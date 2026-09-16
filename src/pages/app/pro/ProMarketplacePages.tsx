@@ -30,18 +30,18 @@ import {
   passOpportunity,
   setContractorServices,
   signedProjectPhotoUrl,
-  submitCredential,
   submitEstimate,
   TIMING_LABELS,
   updateContractorProfile,
-  updateEstimateNotes,
+  updateCredential,
+  updateEstimateDetails,
   uploadContractorDoc,
   upsertContractorArea,
   withdrawEstimate,
   type OpportunityRow,
 } from "../../../lib/marketplace/api";
 import { centsToDollarString, dollarsToCents, formatUsdFromCents, previewFee } from "../../../lib/marketplace/fees";
-import type { ServiceAreaMode, ServiceCategory } from "../../../lib/marketplace/types";
+import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type EstimateItemKind, type ServiceAreaMode, type ServiceCategory } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
 
 export function ProHomePage() {
@@ -273,16 +273,7 @@ function CredentialList({
               event.target.value = "";
               if (!file) return;
               void uploadContractorDoc({ userId, folder: "credentials", file })
-                .then((path) =>
-                  addCredential({
-                    contractor_profile_id: contractorId,
-                    kind: row.kind,
-                    label: `${row.label} document`,
-                    document_path: path,
-                    status: "PENDING",
-                  }),
-                )
-                .then(() => submitCredential(row.id))
+                .then((path) => updateCredential(row.id, { document_path: path, status: "PENDING" }))
                 .then(() => fetchCredentials(contractorId))
                 .then(setRows)
                 .catch((err: Error) => onError(err.message));
@@ -444,6 +435,7 @@ export function OpportunityDetailPage() {
         <div className="flex gap-3">
           <Button
             type="button"
+            className="min-h-14 flex-1"
             disabled={busy}
             onClick={() => {
               setBusy(true);
@@ -461,6 +453,7 @@ export function OpportunityDetailPage() {
           <Button
             type="button"
             variant="outline"
+            className="min-h-14 flex-1"
             disabled={busy}
             onClick={() => {
               setBusy(true);
@@ -523,9 +516,14 @@ export function EstimateBuilderPage() {
   const [estimateId, setEstimateId] = useState<string | null>(null);
   const [status, setStatus] = useState("DRAFT");
   const [notes, setNotes] = useState("");
+  const [duration, setDuration] = useState("");
+  const [availableFrom, setAvailableFrom] = useState("");
+  const [validUntil, setValidUntil] = useState("");
   const [items, setItems] = useState<Awaited<ReturnType<typeof fetchEstimateItems>>>([]);
+  const [kind, setKind] = useState<EstimateItemKind>("LABOR");
   const [label, setLabel] = useState("");
   const [qty, setQty] = useState("1");
+  const [unitLabel, setUnitLabel] = useState("hours");
   const [unit, setUnit] = useState("");
   const [totals, setTotals] = useState(previewFee(0));
 
@@ -542,9 +540,22 @@ export function EstimateBuilderPage() {
     setEstimateId(estimate.id);
     setStatus(estimate.status);
     setNotes(estimate.notes ?? "");
+    setDuration(estimate.duration_hours != null ? String(estimate.duration_hours) : "");
+    setAvailableFrom(estimate.available_from ?? "");
+    setValidUntil(estimate.valid_until ?? "");
     const lineItems = await fetchEstimateItems(estimate.id);
     setItems(lineItems);
     setTotals(previewFee(lineItems.reduce((sum, item) => sum + item.line_total_cents, 0), estimate.fee_bps));
+  }
+
+  function saveDetails(patch: {
+    notes?: string;
+    duration_hours?: number | null;
+    available_from?: string | null;
+    valid_until?: string | null;
+  }) {
+    if (!estimateId) return;
+    void updateEstimateDetails(estimateId, patch).catch((err: Error) => setError(err.message));
   }
 
   useEffect(() => {
@@ -555,17 +566,20 @@ export function EstimateBuilderPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Estimate</h1>
-      <p className="text-sm text-ink-500">Status: {status}. Totals are validated in the database. No charge is taken.</p>
+      <p className="text-sm text-ink-700">
+        Status: {status.replaceAll("_", " ")}. Line totals and the ~7% fee are computed in the database. Nothing is charged.
+      </p>
       <FormError message={error} />
       <ul className="space-y-2">
         {items.map((item) => (
-          <li key={item.id} className="flex items-center justify-between rounded-2xl bg-cream-100 px-3 py-2 text-sm">
+          <li key={item.id} className="flex items-center justify-between gap-3 rounded-2xl bg-cream-100 px-3 py-2 text-sm">
             <span>
-              {item.label} · {item.quantity} × {formatUsdFromCents(item.unit_cents)} = {formatUsdFromCents(item.line_total_cents)}
+              {ESTIMATE_ITEM_KIND_LABELS[(item.kind as EstimateItemKind) ?? "CUSTOM"]}: {item.label} · {item.quantity}{" "}
+              {item.unit_label || "each"} × {formatUsdFromCents(item.unit_cents)} = {formatUsdFromCents(item.line_total_cents)}
             </span>
             <button
               type="button"
-              className="text-danger-600"
+              className="min-h-11 shrink-0 font-semibold text-danger-600"
               onClick={() => void deleteEstimateItem(item.id).then(load).catch((err: Error) => setError(err.message))}
             >
               Remove
@@ -573,12 +587,35 @@ export function EstimateBuilderPage() {
           </li>
         ))}
       </ul>
+      <label className="block">
+        <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
+          Line type
+        </span>
+        <select
+          className="min-h-14 w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4"
+          value={kind}
+          onChange={(e) => setKind(e.target.value as EstimateItemKind)}
+        >
+          {ESTIMATE_ITEM_KINDS.map((itemKind) => (
+            <option key={itemKind} value={itemKind}>
+              {ESTIMATE_ITEM_KIND_LABELS[itemKind]}
+            </option>
+          ))}
+        </select>
+      </label>
       <TextInput label="Line item" value={label} onChange={(e) => setLabel(e.target.value)} />
-      <TextInput label="Quantity" value={qty} onChange={(e) => setQty(e.target.value)} />
-      <TextInput label="Unit price (USD)" value={unit} onChange={(e) => setUnit(e.target.value)} />
+      <TextInput label="Quantity" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} />
+      <TextInput
+        label="Unit"
+        hint="hours, each, sq ft, and so on"
+        value={unitLabel}
+        onChange={(e) => setUnitLabel(e.target.value)}
+      />
+      <TextInput label="Unit price (USD)" inputMode="decimal" value={unit} onChange={(e) => setUnit(e.target.value)} />
       <Button
         type="button"
         variant="outline"
+        className="min-h-14 w-full"
         disabled={!estimateId}
         onClick={() => {
           const unitCents = dollarsToCents(unit);
@@ -588,6 +625,8 @@ export function EstimateBuilderPage() {
             label,
             quantity: Number(qty) || 1,
             unit_cents: unitCents,
+            kind,
+            unit_label: unitLabel || "each",
             sort_order: items.length,
           })
             .then(() => {
@@ -603,21 +642,44 @@ export function EstimateBuilderPage() {
       <div className="rounded-3xl border border-forest-800/10 px-4 py-3 text-sm">
         <p>Total {formatUsdFromCents(totals.total_cents)}</p>
         <p>PPP fee preview (~{totals.fee_bps / 100}%) {formatUsdFromCents(totals.fee_cents)}</p>
-        <p>Contractor earnings {formatUsdFromCents(totals.contractor_earnings_cents)}</p>
-        <p className="text-ink-500">charges_live: false</p>
+        <p>You would earn {formatUsdFromCents(totals.contractor_earnings_cents)}</p>
+        <p className="text-ink-500">Preview only. Live charges are off.</p>
       </div>
-      <textarea
-        className="w-full rounded-2xl border px-3 py-2"
-        rows={3}
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        onBlur={() => {
-          if (estimateId) void updateEstimateNotes(estimateId, notes);
-        }}
+      <TextInput
+        label="Duration (hours)"
+        inputMode="decimal"
+        value={duration}
+        onChange={(e) => setDuration(e.target.value)}
+        onBlur={() => saveDetails({ duration_hours: duration ? Number(duration) : null })}
       />
-      <div className="flex flex-wrap gap-3">
+      <TextInput
+        label="Available from"
+        type="date"
+        value={availableFrom}
+        onChange={(e) => setAvailableFrom(e.target.value)}
+        onBlur={() => saveDetails({ available_from: availableFrom || null })}
+      />
+      <TextInput
+        label="Estimate expires"
+        type="date"
+        value={validUntil}
+        onChange={(e) => setValidUntil(e.target.value)}
+        onBlur={() => saveDetails({ valid_until: validUntil || null })}
+      />
+      <label className="block">
+        <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Notes</span>
+        <textarea
+          className="w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4 py-3"
+          rows={3}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          onBlur={() => saveDetails({ notes })}
+        />
+      </label>
+      <div className="sticky bottom-24 z-20 flex gap-3 bg-cream-50/95 py-3 pb-safe lg:bottom-4">
         <Button
           type="button"
+          className="min-h-14 flex-1"
           onClick={() => {
             if (!estimateId) return;
             void submitEstimate(estimateId)
@@ -634,6 +696,7 @@ export function EstimateBuilderPage() {
         <Button
           type="button"
           variant="outline"
+          className="min-h-14 flex-1"
           onClick={() => {
             if (!estimateId) return;
             void withdrawEstimate(estimateId).then(load).catch((err: Error) => setError(err.message));

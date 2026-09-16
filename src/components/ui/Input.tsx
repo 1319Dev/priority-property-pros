@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from "react";
+import { useId, type InputHTMLAttributes } from "react";
 import { cn } from "../../utils/cn";
 
 export function TextInput({
@@ -11,7 +11,8 @@ export function TextInput({
   label: string;
   hint?: string;
 }) {
-  const inputId = id ?? props.name ?? "field";
+  const generatedId = useId();
+  const inputId = id ?? props.name ?? generatedId;
 
   return (
     <label className="block" htmlFor={inputId}>

@@ -66,7 +66,7 @@ New tables are deny-by-default with RLS. Extra rules:
 - Exact street lives in `project_private_locations`. Opportunity contractors see city / ZIP only.
 - Customers cannot `SELECT` `AVAILABLE` opportunities (matching pool is hidden).
 - Contractors cannot set credential `status` to `VERIFIED`.
-- Estimate `ACCEPTED` / project `CONTRACTOR_SELECTED` happen only through `select_estimate`.
+- Estimate `ACCEPTED` / project `CONTRACTOR_SELECTED` happen only through `select_estimate`. Contractors cannot PATCH an estimate to `ACCEPTED` or rewrite money columns; `protect_estimate_row` allows those changes only from submit/withdraw/select/recompute.
 - Slot table PK + `SELECT … FOR UPDATE` on the project row cap participating contractors at 3.
 - Storage buckets `project-photos` and `contractor-docs` are private. Credential files are owner/admin; portfolio images of **approved** contractors may be read by signed-in users.
 

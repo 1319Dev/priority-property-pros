@@ -49,6 +49,16 @@ export const CREDENTIAL_STATUSES = [
 ] as const;
 export type CredentialStatus = (typeof CREDENTIAL_STATUSES)[number];
 
+export const ESTIMATE_ITEM_KINDS = ["LABOR", "MATERIALS", "EQUIPMENT", "CUSTOM"] as const;
+export type EstimateItemKind = (typeof ESTIMATE_ITEM_KINDS)[number];
+
+export const ESTIMATE_ITEM_KIND_LABELS: Record<EstimateItemKind, string> = {
+  LABOR: "Labor",
+  MATERIALS: "Materials",
+  EQUIPMENT: "Equipment",
+  CUSTOM: "Custom",
+};
+
 export const SERVICE_AREA_MODES = ["ZIPS", "RADIUS", "ZIPS_AND_RADIUS"] as const;
 export type ServiceAreaMode = (typeof SERVICE_AREA_MODES)[number];
 
@@ -128,6 +138,8 @@ export type EstimateItemInput = {
   label: string;
   quantity: number;
   unit_cents: number;
+  kind?: EstimateItemKind;
+  unit_label?: string;
 };
 
 export type FeePreview = {

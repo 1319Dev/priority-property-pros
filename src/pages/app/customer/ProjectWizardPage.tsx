@@ -6,7 +6,8 @@ import { TextInput } from "../../../components/ui/Input";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
 import {
-  createDraftProject,
+  createOrReuseDraftProject,
+  deleteProjectPhoto,
   fetchPrivateLocation,
   fetchProject,
   fetchProjectAnswers,
@@ -60,7 +61,7 @@ export function ProjectWizardPage() {
         if (cancelled) return;
         setCategories(cats);
         if (!projectId || projectId === "new") {
-          const created = await createDraftProject(profile.id);
+          const created = await createOrReuseDraftProject(profile.id);
           const preset = params.get("q") ?? params.get("service") ?? "";
           const match = cats.find((c) => c.slug === preset || c.name.toLowerCase() === preset.toLowerCase());
           if (preset) {
@@ -148,26 +149,45 @@ export function ProjectWizardPage() {
     }
   }
 
+  async function persistStep(fromStep: number) {
+    if (!project) return;
+    if (fromStep === 1) {
+      await updateProject(project.id, { title: project.title, description: project.description });
+    }
+    if (fromStep === 4) {
+      await Promise.all(questions.map((q) => upsertProjectAnswer(project.id, q.id, answers[q.id] ?? "")));
+    }
+    if (fromStep === 5) {
+      await upsertPrivateLocation(project.id, {
+        street_line1: street,
+        street_line2: street2,
+        lat: null,
+        lng: null,
+      });
+      await updateProject(project.id, {
+        city: project.city,
+        state: project.state,
+        zip_code: project.zip_code,
+      });
+    }
+    if (fromStep === 7) {
+      await updateProject(project.id, {
+        budget_min_cents: dollarsToCents(budgetMin),
+        budget_max_cents: dollarsToCents(budgetMax),
+      });
+    }
+  }
+
   async function go(next: number) {
     if (!project) return;
     setBusy(true);
     setError(null);
     try {
-      if (step === 5) {
-        await upsertPrivateLocation(project.id, {
-          street_line1: street,
-          street_line2: street2,
-          lat: null,
-          lng: null,
-        });
-      }
-      if (step === 4) {
-        await Promise.all(
-          questions.map((q) => upsertProjectAnswer(project.id, q.id, answers[q.id] ?? "")),
-        );
-      }
-      const updated = await updateProject(project.id, { draft_step: next });
-      setProject(updated);
+      await persistStep(step);
+      const saved = await updateProject(project.id, { draft_step: next });
+      setProject(saved);
+      setBudgetMin(centsToDollarString(saved.budget_min_cents));
+      setBudgetMax(centsToDollarString(saved.budget_max_cents));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not continue.");
     } finally {
@@ -220,13 +240,13 @@ export function ProjectWizardPage() {
           {WIZARD_STEPS[step - 1]?.label ?? "Project"}
         </h1>
         <CompletenessBadge value={completeness} />
-        <ol className="flex flex-wrap gap-1" aria-label="Steps">
+        <ol className="flex gap-1 overflow-x-auto pb-1" aria-label="Steps">
           {WIZARD_STEPS.map((item) => (
             <li key={item.id}>
               <button
                 type="button"
-                className={`rounded-full px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em] ${
-                  item.id === step ? "bg-forest-800 text-cream-50" : "text-ink-500"
+                className={`min-h-11 rounded-full px-3 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.12em] ${
+                  item.id === step ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-ink-700"
                 }`}
                 onClick={() => void go(item.id)}
               >
@@ -331,10 +351,32 @@ export function ProjectWizardPage() {
             {photos.map((photo) => (
               <li key={photo.id} className="overflow-hidden rounded-2xl bg-cream-100">
                 {photo.url ? (
-                  <img src={photo.url} alt="" className="h-28 w-full object-cover" />
+                  <img src={photo.url} alt="Project photo" className="h-28 w-full object-cover" />
                 ) : (
                   <p className="p-4 text-sm">Photo attached</p>
                 )}
+                <button
+                  type="button"
+                  className="w-full min-h-11 text-sm font-semibold text-danger-600"
+                  onClick={() => {
+                    setBusy(true);
+                    void deleteProjectPhoto(photo.id, photo.storage_path)
+                      .then(() => fetchProjectPhotos(project.id))
+                      .then(async (rows) => {
+                        const withUrls = await Promise.all(
+                          rows.map(async (row) => ({
+                            ...row,
+                            url: (await signedProjectPhotoUrl(row.storage_path)) ?? undefined,
+                          })),
+                        );
+                        setPhotos(withUrls);
+                      })
+                      .catch((err: Error) => setError(err.message))
+                      .finally(() => setBusy(false));
+                  }}
+                >
+                  Remove
+                </button>
               </li>
             ))}
           </ul>
@@ -498,19 +540,20 @@ export function ProjectWizardPage() {
         </div>
       ) : null}
 
-      <div className="flex gap-3">
+      <div className="sticky bottom-24 z-20 flex gap-3 bg-cream-50/95 py-3 pb-safe lg:bottom-4">
         {step > 1 ? (
-          <Button type="button" variant="outline" disabled={busy} onClick={() => void go(step - 1)}>
+          <Button type="button" variant="outline" className="min-h-14 flex-1" disabled={busy} onClick={() => void go(step - 1)}>
             Back
           </Button>
         ) : null}
         {step < 8 ? (
-          <Button type="button" disabled={busy} onClick={() => void go(step + 1)}>
+          <Button type="button" className="min-h-14 flex-1" disabled={busy} onClick={() => void go(step + 1)}>
             Continue
           </Button>
         ) : (
           <Button
             type="button"
+            className="min-h-14 flex-1"
             disabled={busy || !canPostProject(project)}
             onClick={() => void onPost()}
           >

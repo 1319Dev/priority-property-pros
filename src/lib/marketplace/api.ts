@@ -1,6 +1,7 @@
 import { getSupabaseClient } from "../supabase/client";
 import type { Database, Json } from "../supabase/database.types";
 import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
+import { reusableEmptyDraft } from "./flows";
 import type {
   Project,
   ProjectPrivateLocation,
@@ -65,6 +66,13 @@ export async function createDraftProject(customerId: string): Promise<Project> {
     .single();
   if (error || !data) throw new Error(asError(error, "Could not create a draft."));
   return data as Project;
+}
+
+export async function createOrReuseDraftProject(customerId: string): Promise<Project> {
+  const existing = await fetchCustomerProjects(customerId);
+  const reusable = reusableEmptyDraft(existing);
+  if (reusable) return reusable;
+  return createDraftProject(customerId);
 }
 
 export async function fetchCustomerProjects(customerId: string): Promise<Project[]> {
@@ -163,6 +171,13 @@ export async function uploadProjectPhoto(params: {
     sort_order: params.sortOrder,
   });
   if (error) throw new Error(asError(error, "Could not attach the photo."));
+}
+
+export async function deleteProjectPhoto(id: string, storagePath: string) {
+  const supabase = client();
+  await supabase.storage.from("project-photos").remove([storagePath]);
+  const { error } = await supabase.from("project_photos").delete().eq("id", id);
+  if (error) throw new Error(asError(error, "Could not remove the photo."));
 }
 
 export async function signedProjectPhotoUrl(path: string): Promise<string | null> {
@@ -365,6 +380,14 @@ export async function submitCredential(id: string) {
   if (error) throw new Error(asError(error, "Could not submit the credential."));
 }
 
+export async function updateCredential(
+  id: string,
+  patch: Database["public"]["Tables"]["contractor_credentials"]["Update"],
+) {
+  const { error } = await client().from("contractor_credentials").update(patch).eq("id", id);
+  if (error) throw new Error(asError(error, "Could not update the credential."));
+}
+
 export async function uploadContractorDoc(params: {
   userId: string;
   folder: "portfolio" | "credentials";
@@ -458,7 +481,7 @@ export async function fetchEstimate(id: string) {
 export async function fetchEstimateItems(estimateId: string) {
   const { data, error } = await client()
     .from("estimate_items")
-    .select("id, estimate_id, label, quantity, unit_cents, line_total_cents, sort_order")
+    .select("id, estimate_id, label, quantity, unit_cents, line_total_cents, kind, unit_label, sort_order")
     .eq("estimate_id", estimateId)
     .order("sort_order");
   if (error) throw new Error(asError(error, "Could not load line items."));
@@ -483,9 +506,12 @@ export async function deleteEstimateItem(id: string) {
   if (error) throw new Error(asError(error, "Could not remove the line item."));
 }
 
-export async function updateEstimateNotes(id: string, notes: string) {
-  const { error } = await client().from("estimates").update({ notes }).eq("id", id);
-  if (error) throw new Error(asError(error, "Could not save notes."));
+export async function updateEstimateDetails(
+  id: string,
+  patch: Database["public"]["Tables"]["estimates"]["Update"],
+) {
+  const { error } = await client().from("estimates").update(patch).eq("id", id);
+  if (error) throw new Error(asError(error, "Could not save the estimate."));
 }
 
 export async function fetchProjectEstimates(projectId: string) {

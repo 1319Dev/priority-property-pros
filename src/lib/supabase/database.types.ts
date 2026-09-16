@@ -6,6 +6,7 @@ import type {
 } from "../auth/types";
 import type {
   CredentialStatus,
+  EstimateItemKind,
   EstimateStatus,
   OpportunityStatus,
   ProjectCompleteness,
@@ -541,6 +542,8 @@ export type Database = {
           contractor_earnings_cents: number;
           total_cents: number;
           valid_until: string | null;
+          duration_hours: number | null;
+          available_from: string | null;
           submitted_at: string | null;
           created_at: string;
           updated_at: string;
@@ -551,8 +554,15 @@ export type Database = {
           contractor_profile_id: string;
           notes?: string | null;
           valid_until?: string | null;
+          duration_hours?: number | null;
+          available_from?: string | null;
         };
-        Update: { notes?: string | null; valid_until?: string | null };
+        Update: {
+          notes?: string | null;
+          valid_until?: string | null;
+          duration_hours?: number | null;
+          available_from?: string | null;
+        };
         Relationships: [];
       };
       estimate_items: {
@@ -563,6 +573,8 @@ export type Database = {
           quantity: number;
           unit_cents: number;
           line_total_cents: number;
+          kind: EstimateItemKind;
+          unit_label: string;
           sort_order: number;
         };
         Insert: {
@@ -570,9 +582,18 @@ export type Database = {
           label: string;
           quantity?: number;
           unit_cents?: number;
+          kind?: EstimateItemKind;
+          unit_label?: string;
           sort_order?: number;
         };
-        Update: { label?: string; quantity?: number; unit_cents?: number; sort_order?: number };
+        Update: {
+          label?: string;
+          quantity?: number;
+          unit_cents?: number;
+          kind?: EstimateItemKind;
+          unit_label?: string;
+          sort_order?: number;
+        };
         Relationships: [];
       };
     };
@@ -671,6 +692,7 @@ export type Database = {
       credential_status: CredentialStatus;
       service_area_mode: ServiceAreaMode;
       question_kind: QuestionKind;
+      estimate_item_kind: EstimateItemKind;
     };
   };
 };

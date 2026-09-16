@@ -170,4 +170,16 @@ describe("Phase 3 SQL migrations", () => {
     expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.write_audit_log\(uuid, text, text, uuid, jsonb\) FROM PUBLIC, anon, authenticated/);
     expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.is_admin\(\) FROM PUBLIC, anon/);
   });
+
+  it("locks estimate status and money to RPCs and adds labor/materials line kinds", () => {
+    expect(sql).toMatch(/estimate_item_kind/);
+    expect(sql).toMatch(/'LABOR'/);
+    expect(sql).toMatch(/'MATERIALS'/);
+    expect(sql).toMatch(/'EQUIPMENT'/);
+    expect(sql).toMatch(/duration_hours/);
+    expect(sql).toMatch(/available_from/);
+    expect(sql).toMatch(/estimate status can only change through submit, withdraw, or select/);
+    expect(sql).toMatch(/estimate money columns are computed in the database/);
+    expect(sql).toMatch(/FUNCTION public\.protect_estimate_row/);
+  });
 });

@@ -70,6 +70,7 @@ Do not commit `.env.local`.
    16. `20260917000008_phase3_seed_catalog.sql`
    17. `20260917000009_phase3_function_grants.sql`
    18. `20260917000010_phase3_phase2_function_grants.sql`
+   19. `20260917000011_phase3_estimate_builder_guards.sql`
 
 5. If a file says it already exists, stop and ask a developer — do not skip ahead.
 6. Phase 2 Table Editor should list `profiles`, `contractor_profiles`, `verifier_profiles`, `agreements`, `agreement_acceptances`, `audit_logs`.

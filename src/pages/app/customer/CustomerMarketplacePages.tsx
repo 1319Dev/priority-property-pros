@@ -19,7 +19,8 @@ import {
   TIMING_LABELS,
 } from "../../../lib/marketplace/api";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
-import { CUSTOMER_PROJECT_TABS, customerTabForStatus, type Project } from "../../../lib/marketplace/types";
+import { CUSTOMER_PROJECT_TABS, customerTabForStatus, ESTIMATE_ITEM_KIND_LABELS, type EstimateItemKind, type Project } from "../../../lib/marketplace/types";
+import { comparisonDisplayOrder } from "../../../lib/marketplace/flows";
 import { useToast } from "../../../hooks/useToast";
 
 export function CustomerHomePage() {
@@ -51,6 +52,19 @@ export function CustomerProjectsPage() {
     void fetchCustomerProjects(profile.id).then(setProjects).catch((err: Error) => setError(err.message));
   }, [profile]);
 
+  const counts = useMemo(() => {
+    const next: Record<(typeof CUSTOMER_PROJECT_TABS)[number]["key"], number> = {
+      drafts: 0,
+      open: 0,
+      estimates: 0,
+      selected: 0,
+    };
+    for (const project of projects) {
+      next[customerTabForStatus(project.status)] += 1;
+    }
+    return next;
+  }, [projects]);
+
   const filtered = useMemo(() => {
     const match = CUSTOMER_PROJECT_TABS.find((item) => item.key === tab);
     return projects.filter((project) => (match?.statuses as readonly string[] | undefined)?.includes(project.status));
@@ -70,17 +84,20 @@ export function CustomerProjectsPage() {
           <button
             key={item.key}
             type="button"
-            className={`rounded-full px-4 py-2 text-sm font-semibold ${
+            className={`min-h-11 rounded-full px-4 py-2 text-sm font-semibold ${
               tab === item.key ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-forest-800"
             }`}
             onClick={() => setTab(item.key)}
           >
-            {item.label}
+            {item.label} ({counts[item.key]})
           </button>
         ))}
       </div>
       {filtered.length === 0 ? (
-        <EmptyState title="Nothing here yet" body="Drafts, open jobs, and selected contractors will sort into these lists." />
+        <EmptyState
+          title={tab === "drafts" ? "No drafts" : "Nothing here yet"}
+          body="Drafts stay here until you post. Open jobs, estimates, and selected contractors sort into their own lists."
+        />
       ) : (
         <ul className="space-y-3">
           {filtered.map((project) => (
@@ -148,7 +165,7 @@ export function CustomerProjectDetailPage() {
         <p className="mt-3">
           {project.city}, {project.state} {project.zip_code}
         </p>
-        <p>Street (protected): {street ?? "—"}</p>
+        <p>Street (protected until you select a pro): {street ?? "—"}</p>
         <p>{project.timing ? TIMING_LABELS[project.timing] : ""}</p>
       </section>
       <section className="space-y-3">
@@ -208,7 +225,7 @@ export function CompareEstimatesPage() {
     async function load() {
       const proj = await fetchProject(projectId);
       setProject(proj);
-      const estimates = await fetchProjectEstimates(projectId);
+      const estimates = comparisonDisplayOrder(await fetchProjectEstimates(projectId));
       const detailed = await Promise.all(
         estimates.map(async (estimate) => ({
           estimate,
@@ -240,27 +257,43 @@ export function CompareEstimatesPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Compare estimates</h1>
-      <p className="text-ink-700">Factual comparison only. Selecting a pro does not charge a card.</p>
+      <p className="text-ink-700">
+        Factual comparison only. PPP does not rank a “best” estimate. Selecting a pro does not charge a card.
+      </p>
       <FormError message={error} />
-      <div className="grid gap-4 md:grid-cols-2">
+      {rows.length === 0 ? <EmptyState title="No estimates yet" body="Submitted estimates will appear here in the order they arrived." /> : null}
+      <div className="grid gap-4">
         {rows.map(({ estimate, items, contractor }) => (
           <article key={estimate.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 p-5">
             <h2 className="font-display text-2xl text-forest-800">{contractor?.business_name || "Local pro"}</h2>
-            <p className="text-sm text-ink-500">{estimate.status}</p>
+            <p className="text-sm text-ink-500">{estimate.status.replaceAll("_", " ")}</p>
             <p className="mt-3 text-lg font-semibold">{formatUsdFromCents(estimate.total_cents)}</p>
-            <p className="text-sm text-ink-500">
-              PPP fee preview {formatUsdFromCents(estimate.fee_cents)} · contractor would earn{" "}
-              {formatUsdFromCents(estimate.contractor_earnings_cents)} (not charged)
-            </p>
             <ul className="mt-3 space-y-1 text-sm">
               {items.map((item) => (
                 <li key={item.id}>
-                  {item.label} · {item.quantity} × {formatUsdFromCents(item.unit_cents)} ={" "}
-                  {formatUsdFromCents(item.line_total_cents)}
+                  {ESTIMATE_ITEM_KIND_LABELS[(item.kind as EstimateItemKind) ?? "CUSTOM"]}: {item.label} · {item.quantity}{" "}
+                  {item.unit_label || "each"} × {formatUsdFromCents(item.unit_cents)} = {formatUsdFromCents(item.line_total_cents)}
                 </li>
               ))}
             </ul>
+            <dl className="mt-3 space-y-1 text-sm text-ink-700">
+              <div>
+                <dt className="inline font-semibold">Duration: </dt>
+                <dd className="inline">
+                  {estimate.duration_hours != null ? `${estimate.duration_hours} hours` : "Not stated"}
+                </dd>
+              </div>
+              <div>
+                <dt className="inline font-semibold">Available from: </dt>
+                <dd className="inline">{estimate.available_from ?? "Not stated"}</dd>
+              </div>
+              <div>
+                <dt className="inline font-semibold">Expires: </dt>
+                <dd className="inline">{estimate.valid_until ?? "Not stated"}</dd>
+              </div>
+            </dl>
             {estimate.notes ? <p className="mt-3 text-sm">{estimate.notes}</p> : null}
+            <p className="mt-3 text-xs text-ink-500">Platform fee is a contractor preview only. Nothing is charged in Phase 3.</p>
             {project?.status === "CONTRACTOR_SELECTED" && project.selected_estimate_id === estimate.id ? (
               <p className="mt-4 font-semibold text-forest-800">Selected</p>
             ) : project?.status === "CONTRACTOR_SELECTED" ? (
@@ -269,15 +302,15 @@ export function CompareEstimatesPage() {
               confirmId === estimate.id ? (
                 <div className="mt-4 space-y-2">
                   <p className="text-sm">Confirm this independent contractor? This cannot be undone here. No payment is taken.</p>
-                  <Button type="button" disabled={busy} onClick={() => void confirm(estimate.id)}>
-                    Confirm
+                  <Button type="button" className="min-h-14 w-full" disabled={busy} onClick={() => void confirm(estimate.id)}>
+                    Confirm this pro
                   </Button>
-                  <Button type="button" variant="ghost" onClick={() => setConfirmId(null)}>
+                  <Button type="button" variant="ghost" className="min-h-12 w-full" onClick={() => setConfirmId(null)}>
                     Cancel
                   </Button>
                 </div>
               ) : (
-                <Button type="button" className="mt-4" onClick={() => setConfirmId(estimate.id)}>
+                <Button type="button" className="mt-4 min-h-14 w-full" onClick={() => setConfirmId(estimate.id)}>
                   Select this pro
                 </Button>
               )

@@ -24,4 +24,4 @@ See [DATABASE.md](DATABASE.md) and [SECURITY.md](SECURITY.md) for tables and RLS
 
 Stripe charges, booking, payouts, Priority Verified, full messaging, change orders, work workflow, full admin analytics, demo contractors, or wiping production users.
 
-Apply SQL in filename order through `20260917000010_phase3_phase2_function_grants.sql`. Files `09`–`10` only tighten grants; they do not delete users.
+Apply SQL in filename order through `20260917000011_phase3_estimate_builder_guards.sql`. Files `09`–`11` do not delete users. Estimate line items support Labor / Materials / Equipment / Custom. Duration, availability, and expiration are informational. PPP does **not** auto-rank a BEST estimate.

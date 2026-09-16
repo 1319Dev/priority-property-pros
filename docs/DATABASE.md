@@ -66,7 +66,7 @@ Phase 2 had no projects or estimates. Phase 3 adds them (below). Still no paymen
 
 ## Phase 3 marketplace tables
 
-Apply `supabase/migrations/20260917000001_*.sql` through `20260917000010_*.sql` after the Phase 2 files. All new tables have UUID keys, timestamps, and RLS. Files `09` and `10` only tighten `EXECUTE` grants and `search_path`; they do not drop data.
+Apply `supabase/migrations/20260917000001_*.sql` through `20260917000011_*.sql` after the Phase 2 files. All new tables have UUID keys, timestamps, and RLS. Files `09`–`11` only tighten grants, add estimate builder columns, and lock estimate status/money to RPCs; they do not drop data.
 
 | Table | Purpose |
 | --- | --- |
@@ -86,7 +86,7 @@ Apply `supabase/migrations/20260917000001_*.sql` through `20260917000010_*.sql` 
 | `opportunities` | `AVAILABLE\|ACCEPTED\|PASSED\|EXPIRED\|CLOSED`. |
 | `opportunity_slots` | Atomic max-3: PK `(project_id, slot_number)` with `slot_number BETWEEN 1 AND 3`. |
 | `estimate_questions` | Pre-estimate Q&A for accepted participants only. |
-| `estimates` / `estimate_items` | Totals recomputed in the database. Fee preview is not a charge. |
+| `estimates` / `estimate_items` | Totals recomputed in the database. Line kinds: LABOR / MATERIALS / EQUIPMENT / CUSTOM. Duration, available_from, valid_until are informational. Fee preview is not a charge. Status/money cannot be patched from the client. |
 
 Supporting columns on `contractor_profiles`: `accepting_work`, `min_job_cents`, `max_job_cents`, `headline`. Additive; existing rows stay.
 
