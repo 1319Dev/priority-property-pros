@@ -19,7 +19,7 @@ export function Hero() {
 
   return (
     <section className="relative overflow-hidden border-b border-forest-800/10">
-      <Container className="grid items-center gap-10 py-10 sm:py-14 lg:grid-cols-[1.15fr_0.85fr] lg:py-20">
+      <Container className="grid items-center gap-10 py-8 sm:py-14 lg:grid-cols-[1.15fr_0.85fr] lg:py-20">
         <div>
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">
             Local home services marketplace
@@ -67,7 +67,7 @@ export function Hero() {
               />
               <button
                 type="submit"
-                className="min-h-14 rounded-2xl bg-forest-800 px-5 text-[0.78rem] font-semibold uppercase tracking-[0.14em] text-cream-50"
+                className="min-h-14 rounded-2xl bg-forest-800 px-5 text-[0.78rem] font-semibold uppercase tracking-[0.14em] text-cream-50 sm:min-w-36"
               >
                 Continue
               </button>
@@ -82,7 +82,7 @@ export function Hero() {
 
 function HeroArt() {
   return (
-    <div className="relative mx-auto w-full max-w-md" aria-hidden="true">
+    <div className="relative mx-auto hidden w-full max-w-md lg:block" aria-hidden="true">
       <svg viewBox="0 0 360 340" className="h-auto w-full">
         <rect x="18" y="48" width="324" height="250" rx="28" fill="#1A3C2E" />
         <rect x="38" y="78" width="284" height="198" rx="18" fill="#FBF8F1" />
