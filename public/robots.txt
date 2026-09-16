@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+# Phase 1 static site. Update Sitemap when a custom domain is attached.

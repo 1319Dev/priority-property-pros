@@ -1,0 +1,102 @@
+@import "@fontsource-variable/outfit";
+@import "@fontsource-variable/fraunces";
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit Variable", "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces Variable", "Fraunces", ui-serif, Georgia, serif;
+
+  --color-forest-950: #0a1612;
+  --color-forest-900: #10241c;
+  --color-forest-800: #1a3c2e;
+  --color-forest-700: #245544;
+  --color-forest-600: #2f6b54;
+  --color-forest-100: #dce8e1;
+  --color-forest-50: #eef4f0;
+
+  --color-cream-50: #fbf8f1;
+  --color-cream-100: #f3ebda;
+  --color-cream-200: #e6d5b5;
+  --color-cream-300: #d4c09a;
+
+  --color-ink-900: #1a1814;
+  --color-ink-700: #3f3a33;
+  --color-ink-500: #6b645a;
+  --color-ink-300: #a39b90;
+
+  --color-gold-300: #e0c078;
+  --color-gold-500: #c9a227;
+  --color-gold-600: #a6851f;
+  --color-gold-700: #7c6418;
+
+  --color-sage-100: #e4ede7;
+  --color-danger-600: #9b2c2c;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    min-height: 100dvh;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-cream-50);
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+
+  #root {
+    overflow-x: hidden;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-500);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: var(--color-gold-300);
+    color: var(--color-forest-950);
+  }
+}
+
+@utility pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+@utility pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+@utility px-safe {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+.paper-grain {
+  background-color: var(--color-cream-50);
+  background-image:
+    radial-gradient(rgba(26, 24, 20, 0.035) 0.6px, transparent 0.7px),
+    linear-gradient(180deg, rgba(26, 60, 46, 0.03), transparent 28%);
+  background-size: 7px 7px, 100% 320px;
+}
+
+.gold-rule {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-gold-500),
+    transparent
+  );
+}
