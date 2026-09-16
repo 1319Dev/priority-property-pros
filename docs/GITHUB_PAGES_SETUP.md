@@ -162,3 +162,5 @@ Simplest non-programmer rollback:
 Do **not** add Stripe keys, database passwords, or a Supabase **service role** key to this repository.
 
 Phase 1 is static. Accounts, payments, and live project posting come later. `.env.example` is a reminder only.
+
+_Deploy note: repo is public; Pages source is GitHub Actions._
