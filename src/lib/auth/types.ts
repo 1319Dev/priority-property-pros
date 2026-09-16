@@ -48,6 +48,10 @@ export type ContractorProfile = {
   insurance_carrier: string | null;
   website_url: string | null;
   bio: string | null;
+  headline: string | null;
+  accepting_work: boolean;
+  min_job_cents: number | null;
+  max_job_cents: number | null;
   onboarding_status: OnboardingStatus;
   approval_status: ApprovalStatus;
   approved_at: string | null;

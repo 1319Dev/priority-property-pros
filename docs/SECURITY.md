@@ -59,6 +59,21 @@ These are encoded as unit tests in `src/lib/auth/rlsPolicy.test.ts` and `src/lib
 
 Website route guards (`RequireAuth`, `RequireRole`, `RequireAdmin`) hide screens only. They are **not** security.
 
+## Phase 3 marketplace RLS
+
+New tables are deny-by-default with RLS. Extra rules:
+
+- Exact street lives in `project_private_locations`. Opportunity contractors see city / ZIP only.
+- Customers cannot `SELECT` `AVAILABLE` opportunities (matching pool is hidden).
+- Contractors cannot set credential `status` to `VERIFIED`.
+- Estimate `ACCEPTED` / project `CONTRACTOR_SELECTED` happen only through `select_estimate`.
+- Slot table PK + `SELECT … FOR UPDATE` on the project row cap participating contractors at 3.
+- Storage buckets `project-photos` and `contractor-docs` are private. Credential files are owner/admin; portfolio images of **approved** contractors may be read by signed-in users.
+
+`public.is_admin()` remains `SECURITY DEFINER`. New helpers (`current_contractor_profile_id`, `is_project_owner`, `contractor_has_open_opportunity`, `contractor_is_selected_on_project`) are also definer functions with `search_path = public`.
+
+There are **no Stripe charges** in Phase 3. `fee_preview` always returns `charges_live: false`.
+
 ## Auth redirects
 
 Local and GitHub Pages both need allow-listed URLs (see [SUPABASE_SETUP.md](SUPABASE_SETUP.md)):

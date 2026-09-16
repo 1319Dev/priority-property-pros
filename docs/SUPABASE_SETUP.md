@@ -60,9 +60,18 @@ Do not commit `.env.local`.
    6. `20260916000006_signup_trigger.sql`
    7. `20260916000007_rls.sql`
    8. `20260916000008_seed_agreements.sql`
+   9. `20260917000001_phase3_enums_settings.sql`
+   10. `20260917000002_phase3_service_catalog.sql`
+   11. `20260917000003_phase3_contractor_expansion.sql`
+   12. `20260917000004_phase3_projects.sql`
+   13. `20260917000005_phase3_matching_estimates.sql`
+   14. `20260917000006_phase3_functions.sql`
+   15. `20260917000007_phase3_rls_storage.sql`
+   16. `20260917000008_phase3_seed_catalog.sql`
 
 5. If a file says it already exists, stop and ask a developer — do not skip ahead.
-6. Optional: Table Editor should now list `profiles`, `contractor_profiles`, `verifier_profiles`, `agreements`, `agreement_acceptances`, `audit_logs`.
+6. Phase 2 Table Editor should list `profiles`, `contractor_profiles`, `verifier_profiles`, `agreements`, `agreement_acceptances`, `audit_logs`.
+7. After Phase 3, you should also see `service_categories`, `projects`, `opportunities`, `estimates`, and related tables. **Do not delete users or profiles.** Optional: `supabase/sql/approve_contractor.sql` to approve a real contractor so matching can include them. There is no website self-approve.
 
 ---
 
