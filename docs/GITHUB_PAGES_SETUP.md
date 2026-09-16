@@ -85,7 +85,7 @@ Wait until the **Deploy GitHub Pages** job shows a green check.
 ### What to verify after deploy
 
 - The homepage headline includes **YOUR PROJECT. LOCAL PROS. ONE SIMPLE PLACE.** (or the same words in title case).
-- **POST A PROJECT** and **BECOME A PRIORITY PRO** buttons work (they open later-phase placeholder pages — that is expected).
+- **POST A PROJECT** asks customers to sign in. **BECOME A PRO** points contractors to signup/onboarding.
 - Header links work: Find a Pro, How It Works, Become a Pro, Sign In.
 - Popular services include Handyman, TV Mounting, Lawn Care, and Other.
 - Refreshing a sub-page such as `/priority-property-pros/trust` still shows the app (not a GitHub 404 page). That proves the SPA `404.html` fallback.

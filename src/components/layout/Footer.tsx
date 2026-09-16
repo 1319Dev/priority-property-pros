@@ -43,7 +43,7 @@ export function Footer() {
       <div className="border-t border-cream-50/10">
         <Container className="flex flex-col gap-2 py-5 text-xs text-cream-200 sm:flex-row sm:justify-between">
           <p>© {new Date().getFullYear()} {COMPANY_NAME}. All rights reserved.</p>
-          <p>Phase 2 — public site plus accounts. Payments and live jobs come later.</p>
+          <p>Phase 3 — posting, matching, and estimates. No Stripe charges yet.</p>
         </Container>
       </div>
     </footer>
