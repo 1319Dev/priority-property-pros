@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { ToastProvider } from "./components/ui/Toast";
+import { AuthProvider } from "./lib/auth/AuthProvider";
 import "./index.css";
 import { routerBasename } from "./utils/cn";
 
@@ -18,9 +19,11 @@ if (!root) {
 createRoot(root).render(
   <StrictMode>
     <BrowserRouter basename={routerBasename()}>
-      <ToastProvider>
-        <App />
-      </ToastProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 );

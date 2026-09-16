@@ -14,7 +14,7 @@ export function PostProjectPage() {
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Post a project</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">Not live yet.</h1>
         <p className="mt-4 text-lg text-ink-700">
-          This form shows how posting will feel. Nothing is saved. There is no database in Phase 1.
+          This form shows how posting will feel. Nothing is saved. Live posting is not in Phase 2.
         </p>
         <form
           className="mt-8 space-y-4"

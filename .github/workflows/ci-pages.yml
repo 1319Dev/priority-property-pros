@@ -48,6 +48,10 @@ jobs:
           # Project site: https://1319Dev.github.io/priority-property-pros/
           # For a custom domain at the site root, change this to /
           BASE_PATH: /priority-property-pros/
+          # PUBLIC only. Set as repo Actions *variables* (not secrets).
+          # Never add SUPABASE_SERVICE_ROLE_KEY here.
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
 
       - name: Upload Pages artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

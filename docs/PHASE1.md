@@ -2,7 +2,7 @@
 
 Priority Property Pros (PPP) is a **local home-services marketplace**. PPP is not the contractor. Roles planned for later phases: PPP, Customer, Independent Contractor, Independent Completion Verifier.
 
-This document describes **Phase 1 only**: a static, installable frontend ready for GitHub Pages.
+This document describes **Phase 1**: a static, installable frontend ready for GitHub Pages. Phase 2 adds accounts on top of this without removing it.
 
 ## What shipped
 
@@ -16,9 +16,9 @@ This document describes **Phase 1 only**: a static, installable frontend ready f
 
 ## What did not ship (later phases)
 
-Phases 2–13 are **not implemented**: Supabase, auth, Stripe Connect, database, Edge Functions, live posting, messaging, payments, verification, or a demo role switcher.
+Phases 3–13 are **not implemented**: Stripe Connect, Edge Functions, live posting, messaging, payments, verification, or a demo role switcher.
 
-`.env.example` lists public placeholders only. Phase 1 needs **no secrets**.
+`.env.example` lists public placeholders. The homepage still needs **no secrets**. Auth needs the public Supabase URL and anon key (see `docs/SUPABASE_SETUP.md`).
 
 ## Design tokens
 
@@ -54,7 +54,7 @@ Motion: 180–280ms ease for sheets and toasts. No decorative parallax.
 | `/find-a-pro` | Stub |
 | `/how-it-works` | Stub / explainer |
 | `/become-a-pro` | Stub |
-| `/sign-in` | Stub — no auth |
+| `/sign-in` | Phase 2 sign-in form (Supabase when configured) |
 | `/post-project` | Stub — no persistence |
 | `/trust` | Stub / trust copy |
 | unknown | In-app 404; GitHub Pages uses `404.html` copy of `index.html` |

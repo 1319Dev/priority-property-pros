@@ -10,6 +10,7 @@ const footerLinks = [
   { to: "/post-project", label: "Post a project" },
   { to: "/trust", label: "Trust & safety" },
   { to: "/sign-in", label: "Sign in" },
+  { to: "/sign-up", label: "Create account" },
 ];
 
 export function Footer() {
@@ -42,7 +43,7 @@ export function Footer() {
       <div className="border-t border-cream-50/10">
         <Container className="flex flex-col gap-2 py-5 text-xs text-cream-200 sm:flex-row sm:justify-between">
           <p>© {new Date().getFullYear()} {COMPANY_NAME}. All rights reserved.</p>
-          <p>Phase 1 — static public site. Accounts and payments come later.</p>
+          <p>Phase 2 — public site plus accounts. Payments and live jobs come later.</p>
         </Container>
       </div>
     </footer>

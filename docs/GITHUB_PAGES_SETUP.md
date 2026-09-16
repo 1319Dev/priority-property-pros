@@ -157,10 +157,17 @@ Simplest non-programmer rollback:
 
 ---
 
-## H. Secrets and later phases
+## H. Secrets, variables, and later phases
 
-Do **not** add Stripe keys, database passwords, or a Supabase **service role** key to this repository.
+**Public (GitHub Actions → Variables, not Secrets):**
 
-Phase 1 is static. Accounts, payments, and live project posting come later. `.env.example` is a reminder only.
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+Click-by-click: [SUPABASE_SETUP.md](SUPABASE_SETUP.md) section E.
+
+Do **not** add Stripe keys, database passwords, or a Supabase **service role** key to this repository or to Actions.
+
+`.env.example` lists public placeholders. Copy to `.env.local` on your computer only.
 
 _Deploy note: repo is public; Pages source is GitHub Actions._
