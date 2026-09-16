@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Priority Property Pros — Phase 1 static homepage, design system, and PWA.",
+  "description": "Priority Property Pros — Phase 2 auth and database on the Phase 1 homepage, design system, and PWA.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build && node scripts/copy-404.mjs",
@@ -17,6 +17,7 @@
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.2.8",
     "@fontsource-variable/outfit": "^5.2.8",
+    "@supabase/supabase-js": "^2.116.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.8.2"

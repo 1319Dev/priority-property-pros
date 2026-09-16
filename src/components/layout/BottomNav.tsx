@@ -1,14 +1,20 @@
 import { NavLink } from "react-router-dom";
-
-const items = [
-  { to: "/", label: "Home", icon: HomeIcon, end: true },
-  { to: "/find-a-pro", label: "Find", icon: FindIcon, end: false },
-  { to: "/post-project", label: "Post", icon: PostIcon, end: false, prominent: true },
-  { to: "/become-a-pro", label: "Pros", icon: ProIcon, end: false },
-  { to: "/sign-in", label: "Sign in", icon: SignIcon, end: false },
-];
+import { useAuth } from "../../lib/auth/useAuth";
+import { postLoginPath } from "../../lib/auth/roles";
 
 export function BottomNav() {
+  const { loading, user, account_type, account_status } = useAuth();
+  const accountTo = user ? postLoginPath(account_type, account_status) : "/sign-in";
+  const accountLabel = user ? "Account" : "Sign in";
+
+  const items = [
+    { to: "/", label: "Home", icon: HomeIcon, end: true },
+    { to: "/find-a-pro", label: "Find", icon: FindIcon, end: false },
+    { to: "/post-project", label: "Post", icon: PostIcon, end: false, prominent: true },
+    { to: "/become-a-pro", label: "Pros", icon: ProIcon, end: false },
+    { to: accountTo, label: loading ? "…" : accountLabel, icon: SignIcon, end: false },
+  ];
+
   return (
     <nav
       aria-label="App"
@@ -16,7 +22,7 @@ export function BottomNav() {
     >
       <ul className="mx-auto grid max-w-lg grid-cols-5 px-2 pt-1">
         {items.map((item) => (
-          <li key={item.to} className="flex justify-center">
+          <li key={item.label} className="flex justify-center">
             <NavLink
               to={item.to}
               end={item.end}

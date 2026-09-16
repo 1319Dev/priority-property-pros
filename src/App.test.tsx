@@ -6,18 +6,21 @@ import wordmarkSvg from "./assets/wordmark.svg?url";
 import App from "./App";
 import { ToastProvider } from "./components/ui/Toast";
 import { SERVICES } from "./data/services";
+import { AuthProvider } from "./lib/auth/AuthProvider";
 
 function renderApp(path = "/") {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <ToastProvider>
-        <App />
-      </ToastProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </AuthProvider>
     </MemoryRouter>,
   );
 }
 
-describe("Priority Property Pros Phase 1", () => {
+describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
   it("renders the app shell without crashing", () => {
     renderApp("/");
     expect(screen.getAllByLabelText(/priority property pros home/i).length).toBeGreaterThan(0);
@@ -47,13 +50,41 @@ describe("Priority Property Pros Phase 1", () => {
     expect(screen.getAllByRole("link", { name: /sign in/i }).length).toBeGreaterThan(0);
   });
 
-  it("shows a polished coming-soon stub for sign-in", () => {
-    renderApp("/sign-in");
-    expect(screen.getByRole("heading", { name: /no accounts in phase 1/i })).toBeInTheDocument();
-  });
-
   it("includes original brand svg assets", () => {
     expect(logoSvg).toBeTruthy();
     expect(wordmarkSvg).toBeTruthy();
+  });
+});
+
+describe("Phase 2 auth surfaces", () => {
+  it("shows a real sign-in form instead of the Phase 1 stub", () => {
+    renderApp("/sign-in");
+    expect(screen.getByRole("heading", { name: /welcome back/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /no accounts in phase 1/i })).not.toBeInTheDocument();
+  });
+
+  it("asks how you will use PPP and never offers Admin signup", () => {
+    renderApp("/sign-up");
+    expect(
+      screen.getByRole("heading", { name: /how will you use priority property pros/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /i need work done/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /i want to get hired/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /verify completed jobs/i })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /admin/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/no public admin signup/i)).toBeInTheDocument();
+  });
+
+  it("shows contractor foundation fields on contractor signup", () => {
+    renderApp("/sign-up/contractor");
+    expect(screen.getByLabelText(/business name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/primary trade/i)).toBeInTheDocument();
+  });
+
+  it("shows email verification check-email state", () => {
+    renderApp("/auth/verify?state=check-email");
+    expect(screen.getByRole("heading", { name: /check your email/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /resend verification email/i })).toBeInTheDocument();
   });
 });

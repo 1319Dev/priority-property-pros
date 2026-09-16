@@ -22,7 +22,7 @@ pnpm-debug.log*
 *.swp
 *.swo
 
-# Env — never commit secrets. Phase 1 has none.
+# Env — never commit secrets. Anon URL/key are public; service role is not.
 .env
 .env.local
 .env.*.local
