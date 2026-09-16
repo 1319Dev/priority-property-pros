@@ -6,7 +6,7 @@
 
 PPP connects homeowners and property owners with **independent local contractors**. PPP is **not** the contractor. This is not Angi and not Thumbtack.
 
-This repository is **Phase 2**: the Phase 1 homepage, design system, and PWA, plus **accounts, profiles, and Row Level Security**. There is still **no live job posting, no payments, and no Stripe**.
+This repository is **Phase 3**: the Phase 1 homepage, design system, and PWA; Phase 2 accounts, profiles, and Row Level Security; plus **project posting, contractor onboarding, matching (max 3), Q&A, estimates, and contractor selection**. There are still **no Stripe charges, no payouts, and no Priority Verified workflow**.
 
 Live public site (Phase 1 behavior stays): **https://1319dev.github.io/priority-property-pros/**
 
@@ -63,32 +63,32 @@ Project site:
 
 Full click-by-click: **[docs/GITHUB_PAGES_SETUP.md](docs/GITHUB_PAGES_SETUP.md)**.
 
-### Connect accounts (Phase 2)
+### Connect accounts and the marketplace (Phase 2 + 3)
 
-Accounts need a Supabase project. The homepage works without it.
+Accounts and posting need a Supabase project. The homepage works without it.
 
-1. **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)** — create project, run SQL, set redirect URLs.
+1. **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)** — create project, run SQL (including Phase 3 files), set redirect URLs.
 2. Add GitHub Actions **variables** (not secrets): `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 3. Never add the **service role** key.
+4. Approve real contractors with **[supabase/sql/approve_contractor.sql](supabase/sql/approve_contractor.sql)** (no self-approve).
 
-Security and tables: **[docs/SECURITY.md](docs/SECURITY.md)**, **[docs/DATABASE.md](docs/DATABASE.md)**.
+Security, tables, and marketplace flow: **[docs/SECURITY.md](docs/SECURITY.md)**, **[docs/DATABASE.md](docs/DATABASE.md)**, **[docs/MARKETPLACE_CORE.md](docs/MARKETPLACE_CORE.md)**.
 
 ---
 
-## What Phase 2 includes
+## What Phase 3 includes
 
 - Everything from Phase 1 (homepage, brand, PWA, GitHub Pages)
-- Supabase browser client (anon key only)
-- Tables: profiles, contractor_profiles, verifier_profiles, agreements, agreement_acceptances, audit_logs
-- Signup trigger that **cannot** create ADMIN from the website
-- RLS deny-by-default
-- Sign up / sign in / sign out / password reset / email verification UI
-- Role dashboards with empty states (`/app/customer`, `/app/pro`, `/app/verifier`, `/app/admin`)
-- Protected routes (UX only — RLS is the lock)
+- Everything from Phase 2 (accounts, profiles, RLS, role dashboards)
+- Customer POST A PROJECT wizard (drafts, photos, DB questions, protected street address)
+- Contractor onboarding (services, area, portfolio, credentials — no self-verify)
+- Matching with an atomic max of 3 participating contractors
+- Pre-estimate Q&A, estimates with validated totals and a **~7% fee preview** (`charges_live: false`)
+- Customer compare + SELECT THIS PRO (stops before payment)
 
-## What Phase 2 does **not** include
+## What Phase 3 does **not** include
 
-No live project posting, matching, estimates, payments, Stripe, messaging, change orders, or Priority Verified workflow. No client path to become Admin.
+No Stripe charges, booking, payouts, Priority Verified, full messaging, change orders, work workflow, or full admin analytics. No client path to become Admin. No production fake contractors.
 
 Copy `.env.example` to `.env.local` for local public values. Never commit a `.env` with private keys.
 

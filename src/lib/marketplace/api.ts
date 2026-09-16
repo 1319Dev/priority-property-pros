@@ -1,0 +1,536 @@
+import { getSupabaseClient } from "../supabase/client";
+import type { Database, Json } from "../supabase/database.types";
+import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
+import type {
+  Project,
+  ProjectPrivateLocation,
+  QuestionKind,
+  ServiceAreaMode,
+  ServiceCategory,
+  ServiceQuestion,
+  TimingPreference,
+} from "./types";
+
+export type RpcJson = Record<string, unknown>;
+
+function client() {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error("Supabase is not configured yet.");
+  return supabase;
+}
+
+function asError(error: { message: string } | null, fallback: string): string {
+  return error?.message || fallback;
+}
+
+export function parseQuestionOptions(value: Json | string[] | null | undefined): string[] {
+  if (!Array.isArray(value)) return [];
+  const options: string[] = [];
+  for (const item of value) {
+    if (typeof item === "string") options.push(item);
+  }
+  return options;
+}
+
+export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
+  const { data, error } = await client()
+    .from("service_categories")
+    .select("id, slug, name, blurb, sort_order, is_active, is_regulated, requires_verified_credential")
+    .eq("is_active", true)
+    .order("sort_order");
+  if (error) throw new Error(asError(error, "Could not load categories."));
+  return (data ?? []) as ServiceCategory[];
+}
+
+export async function fetchServiceQuestions(categoryId: string): Promise<ServiceQuestion[]> {
+  const { data, error } = await client()
+    .from("service_questions")
+    .select("id, category_id, prompt, help_text, kind, options, is_required, sort_order, is_active")
+    .eq("category_id", categoryId)
+    .eq("is_active", true)
+    .order("sort_order");
+  if (error) throw new Error(asError(error, "Could not load questions."));
+  return (data ?? []).map((row) => ({
+    ...row,
+    kind: row.kind as QuestionKind,
+    options: parseQuestionOptions(row.options),
+  }));
+}
+
+export async function createDraftProject(customerId: string): Promise<Project> {
+  const { data, error } = await client()
+    .from("projects")
+    .insert({ customer_id: customerId, title: "", description: "", status: "DRAFT" })
+    .select()
+    .single();
+  if (error || !data) throw new Error(asError(error, "Could not create a draft."));
+  return data as Project;
+}
+
+export async function fetchCustomerProjects(customerId: string): Promise<Project[]> {
+  const { data, error } = await client()
+    .from("projects")
+    .select(
+      "id, customer_id, category_id, title, description, status, completeness, city, state, zip_code, timing, preferred_date, budget_min_cents, budget_max_cents, draft_step, selected_contractor_profile_id, selected_estimate_id, posted_at, selected_at, created_at, updated_at",
+    )
+    .eq("customer_id", customerId)
+    .order("updated_at", { ascending: false });
+  if (error) throw new Error(asError(error, "Could not load projects."));
+  return (data ?? []) as Project[];
+}
+
+export async function fetchProject(id: string): Promise<Project> {
+  const { data, error } = await client().from("projects").select("*").eq("id", id).single();
+  if (error || !data) throw new Error(asError(error, "Project not found."));
+  return data as Project;
+}
+
+export async function updateProject(
+  id: string,
+  patch: Database["public"]["Tables"]["projects"]["Update"] & { draft_step?: number },
+): Promise<Project> {
+  const { data, error } = await client().from("projects").update(patch).eq("id", id).select().single();
+  if (error || !data) throw new Error(asError(error, "Could not save the project."));
+  return data as Project;
+}
+
+export async function upsertPrivateLocation(
+  projectId: string,
+  location: Omit<ProjectPrivateLocation, "project_id">,
+): Promise<void> {
+  const { error } = await client().from("project_private_locations").upsert({
+    project_id: projectId,
+    ...location,
+  });
+  if (error) throw new Error(asError(error, "Could not save the address."));
+}
+
+export async function fetchPrivateLocation(projectId: string): Promise<ProjectPrivateLocation | null> {
+  const { data, error } = await client()
+    .from("project_private_locations")
+    .select("project_id, street_line1, street_line2, lat, lng")
+    .eq("project_id", projectId)
+    .maybeSingle();
+  if (error) throw new Error(asError(error, "Could not load the address."));
+  return data;
+}
+
+export async function fetchProjectPhotos(projectId: string) {
+  const { data, error } = await client()
+    .from("project_photos")
+    .select("id, project_id, storage_path, sort_order")
+    .eq("project_id", projectId)
+    .order("sort_order");
+  if (error) throw new Error(asError(error, "Could not load photos."));
+  return data ?? [];
+}
+
+export async function fetchProjectAnswers(projectId: string) {
+  const { data, error } = await client()
+    .from("project_answers")
+    .select("id, project_id, question_id, answer_text, answer_json")
+    .eq("project_id", projectId);
+  if (error) throw new Error(asError(error, "Could not load answers."));
+  return data ?? [];
+}
+
+export async function upsertProjectAnswer(projectId: string, questionId: string, answerText: string) {
+  const { error } = await client().from("project_answers").upsert(
+    { project_id: projectId, question_id: questionId, answer_text: answerText },
+    { onConflict: "project_id,question_id" },
+  );
+  if (error) throw new Error(asError(error, "Could not save the answer."));
+}
+
+export async function uploadProjectPhoto(params: {
+  userId: string;
+  projectId: string;
+  file: File;
+  sortOrder: number;
+}) {
+  if (!isAllowedImage(params.file.type)) throw new Error("Use a JPEG, PNG, or WebP photo.");
+  if (params.file.size > 10 * 1024 * 1024) throw new Error("Photos must be 10 MB or smaller.");
+  const path = `${params.userId}/${params.projectId}/${crypto.randomUUID()}-${sanitizeUploadName(params.file.name)}`;
+  const supabase = client();
+  const { error: uploadError } = await supabase.storage.from("project-photos").upload(path, params.file, {
+    contentType: params.file.type,
+    upsert: false,
+  });
+  if (uploadError) throw new Error(uploadError.message);
+  const { error } = await supabase.from("project_photos").insert({
+    project_id: params.projectId,
+    storage_path: path,
+    sort_order: params.sortOrder,
+  });
+  if (error) throw new Error(asError(error, "Could not attach the photo."));
+}
+
+export async function signedProjectPhotoUrl(path: string): Promise<string | null> {
+  const { data, error } = await client().storage.from("project-photos").createSignedUrl(path, 3600);
+  if (error) return null;
+  return data.signedUrl;
+}
+
+export async function postProject(projectId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("post_project", { p_project_id: projectId });
+  if (error) throw new Error(asError(error, "Could not post the project."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function acceptOpportunity(opportunityId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("accept_opportunity", { p_opportunity_id: opportunityId });
+  if (error) throw new Error(asError(error, "Could not accept this opportunity."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function passOpportunity(opportunityId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("pass_opportunity", { p_opportunity_id: opportunityId });
+  if (error) throw new Error(asError(error, "Could not pass on this opportunity."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function submitEstimate(estimateId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("submit_estimate", { p_estimate_id: estimateId });
+  if (error) throw new Error(asError(error, "Could not submit the estimate."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function withdrawEstimate(estimateId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("withdraw_estimate", { p_estimate_id: estimateId });
+  if (error) throw new Error(asError(error, "Could not withdraw the estimate."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function selectEstimate(projectId: string, estimateId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("select_estimate", {
+    p_project_id: projectId,
+    p_estimate_id: estimateId,
+  });
+  if (error) throw new Error(asError(error, "Could not select this contractor."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function fetchFeePreview(totalCents: number) {
+  const { data, error } = await client().rpc("fee_preview", { p_total_cents: totalCents });
+  if (error) throw new Error(asError(error, "Could not load the fee preview."));
+  return data as RpcJson;
+}
+
+export type OpportunityRow = Database["public"]["Tables"]["opportunities"]["Row"] & {
+  projects?: Pick<
+    Project,
+    | "id"
+    | "title"
+    | "description"
+    | "city"
+    | "state"
+    | "zip_code"
+    | "timing"
+    | "budget_min_cents"
+    | "budget_max_cents"
+    | "status"
+    | "completeness"
+    | "category_id"
+    | "preferred_date"
+  > | null;
+};
+
+async function attachProject<T extends { project_id: string }>(row: T): Promise<T & { projects: OpportunityRow["projects"] }> {
+  const project = await fetchProject(row.project_id);
+  return { ...row, projects: project };
+}
+
+export async function fetchMyOpportunities(contractorProfileId: string) {
+  const { data, error } = await client()
+    .from("opportunities")
+    .select("id, project_id, contractor_profile_id, match_id, status, available_at, responded_at, expires_at, created_at")
+    .eq("contractor_profile_id", contractorProfileId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(asError(error, "Could not load opportunities."));
+  return Promise.all((data ?? []).map((row) => attachProject(row)));
+}
+
+export async function fetchOpportunity(id: string) {
+  const { data, error } = await client()
+    .from("opportunities")
+    .select("id, project_id, contractor_profile_id, match_id, status, available_at, responded_at, expires_at, created_at")
+    .eq("id", id)
+    .single();
+  if (error || !data) throw new Error(asError(error, "Opportunity not found."));
+  return attachProject(data);
+}
+
+export async function fetchContractorProfileByUser(profileId: string) {
+  const { data, error } = await client()
+    .from("contractor_profiles")
+    .select("*")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  if (error) throw new Error(asError(error, "Could not load your contractor profile."));
+  return data;
+}
+
+export async function updateContractorProfile(
+  id: string,
+  patch: Database["public"]["Tables"]["contractor_profiles"]["Update"],
+) {
+  const { error } = await client().from("contractor_profiles").update(patch).eq("id", id);
+  if (error) throw new Error(asError(error, "Could not save your profile."));
+}
+
+export async function fetchContractorServices(contractorProfileId: string) {
+  const { data, error } = await client()
+    .from("contractor_services")
+    .select("id, contractor_profile_id, category_id")
+    .eq("contractor_profile_id", contractorProfileId);
+  if (error) throw new Error(asError(error, "Could not load services."));
+  return data ?? [];
+}
+
+export async function setContractorServices(contractorProfileId: string, categoryIds: string[]) {
+  const supabase = client();
+  const { error: delError } = await supabase
+    .from("contractor_services")
+    .delete()
+    .eq("contractor_profile_id", contractorProfileId);
+  if (delError) throw new Error(asError(delError, "Could not update services."));
+  if (categoryIds.length === 0) return;
+  const { error } = await supabase.from("contractor_services").insert(
+    categoryIds.map((category_id) => ({ contractor_profile_id: contractorProfileId, category_id })),
+  );
+  if (error) throw new Error(asError(error, "Could not save services."));
+}
+
+export async function fetchContractorAreas(contractorProfileId: string) {
+  const { data, error } = await client()
+    .from("contractor_service_areas")
+    .select("*")
+    .eq("contractor_profile_id", contractorProfileId);
+  if (error) throw new Error(asError(error, "Could not load service areas."));
+  return data ?? [];
+}
+
+export async function upsertContractorArea(row: {
+  id?: string;
+  contractor_profile_id: string;
+  mode: ServiceAreaMode;
+  center_zip: string | null;
+  radius_miles: number | null;
+  zip_codes: string[];
+  label: string | null;
+}) {
+  const supabase = client();
+  if (row.id) {
+    const { error } = await supabase
+      .from("contractor_service_areas")
+      .update({
+        mode: row.mode,
+        center_zip: row.center_zip,
+        radius_miles: row.radius_miles,
+        zip_codes: row.zip_codes,
+        label: row.label,
+      })
+      .eq("id", row.id);
+    if (error) throw new Error(asError(error, "Could not save the service area."));
+    return;
+  }
+  const { error } = await supabase.from("contractor_service_areas").insert({
+    contractor_profile_id: row.contractor_profile_id,
+    mode: row.mode,
+    center_zip: row.center_zip,
+    radius_miles: row.radius_miles,
+    zip_codes: row.zip_codes,
+    label: row.label,
+  });
+  if (error) throw new Error(asError(error, "Could not save the service area."));
+}
+
+export async function fetchCredentials(contractorProfileId: string) {
+  const { data, error } = await client()
+    .from("contractor_credentials")
+    .select("id, contractor_profile_id, kind, label, document_path, status, expires_at")
+    .eq("contractor_profile_id", contractorProfileId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(asError(error, "Could not load credentials."));
+  return data ?? [];
+}
+
+export async function addCredential(row: Database["public"]["Tables"]["contractor_credentials"]["Insert"]) {
+  const { error } = await client().from("contractor_credentials").insert(row);
+  if (error) throw new Error(asError(error, "Could not add the credential."));
+}
+
+export async function submitCredential(id: string) {
+  const { error } = await client().from("contractor_credentials").update({ status: "PENDING" }).eq("id", id);
+  if (error) throw new Error(asError(error, "Could not submit the credential."));
+}
+
+export async function uploadContractorDoc(params: {
+  userId: string;
+  folder: "portfolio" | "credentials";
+  file: File;
+}) {
+  if (!isAllowedContractorDoc(params.file.type)) throw new Error("Use a JPEG, PNG, WebP, or PDF.");
+  if (params.file.size > 10 * 1024 * 1024) throw new Error("Files must be 10 MB or smaller.");
+  const path = `${params.userId}/${params.folder}/${crypto.randomUUID()}-${sanitizeUploadName(params.file.name)}`;
+  const { error } = await client().storage.from("contractor-docs").upload(path, params.file, {
+    contentType: params.file.type,
+    upsert: false,
+  });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
+export async function addPortfolioItem(row: Database["public"]["Tables"]["contractor_portfolio"]["Insert"]) {
+  const { error } = await client().from("contractor_portfolio").insert(row);
+  if (error) throw new Error(asError(error, "Could not add portfolio photo."));
+}
+
+export async function fetchPortfolio(contractorProfileId: string) {
+  const { data, error } = await client()
+    .from("contractor_portfolio")
+    .select("id, contractor_profile_id, title, description, storage_path, sort_order")
+    .eq("contractor_profile_id", contractorProfileId)
+    .order("sort_order");
+  if (error) throw new Error(asError(error, "Could not load portfolio."));
+  return data ?? [];
+}
+
+export async function fetchEstimateQuestions(projectId: string, opportunityId?: string) {
+  let query = client()
+    .from("estimate_questions")
+    .select("id, project_id, opportunity_id, asked_by_contractor_profile_id, prompt, answer_text, answered_at, created_at")
+    .eq("project_id", projectId)
+    .order("created_at");
+  if (opportunityId) query = query.eq("opportunity_id", opportunityId);
+  const { data, error } = await query;
+  if (error) throw new Error(asError(error, "Could not load questions."));
+  return data ?? [];
+}
+
+export async function askEstimateQuestion(row: {
+  project_id: string;
+  opportunity_id: string;
+  asked_by_contractor_profile_id: string;
+  prompt: string;
+}) {
+  const { error } = await client().from("estimate_questions").insert(row);
+  if (error) throw new Error(asError(error, "Could not send the question."));
+}
+
+export async function answerEstimateQuestion(id: string, answerText: string) {
+  const { error } = await client().from("estimate_questions").update({ answer_text: answerText }).eq("id", id);
+  if (error) throw new Error(asError(error, "Could not save the answer."));
+}
+
+export async function fetchOrCreateEstimate(params: {
+  projectId: string;
+  opportunityId: string;
+  contractorProfileId: string;
+}) {
+  const supabase = client();
+  const existing = await supabase
+    .from("estimates")
+    .select("*")
+    .eq("opportunity_id", params.opportunityId)
+    .maybeSingle();
+  if (existing.error) throw new Error(asError(existing.error, "Could not load the estimate."));
+  if (existing.data) return existing.data;
+  const { data, error } = await supabase
+    .from("estimates")
+    .insert({
+      project_id: params.projectId,
+      opportunity_id: params.opportunityId,
+      contractor_profile_id: params.contractorProfileId,
+    })
+    .select()
+    .single();
+  if (error || !data) throw new Error(asError(error, "Could not start an estimate."));
+  return data;
+}
+
+export async function fetchEstimate(id: string) {
+  const { data, error } = await client().from("estimates").select("*").eq("id", id).single();
+  if (error || !data) throw new Error(asError(error, "Estimate not found."));
+  return data;
+}
+
+export async function fetchEstimateItems(estimateId: string) {
+  const { data, error } = await client()
+    .from("estimate_items")
+    .select("id, estimate_id, label, quantity, unit_cents, line_total_cents, sort_order")
+    .eq("estimate_id", estimateId)
+    .order("sort_order");
+  if (error) throw new Error(asError(error, "Could not load line items."));
+  return data ?? [];
+}
+
+export async function addEstimateItem(row: Database["public"]["Tables"]["estimate_items"]["Insert"]) {
+  const { error } = await client().from("estimate_items").insert(row);
+  if (error) throw new Error(asError(error, "Could not add the line item."));
+}
+
+export async function updateEstimateItem(
+  id: string,
+  patch: Database["public"]["Tables"]["estimate_items"]["Update"],
+) {
+  const { error } = await client().from("estimate_items").update(patch).eq("id", id);
+  if (error) throw new Error(asError(error, "Could not update the line item."));
+}
+
+export async function deleteEstimateItem(id: string) {
+  const { error } = await client().from("estimate_items").delete().eq("id", id);
+  if (error) throw new Error(asError(error, "Could not remove the line item."));
+}
+
+export async function updateEstimateNotes(id: string, notes: string) {
+  const { error } = await client().from("estimates").update({ notes }).eq("id", id);
+  if (error) throw new Error(asError(error, "Could not save notes."));
+}
+
+export async function fetchProjectEstimates(projectId: string) {
+  const { data, error } = await client()
+    .from("estimates")
+    .select("*")
+    .eq("project_id", projectId)
+    .in("status", ["SUBMITTED", "REVISED", "ACCEPTED", "DECLINED", "WITHDRAWN"])
+    .order("submitted_at", { ascending: true });
+  if (error) throw new Error(asError(error, "Could not load estimates."));
+  return data ?? [];
+}
+
+export async function fetchPublicContractor(id: string) {
+  const { data, error } = await client().from("contractor_public_profiles").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(asError(error, "Could not load the contractor."));
+  return data;
+}
+
+export async function fetchPublicContractorExtras(id: string) {
+  const supabase = client();
+  const [services, areas, badges, portfolio] = await Promise.all([
+    supabase.from("contractor_public_services").select("*").eq("contractor_profile_id", id),
+    supabase.from("contractor_public_areas").select("*").eq("contractor_profile_id", id),
+    supabase.from("contractor_verified_credential_badges").select("*").eq("contractor_profile_id", id),
+    supabase.from("contractor_public_portfolio").select("*").eq("contractor_profile_id", id).order("sort_order"),
+  ]);
+  return {
+    services: services.data ?? [],
+    areas: areas.data ?? [],
+    badges: badges.data ?? [],
+    portfolio: portfolio.data ?? [],
+  };
+}
+
+export async function signedContractorDocUrl(path: string): Promise<string | null> {
+  const { data, error } = await client().storage.from("contractor-docs").createSignedUrl(path, 3600);
+  if (error) return null;
+  return data.signedUrl;
+}
+
+export const TIMING_LABELS: Record<TimingPreference, string> = {
+  ASAP: "As soon as possible",
+  WITHIN_A_WEEK: "Within a week",
+  WITHIN_A_MONTH: "Within a month",
+  SPECIFIC_DATE: "A specific date",
+  FLEXIBLE: "Flexible",
+};

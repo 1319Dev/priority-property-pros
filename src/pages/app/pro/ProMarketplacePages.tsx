@@ -1,0 +1,660 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { EmptyState } from "../../../components/layout/DashboardShell";
+import { Button, ButtonLink } from "../../../components/ui/Button";
+import { TextInput } from "../../../components/ui/Input";
+import { FormError } from "../../../lib/auth/AuthCard";
+import { displayName } from "../../../lib/auth/roles";
+import { useAuth } from "../../../lib/auth/useAuth";
+import {
+  acceptOpportunity,
+  addCredential,
+  addEstimateItem,
+  addPortfolioItem,
+  askEstimateQuestion,
+  deleteEstimateItem,
+  fetchContractorAreas,
+  fetchContractorProfileByUser,
+  fetchContractorServices,
+  fetchCredentials,
+  fetchEstimateItems,
+  fetchEstimateQuestions,
+  fetchOrCreateEstimate,
+  fetchOpportunity,
+  fetchMyOpportunities,
+  fetchPortfolio,
+  fetchProjectAnswers,
+  fetchProjectPhotos,
+  fetchServiceCategories,
+  fetchServiceQuestions,
+  passOpportunity,
+  setContractorServices,
+  signedProjectPhotoUrl,
+  submitCredential,
+  submitEstimate,
+  TIMING_LABELS,
+  updateContractorProfile,
+  updateEstimateNotes,
+  uploadContractorDoc,
+  upsertContractorArea,
+  withdrawEstimate,
+  type OpportunityRow,
+} from "../../../lib/marketplace/api";
+import { centsToDollarString, dollarsToCents, formatUsdFromCents, previewFee } from "../../../lib/marketplace/fees";
+import type { ServiceAreaMode, ServiceCategory } from "../../../lib/marketplace/types";
+import { useToast } from "../../../hooks/useToast";
+
+export function ProHomePage() {
+  const { profile } = useAuth();
+  const name = profile ? displayName(profile.first_name, profile.last_name, profile.email) : "Pro";
+  return (
+    <div className="space-y-6">
+      <header>
+        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
+        <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{name}</h1>
+        <p className="mt-3 max-w-xl text-ink-700">
+          Finish onboarding, then respond to opportunities. You cannot approve or verify yourself. At most three
+          contractors can participate on a job.
+        </p>
+      </header>
+      <div className="flex flex-wrap gap-3">
+        <ButtonLink to="/app/pro/onboarding">Onboarding</ButtonLink>
+        <ButtonLink to="/app/pro/opportunities" variant="outline">
+          Opportunities
+        </ButtonLink>
+      </div>
+    </div>
+  );
+}
+
+export function ProOnboardingPage() {
+  const { user } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [contractorId, setContractorId] = useState<string | null>(null);
+  const [businessName, setBusinessName] = useState("");
+  const [headline, setHeadline] = useState("");
+  const [bio, setBio] = useState("");
+  const [years, setYears] = useState("");
+  const [accepting, setAccepting] = useState(true);
+  const [minJob, setMinJob] = useState("");
+  const [maxJob, setMaxJob] = useState("");
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [zips, setZips] = useState("");
+  const [centerZip, setCenterZip] = useState("");
+  const [radius, setRadius] = useState("");
+  const [mode, setMode] = useState<ServiceAreaMode>("ZIPS");
+  const [areaId, setAreaId] = useState<string | undefined>();
+  const [credLabel, setCredLabel] = useState("");
+  const [credKind, setCredKind] = useState("LICENSE");
+  const toast = useToast();
+
+  useEffect(() => {
+    if (!user) return;
+    const userId = user.id;
+    async function load() {
+      const [profileRow, cats] = await Promise.all([
+        fetchContractorProfileByUser(userId),
+        fetchServiceCategories(),
+      ]);
+      setCategories(cats);
+      if (!profileRow) throw new Error("Contractor profile missing.");
+      setContractorId(profileRow.id);
+      setBusinessName(profileRow.business_name);
+      setHeadline(profileRow.headline ?? "");
+      setBio(profileRow.bio ?? "");
+      setYears(profileRow.years_experience?.toString() ?? "");
+      setAccepting(profileRow.accepting_work);
+      setMinJob(centsToDollarString(profileRow.min_job_cents));
+      setMaxJob(centsToDollarString(profileRow.max_job_cents));
+      const services = await fetchContractorServices(profileRow.id);
+      setSelected(services.map((s) => s.category_id));
+      const areas = await fetchContractorAreas(profileRow.id);
+      const area = areas[0];
+      if (area) {
+        setAreaId(area.id);
+        setMode(area.mode);
+        setZips((area.zip_codes ?? []).join(", "));
+        setCenterZip(area.center_zip ?? "");
+        setRadius(area.radius_miles?.toString() ?? "");
+      }
+    }
+    void load().catch((err: Error) => setError(err.message));
+  }, [user]);
+
+  async function save() {
+    if (!contractorId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await updateContractorProfile(contractorId, {
+        business_name: businessName,
+        headline,
+        bio,
+        years_experience: years ? Number(years) : null,
+        accepting_work: accepting,
+        min_job_cents: dollarsToCents(minJob),
+        max_job_cents: dollarsToCents(maxJob),
+        onboarding_status: "SUBMITTED",
+      });
+      await setContractorServices(contractorId, selected);
+      await upsertContractorArea({
+        id: areaId,
+        contractor_profile_id: contractorId,
+        mode,
+        zip_codes: zips
+          .split(/[\s,]+/)
+          .map((z) => z.trim())
+          .filter(Boolean),
+        center_zip: centerZip || null,
+        radius_miles: radius ? Number(radius) : null,
+        label: "Primary area",
+      });
+      toast.push("Onboarding saved. An admin still has to approve you before matching.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-xl space-y-6">
+      <h1 className="font-display text-4xl font-semibold text-forest-800">Contractor onboarding</h1>
+      <p className="text-sm text-ink-700">
+        Customers see a public card. License numbers and documents stay private. You cannot badge yourself as verified.
+      </p>
+      <FormError message={error} />
+      <TextInput label="Business name" value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
+      <TextInput label="Headline" value={headline} onChange={(e) => setHeadline(e.target.value)} />
+      <label className="block">
+        <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Bio</span>
+        <textarea className="w-full rounded-2xl border border-forest-800/15 px-4 py-3" rows={4} value={bio} onChange={(e) => setBio(e.target.value)} />
+      </label>
+      <TextInput label="Years experience" inputMode="numeric" value={years} onChange={(e) => setYears(e.target.value)} />
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={accepting} onChange={(e) => setAccepting(e.target.checked)} />
+        Accepting work
+      </label>
+      <TextInput label="Min job size (USD)" value={minJob} onChange={(e) => setMinJob(e.target.value)} />
+      <TextInput label="Max job size (USD)" value={maxJob} onChange={(e) => setMaxJob(e.target.value)} />
+      <fieldset>
+        <legend className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Services</legend>
+        <div className="grid gap-2">
+          {categories.map((cat) => (
+            <label key={cat.id} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={selected.includes(cat.id)}
+                onChange={(e) =>
+                  setSelected((current) =>
+                    e.target.checked ? [...current, cat.id] : current.filter((id) => id !== cat.id),
+                  )
+                }
+              />
+              {cat.name}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset className="space-y-3">
+        <legend className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Service area</legend>
+        <select className="min-h-14 w-full rounded-2xl border border-forest-800/15 px-4" value={mode} onChange={(e) => setMode(e.target.value as ServiceAreaMode)}>
+          <option value="ZIPS">ZIP list</option>
+          <option value="RADIUS">Radius from a center ZIP</option>
+          <option value="ZIPS_AND_RADIUS">ZIPs and radius</option>
+        </select>
+        <TextInput label="ZIPs (comma separated)" value={zips} onChange={(e) => setZips(e.target.value)} />
+        <TextInput label="Center ZIP" value={centerZip} onChange={(e) => setCenterZip(e.target.value)} />
+        <TextInput label="Radius (miles)" value={radius} onChange={(e) => setRadius(e.target.value)} />
+      </fieldset>
+      <div className="space-y-3 rounded-3xl border border-forest-800/10 p-4">
+        <h2 className="font-semibold">Credentials</h2>
+        <TextInput label="Credential label" value={credLabel} onChange={(e) => setCredLabel(e.target.value)} />
+        <select className="min-h-12 w-full rounded-2xl border px-3" value={credKind} onChange={(e) => setCredKind(e.target.value)}>
+          <option value="LICENSE">License</option>
+          <option value="INSURANCE">Insurance</option>
+          <option value="OTHER">Other</option>
+        </select>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!contractorId || !credLabel}
+          onClick={() => {
+            if (!contractorId) return;
+            void addCredential({
+              contractor_profile_id: contractorId,
+              kind: credKind,
+              label: credLabel,
+              status: "NOT_SUBMITTED",
+            })
+              .then(() => setCredLabel(""))
+              .catch((err: Error) => setError(err.message));
+          }}
+        >
+          Add credential
+        </Button>
+        {contractorId ? <CredentialList contractorId={contractorId} userId={user?.id ?? ""} onError={setError} /> : null}
+      </div>
+      {contractorId && user ? <PortfolioBlock contractorId={contractorId} userId={user.id} onError={setError} /> : null}
+      <Button type="button" disabled={busy} onClick={() => void save()}>
+        {busy ? "Saving…" : "Save onboarding"}
+      </Button>
+    </div>
+  );
+}
+
+function CredentialList({
+  contractorId,
+  userId,
+  onError,
+}: {
+  contractorId: string;
+  userId: string;
+  onError: (message: string) => void;
+}) {
+  const [rows, setRows] = useState<Awaited<ReturnType<typeof fetchCredentials>>>([]);
+  useEffect(() => {
+    void fetchCredentials(contractorId).then(setRows).catch((err: Error) => onError(err.message));
+  }, [contractorId, onError]);
+  return (
+    <ul className="space-y-2 text-sm">
+      {rows.map((row) => (
+        <li key={row.id} className="rounded-2xl bg-cream-100 px-3 py-2">
+          {row.label} · {row.kind} · {row.status}
+          <input
+            className="mt-2 block"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (!file) return;
+              void uploadContractorDoc({ userId, folder: "credentials", file })
+                .then((path) =>
+                  addCredential({
+                    contractor_profile_id: contractorId,
+                    kind: row.kind,
+                    label: `${row.label} document`,
+                    document_path: path,
+                    status: "PENDING",
+                  }),
+                )
+                .then(() => submitCredential(row.id))
+                .then(() => fetchCredentials(contractorId))
+                .then(setRows)
+                .catch((err: Error) => onError(err.message));
+            }}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function PortfolioBlock({
+  contractorId,
+  userId,
+  onError,
+}: {
+  contractorId: string;
+  userId: string;
+  onError: (message: string) => void;
+}) {
+  const [rows, setRows] = useState<Awaited<ReturnType<typeof fetchPortfolio>>>([]);
+  useEffect(() => {
+    void fetchPortfolio(contractorId).then(setRows).catch((err: Error) => onError(err.message));
+  }, [contractorId, onError]);
+  return (
+    <div className="space-y-2">
+      <h2 className="font-semibold">Portfolio</h2>
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        aria-label="Add portfolio photo"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (!file) return;
+          void uploadContractorDoc({ userId, folder: "portfolio", file })
+            .then((path) => addPortfolioItem({ contractor_profile_id: contractorId, title: file.name, storage_path: path }))
+            .then(() => fetchPortfolio(contractorId))
+            .then(setRows)
+            .catch((err: Error) => onError(err.message));
+        }}
+      />
+      <p className="text-sm text-ink-500">{rows.length} photo(s)</p>
+    </div>
+  );
+}
+
+export function OpportunitiesPage() {
+  const { user } = useAuth();
+  const [rows, setRows] = useState<OpportunityRow[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    void fetchContractorProfileByUser(user.id)
+      .then((profile) => {
+        if (!profile) throw new Error("Contractor profile missing.");
+        return fetchMyOpportunities(profile.id);
+      })
+      .then(setRows)
+      .catch((err: Error) => setError(err.message));
+  }, [user]);
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-4xl font-semibold text-forest-800">Opportunities</h1>
+      <p className="text-sm text-ink-700">Approximate location only. Exact street stays hidden until selection.</p>
+      <FormError message={error} />
+      {rows.length === 0 ? (
+        <EmptyState title="No opportunities" body="Nearby matching jobs will land here. At most three contractors can accept." />
+      ) : (
+        <ul className="space-y-3">
+          {rows.map((row) => (
+            <li key={row.id}>
+              <Link to={`/app/pro/opportunities/${row.id}`} className="block rounded-3xl border border-forest-800/10 px-5 py-4">
+                <p className="font-semibold text-forest-800">{row.projects?.title ?? "Project"}</p>
+                <p className="text-sm text-ink-500">
+                  {row.status} · {[row.projects?.city, row.projects?.state, row.projects?.zip_code].filter(Boolean).join(", ")}
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export function OpportunityDetailPage() {
+  const { opportunityId = "" } = useParams();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { user } = useAuth();
+  const [row, setRow] = useState<OpportunityRow | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<{ url?: string; id: string }[]>([]);
+  const [answers, setAnswers] = useState<Awaited<ReturnType<typeof fetchProjectAnswers>>>([]);
+  const [questions, setQuestions] = useState<Awaited<ReturnType<typeof fetchServiceQuestions>>>([]);
+  const [qa, setQa] = useState<Awaited<ReturnType<typeof fetchEstimateQuestions>>>([]);
+  const [prompt, setPrompt] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function reload() {
+    const opp = await fetchOpportunity(opportunityId);
+    setRow(opp);
+    const [photoRows, projectAnswers] = await Promise.all([
+      fetchProjectPhotos(opp.project_id),
+      fetchProjectAnswers(opp.project_id),
+    ]);
+    setAnswers(projectAnswers);
+    if (opp.projects?.category_id) setQuestions(await fetchServiceQuestions(opp.projects.category_id));
+    setQa(await fetchEstimateQuestions(opp.project_id, opp.id));
+    setPhotos(
+      await Promise.all(
+        photoRows.map(async (photo) => ({
+          id: photo.id,
+          url: (await signedProjectPhotoUrl(photo.storage_path)) ?? undefined,
+        })),
+      ),
+    );
+  }
+
+  useEffect(() => {
+    void reload().catch((err: Error) => setError(err.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opportunityId]);
+
+  if (!row) return <p className="text-ink-500">{error ?? "Loading…"}</p>;
+  const project = row.projects;
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-4xl font-semibold text-forest-800">{project?.title}</h1>
+      <p className="text-sm text-ink-500">{row.status}</p>
+      <FormError message={error} />
+      <section className="rounded-3xl border border-forest-800/10 px-5 py-4 text-sm">
+        <p>{project?.description}</p>
+        <p className="mt-2 font-semibold">Approximate location</p>
+        <p>{[project?.city, project?.state, project?.zip_code].filter(Boolean).join(", ")}</p>
+        <p className="text-ink-500">Exact street is hidden until the customer selects you.</p>
+        <p className="mt-2">{project?.timing ? TIMING_LABELS[project.timing] : ""}</p>
+      </section>
+      <div className="grid grid-cols-2 gap-2">
+        {photos.map((photo) => (
+          <img key={photo.id} src={photo.url} alt="" className="h-28 w-full rounded-2xl object-cover" />
+        ))}
+      </div>
+      <ul className="space-y-2 text-sm">
+        {answers.map((answer) => {
+          const question = questions.find((q) => q.id === answer.question_id);
+          return (
+            <li key={answer.id}>
+              <strong>{question?.prompt}:</strong> {answer.answer_text}
+            </li>
+          );
+        })}
+      </ul>
+      {row.status === "AVAILABLE" ? (
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              void acceptOpportunity(row.id)
+                .then(() => {
+                  toast.push("You are participating. Max 3 contractors.");
+                  return reload();
+                })
+                .catch((err: Error) => setError(err.message))
+                .finally(() => setBusy(false));
+            }}
+          >
+            Accept
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              void passOpportunity(row.id)
+                .then(() => navigate("/app/pro/opportunities"))
+                .catch((err: Error) => setError(err.message))
+                .finally(() => setBusy(false));
+            }}
+          >
+            Pass
+          </Button>
+        </div>
+      ) : null}
+      {row.status === "ACCEPTED" ? (
+        <section className="space-y-3">
+          <h2 className="font-display text-2xl">Ask the customer</h2>
+          {qa.map((item) => (
+            <div key={item.id} className="rounded-2xl bg-cream-100 px-3 py-2 text-sm">
+              <p>{item.prompt}</p>
+              <p className="text-ink-500">{item.answer_text ?? "Waiting for an answer"}</p>
+            </div>
+          ))}
+          <textarea className="w-full rounded-2xl border px-3 py-2" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {
+              if (!user) return;
+              void fetchContractorProfileByUser(user.id)
+                .then((profile) => {
+                  if (!profile) throw new Error("Missing contractor profile");
+                  return askEstimateQuestion({
+                    project_id: row.project_id,
+                    opportunity_id: row.id,
+                    asked_by_contractor_profile_id: profile.id,
+                    prompt,
+                  });
+                })
+                .then(() => {
+                  setPrompt("");
+                  return reload();
+                })
+                .catch((err: Error) => setError(err.message));
+            }}
+          >
+            Send question
+          </Button>
+          <ButtonLink to={`/app/pro/opportunities/${row.id}/estimate`}>Build estimate</ButtonLink>
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+export function EstimateBuilderPage() {
+  const { opportunityId = "" } = useParams();
+  const toast = useToast();
+  const { user } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [estimateId, setEstimateId] = useState<string | null>(null);
+  const [status, setStatus] = useState("DRAFT");
+  const [notes, setNotes] = useState("");
+  const [items, setItems] = useState<Awaited<ReturnType<typeof fetchEstimateItems>>>([]);
+  const [label, setLabel] = useState("");
+  const [qty, setQty] = useState("1");
+  const [unit, setUnit] = useState("");
+  const [totals, setTotals] = useState(previewFee(0));
+
+  async function load() {
+    if (!user) return;
+    const opp = await fetchOpportunity(opportunityId);
+    const profile = await fetchContractorProfileByUser(user.id);
+    if (!profile) throw new Error("Missing contractor profile");
+    const estimate = await fetchOrCreateEstimate({
+      projectId: opp.project_id,
+      opportunityId: opp.id,
+      contractorProfileId: profile.id,
+    });
+    setEstimateId(estimate.id);
+    setStatus(estimate.status);
+    setNotes(estimate.notes ?? "");
+    const lineItems = await fetchEstimateItems(estimate.id);
+    setItems(lineItems);
+    setTotals(previewFee(lineItems.reduce((sum, item) => sum + item.line_total_cents, 0), estimate.fee_bps));
+  }
+
+  useEffect(() => {
+    void load().catch((err: Error) => setError(err.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opportunityId, user]);
+
+  return (
+    <div className="mx-auto max-w-xl space-y-6">
+      <h1 className="font-display text-4xl font-semibold text-forest-800">Estimate</h1>
+      <p className="text-sm text-ink-500">Status: {status}. Totals are validated in the database. No charge is taken.</p>
+      <FormError message={error} />
+      <ul className="space-y-2">
+        {items.map((item) => (
+          <li key={item.id} className="flex items-center justify-between rounded-2xl bg-cream-100 px-3 py-2 text-sm">
+            <span>
+              {item.label} · {item.quantity} × {formatUsdFromCents(item.unit_cents)} = {formatUsdFromCents(item.line_total_cents)}
+            </span>
+            <button
+              type="button"
+              className="text-danger-600"
+              onClick={() => void deleteEstimateItem(item.id).then(load).catch((err: Error) => setError(err.message))}
+            >
+              Remove
+            </button>
+          </li>
+        ))}
+      </ul>
+      <TextInput label="Line item" value={label} onChange={(e) => setLabel(e.target.value)} />
+      <TextInput label="Quantity" value={qty} onChange={(e) => setQty(e.target.value)} />
+      <TextInput label="Unit price (USD)" value={unit} onChange={(e) => setUnit(e.target.value)} />
+      <Button
+        type="button"
+        variant="outline"
+        disabled={!estimateId}
+        onClick={() => {
+          const unitCents = dollarsToCents(unit);
+          if (!estimateId || !label || unitCents == null) return;
+          void addEstimateItem({
+            estimate_id: estimateId,
+            label,
+            quantity: Number(qty) || 1,
+            unit_cents: unitCents,
+            sort_order: items.length,
+          })
+            .then(() => {
+              setLabel("");
+              setUnit("");
+              return load();
+            })
+            .catch((err: Error) => setError(err.message));
+        }}
+      >
+        Add line
+      </Button>
+      <div className="rounded-3xl border border-forest-800/10 px-4 py-3 text-sm">
+        <p>Total {formatUsdFromCents(totals.total_cents)}</p>
+        <p>PPP fee preview (~{totals.fee_bps / 100}%) {formatUsdFromCents(totals.fee_cents)}</p>
+        <p>Contractor earnings {formatUsdFromCents(totals.contractor_earnings_cents)}</p>
+        <p className="text-ink-500">charges_live: false</p>
+      </div>
+      <textarea
+        className="w-full rounded-2xl border px-3 py-2"
+        rows={3}
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        onBlur={() => {
+          if (estimateId) void updateEstimateNotes(estimateId, notes);
+        }}
+      />
+      <div className="flex flex-wrap gap-3">
+        <Button
+          type="button"
+          onClick={() => {
+            if (!estimateId) return;
+            void submitEstimate(estimateId)
+              .then((result) => {
+                toast.push("Estimate submitted. Nothing was charged.");
+                setStatus(String(result.status ?? "SUBMITTED"));
+                return load();
+              })
+              .catch((err: Error) => setError(err.message));
+          }}
+        >
+          Submit estimate
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            if (!estimateId) return;
+            void withdrawEstimate(estimateId).then(load).catch((err: Error) => setError(err.message));
+          }}
+        >
+          Withdraw
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function ProJobsPage() {
+  return <OpportunitiesPage />;
+}
+
+export function ProMessagesPage() {
+  return (
+    <EmptyState
+      title="No messages"
+      body="Full messaging is not in Phase 3. Use pre-estimate questions on an accepted opportunity."
+    />
+  );
+}

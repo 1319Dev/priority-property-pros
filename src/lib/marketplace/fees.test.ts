@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertValidTotals, feeCentsFromTotal, previewFee, totalsFromItems } from "./fees";
+import { assertValidTotals, dollarsToCents, feeCentsFromTotal, previewFee, totalsFromItems } from "./fees";
 
 describe("platform fee preview (~7%)", () => {
   it("computes 7% of $100.00 as $7.00 with $93.00 to the contractor", () => {
@@ -14,6 +14,12 @@ describe("platform fee preview (~7%)", () => {
     expect(feeCentsFromTotal(1, 700)).toBe(0);
     expect(feeCentsFromTotal(72, 700)).toBe(5);
     expect(feeCentsFromTotal(715, 700)).toBe(50);
+  });
+
+  it("parses dollar strings into integer cents", () => {
+    expect(dollarsToCents("100")).toBe(10000);
+    expect(dollarsToCents("$12.50")).toBe(1250);
+    expect(dollarsToCents("")).toBeNull();
   });
 
   it("rejects totals that do not match line items or the fee rate", () => {

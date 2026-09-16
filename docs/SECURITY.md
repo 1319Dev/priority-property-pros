@@ -72,7 +72,13 @@ New tables are deny-by-default with RLS. Extra rules:
 
 `public.is_admin()` remains `SECURITY DEFINER`. New helpers (`current_contractor_profile_id`, `is_project_owner`, `contractor_has_open_opportunity`, `contractor_is_selected_on_project`) are also definer functions with `search_path = public`.
 
+Marketplace RPCs (`post_project`, `accept_opportunity`, `pass_opportunity`, `submit_estimate`, `withdraw_estimate`, `select_estimate`, `fee_preview`) are `SECURITY DEFINER` on purpose. Postgres grants `EXECUTE` to `PUBLIC` by default; migrations `20260917000009` and `20260917000010` **revoke** that from `anon` (and from `PUBLIC`). Signed-in users may call the intended RPCs. Internal helpers (`match_project`, trigger functions, `write_audit_log`) are not granted to `anon` or `authenticated`.
+
+Customer-safe views (`contractor_public_profiles`, `contractor_public_services`, `contractor_public_areas`, `contractor_public_portfolio`, `contractor_verified_credential_badges`) are `SECURITY DEFINER` on purpose: they expose **approved** contractors and only safe columns (no license numbers, no document paths). Underlying tables stay own-or-admin. This is **not** a Priority Verified badge.
+
 There are **no Stripe charges** in Phase 3. `fee_preview` always returns `charges_live: false`.
+
+Supabase database advisors will still flag those views and the authenticated RPC grants. That is expected. Do not drop the views or revoke signed-in access to `post_project` / `accept_opportunity` / `select_estimate`.
 
 ## Auth redirects
 

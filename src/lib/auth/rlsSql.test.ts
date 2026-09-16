@@ -160,4 +160,14 @@ describe("Phase 3 SQL migrations", () => {
     expect(sql).not.toMatch(/TRUNCATE public\.profiles/i);
     expect(sql).not.toMatch(/DROP TABLE public\.profiles/i);
   });
+
+  it("revokes anonymous execute on marketplace RPCs and leftover Phase 2 helpers", () => {
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.post_project\(uuid\) FROM PUBLIC, anon/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.accept_opportunity\(uuid\) FROM PUBLIC, anon/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.select_estimate\(uuid, uuid\) FROM PUBLIC, anon/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.post_project\(uuid\) TO authenticated/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.handle_new_user\(\) FROM PUBLIC, anon, authenticated/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.write_audit_log\(uuid, text, text, uuid, jsonb\) FROM PUBLIC, anon, authenticated/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.is_admin\(\) FROM PUBLIC, anon/);
+  });
 });

@@ -23,3 +23,5 @@ See [DATABASE.md](DATABASE.md) and [SECURITY.md](SECURITY.md) for tables and RLS
 ## What is not in Phase 3
 
 Stripe charges, booking, payouts, Priority Verified, full messaging, change orders, work workflow, full admin analytics, demo contractors, or wiping production users.
+
+Apply SQL in filename order through `20260917000010_phase3_phase2_function_grants.sql`. Files `09`–`10` only tighten grants; they do not delete users.

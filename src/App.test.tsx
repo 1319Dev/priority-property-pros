@@ -88,3 +88,16 @@ describe("Phase 2 auth surfaces", () => {
     expect(screen.getByRole("button", { name: /resend verification email/i })).toBeInTheDocument();
   });
 });
+
+describe("Phase 3 marketplace surfaces", () => {
+  it("asks customers to sign in before posting", () => {
+    renderApp("/post-project");
+    expect(screen.getByRole("heading", { name: /sign in as a customer to post/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /preview only/i })).not.toBeInTheDocument();
+  });
+
+  it("keeps Phase 1 homepage posting CTA", () => {
+    renderApp("/");
+    expect(screen.getAllByRole("link", { name: /post a project/i }).length).toBeGreaterThan(0);
+  });
+});

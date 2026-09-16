@@ -68,6 +68,8 @@ Do not commit `.env.local`.
    14. `20260917000006_phase3_functions.sql`
    15. `20260917000007_phase3_rls_storage.sql`
    16. `20260917000008_phase3_seed_catalog.sql`
+   17. `20260917000009_phase3_function_grants.sql`
+   18. `20260917000010_phase3_phase2_function_grants.sql`
 
 5. If a file says it already exists, stop and ask a developer — do not skip ahead.
 6. Phase 2 Table Editor should list `profiles`, `contractor_profiles`, `verifier_profiles`, `agreements`, `agreement_acceptances`, `audit_logs`.
@@ -136,9 +138,11 @@ If it fails with “No auth user”, you signed up with a different email. Check
 - Homepage still matches Phase 1 (tagline, services, PWA).
 - **Sign in** is a real form.
 - **Create account** asks “How will you use Priority Property Pros?” with Customer / Contractor / Verifier only.
-- After confirm, a customer opens `/app/customer` and sees empty projects.
+- After confirm, a customer opens `/app/customer` and can start **POST A PROJECT**.
+- A contractor opens `/app/pro` for onboarding and opportunities (approval is SQL-only).
 - A contractor cannot open `/app/admin`.
 - Forgot password sends mail (once URLs in section D are saved).
+- There is **no** Stripe checkout. Estimate screens show a fee **preview** only.
 
 ---
 

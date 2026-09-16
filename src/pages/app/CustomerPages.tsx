@@ -1,37 +1,8 @@
 import { EmptyState } from "../../components/layout/DashboardShell";
-import { displayName } from "../../lib/auth/roles";
 import { useAuth } from "../../lib/auth/useAuth";
-import { Button, ButtonLink } from "../../components/ui/Button";
+import { Button } from "../../components/ui/Button";
 
-export function CustomerHomePage() {
-  const { profile } = useAuth();
-  const name = profile ? displayName(profile.first_name, profile.last_name, profile.email) : "there";
-  return (
-    <div className="space-y-6">
-      <header>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Customer</p>
-        <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Hello, {name}.</h1>
-        <p className="mt-3 max-w-xl text-ink-700">
-          Live project posting ships in a later phase. Your account is ready; the marketplace board is not.
-        </p>
-      </header>
-      <ButtonLink to="/post-project">Preview post a project</ButtonLink>
-      <EmptyState
-        title="No projects yet"
-        body="When posting goes live, your open jobs will sit here. Nothing is stored from the Phase 1 preview form."
-      />
-    </div>
-  );
-}
-
-export function CustomerProjectsPage() {
-  return (
-    <EmptyState
-      title="Projects come next"
-      body="Matching, estimates, and hiring are not in Phase 2. This list is empty on purpose."
-    />
-  );
-}
+export { CustomerHomePage, CustomerProjectsPage } from "./customer/CustomerMarketplacePages";
 
 export function CustomerMessagesPage() {
   return (

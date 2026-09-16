@@ -66,7 +66,7 @@ Phase 2 had no projects or estimates. Phase 3 adds them (below). Still no paymen
 
 ## Phase 3 marketplace tables
 
-Apply `supabase/migrations/20260917000001_*.sql` through `20260917000008_*.sql` after the Phase 2 files. All new tables have UUID keys, timestamps, and RLS.
+Apply `supabase/migrations/20260917000001_*.sql` through `20260917000010_*.sql` after the Phase 2 files. All new tables have UUID keys, timestamps, and RLS. Files `09` and `10` only tighten `EXECUTE` grants and `search_path`; they do not drop data.
 
 | Table | Purpose |
 | --- | --- |
