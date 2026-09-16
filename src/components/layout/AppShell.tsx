@@ -7,7 +7,7 @@ export function AppShell() {
   return (
     <div className="paper-grain flex min-h-dvh flex-col">
       <Header />
-      <main id="main" className="flex-1 pb-24 lg:pb-0">
+      <main id="main" className="flex-1 pb-32 lg:pb-0">
         <Outlet />
       </main>
       <Footer />
