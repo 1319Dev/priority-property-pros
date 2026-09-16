@@ -46,12 +46,24 @@ describe("location privacy", () => {
     };
     const project = {
       customer_id: "cust",
-      status: "CONTRACTORS_RESPONDING" as const,
       selected_contractor_profile_id: null,
     };
-    expect(canReadExactAddress(pro, project)).toBe(false);
-    expect(canReadCustomerContact(pro, "cust", false)).toBe(false);
-    expect(canReadCustomerContact(pro, "cust", true)).toBe(true);
+    expect(canReadExactAddress(pro, project, null)).toBe(false);
+    expect(canReadCustomerContact(pro, "cust", { bookingStatus: null })).toBe(false);
+    expect(
+      canReadCustomerContact(pro, "cust", {
+        bookingStatus: "PENDING",
+        contractorProfileId: "pro-1",
+        selectedContractorProfileId: "pro-1",
+      }),
+    ).toBe(false);
+    expect(
+      canReadCustomerContact(pro, "cust", {
+        bookingStatus: "CONFIRMED",
+        contractorProfileId: "pro-1",
+        selectedContractorProfileId: "pro-1",
+      }),
+    ).toBe(true);
   });
 });
 

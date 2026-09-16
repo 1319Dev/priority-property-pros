@@ -41,6 +41,7 @@ import {
   type OpportunityRow,
 } from "../../../lib/marketplace/api";
 import { centsToDollarString, dollarsToCents, formatUsdFromCents, previewFee } from "../../../lib/marketplace/fees";
+import { computeMarketplaceFee } from "../../../lib/marketplace/feeEngine";
 import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type EstimateItemKind, type ServiceAreaMode, type ServiceCategory } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
 
@@ -54,7 +55,7 @@ export function ProHomePage() {
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{name}</h1>
         <p className="mt-3 max-w-xl text-ink-700">
           Finish onboarding, then respond to opportunities. You cannot approve or verify yourself. At most three
-          contractors can participate on a job.
+          contractors can participate on a job. Exact address unlocks only after a booking is confirmed.
         </p>
       </header>
       <div className="flex flex-wrap gap-3">
@@ -340,7 +341,7 @@ export function OpportunitiesPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Opportunities</h1>
-      <p className="text-sm text-ink-700">Approximate location only. Exact street stays hidden until selection.</p>
+      <p className="text-sm text-ink-700">Approximate location only. Exact street stays hidden until a booking is confirmed.</p>
       <FormError message={error} />
       {rows.length === 0 ? (
         <EmptyState title="No opportunities" body="Nearby matching jobs will land here. At most three contractors can accept." />
@@ -413,7 +414,7 @@ export function OpportunityDetailPage() {
         <p>{project?.description}</p>
         <p className="mt-2 font-semibold">Approximate location</p>
         <p>{[project?.city, project?.state, project?.zip_code].filter(Boolean).join(", ")}</p>
-        <p className="text-ink-500">Exact street is hidden until the customer selects you.</p>
+        <p className="text-ink-500">Exact street is hidden until the customer’s booking is confirmed.</p>
         <p className="mt-2">{project?.timing ? TIMING_LABELS[project.timing] : ""}</p>
       </section>
       <div className="grid grid-cols-2 gap-2">
@@ -567,7 +568,8 @@ export function EstimateBuilderPage() {
     <div className="mx-auto max-w-xl space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Estimate</h1>
       <p className="text-sm text-ink-700">
-        Status: {status.replaceAll("_", " ")}. Line totals and the ~7% fee are computed in the database. Nothing is charged.
+        Status: {status.replaceAll("_", " ")}. Line totals are computed in the database. The estimate still stores the
+        Phase 3 ~7% snapshot. Booking fees use the progressive schedule and are only a preview — nothing is charged.
       </p>
       <FormError message={error} />
       <ul className="space-y-2">
@@ -641,8 +643,12 @@ export function EstimateBuilderPage() {
       </Button>
       <div className="rounded-3xl border border-forest-800/10 px-4 py-3 text-sm">
         <p>Total {formatUsdFromCents(totals.total_cents)}</p>
-        <p>PPP fee preview (~{totals.fee_bps / 100}%) {formatUsdFromCents(totals.fee_cents)}</p>
-        <p>You would earn {formatUsdFromCents(totals.contractor_earnings_cents)}</p>
+        <p>Estimate snapshot (~{totals.fee_bps / 100}%) {formatUsdFromCents(totals.fee_cents)}</p>
+        <p>
+          Booking fee preview {formatUsdFromCents(computeMarketplaceFee({ amount_cents: totals.total_cents }).fee_cents)}{" "}
+          (progressive — payments not live)
+        </p>
+        <p>You would earn {formatUsdFromCents(computeMarketplaceFee({ amount_cents: totals.total_cents }).contractor_earnings_cents)}</p>
         <p className="text-ink-500">Preview only. Live charges are off.</p>
       </div>
       <TextInput

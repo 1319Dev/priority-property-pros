@@ -66,7 +66,61 @@ export const QUESTION_KINDS = ["TEXT", "SINGLE_CHOICE", "MULTI_CHOICE", "BOOLEAN
 export type QuestionKind = (typeof QUESTION_KINDS)[number];
 
 export const MAX_PARTICIPATING_CONTRACTORS = 3;
+export const BOOKING_STATUSES = [
+  "PENDING",
+  "AWAITING_PAYMENT",
+  "CONFIRMED",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "CANCELLED",
+  "DISPUTED",
+] as const;
+export type BookingStatus = (typeof BOOKING_STATUSES)[number];
+
+export const FEE_SCHEDULE_KINDS = ["ORIGINAL", "REPEAT"] as const;
+export type FeeScheduleKind = (typeof FEE_SCHEDULE_KINDS)[number];
+
+export const RELATIONSHIP_STATUSES = ["ACTIVE", "BLOCKED"] as const;
+export type RelationshipStatus = (typeof RELATIONSHIP_STATUSES)[number];
+
+export const CHANGE_ORDER_STATUSES = [
+  "DRAFT",
+  "PROPOSED",
+  "CUSTOMER_APPROVED",
+  "REJECTED",
+  "APPROVED",
+  "CANCELLED",
+] as const;
+export type ChangeOrderStatus = (typeof CHANGE_ORDER_STATUSES)[number];
+
+export type FeeBracket = {
+  min_amount_cents: number;
+  max_amount_cents: number | null;
+  rate_bps: number;
+};
+
+export type MarketplaceFeePreview = {
+  amount_cents: number;
+  raw_fee_cents: number;
+  fee_cents: number;
+  min_fee_cents: number;
+  max_fee_cents: number;
+  min_applied: boolean;
+  max_applied: boolean;
+  contractor_earnings_cents: number;
+  customer_amount_cents: number;
+  kind: FeeScheduleKind;
+  schedule_id: string | null;
+  version: number | null;
+  brackets: Array<FeeBracket & { slice_cents: number; fee_cents: number }>;
+  charges_live: false;
+  payments_live: false;
+  label: "preview / estimate — payments not live";
+};
+
 export const DEFAULT_FEE_BPS = 700;
+export const PAYMENTS_LIVE = false;
+export const CHARGES_LIVE = false;
 
 export const WIZARD_STEPS = [
   { id: 1, key: "need", label: "Need" },
@@ -120,6 +174,7 @@ export type Project = {
   draft_step: number;
   selected_contractor_profile_id: string | null;
   selected_estimate_id: string | null;
+  selected_booking_id?: string | null;
   posted_at: string | null;
   selected_at: string | null;
   created_at: string;
@@ -148,6 +203,85 @@ export type FeePreview = {
   fee_cents: number;
   contractor_earnings_cents: number;
   charges_live: false;
+  payments_live?: false;
+};
+
+export type Booking = {
+  id: string;
+  project_id: string;
+  estimate_id: string;
+  customer_id: string;
+  contractor_profile_id: string;
+  status: BookingStatus;
+  amount_cents: number;
+  approved_delta_cents: number;
+  billable_amount_cents: number;
+  is_repeat: boolean;
+  fee_kind: FeeScheduleKind;
+  fee_schedule_id: string | null;
+  fee_schedule_version: number | null;
+  fee_brackets_snapshot: FeeBracket[] | null;
+  min_fee_cents_snapshot: number | null;
+  max_fee_cents_snapshot: number | null;
+  fee_cents: number;
+  contractor_earnings_cents: number;
+  customer_amount_cents: number;
+  fee_locked: boolean;
+  fee_locked_at: string | null;
+  payments_live: false;
+  charges_live: false;
+  expires_at: string | null;
+  confirmed_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  cancelled_at: string | null;
+  disputed_at: string | null;
+  cancel_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CustomerContractorRelationship = {
+  id: string;
+  customer_id: string;
+  contractor_profile_id: string;
+  originating_project_id: string | null;
+  originating_booking_id: string | null;
+  introduced_at: string;
+  last_completed_booking_id: string | null;
+  last_completed_at: string | null;
+  status: RelationshipStatus;
+  protected_until: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ChangeOrder = {
+  id: string;
+  booking_id: string;
+  created_by: string;
+  created_by_role: "CUSTOMER" | "CONTRACTOR" | "ADMIN";
+  description: string;
+  amount_delta_cents: number;
+  status: ChangeOrderStatus;
+  customer_approved_at: string | null;
+  customer_approved_by: string | null;
+  contractor_acked_at: string | null;
+  contractor_acked_by: string | null;
+  decided_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BookingReview = {
+  id: string;
+  booking_id: string;
+  customer_id: string;
+  contractor_profile_id: string;
+  rating: number;
+  body: string | null;
+  is_verified: boolean;
+  created_at: string;
 };
 
 export const OPEN_PROJECT_STATUSES: ProjectStatus[] = [

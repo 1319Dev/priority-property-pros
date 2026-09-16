@@ -79,7 +79,7 @@ export async function fetchCustomerProjects(customerId: string): Promise<Project
   const { data, error } = await client()
     .from("projects")
     .select(
-      "id, customer_id, category_id, title, description, status, completeness, city, state, zip_code, timing, preferred_date, budget_min_cents, budget_max_cents, draft_step, selected_contractor_profile_id, selected_estimate_id, posted_at, selected_at, created_at, updated_at",
+      "id, customer_id, category_id, title, description, status, completeness, city, state, zip_code, timing, preferred_date, budget_min_cents, budget_max_cents, draft_step, selected_contractor_profile_id, selected_estimate_id, selected_booking_id, posted_at, selected_at, created_at, updated_at",
     )
     .eq("customer_id", customerId)
     .order("updated_at", { ascending: false });
@@ -229,6 +229,141 @@ export async function fetchFeePreview(totalCents: number) {
   const { data, error } = await client().rpc("fee_preview", { p_total_cents: totalCents });
   if (error) throw new Error(asError(error, "Could not load the fee preview."));
   return data as RpcJson;
+}
+
+export async function fetchMarketplaceFeePreview(amountCents: number, kind: "ORIGINAL" | "REPEAT" = "ORIGINAL") {
+  const { data, error } = await client().rpc("preview_marketplace_fee", {
+    p_amount_cents: amountCents,
+    p_kind: kind,
+  });
+  if (error) throw new Error(asError(error, "Could not load the booking fee preview."));
+  return data as RpcJson;
+}
+
+export async function fetchProtectionMonths(): Promise<number> {
+  const { data, error } = await client().rpc("relationship_protection_months");
+  if (error) throw new Error(asError(error, "Could not load protection months."));
+  return Number(data ?? 12);
+}
+
+export async function fetchMyBookings(role: "customer" | "contractor", id: string) {
+  const column = role === "customer" ? "customer_id" : "contractor_profile_id";
+  const { data, error } = await client()
+    .from("bookings")
+    .select("*")
+    .eq(column, id)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(asError(error, "Could not load bookings."));
+  return data ?? [];
+}
+
+export async function fetchBooking(id: string) {
+  const { data, error } = await client().from("bookings").select("*").eq("id", id).single();
+  if (error || !data) throw new Error(asError(error, "Booking not found."));
+  return data;
+}
+
+export async function fetchChangeOrders(bookingId: string) {
+  const { data, error } = await client()
+    .from("change_orders")
+    .select("*")
+    .eq("booking_id", bookingId)
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(asError(error, "Could not load change orders."));
+  return data ?? [];
+}
+
+export async function fetchBookingReview(bookingId: string) {
+  const { data, error } = await client().from("booking_reviews").select("*").eq("booking_id", bookingId).maybeSingle();
+  if (error) throw new Error(asError(error, "Could not load the review."));
+  return data;
+}
+
+export async function fetchBookingEvents(bookingId: string) {
+  const { data, error } = await client()
+    .from("booking_events")
+    .select("id, event_type, payload, created_at")
+    .eq("booking_id", bookingId)
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(asError(error, "Could not load booking history."));
+  return data ?? [];
+}
+
+export async function cancelPendingBooking(bookingId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("cancel_pending_booking", { p_booking_id: bookingId });
+  if (error) throw new Error(asError(error, "Could not cancel the booking."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function startBooking(bookingId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("start_booking", { p_booking_id: bookingId });
+  if (error) throw new Error(asError(error, "Could not start the job."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function completeBooking(bookingId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("complete_booking", { p_booking_id: bookingId });
+  if (error) throw new Error(asError(error, "Could not mark the job complete."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function disputeBooking(bookingId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("dispute_booking", { p_booking_id: bookingId });
+  if (error) throw new Error(asError(error, "Could not open a dispute."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function confirmBookingForTesting(bookingId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("confirm_booking_for_testing", { p_booking_id: bookingId });
+  if (error) throw new Error(asError(error, "Testing confirmation failed."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function proposeChangeOrder(bookingId: string, description: string, amountDeltaCents: number): Promise<RpcJson> {
+  const { data, error } = await client().rpc("propose_change_order", {
+    p_booking_id: bookingId,
+    p_description: description,
+    p_amount_delta_cents: amountDeltaCents,
+  });
+  if (error) throw new Error(asError(error, "Could not propose the change."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function respondChangeOrder(changeOrderId: string, approve: boolean): Promise<RpcJson> {
+  const { data, error } = await client().rpc("respond_change_order", {
+    p_change_order_id: changeOrderId,
+    p_approve: approve,
+  });
+  if (error) throw new Error(asError(error, "Could not respond to the change order."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function submitBookingReview(bookingId: string, rating: number, body?: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("submit_booking_review", {
+    p_booking_id: bookingId,
+    p_rating: rating,
+    p_body: body ?? null,
+  });
+  if (error) throw new Error(asError(error, "Could not save the review."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function fetchBookingJobContact(bookingId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("booking_job_contact", { p_booking_id: bookingId });
+  if (error) throw new Error(asError(error, "Contact is still locked."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function fetchHireAgainContractors(): Promise<RpcJson[]> {
+  const { data, error } = await client().rpc("hire_again_contractors");
+  if (error) throw new Error(asError(error, "Could not load Hire Again."));
+  return (Array.isArray(data) ? data : []) as RpcJson[];
+}
+
+export async function expireStalePendingBookings(): Promise<number> {
+  const { data, error } = await client().rpc("expire_stale_pending_bookings");
+  if (error) throw new Error(asError(error, "Could not refresh expired bookings."));
+  return Number(data ?? 0);
 }
 
 export type OpportunityRow = Database["public"]["Tables"]["opportunities"]["Row"] & {

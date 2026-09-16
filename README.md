@@ -6,7 +6,7 @@
 
 PPP connects homeowners and property owners with **independent local contractors**. PPP is **not** the contractor. This is not Angi and not Thumbtack.
 
-This repository is **Phase 3**: the Phase 1 homepage, design system, and PWA; Phase 2 accounts, profiles, and Row Level Security; plus **project posting, contractor onboarding, matching (max 3), Q&A, estimates, and contractor selection**. There are still **no Stripe charges, no payouts, and no Priority Verified workflow**.
+This repository is **Phase 4A**: the Phase 1 homepage, Phase 2 accounts, Phase 3 posting/matching/estimates, plus a **versioned progressive fee engine, pending bookings (selection ≠ confirmation), relationships / Hire Again, change orders, and a verified-review guard**. There are still **no Stripe charges, no payouts, and no Priority Verified workflow**. Production UI does not fake paid bookings.
 
 Live public site (Phase 1 behavior stays): **https://1319dev.github.io/priority-property-pros/**
 
@@ -67,12 +67,12 @@ Full click-by-click: **[docs/GITHUB_PAGES_SETUP.md](docs/GITHUB_PAGES_SETUP.md)*
 
 Accounts and posting need a Supabase project. The homepage works without it.
 
-1. **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)** — create project, run SQL (including Phase 3 files), set redirect URLs.
+1. **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)** — create project, run SQL (including Phase 3 and Phase 4A files), set redirect URLs.
 2. Add GitHub Actions **variables** (not secrets): `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 3. Never add the **service role** key.
 4. Approve real contractors with **[supabase/sql/approve_contractor.sql](supabase/sql/approve_contractor.sql)** (no self-approve).
 
-Security, tables, and marketplace flow: **[docs/SECURITY.md](docs/SECURITY.md)**, **[docs/DATABASE.md](docs/DATABASE.md)**, **[docs/MARKETPLACE_CORE.md](docs/MARKETPLACE_CORE.md)**.
+Security, tables, and marketplace flow: **[docs/SECURITY.md](docs/SECURITY.md)**, **[docs/DATABASE.md](docs/DATABASE.md)**, **[docs/MARKETPLACE_CORE.md](docs/MARKETPLACE_CORE.md)**, **[docs/PHASE4A.md](docs/PHASE4A.md)**.
 
 ---
 
@@ -84,11 +84,13 @@ Security, tables, and marketplace flow: **[docs/SECURITY.md](docs/SECURITY.md)**
 - Contractor onboarding (services, area, portfolio, credentials — no self-verify)
 - Matching with an atomic max of 3 participating contractors
 - Pre-estimate Q&A, estimates with validated totals and a **~7% fee preview** (`charges_live: false`)
-- Customer compare + SELECT THIS PRO (stops before payment)
+- Customer compare + SELECT THIS PRO (creates a **PENDING booking**, does not confirm or charge)
+- Versioned progressive marketplace fee engine (integer cents; ORIGINAL vs REPEAT)
+- Hire Again foundation, change orders with dual approval, verified reviews on COMPLETED bookings only
 
-## What Phase 3 does **not** include
+## What Phase 4A does **not** include
 
-No Stripe charges, booking, payouts, Priority Verified, full messaging, change orders, work workflow, or full admin analytics. No client path to become Admin. No production fake contractors.
+No Stripe charges, payouts, Priority Verified, full messaging scanners, inspection marketplace, or INSPECTOR role. No client path to become Admin. Production UI must not fake paid/confirmed bookings (`payments_live` / `charges_live` stay false).
 
 Copy `.env.example` to `.env.local` for local public values. Never commit a `.env` with private keys.
 

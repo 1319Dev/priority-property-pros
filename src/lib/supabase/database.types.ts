@@ -373,6 +373,7 @@ export type Database = {
           draft_step: number;
           selected_contractor_profile_id: string | null;
           selected_estimate_id: string | null;
+          selected_booking_id: string | null;
           posted_at: string | null;
           selected_at: string | null;
           created_at: string;
@@ -596,6 +597,70 @@ export type Database = {
         };
         Relationships: [];
       };
+      fee_schedules: {
+        Row: {
+          id: string;
+          kind: import("../marketplace/types").FeeScheduleKind;
+          version: number;
+          name: string;
+          is_active: boolean;
+          min_fee_cents: number;
+          max_fee_cents: number;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      fee_schedule_brackets: {
+        Row: {
+          id: string;
+          schedule_id: string;
+          min_amount_cents: number;
+          max_amount_cents: number | null;
+          rate_bps: number;
+          sort_order: number;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      bookings: {
+        Row: import("../marketplace/types").Booking;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      booking_events: {
+        Row: {
+          id: string;
+          booking_id: string;
+          actor_id: string | null;
+          event_type: string;
+          payload: Json;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      customer_contractor_relationships: {
+        Row: import("../marketplace/types").CustomerContractorRelationship;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      change_orders: {
+        Row: import("../marketplace/types").ChangeOrder;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      booking_reviews: {
+        Row: import("../marketplace/types").BookingReview;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: {
       contractor_public_profiles: {
@@ -671,6 +736,30 @@ export type Database = {
       is_admin: { Args: Record<string, never>; Returns: boolean };
       current_fee_bps: { Args: Record<string, never>; Returns: number };
       fee_preview: { Args: { p_total_cents: number }; Returns: Json };
+      preview_marketplace_fee: { Args: { p_amount_cents: number; p_kind?: string }; Returns: Json };
+      compute_fee: { Args: { p_amount_cents: number; p_schedule_id: string }; Returns: Json };
+      payments_live: { Args: Record<string, never>; Returns: boolean };
+      charges_live: { Args: Record<string, never>; Returns: boolean };
+      relationship_protection_months: { Args: Record<string, never>; Returns: number };
+      expire_stale_pending_bookings: { Args: Record<string, never>; Returns: number };
+      mark_booking_awaiting_payment: { Args: { p_booking_id: string }; Returns: Json };
+      cancel_pending_booking: { Args: { p_booking_id: string }; Returns: Json };
+      confirm_booking_for_testing: { Args: { p_booking_id: string }; Returns: Json };
+      start_booking: { Args: { p_booking_id: string }; Returns: Json };
+      complete_booking: { Args: { p_booking_id: string }; Returns: Json };
+      dispute_booking: { Args: { p_booking_id: string }; Returns: Json };
+      propose_change_order: {
+        Args: { p_booking_id: string; p_description: string; p_amount_delta_cents: number };
+        Returns: Json;
+      };
+      respond_change_order: { Args: { p_change_order_id: string; p_approve: boolean }; Returns: Json };
+      submit_booking_review: {
+        Args: { p_booking_id: string; p_rating: number; p_body?: string | null };
+        Returns: Json;
+      };
+      booking_job_contact: { Args: { p_booking_id: string }; Returns: Json };
+      hire_again_contractors: { Args: Record<string, never>; Returns: Json };
+      booking_is_confirmed_for_contractor: { Args: { p_project_id: string }; Returns: boolean };
       current_contractor_profile_id: { Args: Record<string, never>; Returns: string };
       post_project: { Args: { p_project_id: string }; Returns: Json };
       accept_opportunity: { Args: { p_opportunity_id: string }; Returns: Json };
@@ -693,6 +782,10 @@ export type Database = {
       service_area_mode: ServiceAreaMode;
       question_kind: QuestionKind;
       estimate_item_kind: EstimateItemKind;
+      booking_status: import("../marketplace/types").BookingStatus;
+      fee_schedule_kind: import("../marketplace/types").FeeScheduleKind;
+      relationship_status: import("../marketplace/types").RelationshipStatus;
+      change_order_status: import("../marketplace/types").ChangeOrderStatus;
     };
   };
 };

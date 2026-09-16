@@ -1,31 +1,39 @@
 import type { Actor } from "../auth/rlsPolicy";
 import { actorIsAdmin } from "../auth/rlsPolicy";
-import type { CredentialStatus, EstimateStatus, OpportunityStatus, ProjectStatus } from "./types";
+import { bookingUnlocksContact } from "./bookings";
+import type { BookingStatus, CredentialStatus, EstimateStatus, OpportunityStatus } from "./types";
 
 export type MarketplaceActor = Actor & {
   contractorProfileId?: string | null;
 };
 
-export function canReadExactAddress(actor: MarketplaceActor, project: {
-  customer_id: string;
-  status: ProjectStatus;
-  selected_contractor_profile_id: string | null;
-}): boolean {
+export function canReadExactAddress(
+  actor: MarketplaceActor,
+  project: {
+    customer_id: string;
+    selected_contractor_profile_id: string | null;
+  },
+  bookingStatus: BookingStatus | null = null,
+): boolean {
   if (!actor.id) return false;
   if (actorIsAdmin(actor)) return true;
   if (actor.id === project.customer_id) return true;
-  return (
-    project.status === "CONTRACTOR_SELECTED" &&
-    Boolean(actor.contractorProfileId) &&
-    actor.contractorProfileId === project.selected_contractor_profile_id
-  );
+  if (!bookingStatus || !bookingUnlocksContact(bookingStatus)) return false;
+  return Boolean(actor.contractorProfileId) && actor.contractorProfileId === project.selected_contractor_profile_id;
 }
 
-export function canReadCustomerContact(actor: MarketplaceActor, customerId: string, selected: boolean): boolean {
+export function canReadCustomerContact(
+  actor: MarketplaceActor,
+  customerId: string,
+  opts: { bookingStatus: BookingStatus | null; contractorProfileId?: string | null; selectedContractorProfileId?: string | null },
+): boolean {
   if (!actor.id) return false;
   if (actorIsAdmin(actor)) return true;
   if (actor.id === customerId) return true;
-  return selected && actor.accountType === "CONTRACTOR";
+  if (!opts.bookingStatus || !bookingUnlocksContact(opts.bookingStatus)) return false;
+  if (actor.accountType !== "CONTRACTOR") return false;
+  if (!opts.contractorProfileId || !opts.selectedContractorProfileId) return false;
+  return opts.contractorProfileId === opts.selectedContractorProfileId;
 }
 
 export function opportunityVisibleToCustomer(status: OpportunityStatus): boolean {

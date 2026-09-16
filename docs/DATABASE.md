@@ -62,7 +62,7 @@ Append-only. `write_audit_log(...)` is for server/SQL. Clients may **select** on
 
 ## What is not in Phase 2
 
-Phase 2 had no projects or estimates. Phase 3 adds them (below). Still no payments, Stripe charges, messaging, change orders, or Priority Verified workflow tables.
+Phase 2 had no projects or estimates. Phase 3 adds them (below). Phase 4A adds bookings, a versioned fee engine, relationships, change orders, and a verified-review guard. Still no live Stripe charges, payouts, or Priority Verified.
 
 ## Phase 3 marketplace tables
 
@@ -105,6 +105,21 @@ Customer-safe views (approved contractors only, no license numbers or document p
 | `fee_preview(cents)` | Anyone signed in | `{ total, fee, earnings, charges_live: false }`. |
 
 Matching uses category, ZIP/radius, services, `ACTIVE` + `APPROVED`, `accepting_work`, job-size prefs, and verified credentials when a category requires them.
+
+## Phase 4A
+
+Apply `20260918000001` through `20260918000005` after Phase 3. Additive. Full rules: [PHASE4A.md](PHASE4A.md).
+
+| Table | Purpose |
+| --- | --- |
+| `fee_schedules` / `fee_schedule_brackets` | Versioned ORIGINAL vs REPEAT progressive fees. Clients cannot write them. |
+| `bookings` | PENDING through COMPLETED/CANCELLED/DISPUTED. Financial snapshot at confirm. `payments_live` and `charges_live` stay false. |
+| `customer_contractor_relationships` | Created on first CONFIRMED booking. Protected months from `platform_settings`. |
+| `change_orders` | Dual approval. Positive approved deltas count toward the snapshotted fee cap. |
+| `booking_reviews` | Only COMPLETED bookings via RPC. |
+| `booking_events` | Append-only audit for booking/CO/review actions. |
+
+New RPCs include `preview_marketplace_fee`, `select_estimate` (now creates a PENDING booking), `cancel_pending_booking`, `confirm_booking_for_testing` (ADMIN), `start_booking`, `complete_booking`, `dispute_booking`, `propose_change_order`, `respond_change_order`, `submit_booking_review`, `booking_job_contact`, `hire_again_contractors`.
 
 ## How to inspect
 

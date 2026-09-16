@@ -24,27 +24,21 @@ const otherPro: MarketplaceActor = {
 };
 
 describe("privacy and IDOR mirrors", () => {
-  it("hides exact street from opportunity contractors until selection", () => {
+  it("hides exact street from opportunity contractors until booking confirmation", () => {
     const project = {
       customer_id: "cust",
-      status: "CONTRACTORS_RESPONDING" as const,
       selected_contractor_profile_id: null,
     };
-    expect(canReadExactAddress(customer, project)).toBe(true);
-    expect(canReadExactAddress(pro, project)).toBe(false);
+    expect(canReadExactAddress(customer, project, null)).toBe(true);
+    expect(canReadExactAddress(pro, project, null)).toBe(false);
     expect(
-      canReadExactAddress(pro, {
-        customer_id: "cust",
-        status: "CONTRACTOR_SELECTED",
-        selected_contractor_profile_id: "pro-1",
-      }),
+      canReadExactAddress(pro, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "PENDING"),
+    ).toBe(false);
+    expect(
+      canReadExactAddress(pro, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED"),
     ).toBe(true);
     expect(
-      canReadExactAddress(otherPro, {
-        customer_id: "cust",
-        status: "CONTRACTOR_SELECTED",
-        selected_contractor_profile_id: "pro-1",
-      }),
+      canReadExactAddress(otherPro, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED"),
     ).toBe(false);
   });
 

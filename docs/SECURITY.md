@@ -76,9 +76,20 @@ Marketplace RPCs (`post_project`, `accept_opportunity`, `pass_opportunity`, `sub
 
 Customer-safe views (`contractor_public_profiles`, `contractor_public_services`, `contractor_public_areas`, `contractor_public_portfolio`, `contractor_verified_credential_badges`) are `SECURITY DEFINER` on purpose: they expose **approved** contractors and only safe columns (no license numbers, no document paths). Underlying tables stay own-or-admin. This is **not** a Priority Verified badge.
 
-There are **no Stripe charges** in Phase 3. `fee_preview` always returns `charges_live: false`.
+There are **no Stripe charges** in Phase 3 or Phase 4A. `fee_preview` and `preview_marketplace_fee` always return `charges_live: false` and `payments_live: false`.
 
-Supabase database advisors will still flag those views and the authenticated RPC grants. That is expected. Do not drop the views or revoke signed-in access to `post_project` / `accept_opportunity` / `select_estimate`.
+### Phase 4A
+
+- Exact street unlocks only via `booking_is_confirmed_for_contractor`, not on `CONTRACTOR_SELECTED`.
+- Phone/email after confirm go through `booking_job_contact`, not open `profiles` SELECT.
+- Bookings, fee snapshots, relationships, change-order approvals, and reviews cannot be written from the client except through SECURITY DEFINER RPCs that check `auth.uid()` / `is_admin()`.
+- `confirm_booking_for_testing` is ADMIN-only. Customers and contractors cannot spoof CONFIRMED.
+- Repeat pricing and relationships are server-assigned.
+- `ADMIN` is still not self-assignable. Contractor approval and max-3 matching are unchanged. VERIFIER remains; there is no INSPECTOR role.
+
+Free-text Q&A can still leak PII. There is no scanner in this phase.
+
+Supabase database advisors will still flag SECURITY DEFINER views and authenticated RPC grants. That is expected. Do not drop the views or revoke signed-in access to `post_project` / `accept_opportunity` / `select_estimate`.
 
 ## Auth redirects
 

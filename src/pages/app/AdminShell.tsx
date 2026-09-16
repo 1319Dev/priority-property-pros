@@ -2,9 +2,9 @@ import { DashboardShell } from "../../components/layout/DashboardShell";
 
 const items = [
   { to: "/app/admin", label: "Overview", end: true },
+  { to: "/app/admin/bookings", label: "Bookings" },
   { to: "/app/admin/people", label: "People" },
   { to: "/app/admin/approvals", label: "Approvals" },
-  { to: "/app/admin/audit", label: "Audit" },
   { to: "/app/admin/account", label: "Account" },
 ];
 
