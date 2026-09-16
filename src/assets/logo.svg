@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="pppMarkTitle">
+  <title id="pppMarkTitle">Priority Property Pros mark</title>
+  <rect width="64" height="64" rx="14" fill="#1A3C2E"/>
+  <path d="M12 32 L32 14 L52 32" fill="none" stroke="#C9A227" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M18 31 V50 H46 V31" fill="none" stroke="#FBF8F1" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M26 50 V36 M32 50 V34 M38 50 V36" fill="none" stroke="#E0C078" stroke-width="3.2" stroke-linecap="round"/>
+</svg>

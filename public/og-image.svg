@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Priority Property Pros">
+  <rect width="1200" height="630" fill="#FBF8F1"/>
+  <rect width="16" height="630" fill="#1A3C2E"/>
+  <rect x="80" y="175" width="280" height="280" rx="48" fill="#1A3C2E"/>
+  <path d="M132 325 L220 232 L308 325" fill="none" stroke="#C9A227" stroke-width="16" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M158 322 V418 H282 V322" fill="none" stroke="#FBF8F1" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M194 418 V350 M220 418 V338 M246 418 V350" fill="none" stroke="#E0C078" stroke-width="14" stroke-linecap="round"/>
+  <text x="400" y="268" font-family="Georgia, 'Times New Roman', serif" font-size="22" letter-spacing="6" fill="#A6851F">PRIORITY PROPERTY PROS</text>
+  <text x="400" y="338" font-family="Georgia, 'Times New Roman', serif" font-size="42" fill="#1A3C2E">Your project. Local pros.</text>
+  <text x="400" y="392" font-family="Georgia, 'Times New Roman', serif" font-size="42" fill="#1A3C2E">One simple place.</text>
+  <text x="400" y="448" font-family="Georgia, 'Times New Roman', serif" font-size="20" fill="#3F3A33">A local marketplace  PPP is not the contractor.</text>
+</svg>

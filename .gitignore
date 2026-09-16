@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+dev-dist/
+coverage/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# Env — never commit secrets. Phase 1 has none.
+.env
+.env.local
+.env.*.local
+
+# Test / cache
+.cache/
+.turbo/
+*.tsbuildinfo

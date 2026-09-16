@@ -1,0 +1,164 @@
+# GitHub Pages setup (click by click)
+
+This guide is for someone who is not a programmer. It publishes the Priority Property Pros Phase 1 website using **GitHub Pages** and **GitHub Actions**.
+
+The live project-site URL for this repository is:
+
+**https://1319Dev.github.io/priority-property-pros/**
+
+If you later attach a custom domain (for example `www.example.com`), the site can also run at the **root** path `/`. Both are documented below.
+
+Phase 1 does **not** need Supabase, Stripe, or any secret keys.
+
+---
+
+## A. One-time: put the code on GitHub
+
+Skip this section if the code is already in `https://github.com/1319Dev/priority-property-pros`.
+
+1. Sign in at [https://github.com](https://github.com) as **1319Dev**.
+2. Click the **+** in the top right → **New repository**.
+3. Repository name: `priority-property-pros` (exact spelling).
+4. Owner: `1319Dev`.
+5. Leave it **Public** (GitHub Pages on a free account is simplest with a public repo).
+6. Do **not** add a README, .gitignore, or license (this project already has them).
+7. Click **Create repository**.
+8. On your computer, open Terminal (Mac) or Command Prompt and run, from the project folder:
+
+```bash
+git init
+git add .
+git commit -m "Phase 1 homepage"
+git branch -M main
+git remote add origin https://github.com/1319Dev/priority-property-pros.git
+git push -u origin main
+```
+
+If GitHub already has the repo and this computer is set up, `git push -u origin main` is enough after a commit.
+
+---
+
+## B. Enable GitHub Pages (Actions)
+
+Do this once per repository.
+
+1. Open **https://github.com/1319Dev/priority-property-pros**.
+2. Click the **Settings** tab (top of the repository).
+3. In the left sidebar, click **Pages**.
+4. Under **Build and deployment**:
+   - **Source**: choose **GitHub Actions** (not “Deploy from a branch”).
+5. Leave **Custom domain** blank unless you already own a domain you want to attach.
+6. You do **not** need to pick a folder. The workflow file `.github/workflows/ci-pages.yml` builds the site and deploys it.
+
+The first deploy happens automatically when `main` receives a push **after** Pages is set to GitHub Actions. If you enabled Pages after the last push:
+
+7. Click the **Actions** tab.
+8. In the left list, click **CI and GitHub Pages**.
+9. Click **Run workflow** → **Run workflow** on branch **main**.
+
+---
+
+## C. Approve the first Pages deploy (if GitHub asks)
+
+The first time, GitHub may wait for you:
+
+1. Open the **Actions** tab.
+2. Click the latest **CI and GitHub Pages** run.
+3. If you see **Review deployments** or **Waiting for review**, click it.
+4. Check **github-pages**.
+5. Click **Approve and deploy**.
+
+Wait until the **Deploy GitHub Pages** job shows a green check.
+
+---
+
+## D. Open the live site
+
+1. Go to **Settings → Pages** again.
+2. At the top, GitHub shows **Your site is live at** plus a URL.
+3. For this repo, it should be:
+
+   `https://1319Dev.github.io/priority-property-pros/`
+
+4. Open that URL on your phone and on a computer.
+
+### What to verify after deploy
+
+- The homepage headline includes **YOUR PROJECT. LOCAL PROS. ONE SIMPLE PLACE.** (or the same words in title case).
+- **POST A PROJECT** and **BECOME A PRIORITY PRO** buttons work (they open later-phase placeholder pages — that is expected).
+- Header links work: Find a Pro, How It Works, Become a Pro, Sign In.
+- Popular services include Handyman, TV Mounting, Lawn Care, and Other.
+- Refreshing a sub-page such as `/priority-property-pros/trust` still shows the app (not a GitHub 404 page). That proves the SPA `404.html` fallback.
+- On a phone: Add to Home Screen works (Safari: Share → Add to Home Screen; Chrome: menu → Install app / Add to Home screen). The PPP house icon should appear.
+- Turn on airplane mode after visiting once, then reopen the app: you should still see the site or the cream **You’re offline** screen.
+
+---
+
+## E. Root custom domain vs `/priority-property-pros/`
+
+This project supports both.
+
+| How you host | Site URL | `BASE_PATH` in the workflow |
+| --- | --- | --- |
+| GitHub project site (current) | `https://1319Dev.github.io/priority-property-pros/` | `/priority-property-pros/` |
+| Custom domain at the root | `https://your-domain.com/` | `/` |
+
+The workflow file `.github/workflows/ci-pages.yml` currently sets:
+
+```yaml
+BASE_PATH: /priority-property-pros/
+```
+
+To switch to a **custom domain at the root**:
+
+1. Buy and connect the domain in **Settings → Pages → Custom domain**. Follow GitHub’s DNS instructions.
+2. Edit `.github/workflows/ci-pages.yml`.
+3. Change `BASE_PATH: /priority-property-pros/` to `BASE_PATH: /`.
+4. Commit and push to `main`.
+5. Wait for Actions to finish.
+
+Local preview always defaults to `/` (no env var needed):
+
+```bash
+npm install
+npm run dev
+```
+
+Production-like preview of the **project** path:
+
+```bash
+BASE_PATH=/priority-property-pros/ npm run build
+npx vite preview --base /priority-property-pros/
+```
+
+---
+
+## F. How to update later
+
+1. Change files on your computer (or merge an approved pull request into `main`).
+2. Commit and push to **main**.
+3. Open the **Actions** tab and wait for a green check.
+4. Hard-refresh the live site (on iPhone Safari: pull to refresh, or close the tab and reopen).
+
+---
+
+## G. How to roll back
+
+1. Open **https://github.com/1319Dev/priority-property-pros**.
+2. Click **Commits** (or the clock/history icon on the file list).
+3. Find the last commit you trusted. Click it.
+4. Click **Browse files** `<>` then the **Code** dropdown → **Download ZIP** if you only need a copy.
+5. To put the site back: click the commit, then the three dots **…** → **Revert** if GitHub offers it, **or** ask a developer to reset `main` to that commit and force-push (only if you understand that this rewrites history).
+
+Simplest non-programmer rollback:
+
+1. Actions tab → a previous successful **CI and GitHub Pages** run on `main`.
+2. You cannot re-deploy an old artifact from the UI alone without a new commit. Instead, restore the files with a revert commit (GitHub: commit page → **Revert**) and let Actions publish again.
+
+---
+
+## H. Secrets and later phases
+
+Do **not** add Stripe keys, database passwords, or a Supabase **service role** key to this repository.
+
+Phase 1 is static. Accounts, payments, and live project posting come later. `.env.example` is a reminder only.
