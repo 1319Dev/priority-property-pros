@@ -9,11 +9,13 @@ export function getSupabaseAnonKey(): string {
   return (import.meta.env.VITE_SUPABASE_ANON_KEY ?? "").trim();
 }
 
-export function isSupabaseConfigured(): boolean {
-  const url = getSupabaseUrl();
-  const key = getSupabaseAnonKey();
+export function isConfiguredPair(url: string, key: string): boolean {
   if (!url || !key) return false;
   if (url.includes(PLACEHOLDER_URL)) return false;
   if (key.includes(PLACEHOLDER_KEY)) return false;
   return url.startsWith("https://") && key.length > 20;
+}
+
+export function isSupabaseConfigured(): boolean {
+  return isConfiguredPair(getSupabaseUrl(), getSupabaseAnonKey());
 }

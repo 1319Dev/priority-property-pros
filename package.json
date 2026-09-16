@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Priority Property Pros — Phase 2 auth and database on the Phase 1 homepage, design system, and PWA.",
+  "description": "Priority Property Pros — Phase 3 marketplace core on the Phase 1 homepage and Phase 2 auth.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build && node scripts/copy-404.mjs",

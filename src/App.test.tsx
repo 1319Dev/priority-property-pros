@@ -88,3 +88,23 @@ describe("Phase 2 auth surfaces", () => {
     expect(screen.getByRole("button", { name: /resend verification email/i })).toBeInTheDocument();
   });
 });
+
+describe("Phase 3 marketplace surfaces", () => {
+  it("asks customers to sign in before posting", () => {
+    renderApp("/post-project");
+    expect(screen.getByRole("heading", { name: /sign in as a customer to post/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /preview only/i })).not.toBeInTheDocument();
+  });
+
+  it("keeps Phase 1 homepage posting CTA", () => {
+    renderApp("/");
+    expect(screen.getAllByRole("link", { name: /post a project/i }).length).toBeGreaterThan(0);
+  });
+
+  it("describes live posting with a max of three contractors on How it works", () => {
+    renderApp("/how-it-works");
+    expect(screen.getByText(/up to three local independents/i)).toBeInTheDocument();
+    expect(screen.queryByText(/live posting is not on yet/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/payments, payouts, and priority verified are not/i)).toBeInTheDocument();
+  });
+});

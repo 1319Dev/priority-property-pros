@@ -26,7 +26,15 @@ import {
   CustomerMessagesPage,
   CustomerProjectsPage,
 } from "./pages/app/CustomerPages";
+import { CompareEstimatesPage, CustomerProjectDetailPage } from "./pages/app/customer/CustomerMarketplacePages";
+import { ProjectWizardPage } from "./pages/app/customer/ProjectWizardPage";
 import { ProHomePage, ProJobsPage, ProMessagesPage } from "./pages/app/ProPages";
+import {
+  EstimateBuilderPage,
+  OpportunitiesPage,
+  OpportunityDetailPage,
+  ProOnboardingPage,
+} from "./pages/app/pro/ProMarketplacePages";
 import { VerifierHomePage, VerifierMessagesPage, VerifierVisitsPage } from "./pages/app/VerifierPages";
 import {
   AdminApprovalsPage,
@@ -60,6 +68,10 @@ export default function App() {
           <Route path="/app/customer" element={<CustomerShell />}>
             <Route index element={<CustomerHomePage />} />
             <Route path="projects" element={<CustomerProjectsPage />} />
+            <Route path="projects/new/wizard" element={<ProjectWizardPage />} />
+            <Route path="projects/:projectId/wizard" element={<ProjectWizardPage />} />
+            <Route path="projects/:projectId/compare" element={<CompareEstimatesPage />} />
+            <Route path="projects/:projectId" element={<CustomerProjectDetailPage />} />
             <Route path="messages" element={<CustomerMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
           </Route>
@@ -68,6 +80,10 @@ export default function App() {
           <Route path="/app/pro" element={<ProShell />}>
             <Route index element={<ProHomePage />} />
             <Route path="jobs" element={<ProJobsPage />} />
+            <Route path="opportunities" element={<OpportunitiesPage />} />
+            <Route path="opportunities/:opportunityId/estimate" element={<EstimateBuilderPage />} />
+            <Route path="opportunities/:opportunityId" element={<OpportunityDetailPage />} />
+            <Route path="onboarding" element={<ProOnboardingPage />} />
             <Route path="messages" element={<ProMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
           </Route>

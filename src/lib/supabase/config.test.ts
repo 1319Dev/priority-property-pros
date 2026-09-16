@@ -2,13 +2,16 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { isSupabaseConfigured } from "./config";
+import { isConfiguredPair } from "./config";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
 describe("Supabase public config", () => {
   it("treats missing or placeholder env as not configured", () => {
-    expect(isSupabaseConfigured()).toBe(false);
+    expect(isConfiguredPair("", "")).toBe(false);
+    expect(isConfiguredPair("https://YOUR-PROJECT-REF.supabase.co", "your-anon-public-key")).toBe(false);
+    expect(isConfiguredPair("https://example.supabase.co", "your-anon-public-key")).toBe(false);
+    expect(isConfiguredPair("https://example.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.demo")).toBe(true);
   });
 
   it("documents public vars only in .env.example", () => {

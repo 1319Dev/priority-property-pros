@@ -35,7 +35,7 @@ export function DashboardShell({
       </header>
       {account_status === "PENDING" ? (
         <div className="bg-gold-500/20 px-4 py-2 text-center text-sm text-forest-950">
-          This account is pending review or email confirmation. You can look around; live jobs are not on yet.
+          This account is pending review or email confirmation. You can look around; matching waits on an active, approved contractor.
         </div>
       ) : null}
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-28 sm:px-6 lg:pb-10">

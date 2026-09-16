@@ -1,4 +1,4 @@
-# Database — Phase 2
+# Database — Phase 2 and Phase 3
 
 Schema lives in `supabase/migrations/`. Apply files in filename order (see [SUPABASE_SETUP.md](SUPABASE_SETUP.md)).
 
@@ -62,7 +62,49 @@ Append-only. `write_audit_log(...)` is for server/SQL. Clients may **select** on
 
 ## What is not in Phase 2
 
-No projects, estimates, payments, Stripe, messages, change orders, or Priority Verified workflow tables.
+Phase 2 had no projects or estimates. Phase 3 adds them (below). Still no payments, Stripe charges, messaging, change orders, or Priority Verified workflow tables.
+
+## Phase 3 marketplace tables
+
+Apply `supabase/migrations/20260917000001_*.sql` through `20260917000011_*.sql` after the Phase 2 files. All new tables have UUID keys, timestamps, and RLS. Files `09`–`11` only tighten grants, add estimate builder columns, and lock estimate status/money to RPCs; they do not drop data.
+
+| Table | Purpose |
+| --- | --- |
+| `platform_settings` | `contractor_fee_bps` (700 ≈ 7%) and `max_participating_contractors` (3). Preview only; no charges. |
+| `service_categories` | DB-managed catalog (Handyman … Other). Electrical / plumbing / HVAC are **not** seeded as ordinary unverified services. |
+| `service_questions` | Smart questions per category for the customer wizard. |
+| `contractor_services` | Categories a contractor offers. |
+| `contractor_service_areas` | ZIP list and/or radius (miles + optional lat/lng). |
+| `contractor_portfolio` | Work photos (private storage paths). |
+| `contractor_credentials` | LICENSE / INSURANCE / OTHER with `NOT_SUBMITTED\|PENDING\|VERIFIED\|REJECTED\|EXPIRED`. No self-verify. |
+| `projects` | Customer jobs. Statuses: `DRAFT`, `POSTED`, `MATCHING`, `CONTRACTORS_RESPONDING`, `ESTIMATES_AVAILABLE`, `CONTRACTOR_SELECTED`. Completeness is informational (`HIGH\|MEDIUM\|MORE_INFO_NEEDED`). |
+| `project_private_locations` | Exact street + coordinates. Not visible to opportunity contractors. |
+| `project_photos` | Private storage paths. |
+| `project_answers` | Answers to `service_questions`. |
+| `project_status_history` | Logged on every status change. |
+| `matches` | Eligible contractors after post. |
+| `opportunities` | `AVAILABLE\|ACCEPTED\|PASSED\|EXPIRED\|CLOSED`. |
+| `opportunity_slots` | Atomic max-3: PK `(project_id, slot_number)` with `slot_number BETWEEN 1 AND 3`. |
+| `estimate_questions` | Pre-estimate Q&A for accepted participants only. |
+| `estimates` / `estimate_items` | Totals recomputed in the database. Line kinds: LABOR / MATERIALS / EQUIPMENT / CUSTOM. Duration, available_from, valid_until are informational. Fee preview is not a charge. Status/money cannot be patched from the client. |
+
+Supporting columns on `contractor_profiles`: `accepting_work`, `min_job_cents`, `max_job_cents`, `headline`. Additive; existing rows stay.
+
+Customer-safe views (approved contractors only, no license numbers or document paths): `contractor_public_profiles`, `contractor_public_services`, `contractor_public_areas`, `contractor_public_portfolio`, `contractor_verified_credential_badges`.
+
+## Phase 3 RPCs
+
+| Function | Who | What |
+| --- | --- | --- |
+| `post_project(id)` | Customer owner | DRAFT → POSTED → matching. |
+| `accept_opportunity(id)` | Contractor | Claims a slot under a project row lock. 4th accept fails. |
+| `pass_opportunity(id)` | Contractor | AVAILABLE → PASSED. |
+| `submit_estimate(id)` | Contractor | Validates line totals + ~7% fee preview. |
+| `withdraw_estimate(id)` | Contractor | Withdraws an open estimate. |
+| `select_estimate(project, estimate)` | Customer | One accepted estimate; others decline; remaining opps close. **No payment.** |
+| `fee_preview(cents)` | Anyone signed in | `{ total, fee, earnings, charges_live: false }`. |
+
+Matching uses category, ZIP/radius, services, `ACTIVE` + `APPROVED`, `accepting_work`, job-size prefs, and verified credentials when a category requires them.
 
 ## How to inspect
 

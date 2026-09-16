@@ -60,9 +60,21 @@ Do not commit `.env.local`.
    6. `20260916000006_signup_trigger.sql`
    7. `20260916000007_rls.sql`
    8. `20260916000008_seed_agreements.sql`
+   9. `20260917000001_phase3_enums_settings.sql`
+   10. `20260917000002_phase3_service_catalog.sql`
+   11. `20260917000003_phase3_contractor_expansion.sql`
+   12. `20260917000004_phase3_projects.sql`
+   13. `20260917000005_phase3_matching_estimates.sql`
+   14. `20260917000006_phase3_functions.sql`
+   15. `20260917000007_phase3_rls_storage.sql`
+   16. `20260917000008_phase3_seed_catalog.sql`
+   17. `20260917000009_phase3_function_grants.sql`
+   18. `20260917000010_phase3_phase2_function_grants.sql`
+   19. `20260917000011_phase3_estimate_builder_guards.sql`
 
 5. If a file says it already exists, stop and ask a developer — do not skip ahead.
-6. Optional: Table Editor should now list `profiles`, `contractor_profiles`, `verifier_profiles`, `agreements`, `agreement_acceptances`, `audit_logs`.
+6. Phase 2 Table Editor should list `profiles`, `contractor_profiles`, `verifier_profiles`, `agreements`, `agreement_acceptances`, `audit_logs`.
+7. After Phase 3, you should also see `service_categories`, `projects`, `opportunities`, `estimates`, and related tables. **Do not delete users or profiles.** Optional: `supabase/sql/approve_contractor.sql` to approve a real contractor so matching can include them. There is no website self-approve.
 
 ---
 
@@ -127,9 +139,11 @@ If it fails with “No auth user”, you signed up with a different email. Check
 - Homepage still matches Phase 1 (tagline, services, PWA).
 - **Sign in** is a real form.
 - **Create account** asks “How will you use Priority Property Pros?” with Customer / Contractor / Verifier only.
-- After confirm, a customer opens `/app/customer` and sees empty projects.
+- After confirm, a customer opens `/app/customer` and can start **POST A PROJECT**.
+- A contractor opens `/app/pro` for onboarding and opportunities (approval is SQL-only).
 - A contractor cannot open `/app/admin`.
 - Forgot password sends mail (once URLs in section D are saved).
+- There is **no** Stripe checkout. Estimate screens show a fee **preview** only.
 
 ---
 

@@ -1,0 +1,17 @@
+-- Owner helper: approve an existing contractor so matching can include them.
+-- Phase 3 does not add a website self-approve button.
+-- Replace the email, then run in the SQL editor. Never invent demo contractors.
+
+-- UPDATE public.profiles
+-- SET account_status = 'ACTIVE'
+-- WHERE email = 'CONTRACTOR@example.com'
+--   AND account_type = 'CONTRACTOR';
+--
+-- UPDATE public.contractor_profiles cp
+-- SET
+--   approval_status = 'APPROVED',
+--   approved_at = now(),
+--   onboarding_status = 'COMPLETE'
+-- FROM public.profiles p
+-- WHERE cp.profile_id = p.id
+--   AND p.email = 'CONTRACTOR@example.com';
