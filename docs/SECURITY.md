@@ -111,9 +111,9 @@ Private street, phone, email, and coordinates are gated by `booking_contact_acce
 - `UNLOCKED` (reserved for a future successful job-fee payment; stub is not wired while `payments_live`/`charges_live` are off)
 - `ADMIN_OVERRIDE` (targeted admin RPC with reason + audit log)
 
-`booking_job_contact` and `project_private_locations` RLS require that entitlement for the hired contractor. Unrelated contractors never inherit access. This work does not change `payments_live` or `charges_live`.
+`booking_job_contact` and `project_private_locations` RLS require that entitlement for the hired contractor. Unrelated contractors never inherit access. Missing entitlement rows are treated as no access. ACCEPTED and CONFIRMED never unlock. This work does not change `payments_live` or `charges_live`.
 
-Free-text Q&A can still leak PII. There is no scanner in this phase.
+Estimate-lifecycle scanners block obvious phone / email / URL / handle patterns in notes, bios, and messages. Dedicated street / phone / email / coordinates stay on this entitlement path. Unauthorized RPC, notification, and estimate_event payloads must not include those private fields.
 
 Supabase database advisors will still flag SECURITY DEFINER views and authenticated RPC grants. That is expected. Do not drop the views or revoke signed-in access to `post_project` / `accept_opportunity` / `select_estimate`.
 

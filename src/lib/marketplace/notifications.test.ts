@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { unauthorizedPayloadLeaksPrivateContact } from "./bookings";
 import {
   contractorNotificationForStatus,
   customerNotificationForSubmit,
@@ -30,6 +31,9 @@ describe("in-app notifications", () => {
     );
     expect(NOTIFICATION_CATALOG["estimate.declined"].body).not.toMatch(/another pro/i);
     expect(NOTIFICATION_CATALOG["estimate.viewed"].oncePerEntity).toBe(true);
+    for (const event of Object.values(NOTIFICATION_CATALOG)) {
+      expect(unauthorizedPayloadLeaksPrivateContact({ title: event.title, body: event.body })).toBe(false);
+    }
   });
 
   it("notifies the customer on receive, post-submit update, and withdraw", () => {

@@ -491,10 +491,10 @@ export async function adminGrantBookingContactAccess(bookingId: string, reason: 
   return (data ?? {}) as RpcJson;
 }
 
-export async function adminRevokeBookingContactAccess(bookingId: string, reason?: string): Promise<RpcJson> {
+export async function adminRevokeBookingContactAccess(bookingId: string, reason: string): Promise<RpcJson> {
   const { data, error } = await client().rpc("admin_revoke_booking_contact_access", {
     p_booking_id: bookingId,
-    p_reason: reason ?? null,
+    p_reason: reason,
   });
   if (error) throw new Error(asError(error, "Could not revoke contact access."));
   return (data ?? {}) as RpcJson;

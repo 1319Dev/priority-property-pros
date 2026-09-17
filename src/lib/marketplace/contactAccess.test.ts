@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   bookingUnlocksContact,
   contactAccessAllowsReveal,
+  contactAccessRowAllowsReveal,
+  formatContactAccessState,
   privateContactHintCopy,
   privateContactLockedCopy,
+  unauthorizedPayloadLeaksPrivateContact,
 } from "./bookings";
 import { canReadCustomerContact, canReadExactAddress, type MarketplaceActor } from "./privacy";
 import { CUSTOMER_ISOLATION_RULES } from "./customerPrivacy";
@@ -55,6 +58,20 @@ describe("contact-access entitlement helpers", () => {
     expect(contactAccessAllowsReveal(undefined)).toBe(false);
     expect(contactAccessAllowsReveal("UNLOCKED")).toBe(true);
     expect(contactAccessAllowsReveal("ADMIN_OVERRIDE")).toBe(true);
+  });
+
+  it("treats missing or revoked entitlement rows as no access", () => {
+    expect(contactAccessRowAllowsReveal(null)).toBe(false);
+    expect(contactAccessRowAllowsReveal(undefined)).toBe(false);
+    expect(
+      contactAccessRowAllowsReveal({
+        status: "UNLOCKED",
+        revoked_at: "2026-09-17T12:00:00.000Z",
+      }),
+    ).toBe(false);
+    expect(contactAccessRowAllowsReveal({ status: "LOCKED", revoked_at: null })).toBe(false);
+    expect(contactAccessRowAllowsReveal({ status: "UNLOCKED", revoked_at: null })).toBe(true);
+    expect(formatContactAccessState(null)).toMatch(/missing row/i);
   });
 
   it("1. unhired contractor cannot retrieve private customer info", () => {
@@ -144,5 +161,7 @@ describe("contact-access entitlement helpers", () => {
     expect(privateContactLockedCopy()).toMatch(/admin/i);
     expect(privateContactLockedCopy()).not.toMatch(/until (the )?booking is confirmed/i);
     expect(privateContactHintCopy()).toMatch(/hire \+ job fee/i);
+    expect(unauthorizedPayloadLeaksPrivateContact({ project_id: "p1" })).toBe(false);
+    expect(unauthorizedPayloadLeaksPrivateContact({ phone: "404-555-0100" })).toBe(true);
   });
 });

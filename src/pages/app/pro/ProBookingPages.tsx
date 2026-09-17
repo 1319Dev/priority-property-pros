@@ -19,13 +19,51 @@ import {
   respondChangeOrder,
   startBooking,
 } from "../../../lib/marketplace/api";
-import { BOOKING_STATUS_LABELS, contactAccessAllowsReveal, paymentsComingSoonCopy, privateContactLockedCopy } from "../../../lib/marketplace/bookings";
+import { BOOKING_STATUS_LABELS, contactAccessRowAllowsReveal, paymentsComingSoonCopy, privateContactLockedCopy } from "../../../lib/marketplace/bookings";
 import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
 import type { Booking, BookingContactAccess, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
 
 function statusLabel(status: string) {
   return BOOKING_STATUS_LABELS[status as BookingStatus] ?? status.replaceAll("_", " ");
+}
+
+export type ProjectContactFields = {
+  street?: string;
+  phone?: string;
+  email?: string;
+};
+
+export function ProjectContactSection({
+  entitled,
+  contact,
+}: {
+  entitled: boolean;
+  contact: ProjectContactFields | null;
+}) {
+  return (
+    <section className="rounded-3xl border border-forest-800/10 px-5 py-4 text-sm">
+      <h2 className="font-display text-2xl text-forest-800">Project Contact</h2>
+      {entitled && contact ? (
+        <dl className="mt-3 space-y-2">
+          <div>
+            <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Street</dt>
+            <dd className="mt-1 font-semibold text-forest-800">{contact.street || "Not provided"}</dd>
+          </div>
+          <div>
+            <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Phone</dt>
+            <dd className="mt-1 font-semibold text-forest-800">{contact.phone || "Not provided"}</dd>
+          </div>
+          <div>
+            <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Email</dt>
+            <dd className="mt-1 font-semibold text-forest-800">{contact.email || "Not provided"}</dd>
+          </div>
+        </dl>
+      ) : (
+        <p className="mt-3 leading-relaxed text-ink-700">{privateContactLockedCopy()}</p>
+      )}
+    </section>
+  );
 }
 
 export function ProBookingsPage() {
@@ -95,7 +133,7 @@ export function ProBookingDetailPage() {
     setOrders((await fetchChangeOrders(bookingId)) as ChangeOrder[]);
     const access = await fetchBookingContactAccess(row.id).catch(() => null);
     setContactAccess(access);
-    if (contactAccessAllowsReveal(access?.status)) {
+    if (contactAccessRowAllowsReveal(access)) {
       const payload = await fetchBookingJobContact(row.id);
       setContact({
         street: [payload.street_line1, payload.street_line2].filter(Boolean).join(", "),
@@ -124,19 +162,6 @@ export function ProBookingDetailPage() {
       <section className="rounded-3xl border border-forest-800/10 px-5 py-4 text-sm">
         <p className="font-semibold">Approximate location</p>
         <p>{cityZip}</p>
-        {contact ? (
-          <>
-            <p className="mt-3 font-semibold">Job contact (unlocked after hire + job fee or admin override)</p>
-            <p>{contact.street || "—"}</p>
-            <p>{contact.phone || "—"}</p>
-            <p>{contact.email || "—"}</p>
-          </>
-        ) : (
-          <p className="mt-3 text-ink-500">
-            {privateContactLockedCopy()}
-            {contactAccess?.status ? ` Current access: ${contactAccess.status}.` : ""}
-          </p>
-        )}
         <p className="mt-3">Job {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
         <p>
           PPP fee {booking.fee_locked ? "" : "preview "}
@@ -144,6 +169,7 @@ export function ProBookingDetailPage() {
         </p>
         <p className="text-ink-500">{paymentsComingSoonCopy()}</p>
       </section>
+      <ProjectContactSection entitled={contactAccessRowAllowsReveal(contactAccess)} contact={contact} />
       {booking.status === "CONFIRMED" ? (
         <Button
           type="button"

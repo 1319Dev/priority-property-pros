@@ -1,6 +1,7 @@
 -- Contact-access entitlement checks for the SQL editor after
--- 20260922000001_contact_access_entitlement.sql. CI does not connect to a live
--- database; vitest mirrors these cases in contactAccess*.test.ts.
+-- 20260922000001_contact_access_entitlement.sql and
+-- 20260924000001_contact_access_lifecycle_compat.sql. CI does not connect to a
+-- live database; vitest mirrors these cases in contactAccess*.test.ts.
 
 -- Catalog / definition assertions (run as the dashboard role):
 DO $$
@@ -60,14 +61,17 @@ END $$;
 -- Scenario expectations (JWT client, not this file):
 --   1. Unhired contractor booking_job_contact → locked
 --   2. Estimate-only contractor booking_job_contact → locked
---   3. CONFIRMED booking without booking_contact_access UNLOCKED/ADMIN_OVERRIDE → locked
---   4. Hired contractor with UNLOCKED or ADMIN_OVERRIDE → street/phone/email/lat/lng
---   5. Different contractor on the same project → locked (no inherited access)
---   6. Opportunity / list_my_customer_projects / submit_estimate do not return street/phone/email/coords
---   7. Direct select project_private_locations as unauthorized contractor → 0 rows
---   8. Direct RPC bypass / client insert booking_contact_access → error
---   9. admin_grant_booking_contact_access as non-admin → error; as admin writes audit_logs
---  10. Matching, estimates, and max-3 slots still work; payments_live/charges_live stay 0
+--   3. SENT / VIEWED / ACCEPTED / CONFIRMED without entitlement → locked
+--   4. Missing booking_contact_access row → no access (never implicit unlock)
+--   5. Hired contractor with UNLOCKED or ADMIN_OVERRIDE → street/phone/email/lat/lng
+--   6. Different contractor or customer UUID on the same project → locked
+--   7. Opportunity / list_my_estimates / list_my_notifications / estimate_events / submit_estimate
+--      do not return street/phone/email/coords
+--   8. Direct select project_private_locations as unauthorized contractor → 0 rows
+--   9. Direct RPC bypass / client insert booking_contact_access → error
+--  10. admin_grant_booking_contact_access as non-admin → error; as admin writes audit_logs
+--  11. admin_revoke immediately locks; booking_job_contact then errors with no private fields
+--  12. Matching, estimates, Manage Profile, and max-3 slots still work; payments stay off
 
 -- Default backfill:
 --   SELECT status, count(*) FROM booking_contact_access GROUP BY status;

@@ -166,3 +166,86 @@ describe("Contact-access entitlement SQL", () => {
     expect(listMine).not.toMatch(/from public\.profiles/i);
   });
 });
+
+describe("Contact-access + estimate-lifecycle SQL compatibility", () => {
+  const sql = allSql();
+  const compatName = "20260924000001_contact_access_lifecycle_compat.sql";
+  const compat = readFileSync(path.join(repoRoot, "supabase/migrations", compatName), "utf8");
+  const liveJobContact = functionBody(sql, "booking_job_contact");
+  const liveHelper = functionBody(sql, "booking_has_contact_access");
+  const liveGrant = functionBody(sql, "admin_grant_booking_contact_access");
+  const liveRevoke = functionBody(sql, "admin_revoke_booking_contact_access");
+  const liveJobFee = functionBody(sql, "grant_booking_contact_access_from_job_fee");
+  const liveSelect = functionBody(sql, "select_estimate");
+  const liveListEstimates = functionBody(sql, "list_my_estimates");
+  const liveListNotes = functionBody(sql, "list_my_notifications");
+  const liveMarkViewed = functionBody(sql, "mark_estimate_viewed");
+  const liveEvents = functionBody(sql, "write_estimate_event");
+  const liveEnqueue = functionBody(sql, "enqueue_notification");
+
+  it("applies a later additive hardening migration after #16 timestamps", () => {
+    expect(compatName > "20260923000004_estimate_lifecycle_select_rls.sql").toBe(true);
+    expect(compat).toMatch(/Missing booking_contact_access row = NO ACCESS/);
+    expect(compat).toMatch(/ACCEPTED and CONFIRMED never unlock/);
+    expect(compat).not.toMatch(/payments_live',\s*1/);
+    expect(compat).not.toMatch(/charges_live',\s*1/);
+    expect(compat).not.toMatch(/signup_fee_enabled',\s*1/);
+  });
+
+  it("keeps missing-row / LOCKED as no access and never keys off ACCEPTED or CONFIRMED", () => {
+    expect(liveHelper).toMatch(/a\.status IN \('UNLOCKED', 'ADMIN_OVERRIDE'\)/);
+    expect(liveHelper).toMatch(/FROM public\.booking_contact_access a/);
+    expect(liveHelper).not.toMatch(/b\.status IN \('CONFIRMED'/);
+    expect(liveJobContact).toMatch(/Missing row is LOCKED/);
+    expect(liveJobContact).toMatch(/entitled := public\.booking_has_contact_access\(b\.id\)/);
+    expect(liveJobContact).toMatch(/ACCEPTED estimate status and CONFIRMED booking status are not consulted/);
+    expect(liveJobContact).not.toMatch(/unlocked := b\.status IN \('CONFIRMED'/);
+    expect(liveSelect).not.toMatch(/booking_contact_access/);
+    expect(liveSelect).toMatch(/'PENDING'/);
+  });
+
+  it("does not put private fields on #16 list/view/select/notification/event payloads", () => {
+    expect(liveListEstimates).not.toMatch(/street_line1/);
+    expect(liveListEstimates).not.toMatch(/cust\.phone/);
+    expect(liveListEstimates).not.toMatch(/cust\.email/);
+    expect(liveMarkViewed).not.toMatch(/street_line1/);
+    expect(liveMarkViewed).not.toMatch(/cust\.phone/);
+    expect(liveSelect).not.toMatch(/street_line1/);
+    expect(liveSelect).not.toMatch(/cust\.phone/);
+    expect(liveListNotes).toMatch(/strip_private_contact_keys\(n\.payload\)/);
+    expect(liveEvents).toMatch(/strip_private_contact_keys/);
+    expect(liveEnqueue).toMatch(/strip_private_contact_keys/);
+    expect(compat).toMatch(/- 'phone' - 'email' - 'street'/);
+  });
+
+  it("keeps admin grant/revoke admin-only with required reason and immediate revoke", () => {
+    expect(liveGrant).toMatch(/only an admin can grant booking contact access/);
+    expect(liveGrant).toMatch(/a reason is required to grant contact access/);
+    expect(liveRevoke).toMatch(/only an admin can revoke booking contact access/);
+    expect(liveRevoke).toMatch(/a reason is required to revoke contact access/);
+    expect(liveRevoke).toMatch(/status = 'LOCKED'/);
+    expect(liveRevoke).toMatch(/revoked_at = now\(\)/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.admin_grant_booking_contact_access\(uuid, text\) TO authenticated/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.admin_grant_booking_contact_access\(uuid, text\) FROM PUBLIC, anon/);
+  });
+
+  it("refuses client manufacture of UNLOCKED while payments are off", () => {
+    expect(liveJobFee).toMatch(/job-fee contact unlock is disabled while payments are off/);
+    expect(liveJobFee).toMatch(/job-fee contact unlock is not wired/);
+    expect(compat).toMatch(/REVOKE ALL ON FUNCTION public\.grant_booking_contact_access_from_job_fee\(uuid, text\) FROM PUBLIC, anon, authenticated/);
+    expect(sql).not.toMatch(/GRANT EXECUTE ON FUNCTION public\.grant_booking_contact_access_from_job_fee/);
+    expect(PAYMENTS_LIVE).toBe(false);
+    expect(CHARGES_LIVE).toBe(false);
+  });
+
+  it("unauthorized booking_job_contact errors contain no private field assignment", () => {
+    const beforeSelect = liveJobContact.slice(0, liveJobContact.indexOf("SELECT * INTO loc"));
+    expect(beforeSelect).toMatch(/is_hired AND entitled/);
+    expect(beforeSelect).toMatch(/RAISE EXCEPTION 'contact is locked until hire and job-fee entitlement or admin override'/);
+    expect(beforeSelect).not.toMatch(/'street_line1'/);
+    expect(beforeSelect).not.toMatch(/'phone'/);
+    expect(beforeSelect).not.toMatch(/'email'/);
+    expect(beforeSelect).not.toMatch(/loc\.lat/);
+  });
+});
+

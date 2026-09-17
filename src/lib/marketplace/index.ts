@@ -7,9 +7,11 @@ export { canReadExactAddress, opportunityVisibleToCustomer, estimateVisibleToCus
 export {
   bookingUnlocksContact,
   contactAccessAllowsReveal,
+  contactAccessRowAllowsReveal,
   paymentsComingSoonCopy,
   privateContactHintCopy,
   privateContactLockedCopy,
+  unauthorizedPayloadLeaksPrivateContact,
 } from "./bookings";
 export { showManageProfile, profilePageMode, contractorMayEditField } from "./profileManage";
 export { contractorEstimateUiStatus, submitTargetStatus, shouldMarkEstimateViewed } from "./estimateLifecycle";
