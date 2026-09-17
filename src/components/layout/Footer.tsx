@@ -6,6 +6,7 @@ import { Container } from "../ui/Container";
 const footerLinks = [
   { to: "/how-it-works", label: "How it works" },
   { to: "/find-a-pro", label: "Find a pro" },
+  { to: "/pricing", label: "Pricing" },
   { to: "/become-a-pro", label: "Become a pro" },
   { to: "/post-project", label: "Post a project" },
   { to: "/trust", label: "Trust & safety" },

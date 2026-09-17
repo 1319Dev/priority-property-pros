@@ -6,6 +6,7 @@ import { FindAProPage } from "./pages/FindAProPage";
 import { HomePage } from "./pages/HomePage";
 import { HowItWorksPage } from "./pages/HowItWorksPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { PricingPage } from "./pages/PricingPage";
 import { PostProjectPage } from "./pages/PostProjectPage";
 import { SignInPage } from "./pages/SignInPage";
 import { SignUpPage } from "./pages/SignUpPage";
@@ -54,6 +55,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/find-a-pro" element={<FindAProPage />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
         <Route path="/become-a-pro" element={<BecomeAProPage />} />
         <Route path="/sign-in" element={<SignInPage />} />
         <Route path="/sign-up" element={<SignUpRolePage />} />
