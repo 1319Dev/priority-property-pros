@@ -299,3 +299,26 @@ describe("Phase 5A SQL migrations", () => {
     expect(sql).toMatch(/the service type cannot change after contractors have already priced this job/);
   });
 });
+
+describe("Public contractor directory SQL", () => {
+  const sql = allSql();
+
+  it("lists only APPROVED + ACTIVE contractors and keeps payments paused", () => {
+    expect(sql).toMatch(/FUNCTION public\.list_public_directory_contractors/);
+    expect(sql).toMatch(/FUNCTION public\.get_public_directory_contractor/);
+    expect(sql).toMatch(/cp\.approval_status = 'APPROVED'/);
+    expect(sql).toMatch(/p\.account_status = 'ACTIVE'/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.list_public_directory_contractors\(\) TO anon, authenticated/);
+    expect(sql).toMatch(/CONSTRAINT bookings_payments_not_live CHECK \(payments_live = false\)/);
+    expect(sql).not.toMatch(/payments_live',\s*1/);
+  });
+
+  it("does not expose email, phone, or street through the directory RPC", () => {
+    const rpc = sql.slice(sql.indexOf("list_public_directory_contractors"));
+    expect(rpc).not.toMatch(/p\.email/);
+    expect(rpc).not.toMatch(/p\.phone/);
+    expect(rpc).not.toMatch(/street_line/);
+    expect(sql).toMatch(/REVOKE ALL ON TABLE public\.profiles FROM anon/);
+    expect(sql).toMatch(/REVOKE ALL ON TABLE public\.projects FROM anon/);
+  });
+});

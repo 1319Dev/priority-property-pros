@@ -698,6 +698,8 @@ export type Database = {
           website_url: string | null;
           accepting_work: boolean;
           created_at: string;
+          service_area: string | null;
+          photo_url: string | null;
         };
         Insert: never;
         Update: never;
@@ -755,6 +757,16 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      contractor_public_ratings: {
+        Row: {
+          contractor_profile_id: string;
+          rating_average: number | null;
+          rating_count: number;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Functions: {
       is_admin: { Args: Record<string, never>; Returns: boolean };
@@ -797,6 +809,7 @@ export type Database = {
       cancel_customer_project: { Args: { p_project_id: string; p_confirm?: boolean }; Returns: Json };
       project_has_participation: { Args: { p_project_id: string }; Returns: boolean };
       contractor_can_read_project: { Args: { p_project_id: string }; Returns: boolean };
+<<<<<<< HEAD
       list_contractor_approvals: { Args: { p_tab?: string }; Returns: Json };
       get_contractor_approval: { Args: { p_contractor_profile_id: string }; Returns: Json };
       count_pending_contractor_approvals: { Args: Record<string, never>; Returns: number };
@@ -808,6 +821,39 @@ export type Database = {
       admin_request_contractor_info: {
         Args: { p_contractor_profile_id: string; p_message: string };
         Returns: Json;
+=======
+      list_public_directory_contractors: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          business_name: string;
+          photo_url: string | null;
+          headline: string | null;
+          bio: string | null;
+          service_area: string | null;
+          primary_trade: string | null;
+          categories: string[] | null;
+          rating_average: number | null;
+          rating_count: number;
+          badges: Json;
+        }[];
+      };
+      get_public_directory_contractor: {
+        Args: { p_id: string };
+        Returns: {
+          id: string;
+          business_name: string;
+          photo_url: string | null;
+          headline: string | null;
+          bio: string | null;
+          service_area: string | null;
+          primary_trade: string | null;
+          categories: string[] | null;
+          rating_average: number | null;
+          rating_count: number;
+          badges: Json;
+        }[];
+>>>>>>> 107c676 (Add public Find a Pro directory with labeled demos.)
       };
     };
     Enums: {
