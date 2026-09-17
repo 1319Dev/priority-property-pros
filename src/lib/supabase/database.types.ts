@@ -78,6 +78,9 @@ export type Database = {
           info_requested_at: string | null;
           info_requested_by: string | null;
           info_request_message: string | null;
+          identity_review_required: boolean;
+          identity_review_at: string | null;
+          identity_review_fields: string[];
           created_at: string;
           updated_at: string;
         };
@@ -570,6 +573,13 @@ export type Database = {
           duration_hours: number | null;
           available_from: string | null;
           submitted_at: string | null;
+          withdrawn_at: string | null;
+          first_viewed_at: string | null;
+          last_viewed_at: string | null;
+          view_count: number;
+          accepted_at: string | null;
+          declined_at: string | null;
+          decline_reason: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -691,6 +701,37 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      estimate_events: {
+        Row: {
+          id: string;
+          estimate_id: string;
+          actor_id: string | null;
+          event_type: string;
+          payload: Json;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          recipient_profile_id: string;
+          kind: string;
+          title: string;
+          body: string;
+          entity_type: string;
+          entity_id: string | null;
+          payload: Json;
+          channel: "in_app";
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: { read_at?: string | null };
+        Relationships: [];
+      };
     };
     Views: {
       contractor_public_profiles: {
@@ -801,6 +842,12 @@ export type Database = {
       submit_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       withdraw_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       select_estimate: { Args: { p_project_id: string; p_estimate_id: string }; Returns: Json };
+      mark_estimate_viewed: { Args: { p_estimate_id: string; p_project_id?: string | null }; Returns: Json };
+      decline_estimate: { Args: { p_estimate_id: string }; Returns: Json };
+      list_my_estimates: { Args: Record<string, never>; Returns: Json };
+      list_my_notifications: { Args: Record<string, never>; Returns: Json };
+      mark_notification_read: { Args: { p_notification_id: string }; Returns: Json };
+      text_contains_contact_info: { Args: { p_text: string }; Returns: boolean };
       list_my_customer_projects: { Args: Record<string, never>; Returns: Json };
       get_my_customer_project: { Args: { p_project_id: string }; Returns: Json };
       update_customer_project: { Args: { p_project_id: string; p_patch: Json }; Returns: Json };

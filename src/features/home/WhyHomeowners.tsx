@@ -1,9 +1,14 @@
 import { Container, SectionHeading } from "../../components/ui/Container";
+import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING } from "../../data/pricing";
 
 const points = [
   {
     title: "One simple place",
     body: "Stop collecting random numbers from porch flyers and group chats. Put the job where local pros actually look.",
+  },
+  {
+    title: "One-time signup",
+    body: `${HOMEPAGE_SIGNUP_HEADLINE} ${HOMEPAGE_SIGNUP_SUPPORTING} There is no PPP marketplace fee when you hire.`,
   },
   {
     title: "Local independents",

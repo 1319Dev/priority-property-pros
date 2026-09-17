@@ -58,6 +58,10 @@ export function estimateVisibleToCustomer(status: EstimateStatus): boolean {
   return status !== "DRAFT";
 }
 
+export function estimateListLoadMarksViewed(): boolean {
+  return false;
+}
+
 export function estimateNeedsNewSubmission(status: EstimateStatus): boolean {
   return status === "SUPERSEDED" || status === "EXPIRED";
 }

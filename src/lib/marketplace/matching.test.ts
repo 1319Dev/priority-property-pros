@@ -46,7 +46,46 @@ describe("matching eligibility", () => {
     expect(contractorEligibleForProject(pro({ approval_status: "REJECTED" }), project).ok).toBe(false);
     expect(contractorEligibleForProject(pro({ account_status: "PENDING" }), project).ok).toBe(false);
     expect(contractorEligibleForProject(pro({ category_ids: ["paint"] }), project).ok).toBe(false);
-    expect(contractorEligibleForProject(pro({ accepting_work: false }), project).ok).toBe(false);
+    expect(
+      contractorEligibleForProject(pro({ accepting_work: false }), project).ok,
+    ).toBe(false);
+  });
+
+  it("uses the NEW categories, ZIP, radius, and Accepting Work after APPROVED+ACTIVE edits", () => {
+    const edited = pro({
+      category_ids: ["paint"],
+      areas: [
+        {
+          mode: "ZIPS",
+          center_zip: "10001",
+          center_lat: null,
+          center_lng: null,
+          radius_miles: null,
+          zip_codes: ["10001"],
+        },
+      ],
+    });
+    expect(contractorEligibleForProject(edited, project).ok).toBe(false);
+    expect(
+      contractorEligibleForProject(edited, { ...project, category_id: "paint", zip_code: "10001" }).ok,
+    ).toBe(true);
+
+    const wider = pro({
+      areas: [
+        {
+          mode: "RADIUS",
+          center_zip: "30318",
+          center_lat: 33.79,
+          center_lng: -84.44,
+          radius_miles: 25,
+          zip_codes: [],
+        },
+      ],
+    });
+    expect(contractorEligibleForProject(wider, { ...project, zip_code: "99999" }).ok).toBe(true);
+
+    const paused = pro({ accepting_work: false });
+    expect(contractorEligibleForProject(paused, project).ok).toBe(false);
   });
 
   it("rejects out-of-area ZIPs and too-small budgets", () => {

@@ -5,11 +5,13 @@ import { isSupabaseConfigured } from "../supabase/config";
 export function AuthCard({
   eyebrow,
   title,
+  lede,
   children,
   footer,
 }: {
   eyebrow: string;
   title: string;
+  lede?: string;
   children: ReactNode;
   footer?: ReactNode;
 }) {
@@ -18,6 +20,7 @@ export function AuthCard({
       <Container className="max-w-lg">
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">{eyebrow}</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">{title}</h1>
+        {lede ? <p className="mt-3 text-base leading-relaxed text-ink-700">{lede}</p> : null}
         {!isSupabaseConfigured() ? <NotConfiguredBanner /> : null}
         <div className="mt-8 space-y-4">{children}</div>
         {footer ? <div className="mt-8 text-sm text-ink-700">{footer}</div> : null}

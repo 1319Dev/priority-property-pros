@@ -1,5 +1,6 @@
 import { ButtonLink } from "../../components/ui/Button";
 import { Container, SectionHeading } from "../../components/ui/Container";
+import { SIGNUP_FEE_NOT_MONTHLY } from "../../data/pricing";
 
 export function TrustSafety() {
   return (
@@ -18,6 +19,7 @@ export function TrustSafety() {
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink-700">
               <li>A marketplace that connects property owners with independent local contractors.</li>
               <li>Live posting and estimates for signed-in accounts. Online payment setup is coming soon.</li>
+              <li>{SIGNUP_FEE_NOT_MONTHLY}</li>
             </ul>
           </div>
           <div className="rounded-3xl border border-forest-800/10 bg-cream-50 p-6">

@@ -5,6 +5,7 @@ import { TextInput } from "../components/ui/Input";
 import { postLoginPath } from "../lib/auth/roles";
 import { AuthCard, FormError } from "../lib/auth/AuthCard";
 import { useAuth } from "../lib/auth/useAuth";
+import { SIGN_IN_CREATE_ACCOUNT_NOTE } from "../data/pricing";
 
 export function SignInPage() {
   const { signIn, configured, refreshProfile, account_type, account_status, user, loading } = useAuth();
@@ -46,6 +47,7 @@ export function SignInPage() {
           <Link to="/sign-up" className="font-semibold text-forest-800 underline">
             Create an account
           </Link>
+          . {SIGN_IN_CREATE_ACCOUNT_NOTE}
         </>
       }
     >
