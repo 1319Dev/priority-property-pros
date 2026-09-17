@@ -19,7 +19,8 @@ import {
   findDemoProject,
   findDemoVerifier,
 } from "../data/demoMarketplace";
-import { GET_ESTIMATES_CTA, SIGNUP_FEE_NOTE } from "../data/signup";
+import { HOMEPAGE_SIGNUP_HEADLINE } from "../data/pricing";
+import { GET_ESTIMATES_CTA } from "../data/signup";
 import {
   directoryRowBadges,
   fetchPublicContractor,
@@ -52,15 +53,12 @@ function BrowseCtas() {
           {GET_ESTIMATES_CTA}
         </ButtonLink>
       </div>
-      <p className="text-sm leading-relaxed text-ink-700">{SIGNUP_FEE_NOTE}</p>
+      <p className="text-sm leading-relaxed text-ink-700">{HOMEPAGE_SIGNUP_HEADLINE} Checkout is not live yet.</p>
     </div>
   );
 }
 
-function PhotoMark({ initials, src, label }: { initials: string; src?: string | null; label: string }) {
-  if (src) {
-    return <img src={src} alt="" className="size-14 rounded-2xl object-cover sm:size-16" />;
-  }
+function PhotoMark({ initials, label }: { initials: string; label: string }) {
   return (
     <div
       className="grid size-14 place-items-center rounded-2xl bg-forest-800 text-sm font-semibold text-cream-50 sm:size-16"
@@ -76,27 +74,27 @@ function DirectoryCard({
   to,
   name,
   initials,
-  photoUrl,
   meta,
   description,
-  demo,
   extra,
+  demo,
+  cta = "View Pro",
 }: {
   to: string;
   name: string;
   initials: string;
-  photoUrl?: string | null;
   meta: string;
   description: string;
-  demo?: boolean;
   extra?: ReactNode;
+  demo?: boolean;
+  cta?: string;
 }) {
   return (
     <Link
       to={to}
       className="flex min-h-28 gap-3 rounded-3xl border border-forest-800/10 bg-cream-50 p-4 active:bg-cream-100"
     >
-      <PhotoMark initials={initials} src={photoUrl} label={name} />
+      <PhotoMark initials={initials} label={name} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           {demo ? <DemoPill /> : null}
@@ -105,6 +103,7 @@ function DirectoryCard({
         <p className="mt-1 text-sm text-ink-700">{meta}</p>
         <p className="mt-2 text-sm leading-relaxed text-ink-700">{description}</p>
         {extra}
+        <p className="mt-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-forest-800">{cta}</p>
       </div>
     </Link>
   );
@@ -113,16 +112,26 @@ function DirectoryCard({
 function liveCardFromRow(row: PublicDirectoryRpcRow): PublicContractorCard {
   return toPublicContractorCard({
     id: row.id,
-    businessName: row.business_name,
-    photoUrl: row.photo_url,
+    displayLabel: row.display_label,
+    primaryTrade: row.primary_trade,
     categories: row.categories ?? (row.primary_trade ? [row.primary_trade] : []),
     serviceArea: row.service_area,
+    yearsExperience: row.years_experience,
     ratingAverage: row.rating_average,
     ratingCount: row.rating_count,
     badges: directoryRowBadges(row),
-    headline: row.headline,
-    bio: row.bio,
+    shortDescription: row.short_description,
   });
+}
+
+function cardRatingLine(card: Pick<PublicContractorCard, "ratingAverage" | "ratingCount" | "yearsExperience" | "badges">, demo = false) {
+  const rating = formatPublicRating(card.ratingAverage, card.ratingCount, { demo });
+  const years =
+    card.yearsExperience != null && card.yearsExperience > 0
+      ? `${card.yearsExperience} year${card.yearsExperience === 1 ? "" : "s"} experience`
+      : null;
+  const badges = card.badges.map((badge) => `✓ ${badge.label}`).join(" · ");
+  return [rating, years, badges].filter(Boolean).join(" · ");
 }
 
 export function FindAProPage() {
@@ -155,8 +164,8 @@ export function FindAProPage() {
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">Browse local independents.</h1>
         <p className="mt-4 text-base leading-relaxed text-ink-700 sm:text-lg">
-          Live cards are real approved, active contractors. Example / Demo cards are fictional so you can see
-          the marketplace. PPP is not the contractor.
+          Live cards are real approved, active contractors shown without business names or contact details. Example /
+          Demo cards are fictional so you can see the marketplace. PPP is not the contractor.
         </p>
         <BrowseCtas />
 
@@ -165,8 +174,9 @@ export function FindAProPage() {
             Live approved contractors
           </h2>
           <p className="mt-2 text-sm text-ink-700">
-            Public fields only: business name, photo, categories, general service area, ratings when available,
-            verification badges, and a short description.
+            Public cards show a generic trade title, general service area, real PPP ratings when they exist, earned
+            badges, and a short non-identifying description. Business names, phones, websites, logos, and exact
+            addresses stay private until you hire through Priority Property Pros.
           </p>
           {loading ? <p className="mt-4 text-sm text-ink-700">Loading live directory…</p> : null}
           {error ? <p className="mt-4 text-sm text-danger-600">{error}</p> : null}
@@ -185,17 +195,11 @@ export function FindAProPage() {
               <li key={card.id}>
                 <DirectoryCard
                   to={liveContractorPath(card.id)}
-                  name={card.businessName}
+                  name={card.displayLabel}
                   initials={card.photoInitials}
-                  photoUrl={card.photoUrl}
-                  meta={`${card.categories.join(" · ") || "Local services"} · ${card.serviceArea}`}
+                  meta={`${card.serviceArea}${card.categories.length ? ` · ${card.categories.join(" • ")}` : ""}`}
                   description={card.shortDescription}
-                  extra={
-                    <p className="mt-2 text-sm font-medium text-forest-800">
-                      {formatPublicRating(card.ratingAverage, card.ratingCount) ?? "No public ratings yet"}
-                      {card.badges.length > 0 ? ` · ${card.badges.map((badge) => badge.label).join(" · ")}` : ""}
-                    </p>
-                  }
+                  extra={<p className="mt-2 text-sm font-medium text-forest-800">{cardRatingLine(card)}</p>}
                 />
               </li>
             ))}
@@ -214,10 +218,11 @@ export function FindAProPage() {
               <li key={row.slug}>
                 <DirectoryCard
                   to={demoContractorPath(row.slug)}
-                  name={row.businessName}
+                  name={row.displayLabel}
                   initials={row.photoInitials}
-                  meta={`${row.categories.join(" · ")} · ${row.serviceArea}`}
+                  meta={`${row.serviceArea} · ${row.categories.join(" • ")}`}
                   description={row.shortDescription}
+                  extra={<p className="mt-2 text-sm font-medium text-forest-800">{cardRatingLine(row, true)}</p>}
                   demo
                 />
               </li>
@@ -235,6 +240,7 @@ export function FindAProPage() {
                   meta={row.generalArea}
                   description={row.shortDescription}
                   demo
+                  cta="View example"
                 />
               </li>
             ))}
@@ -251,6 +257,7 @@ export function FindAProPage() {
                   meta={row.coverageArea}
                   description={row.shortDescription}
                   demo
+                  cta="View example"
                 />
               </li>
             ))}
@@ -267,6 +274,7 @@ export function FindAProPage() {
                   meta={`${row.category} · ${row.city}, ${row.state} ${row.zip} · ${row.timing}`}
                   description={row.shortDescription}
                   demo
+                  cta="View example"
                 />
               </li>
             ))}
@@ -351,25 +359,33 @@ export function PublicContractorPage() {
   }
 
   return (
-    <ProfileShell eyebrow="Public profile" title={card.businessName}>
-      <PhotoMark initials={card.photoInitials} src={card.photoUrl} label={card.businessName} />
+    <ProfileShell eyebrow="Public profile" title={card.displayLabel}>
+      <PhotoMark initials={card.photoInitials} label={card.displayLabel} />
       <p>{card.shortDescription}</p>
       <p>
-        <span className="font-semibold text-forest-800">Categories.</span> {card.categories.join(", ") || "Not listed"}
+        <span className="font-semibold text-forest-800">Categories.</span> {card.categories.join(" • ") || "Not listed"}
       </p>
       <p>
         <span className="font-semibold text-forest-800">Service area.</span> {card.serviceArea}
       </p>
+      {card.yearsExperience != null ? (
+        <p>
+          <span className="font-semibold text-forest-800">Experience.</span> {card.yearsExperience} years
+        </p>
+      ) : null}
       <p>
         <span className="font-semibold text-forest-800">Ratings.</span>{" "}
-        {formatPublicRating(card.ratingAverage, card.ratingCount) ?? "None yet"}
+        {formatPublicRating(card.ratingAverage, card.ratingCount) ?? "No verified PPP reviews yet"}
       </p>
       {card.badges.length > 0 ? (
         <p>
           <span className="font-semibold text-forest-800">Reviewed credentials.</span>{" "}
-          {card.badges.map((badge) => badge.label).join(" · ")} (not Priority Verified)
+          {card.badges.map((badge) => `✓ ${badge.label}`).join(" · ")} (not Priority Verified)
         </p>
       ) : null}
+      <p className="text-sm">
+        Business name and contact details are shared after you hire through Priority Property Pros. {HOMEPAGE_SIGNUP_HEADLINE}
+      </p>
     </ProfileShell>
   );
 }
@@ -385,21 +401,26 @@ export function DemoContractorPage() {
     );
   }
   return (
-    <ProfileShell eyebrow="Example contractor" title={row.businessName} demo>
+    <ProfileShell eyebrow="Example contractor" title={row.displayLabel} demo>
       <p>{row.shortDescription}</p>
       <p>
-        <span className="font-semibold text-forest-800">Categories.</span> {row.categories.join(", ")}
+        <span className="font-semibold text-forest-800">Categories.</span> {row.categories.join(" • ")}
       </p>
       <p>
         <span className="font-semibold text-forest-800">Service area.</span> {row.serviceArea}
       </p>
+      {row.yearsExperience != null ? (
+        <p>
+          <span className="font-semibold text-forest-800">Experience.</span> {row.yearsExperience} years
+        </p>
+      ) : null}
       <p>
         <span className="font-semibold text-forest-800">Ratings.</span>{" "}
-        {formatPublicRating(row.ratingAverage, row.ratingCount) ?? "None yet"}
+        {formatPublicRating(row.ratingAverage, row.ratingCount, { demo: true }) ?? "No example reviews yet"}
       </p>
       <p>
         <span className="font-semibold text-forest-800">Example badges.</span>{" "}
-        {row.badges.map((badge) => badge.label).join(" · ")}
+        {row.badges.map((badge) => `✓ ${badge.label}`).join(" · ")}
       </p>
     </ProfileShell>
   );

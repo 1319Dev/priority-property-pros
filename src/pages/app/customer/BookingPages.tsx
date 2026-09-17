@@ -92,7 +92,7 @@ export function CustomerBookingDetailPage() {
     const project = await fetchProject(row.project_id).catch(() => null);
     setTitle(project?.title ?? "Booking");
     const pro = await fetchPublicContractor(row.contractor_profile_id).catch(() => null);
-    setContractor(pro?.business_name ?? "Local pro");
+    setContractor(pro?.display_label ?? "Local pro");
     setOrders((await fetchChangeOrders(bookingId)) as ChangeOrder[]);
     setReview(await fetchBookingReview(bookingId));
   }

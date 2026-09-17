@@ -22,6 +22,7 @@ import {
   upsertPrivateLocation,
   upsertProjectAnswer,
 } from "../../../lib/marketplace/api";
+import { PRE_HIRE_CONTACT_HINT } from "../../../lib/marketplace/antiCircumvention";
 import { canPostProject, computeCompleteness } from "../../../lib/marketplace/completeness";
 import { centsToDollarString, dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
 import {
@@ -289,6 +290,7 @@ export function ProjectWizardPage() {
               onChange={(e) => setProject({ ...project, description: e.target.value })}
               onBlur={() => void savePatch({ description: project.description })}
             />
+            <span className="mt-1.5 block text-sm text-ink-500">{PRE_HIRE_CONTACT_HINT}</span>
           </label>
         </div>
       ) : null}

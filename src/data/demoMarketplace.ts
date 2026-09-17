@@ -2,6 +2,7 @@
  * Fictional EXAMPLE / DEMO marketplace content.
  * These are not live accounts. They must stay labeled so they cannot be
  * mistaken for real contractors, homeowners, verifiers, or jobs.
+ * Demo contractor cards use anonymized trade labels, not googable business names.
  */
 
 export const DEMO_LABEL = "EXAMPLE / DEMO";
@@ -9,21 +10,21 @@ export const DEMO_BANNER =
   "These are labeled examples so you can see how the marketplace looks. They are not real people, businesses, or jobs.";
 
 export type DemoBadge = {
-  kind: "LICENSE" | "INSURANCE" | "OTHER";
+  kind: "LICENSE" | "INSURANCE" | "OTHER" | "APPROVED";
   label: string;
 };
 
 export type DemoContractor = {
   slug: string;
-  businessName: string;
+  displayLabel: string;
   photoInitials: string;
   categories: string[];
   serviceArea: string;
+  yearsExperience: number | null;
   ratingAverage: number | null;
   ratingCount: number;
   badges: DemoBadge[];
   shortDescription: string;
-  headline: string;
 };
 
 export type DemoHomeowner = {
@@ -55,46 +56,50 @@ export type DemoProject = {
 
 export const DEMO_CONTRACTORS: DemoContractor[] = [
   {
-    slug: "example-cedar-ridge-fence",
-    businessName: "Example Cedar Ridge Fence Co.",
-    photoInitials: "CR",
+    slug: "example-fence-pro",
+    displayLabel: "Example Fence Pro",
+    photoInitials: "FP",
     categories: ["Fence Repair", "Deck Repair"],
-    serviceArea: "Cedar Park / Leander area",
+    serviceArea: "Cedar Park / Leander Area",
+    yearsExperience: 11,
     ratingAverage: 4.8,
     ratingCount: 12,
     badges: [
-      { kind: "LICENSE", label: "Example license reviewed" },
-      { kind: "INSURANCE", label: "Example insurance reviewed" },
+      { kind: "APPROVED", label: "Approved Pro" },
+      { kind: "LICENSE", label: "License reviewed" },
+      { kind: "INSURANCE", label: "Insurance reviewed" },
     ],
-    shortDescription:
-      "Example independent fence shop used to show a public pro card. Fictional — not a real business.",
-    headline: "Example cedar fences and gate repairs",
+    shortDescription: "Example independent fence work used to show a public pro card. Fictional — not a real business.",
   },
   {
-    slug: "demo-hill-country-handyman",
-    businessName: "Demo Hill Country Handyman",
-    photoInitials: "HH",
+    slug: "example-handyman-pro",
+    displayLabel: "Example Handyman Pro",
+    photoInitials: "HP",
     categories: ["Handyman", "TV Mounting", "Drywall Repair"],
-    serviceArea: "Round Rock / Pflugerville area",
+    serviceArea: "Round Rock / Pflugerville Area",
+    yearsExperience: 8,
     ratingAverage: 4.6,
     ratingCount: 9,
-    badges: [{ kind: "INSURANCE", label: "Example insurance reviewed" }],
-    shortDescription:
-      "Demo handyman profile so visitors can browse a sample card. Fictional — not a real contractor.",
-    headline: "Demo small fixes around the house",
+    badges: [
+      { kind: "APPROVED", label: "Approved Pro" },
+      { kind: "INSURANCE", label: "Insurance reviewed" },
+    ],
+    shortDescription: "Demo handyman profile so visitors can browse a sample card. Fictional — not a real contractor.",
   },
   {
-    slug: "example-oak-stone-care",
-    businessName: "Example Oak & Stone Care",
-    photoInitials: "OS",
+    slug: "example-lawn-care-pro",
+    displayLabel: "Example Lawn Care Pro",
+    photoInitials: "LP",
     categories: ["Lawn Care", "Pressure Washing", "Property Cleanup"],
-    serviceArea: "Georgetown / North Austin area",
+    serviceArea: "Georgetown / North Austin Area",
+    yearsExperience: 6,
     ratingAverage: null,
     ratingCount: 0,
-    badges: [{ kind: "OTHER", label: "Example credential reviewed" }],
-    shortDescription:
-      "Example outdoor-care business with no ratings yet, so empty ratings stay honest. Fictional.",
-    headline: "Example lawn, wash, and lot tidy",
+    badges: [
+      { kind: "APPROVED", label: "Approved Pro" },
+      { kind: "OTHER", label: "Credential reviewed" },
+    ],
+    shortDescription: "Example outdoor-care card with no ratings yet, so empty ratings stay honest. Fictional.",
   },
 ];
 
@@ -103,7 +108,7 @@ export const DEMO_HOMEOWNERS: DemoHomeowner[] = [
     slug: "example-jordan-p",
     displayName: "Example homeowner Jordan P.",
     photoInitials: "JP",
-    generalArea: "Cedar Park, TX",
+    generalArea: "Cedar Park Area",
     shortDescription:
       "Example property owner who posts a project and compares estimates. Fictional person — no real contact details.",
   },
@@ -111,9 +116,8 @@ export const DEMO_HOMEOWNERS: DemoHomeowner[] = [
     slug: "demo-riley-m",
     displayName: "Demo property owner Riley M.",
     photoInitials: "RM",
-    generalArea: "Round Rock, TX",
-    shortDescription:
-      "Demo landlord profile for the public browse. Fictional — not a real customer account.",
+    generalArea: "Round Rock Area",
+    shortDescription: "Demo landlord profile for the public browse. Fictional — not a real customer account.",
   },
 ];
 
@@ -123,16 +127,14 @@ export const DEMO_VERIFIERS: DemoVerifier[] = [
     displayName: "Example verifier Morgan Lee",
     photoInitials: "ML",
     coverageArea: "Central Texas (example)",
-    shortDescription:
-      "Example independent completion verifier. Priority Verified is not live. Fictional person.",
+    shortDescription: "Example independent completion verifier. Priority Verified is not live. Fictional person.",
   },
   {
     slug: "demo-casey-nguyen",
     displayName: "Demo verifier Casey Nguyen",
     photoInitials: "CN",
     coverageArea: "Austin suburbs (example)",
-    shortDescription:
-      "Demo verifier card so the browse can show the role. Not a real verifier and not Priority Verified.",
+    shortDescription: "Demo verifier card so the browse can show the role. Not a real verifier and not Priority Verified.",
   },
 ];
 
@@ -145,8 +147,7 @@ export const DEMO_PROJECTS: DemoProject[] = [
     state: "TX",
     zip: "78613",
     timing: "Within a week",
-    shortDescription:
-      "Sample posted job with city and ZIP only. Fictional project — no exact address or contact details.",
+    shortDescription: "Sample posted job with city and ZIP only. Fictional project — no street, phone, or customer name.",
   },
   {
     slug: "demo-living-room-tv",
@@ -156,8 +157,7 @@ export const DEMO_PROJECTS: DemoProject[] = [
     state: "TX",
     zip: "78681",
     timing: "As soon as possible",
-    shortDescription:
-      "Demo project used to show how a public sample looks. Not a real job and not someone else's private record.",
+    shortDescription: "Demo project used to show how a public sample looks. Not a real job and not someone else's private record.",
   },
   {
     slug: "example-garage-junk-haul",
@@ -167,8 +167,7 @@ export const DEMO_PROJECTS: DemoProject[] = [
     state: "TX",
     zip: "78626",
     timing: "Flexible",
-    shortDescription:
-      "Example cleanup job with a general area only. Fictional — no exact address or owner identity.",
+    shortDescription: "Example cleanup job with a general area only. Fictional — no exact address or owner identity.",
   },
 ];
 

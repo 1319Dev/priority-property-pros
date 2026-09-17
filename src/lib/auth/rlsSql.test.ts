@@ -311,14 +311,32 @@ describe("Public contractor directory SQL", () => {
     expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.list_public_directory_contractors\(\) TO anon, authenticated/);
     expect(sql).toMatch(/CONSTRAINT bookings_payments_not_live CHECK \(payments_live = false\)/);
     expect(sql).not.toMatch(/payments_live',\s*1/);
+    expect(sql).not.toMatch(/charges_live',\s*1/);
   });
 
-  it("does not expose email, phone, or street through the directory RPC", () => {
-    const rpc = sql.slice(sql.indexOf("list_public_directory_contractors"));
+  it("returns an anonymized projection without identifying fields", () => {
+    const start = sql.lastIndexOf("CREATE OR REPLACE FUNCTION public.list_public_directory_contractors()");
+    const end = sql.indexOf("CREATE OR REPLACE FUNCTION public.get_public_directory_contractor", start);
+    const rpc = sql.slice(start, end === -1 ? start + 8000 : end);
+    expect(rpc).toMatch(/display_label text/);
+    expect(rpc).not.toMatch(/business_name/);
+    expect(rpc).not.toMatch(/website_url/);
+    expect(rpc).not.toMatch(/photo_url|avatar_url/);
     expect(rpc).not.toMatch(/p\.email/);
     expect(rpc).not.toMatch(/p\.phone/);
     expect(rpc).not.toMatch(/street_line/);
+    expect(rpc).not.toMatch(/license_number/);
     expect(sql).toMatch(/REVOKE ALL ON TABLE public\.profiles FROM anon/);
     expect(sql).toMatch(/REVOKE ALL ON TABLE public\.projects FROM anon/);
+    expect(sql).toMatch(/REVOKE ALL ON TABLE public\.contractor_profiles FROM anon/);
+  });
+
+  it("blocks obvious pre-hire contact in project, estimate, and bio text", () => {
+    expect(sql).toMatch(/FUNCTION public\.text_contains_pre_hire_contact/);
+    expect(sql).toMatch(/FUNCTION public\.assert_no_pre_hire_contact/);
+    expect(sql).toMatch(/trg_reject_pre_hire_contact_projects/);
+    expect(sql).toMatch(/trg_reject_pre_hire_contact_estimates/);
+    expect(sql).toMatch(/trg_reject_pre_hire_contact_contractor_profiles/);
+    expect(sql).toMatch(/contact information is shared after you''re connected through Priority Property Pros/);
   });
 });

@@ -4,5 +4,6 @@ export { computeMarketplaceFee, ORIGINAL_FEE_BRACKETS } from "./feeEngine";
 export { matchContractors, contractorEligibleForProject, locationMatches, haversineMiles } from "./matching";
 export { nextOpportunitySlot, claimSlotExclusive } from "./slots";
 export { canReadExactAddress, opportunityVisibleToCustomer, estimateVisibleToCustomer, canSelfVerifyCredential, sanitizeUploadName } from "./privacy";
+export { assertNoPreHireContact, PRE_HIRE_CONTACT_MESSAGE } from "./antiCircumvention";
 export { bookingUnlocksContact, paymentsComingSoonCopy } from "./bookings";
 export * from "./types";

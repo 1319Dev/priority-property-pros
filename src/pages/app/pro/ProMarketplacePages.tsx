@@ -7,6 +7,7 @@ import { ErrorState, LoadingState } from "../../../components/ui/PageState";
 import { HumanStatus, StatusBanner } from "../../../components/ui/StatusBanner";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { displayName } from "../../../lib/auth/roles";
+import { PRE_HIRE_CONTACT_HINT } from "../../../lib/marketplace/antiCircumvention";
 import { useAuth } from "../../../lib/auth/useAuth";
 import {
   acceptOpportunity,
@@ -171,15 +172,22 @@ export function ProOnboardingPage() {
     <div className="mx-auto max-w-xl space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Contractor onboarding</h1>
       <p className="text-sm text-ink-700">
-        Customers see a public card. License numbers and documents stay private. You cannot badge yourself as verified.
+        Customers see an anonymized public card (trade and general area). Business name, logos, license numbers, and
+        contact stay private until a homeowner hires you through Priority Property Pros.
         {` ${PRO_DASHBOARD_PRICING_NOTE}`}
       </p>
       <FormError message={error} />
       <TextInput label="Business name" value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
-      <TextInput label="Headline" value={headline} onChange={(e) => setHeadline(e.target.value)} />
+      <TextInput
+        label="Headline"
+        hint={PRE_HIRE_CONTACT_HINT}
+        value={headline}
+        onChange={(e) => setHeadline(e.target.value)}
+      />
       <label className="block">
         <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Bio</span>
         <textarea className="w-full rounded-2xl border border-forest-800/15 px-4 py-3" rows={4} value={bio} onChange={(e) => setBio(e.target.value)} />
+        <span className="mt-1.5 block text-sm text-ink-500">{PRE_HIRE_CONTACT_HINT}</span>
       </label>
       <TextInput label="Years experience" inputMode="numeric" value={years} onChange={(e) => setYears(e.target.value)} />
       <label className="flex items-center gap-2 text-sm">
@@ -724,6 +732,7 @@ export function EstimateBuilderPage() {
           onChange={(e) => setNotes(e.target.value)}
           onBlur={() => saveDetails({ notes })}
         />
+        <span className="mt-1.5 block text-sm text-ink-500">{PRE_HIRE_CONTACT_HINT}</span>
       </label>
       <div className="sticky bottom-24 z-20 flex gap-3 bg-cream-50/95 py-3 pb-safe lg:bottom-4">
         <Button

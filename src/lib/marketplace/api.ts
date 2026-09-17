@@ -1,5 +1,6 @@
 import { getSupabaseClient } from "../supabase/client";
 import type { Database, Json } from "../supabase/database.types";
+import { assertNoPreHireContact, assertNoPreHireContactIn } from "./antiCircumvention";
 import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
 import { reusableEmptyDraft } from "./flows";
 import type {
@@ -110,6 +111,8 @@ export async function updateProject(
   id: string,
   patch: Database["public"]["Tables"]["projects"]["Update"] & { draft_step?: number },
 ): Promise<Project> {
+  if (typeof patch.title === "string") assertNoPreHireContact(patch.title);
+  if (typeof patch.description === "string") assertNoPreHireContact(patch.description);
   const { data, error } = await client().from("projects").update(patch).eq("id", id).select().single();
   if (error || !data) throw new Error(asError(error, "Could not save the project."));
   return data as Project;
@@ -156,6 +159,7 @@ export async function fetchProjectAnswers(projectId: string) {
 }
 
 export async function upsertProjectAnswer(projectId: string, questionId: string, answerText: string) {
+  assertNoPreHireContact(answerText);
   const { error } = await client().from("project_answers").upsert(
     { project_id: projectId, question_id: questionId, answer_text: answerText },
     { onConflict: "project_id,question_id" },
@@ -206,6 +210,8 @@ export async function postProject(projectId: string): Promise<RpcJson> {
 }
 
 export async function updateCustomerProject(projectId: string, patch: Record<string, unknown>): Promise<RpcJson> {
+  if (typeof patch.title === "string") assertNoPreHireContact(patch.title);
+  if (typeof patch.description === "string") assertNoPreHireContact(patch.description);
   const { data, error } = await client().rpc("update_customer_project", {
     p_project_id: projectId,
     p_patch: patch as Json,
@@ -466,6 +472,7 @@ export async function updateContractorProfile(
   id: string,
   patch: Database["public"]["Tables"]["contractor_profiles"]["Update"],
 ) {
+  assertNoPreHireContactIn(patch.business_name, patch.headline, patch.bio);
   const { error } = await client().from("contractor_profiles").update(patch).eq("id", id);
   if (error) throw new Error(asError(error, "Could not save your profile."));
 }
@@ -614,11 +621,13 @@ export async function askEstimateQuestion(row: {
   asked_by_contractor_profile_id: string;
   prompt: string;
 }) {
+  assertNoPreHireContact(row.prompt);
   const { error } = await client().from("estimate_questions").insert(row);
   if (error) throw new Error(asError(error, "Could not send the question."));
 }
 
 export async function answerEstimateQuestion(id: string, answerText: string) {
+  assertNoPreHireContact(answerText);
   const { error } = await client().from("estimate_questions").update({ answer_text: answerText }).eq("id", id);
   if (error) throw new Error(asError(error, "Could not save the answer."));
 }
@@ -687,6 +696,7 @@ export async function updateEstimateDetails(
   id: string,
   patch: Database["public"]["Tables"]["estimates"]["Update"],
 ) {
+  if (typeof patch.notes === "string") assertNoPreHireContact(patch.notes);
   const { error } = await client().from("estimates").update(patch).eq("id", id);
   if (error) throw new Error(asError(error, "Could not save the estimate."));
 }
@@ -704,16 +714,15 @@ export async function fetchProjectEstimates(projectId: string) {
 
 export type PublicDirectoryRpcRow = {
   id: string;
-  business_name: string;
-  photo_url: string | null;
-  headline: string | null;
-  bio: string | null;
-  service_area: string | null;
+  display_label: string;
   primary_trade: string | null;
   categories: string[] | null;
+  service_area: string | null;
+  years_experience: number | null;
   rating_average: number | null;
   rating_count: number | null;
   badges: Json;
+  short_description: string | null;
 };
 
 function parseDirectoryBadges(value: Json | null | undefined): Array<{ kind: string; label: string }> {

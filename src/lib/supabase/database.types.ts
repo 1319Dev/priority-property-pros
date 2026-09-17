@@ -690,16 +690,13 @@ export type Database = {
       contractor_public_profiles: {
         Row: {
           id: string;
-          business_name: string;
-          headline: string | null;
+          display_label: string;
           primary_trade: string | null;
           years_experience: number | null;
-          bio: string | null;
-          website_url: string | null;
+          short_description: string | null;
           accepting_work: boolean;
           created_at: string;
           service_area: string | null;
-          photo_url: string | null;
         };
         Insert: never;
         Update: never;
@@ -734,10 +731,6 @@ export type Database = {
         Row: {
           id: string;
           contractor_profile_id: string;
-          mode: ServiceAreaMode;
-          center_zip: string | null;
-          radius_miles: number | null;
-          zip_codes: string[] | null;
           label: string | null;
         };
         Insert: never;
@@ -748,9 +741,6 @@ export type Database = {
         Row: {
           id: string;
           contractor_profile_id: string;
-          title: string;
-          description: string | null;
-          storage_path: string;
           sort_order: number;
         };
         Insert: never;
@@ -809,7 +799,6 @@ export type Database = {
       cancel_customer_project: { Args: { p_project_id: string; p_confirm?: boolean }; Returns: Json };
       project_has_participation: { Args: { p_project_id: string }; Returns: boolean };
       contractor_can_read_project: { Args: { p_project_id: string }; Returns: boolean };
-<<<<<<< HEAD
       list_contractor_approvals: { Args: { p_tab?: string }; Returns: Json };
       get_contractor_approval: { Args: { p_contractor_profile_id: string }; Returns: Json };
       count_pending_contractor_approvals: { Args: Record<string, never>; Returns: number };
@@ -821,40 +810,39 @@ export type Database = {
       admin_request_contractor_info: {
         Args: { p_contractor_profile_id: string; p_message: string };
         Returns: Json;
-=======
+      };
       list_public_directory_contractors: {
         Args: Record<string, never>;
         Returns: {
           id: string;
-          business_name: string;
-          photo_url: string | null;
-          headline: string | null;
-          bio: string | null;
-          service_area: string | null;
+          display_label: string;
           primary_trade: string | null;
           categories: string[] | null;
+          service_area: string | null;
+          years_experience: number | null;
           rating_average: number | null;
           rating_count: number;
           badges: Json;
+          short_description: string | null;
         }[];
       };
       get_public_directory_contractor: {
         Args: { p_id: string };
         Returns: {
           id: string;
-          business_name: string;
-          photo_url: string | null;
-          headline: string | null;
-          bio: string | null;
-          service_area: string | null;
+          display_label: string;
           primary_trade: string | null;
           categories: string[] | null;
+          service_area: string | null;
+          years_experience: number | null;
           rating_average: number | null;
           rating_count: number;
           badges: Json;
+          short_description: string | null;
         }[];
->>>>>>> 107c676 (Add public Find a Pro directory with labeled demos.)
       };
+      text_contains_pre_hire_contact: { Args: { p_text?: string | null }; Returns: boolean };
+      assert_no_pre_hire_contact: { Args: { p_text?: string | null }; Returns: undefined };
     };
     Enums: {
       account_type: AccountType;

@@ -481,9 +481,12 @@ export function CompareEstimatesPage() {
           const outOfDate = estimateNeedsNewSubmission(estimate.status as "SUPERSEDED" | "EXPIRED" | "SUBMITTED");
           return (
             <article key={estimate.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 p-5">
-              <h2 className="font-display text-2xl text-forest-800">{contractor?.business_name || "Local pro"}</h2>
+              <h2 className="font-display text-2xl text-forest-800">{contractor?.display_label || "Local pro"}</h2>
               <p className="text-sm text-ink-500">
                 {outOfDate ? "Needs a new estimate" : estimate.status === "ACCEPTED" ? "Selected" : "Submitted"}
+              </p>
+              <p className="mt-1 text-xs text-ink-500">
+                Full business identity is shared after you hire through Priority Property Pros.
               </p>
               {outOfDate ? (
                 <StatusBanner

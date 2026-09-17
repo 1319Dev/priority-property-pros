@@ -134,14 +134,18 @@ describe("Phase 3 marketplace surfaces", () => {
     renderApp("/find-a-pro");
     expect(screen.getByRole("heading", { name: /browse local independents/i })).toBeInTheDocument();
     expect(screen.getAllByText(/example \/ demo/i).length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: /example cedar ridge fence/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /example fence pro/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /example handyman pro/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /example homeowner jordan/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /example verifier morgan/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /example: cedar fence repair/i })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /post a project/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /get estimates/i }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/\$9\.99 one-time signup/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/join priority property pros for a one-time \$9\.99 signup fee/i).length).toBeGreaterThan(
+      0,
+    );
     expect(screen.queryByText(/free signup/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/example cedar ridge fence/i)).not.toBeInTheDocument();
   });
 });
 
