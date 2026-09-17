@@ -49,6 +49,7 @@ import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type EstimateItemKind, 
 import { OPPORTUNITY_STATUS_LABELS, opportunityNextActions } from "../../../lib/marketplace/statusLabels";
 import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import { useToast } from "../../../hooks/useToast";
+import { PRO_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
 
 export function ProHomePage() {
   const { profile } = useAuth();
@@ -61,6 +62,7 @@ export function ProHomePage() {
         <p className="mt-3 max-w-xl text-ink-700">
           Finish onboarding, then respond to nearby jobs. You cannot approve or verify yourself. At most three
           contractors can participate on a job. Exact address unlocks only after a booking is confirmed.
+          {` ${PRO_DASHBOARD_PRICING_NOTE}`}
         </p>
       </header>
       <div className="flex flex-wrap gap-3">
@@ -170,6 +172,7 @@ export function ProOnboardingPage() {
       <h1 className="font-display text-4xl font-semibold text-forest-800">Contractor onboarding</h1>
       <p className="text-sm text-ink-700">
         Customers see a public card. License numbers and documents stay private. You cannot badge yourself as verified.
+        {` ${PRO_DASHBOARD_PRICING_NOTE}`}
       </p>
       <FormError message={error} />
       <TextInput label="Business name" value={businessName} onChange={(e) => setBusinessName(e.target.value)} />

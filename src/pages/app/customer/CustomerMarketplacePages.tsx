@@ -27,6 +27,7 @@ import {
 import { computeMarketplaceFee } from "../../../lib/marketplace/feeEngine";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
+import { CUSTOMER_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
 import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type EstimateItemKind, type Project } from "../../../lib/marketplace/types";
 import { comparisonDisplayOrder } from "../../../lib/marketplace/flows";
 import { planDeleteOrCancel } from "../../../lib/marketplace/lifecycle";
@@ -82,6 +83,7 @@ export function CustomerHomePage() {
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Hello, {name}.</h1>
         <p className="mt-3 max-w-xl text-ink-700">
           Post a project, compare estimates, and choose one local pro. Selecting a pro starts a booking.
+          {` ${CUSTOMER_DASHBOARD_PRICING_NOTE}`}
           {` ${paymentsComingSoonCopy()}`}
         </p>
       </header>
@@ -91,7 +93,10 @@ export function CustomerHomePage() {
       {error ? <ErrorState message={error} /> : null}
       {loading ? <LoadingState /> : null}
       {!loading && recent.length === 0 ? (
-        <EmptyState title="No projects yet" body="Start a draft when you know what needs doing. Only you will see it." />
+        <EmptyState
+          title="No projects yet"
+          body="Start a draft when you know what needs doing. Only you will see it. There is no monthly homeowner subscription and no PPP marketplace fee when you hire."
+        />
       ) : null}
       <ul className="space-y-3">
         {recent.map((project) => {
