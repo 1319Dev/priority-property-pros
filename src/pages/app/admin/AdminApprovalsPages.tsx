@@ -16,6 +16,7 @@ import {
   formatServiceAreaSummary,
   onboardingStatusLabel,
   pendingApprovalCount,
+  identityReviewCount,
   type ApprovalTab,
   type ContractorApprovalItem,
 } from "../../../lib/admin/approvals";
@@ -34,6 +35,7 @@ const TAB_LABELS: Record<ApprovalTab, string> = {
   PENDING: "Pending",
   APPROVED: "Approved",
   REJECTED: "Rejected",
+  IDENTITY_REVIEW: "Re-verify",
   ALL: "All",
 };
 
@@ -67,6 +69,7 @@ export function AdminApprovalsPage() {
       PENDING: pendingApprovalCount(items),
       APPROVED: filterApprovalQueue(items, "APPROVED").length,
       REJECTED: filterApprovalQueue(items, "REJECTED").length,
+      IDENTITY_REVIEW: identityReviewCount(items),
       ALL: items.length,
     }),
     [items],
@@ -166,6 +169,7 @@ function ApprovalCard({ item }: { item: ContractorApprovalItem }) {
         <div className="flex flex-wrap gap-2">
           <StatusChip label={approvalStatusLabel(item.approval_status)} />
           <StatusChip label={accountStatusLabel(item.account_status)} />
+          {item.identity_review_required ? <StatusChip label="Re-verify credentials" /> : null}
         </div>
       </div>
       <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
@@ -427,12 +431,25 @@ export function ApprovalDetailView({
                 <p className="text-ink-700">
                   {cred.status.replaceAll("_", " ")}
                   {cred.expires_at ? ` · expires ${formatApprovalDate(cred.expires_at)}` : ""}
+                  {cred.status === "VERIFIED" ? " · verified badge shown" : " · verified badge hidden"}
                 </p>
               </li>
             ))}
           </ul>
         )}
       </section>
+      {item.identity_review_required ? (
+        <section className="rounded-3xl border border-gold-500/40 bg-gold-500/10 px-5 py-4">
+          <h2 className="font-display text-2xl font-semibold text-forest-800">Credential re-verification</h2>
+          <p className="mt-2 text-sm text-ink-700">
+            This contractor changed previously verified license, insurance, or credential info. Review those
+            documents. Approval and Active status were not stripped.
+          </p>
+          <p className="mt-2 text-xs uppercase tracking-[0.16em] text-gold-700">
+            {formatApprovalDate(item.identity_review_at)} · {(item.identity_review_fields ?? []).join(", ") || "identity fields"}
+          </p>
+        </section>
+      ) : null}
       {item.info_request_message ? (
         <section className="rounded-3xl border border-gold-500/40 bg-gold-500/10 px-5 py-4">
           <h2 className="font-display text-2xl font-semibold text-forest-800">More information requested</h2>

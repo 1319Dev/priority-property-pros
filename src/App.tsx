@@ -34,7 +34,7 @@ import {
   CustomerMessagesPage,
   CustomerProjectsPage,
 } from "./pages/app/CustomerPages";
-import { CompareEstimatesPage, CustomerProjectDetailPage } from "./pages/app/customer/CustomerMarketplacePages";
+import { CompareEstimatesPage, CustomerEstimateDetailPage, CustomerProjectDetailPage } from "./pages/app/customer/CustomerMarketplacePages";
 import { CustomerBookingDetailPage, CustomerBookingsPage, HireAgainPage } from "./pages/app/customer/BookingPages";
 import { ProjectWizardPage } from "./pages/app/customer/ProjectWizardPage";
 import { ProjectEditPage } from "./pages/app/customer/ProjectEditPage";
@@ -45,6 +45,8 @@ import {
   OpportunityDetailPage,
   ProOnboardingPage,
 } from "./pages/app/pro/ProMarketplacePages";
+import { ProProfilePage } from "./pages/app/pro/ProProfilePages";
+import { ProEstimatesPage } from "./pages/app/pro/ProEstimatesPages";
 import { ProBookingDetailPage, ProBookingsPage } from "./pages/app/pro/ProBookingPages";
 import { VerifierHomePage, VerifierMessagesPage, VerifierVisitsPage } from "./pages/app/VerifierPages";
 import {
@@ -91,6 +93,7 @@ export default function App() {
             <Route path="projects/:projectId/wizard" element={<ProjectWizardPage />} />
             <Route path="projects/:projectId/edit" element={<ProjectEditPage />} />
             <Route path="projects/:projectId/compare" element={<CompareEstimatesPage />} />
+            <Route path="projects/:projectId/estimates/:estimateId" element={<CustomerEstimateDetailPage />} />
             <Route path="projects/:projectId" element={<CustomerProjectDetailPage />} />
             <Route path="bookings" element={<CustomerBookingsPage />} />
             <Route path="bookings/:bookingId" element={<CustomerBookingDetailPage />} />
@@ -108,7 +111,9 @@ export default function App() {
             <Route path="opportunities/:opportunityId" element={<OpportunityDetailPage />} />
             <Route path="bookings" element={<ProBookingsPage />} />
             <Route path="bookings/:bookingId" element={<ProBookingDetailPage />} />
+            <Route path="estimates" element={<ProEstimatesPage />} />
             <Route path="onboarding" element={<ProOnboardingPage />} />
+            <Route path="profile" element={<ProProfilePage />} />
             <Route path="messages" element={<ProMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
           </Route>

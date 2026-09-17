@@ -32,20 +32,21 @@ describe("Phase 4A authorization mirrors", () => {
         selectedContractorProfileId: "pro-1",
       }),
     ).toBe(false);
-    expect(canReadExactAddress(otherCustomer, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED")).toBe(
-      false,
-    );
+    expect(
+      canReadExactAddress(otherCustomer, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED", "UNLOCKED"),
+    ).toBe(false);
   });
 
   it("does not let unrelated contractors see a booking or contact", () => {
     expect(
-      canReadExactAddress(stranger, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED"),
+      canReadExactAddress(stranger, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED", "UNLOCKED"),
     ).toBe(false);
     expect(
       canReadCustomerContact(stranger, "cust", {
         bookingStatus: "CONFIRMED",
         contractorProfileId: "pro-9",
         selectedContractorProfileId: "pro-1",
+        contactAccess: "UNLOCKED",
       }),
     ).toBe(false);
   });
@@ -63,6 +64,7 @@ describe("Phase 4A authorization mirrors", () => {
 
   it("keeps pending bookings from unlocking contact or verified reviews", () => {
     expect(bookingUnlocksContact("PENDING")).toBe(false);
+    expect(bookingUnlocksContact("CONFIRMED")).toBe(false);
     expect(
       canSubmitVerifiedReview({
         bookingStatus: "PENDING",

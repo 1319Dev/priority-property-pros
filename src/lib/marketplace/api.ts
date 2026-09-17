@@ -1,9 +1,10 @@
 import { getSupabaseClient } from "../supabase/client";
 import type { Database, Json } from "../supabase/database.types";
-import { assertNoPreHireContact, assertNoPreHireContactIn } from "./antiCircumvention";
 import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
 import { reusableEmptyDraft } from "./flows";
+import { detectContactLeak } from "./contactLeak";
 import type {
+  BookingContactAccess,
   Project,
   ProjectPrivateLocation,
   QuestionKind,
@@ -23,6 +24,11 @@ function client() {
 
 function asError(error: { message: string } | null, fallback: string): string {
   return error?.message || fallback;
+}
+
+function rejectContactLeak(text: string | null | undefined) {
+  const leak = detectContactLeak(text);
+  if (leak.blocked) throw new Error(leak.message ?? "Contact info is shared after connection through Priority Property Pros.");
 }
 
 export function parseQuestionOptions(value: Json | string[] | null | undefined): string[] {
@@ -111,8 +117,8 @@ export async function updateProject(
   id: string,
   patch: Database["public"]["Tables"]["projects"]["Update"] & { draft_step?: number },
 ): Promise<Project> {
-  if (typeof patch.title === "string") assertNoPreHireContact(patch.title);
-  if (typeof patch.description === "string") assertNoPreHireContact(patch.description);
+  if (patch.title !== undefined) rejectContactLeak(patch.title);
+  if (patch.description !== undefined) rejectContactLeak(patch.description);
   const { data, error } = await client().from("projects").update(patch).eq("id", id).select().single();
   if (error || !data) throw new Error(asError(error, "Could not save the project."));
   return data as Project;
@@ -159,7 +165,7 @@ export async function fetchProjectAnswers(projectId: string) {
 }
 
 export async function upsertProjectAnswer(projectId: string, questionId: string, answerText: string) {
-  assertNoPreHireContact(answerText);
+  rejectContactLeak(answerText);
   const { error } = await client().from("project_answers").upsert(
     { project_id: projectId, question_id: questionId, answer_text: answerText },
     { onConflict: "project_id,question_id" },
@@ -210,8 +216,8 @@ export async function postProject(projectId: string): Promise<RpcJson> {
 }
 
 export async function updateCustomerProject(projectId: string, patch: Record<string, unknown>): Promise<RpcJson> {
-  if (typeof patch.title === "string") assertNoPreHireContact(patch.title);
-  if (typeof patch.description === "string") assertNoPreHireContact(patch.description);
+  if (typeof patch.title === "string") rejectContactLeak(patch.title);
+  if (typeof patch.description === "string") rejectContactLeak(patch.description);
   const { data, error } = await client().rpc("update_customer_project", {
     p_project_id: projectId,
     p_patch: patch as Json,
@@ -270,6 +276,70 @@ export async function selectEstimate(projectId: string, estimateId: string): Pro
     p_estimate_id: estimateId,
   });
   if (error) throw new Error(asError(error, "Could not select this contractor."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function markEstimateViewed(estimateId: string, projectId?: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("mark_estimate_viewed", {
+    p_estimate_id: estimateId,
+    p_project_id: projectId ?? null,
+  });
+  if (error) throw new Error(asError(error, "Could not open the estimate."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function declineEstimate(estimateId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("decline_estimate", { p_estimate_id: estimateId });
+  if (error) throw new Error(asError(error, "Could not decline this estimate."));
+  return (data ?? {}) as RpcJson;
+}
+
+export type ContractorEstimateListItem = {
+  id: string;
+  project_id: string;
+  opportunity_id: string;
+  project_title: string;
+  status: string;
+  total_cents: number;
+  submitted_at: string | null;
+  first_viewed_at: string | null;
+  last_viewed_at: string | null;
+  view_count: number;
+  accepted_at: string | null;
+  declined_at: string | null;
+  decline_reason: string | null;
+  withdrawn_at: string | null;
+  created_at: string;
+};
+
+export async function fetchMyEstimates(): Promise<ContractorEstimateListItem[]> {
+  const { data, error } = await client().rpc("list_my_estimates");
+  if (error) throw new Error(asError(error, "Could not load your estimates."));
+  return Array.isArray(data) ? (data as ContractorEstimateListItem[]) : [];
+}
+
+export type InAppNotificationRow = {
+  id: string;
+  kind: string;
+  title: string;
+  body: string;
+  entity_type: string;
+  entity_id: string | null;
+  payload: Record<string, unknown>;
+  channel: "in_app";
+  read_at: string | null;
+  created_at: string;
+};
+
+export async function fetchMyNotifications(): Promise<InAppNotificationRow[]> {
+  const { data, error } = await client().rpc("list_my_notifications");
+  if (error) throw new Error(asError(error, "Could not load notifications."));
+  return Array.isArray(data) ? (data as InAppNotificationRow[]) : [];
+}
+
+export async function markNotificationRead(id: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("mark_notification_read", { p_notification_id: id });
+  if (error) throw new Error(asError(error, "Could not mark the notification read."));
   return (data ?? {}) as RpcJson;
 }
 
@@ -402,6 +472,36 @@ export async function fetchBookingJobContact(bookingId: string): Promise<RpcJson
   return (data ?? {}) as RpcJson;
 }
 
+export async function fetchBookingContactAccess(bookingId: string): Promise<BookingContactAccess | null> {
+  const { data, error } = await client()
+    .from("booking_contact_access")
+    .select(
+      "booking_id, status, granted_at, granted_by, grant_reason, grant_source, revoked_at, created_at, updated_at",
+    )
+    .eq("booking_id", bookingId)
+    .maybeSingle();
+  if (error) throw new Error(asError(error, "Could not load contact access."));
+  return (data as BookingContactAccess | null) ?? null;
+}
+
+export async function adminGrantBookingContactAccess(bookingId: string, reason: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("admin_grant_booking_contact_access", {
+    p_booking_id: bookingId,
+    p_reason: reason,
+  });
+  if (error) throw new Error(asError(error, "Could not grant contact access."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function adminRevokeBookingContactAccess(bookingId: string, reason: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("admin_revoke_booking_contact_access", {
+    p_booking_id: bookingId,
+    p_reason: reason,
+  });
+  if (error) throw new Error(asError(error, "Could not revoke contact access."));
+  return (data ?? {}) as RpcJson;
+}
+
 export async function fetchHireAgainContractors(): Promise<RpcJson[]> {
   const { data, error } = await client().rpc("hire_again_contractors");
   if (error) throw new Error(asError(error, "Could not load Hire Again."));
@@ -472,7 +572,8 @@ export async function updateContractorProfile(
   id: string,
   patch: Database["public"]["Tables"]["contractor_profiles"]["Update"],
 ) {
-  assertNoPreHireContactIn(patch.business_name, patch.headline, patch.bio);
+  if (patch.bio !== undefined) rejectContactLeak(patch.bio);
+  if (patch.headline !== undefined) rejectContactLeak(patch.headline);
   const { error } = await client().from("contractor_profiles").update(patch).eq("id", id);
   if (error) throw new Error(asError(error, "Could not save your profile."));
 }
@@ -593,6 +694,16 @@ export async function addPortfolioItem(row: Database["public"]["Tables"]["contra
   if (error) throw new Error(asError(error, "Could not add portfolio photo."));
 }
 
+export async function deletePortfolioItem(id: string) {
+  const { error } = await client().from("contractor_portfolio").delete().eq("id", id);
+  if (error) throw new Error(asError(error, "Could not remove the photo."));
+}
+
+export async function updateProfileAvatar(profileId: string, avatarUrl: string | null) {
+  const { error } = await client().from("profiles").update({ avatar_url: avatarUrl }).eq("id", profileId);
+  if (error) throw new Error(asError(error, "Could not save your photo."));
+}
+
 export async function fetchPortfolio(contractorProfileId: string) {
   const { data, error } = await client()
     .from("contractor_portfolio")
@@ -621,13 +732,13 @@ export async function askEstimateQuestion(row: {
   asked_by_contractor_profile_id: string;
   prompt: string;
 }) {
-  assertNoPreHireContact(row.prompt);
+  rejectContactLeak(row.prompt);
   const { error } = await client().from("estimate_questions").insert(row);
   if (error) throw new Error(asError(error, "Could not send the question."));
 }
 
 export async function answerEstimateQuestion(id: string, answerText: string) {
-  assertNoPreHireContact(answerText);
+  rejectContactLeak(answerText);
   const { error } = await client().from("estimate_questions").update({ answer_text: answerText }).eq("id", id);
   if (error) throw new Error(asError(error, "Could not save the answer."));
 }
@@ -675,6 +786,7 @@ export async function fetchEstimateItems(estimateId: string) {
 }
 
 export async function addEstimateItem(row: Database["public"]["Tables"]["estimate_items"]["Insert"]) {
+  rejectContactLeak(row.label);
   const { error } = await client().from("estimate_items").insert(row);
   if (error) throw new Error(asError(error, "Could not add the line item."));
 }
@@ -683,6 +795,7 @@ export async function updateEstimateItem(
   id: string,
   patch: Database["public"]["Tables"]["estimate_items"]["Update"],
 ) {
+  if (patch.label !== undefined) rejectContactLeak(patch.label);
   const { error } = await client().from("estimate_items").update(patch).eq("id", id);
   if (error) throw new Error(asError(error, "Could not update the line item."));
 }
@@ -696,7 +809,7 @@ export async function updateEstimateDetails(
   id: string,
   patch: Database["public"]["Tables"]["estimates"]["Update"],
 ) {
-  if (typeof patch.notes === "string") assertNoPreHireContact(patch.notes);
+  if (patch.notes !== undefined) rejectContactLeak(patch.notes);
   const { error } = await client().from("estimates").update(patch).eq("id", id);
   if (error) throw new Error(asError(error, "Could not save the estimate."));
 }
@@ -706,7 +819,17 @@ export async function fetchProjectEstimates(projectId: string) {
     .from("estimates")
     .select("*")
     .eq("project_id", projectId)
-    .in("status", ["SUBMITTED", "REVISED", "ACCEPTED", "DECLINED", "WITHDRAWN", "EXPIRED", "SUPERSEDED"])
+    .in("status", [
+      "SUBMITTED",
+      "SENT",
+      "REVISED",
+      "VIEWED",
+      "ACCEPTED",
+      "DECLINED",
+      "WITHDRAWN",
+      "EXPIRED",
+      "SUPERSEDED",
+    ])
     .order("submitted_at", { ascending: true });
   if (error) throw new Error(asError(error, "Could not load estimates."));
   return data ?? [];
@@ -752,6 +875,22 @@ export async function fetchPublicContractor(id: string): Promise<PublicDirectory
 
 export function directoryRowBadges(row: PublicDirectoryRpcRow) {
   return parseDirectoryBadges(row.badges);
+}
+
+export async function fetchPublicContractorExtras(id: string) {
+  const supabase = client();
+  const [services, areas, badges, portfolio] = await Promise.all([
+    supabase.from("contractor_public_services").select("id, contractor_profile_id, category_id, category_slug, category_name").eq("contractor_profile_id", id),
+    supabase.from("contractor_public_areas").select("id, contractor_profile_id, label").eq("contractor_profile_id", id),
+    supabase.from("contractor_verified_credential_badges").select("id, contractor_profile_id, kind, label, status, expires_at").eq("contractor_profile_id", id),
+    supabase.from("contractor_public_portfolio").select("id, contractor_profile_id, sort_order").eq("contractor_profile_id", id).order("sort_order"),
+  ]);
+  return {
+    services: services.data ?? [],
+    areas: areas.data ?? [],
+    badges: badges.data ?? [],
+    portfolio: portfolio.data ?? [],
+  };
 }
 
 export async function signedContractorDocUrl(path: string): Promise<string | null> {

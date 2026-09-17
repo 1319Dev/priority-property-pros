@@ -37,7 +37,7 @@ Pending bookings expire via `expire_stale_pending_bookings` (TTL from `booking_p
 
 ## Contact / address
 
-Exact street + lat/lng stay in `project_private_locations`. RLS uses `booking_is_confirmed_for_contractor`, not selection. Phone/email are **not** opened on `profiles` SELECT. After CONFIRMED, the booked contractor calls `booking_job_contact`.
+Exact street + lat/lng stay in `project_private_locations`. RLS uses `contractor_has_contact_access_on_project` (contact entitlement), not selection and not CONFIRMED. Phone/email are **not** opened on `profiles` SELECT. After entitlement, the booked contractor calls `booking_job_contact`.
 
 City/ZIP remain visible for estimating.
 

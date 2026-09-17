@@ -2,7 +2,7 @@ import type { AccountStatus, ApprovalStatus, OnboardingStatus } from "../auth/ty
 import { displayName } from "../auth/roles";
 import { contractorEligibleForProject, type MatchingContractor, type MatchingProject } from "../marketplace/matching";
 
-export const APPROVAL_TABS = ["PENDING", "APPROVED", "REJECTED", "ALL"] as const;
+export const APPROVAL_TABS = ["PENDING", "APPROVED", "REJECTED", "IDENTITY_REVIEW", "ALL"] as const;
 export type ApprovalTab = (typeof APPROVAL_TABS)[number];
 
 export type ApprovalCategory = {
@@ -62,6 +62,9 @@ export type ContractorApprovalItem = {
   info_requested_at: string | null;
   info_requested_by: string | null;
   info_request_message: string | null;
+  identity_review_required: boolean;
+  identity_review_at: string | null;
+  identity_review_fields: string[];
   credentials: ApprovalCredential[];
 };
 
@@ -70,7 +73,12 @@ export function filterApprovalQueue(
   tab: ApprovalTab,
 ): ContractorApprovalItem[] {
   if (tab === "ALL") return items;
+  if (tab === "IDENTITY_REVIEW") return items.filter((item) => item.identity_review_required);
   return items.filter((item) => item.approval_status === tab);
+}
+
+export function identityReviewCount(items: ContractorApprovalItem[]): number {
+  return items.filter((item) => item.identity_review_required).length;
 }
 
 export function pendingApprovalCount(items: ContractorApprovalItem[]): number {

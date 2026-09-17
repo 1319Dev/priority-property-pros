@@ -51,6 +51,7 @@ import { OPPORTUNITY_STATUS_LABELS, opportunityNextActions } from "../../../lib/
 import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import { useToast } from "../../../hooks/useToast";
 import { PRO_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
+import { ProNotificationsList } from "./ProEstimatesPages";
 
 export function ProHomePage() {
   const { profile } = useAuth();
@@ -61,17 +62,21 @@ export function ProHomePage() {
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{name}</h1>
         <p className="mt-3 max-w-xl text-ink-700">
-          Finish onboarding, then respond to nearby jobs. You cannot approve or verify yourself. At most three
-          contractors can participate on a job. Exact address unlocks only after a booking is confirmed.
+          Respond to nearby jobs and track estimates. You cannot approve or verify yourself. At most three
+          contractors can participate on a job. Exact address unlocks only after a hire and contact entitlement.
           {` ${PRO_DASHBOARD_PRICING_NOTE}`}
         </p>
       </header>
       <div className="flex flex-wrap gap-3">
-        <ButtonLink to="/app/pro/onboarding">Onboarding</ButtonLink>
+        <ButtonLink to="/app/pro/profile">Manage Profile</ButtonLink>
+        <ButtonLink to="/app/pro/estimates" variant="outline">
+          My Estimates
+        </ButtonLink>
         <ButtonLink to="/app/pro/opportunities" variant="outline">
           Opportunities
         </ButtonLink>
       </div>
+      <ProNotificationsList />
     </div>
   );
 }
@@ -95,6 +100,7 @@ export function ProOnboardingPage() {
   const [radius, setRadius] = useState("");
   const [mode, setMode] = useState<ServiceAreaMode>("ZIPS");
   const [areaId, setAreaId] = useState<string | undefined>();
+  const [onboardingStatus, setOnboardingStatus] = useState<string>("NOT_STARTED");
   const [credLabel, setCredLabel] = useState("");
   const [credKind, setCredKind] = useState("LICENSE");
   const toast = useToast();
@@ -110,6 +116,7 @@ export function ProOnboardingPage() {
       setCategories(cats);
       if (!profileRow) throw new Error("Contractor profile missing.");
       setContractorId(profileRow.id);
+      setOnboardingStatus(profileRow.onboarding_status);
       setBusinessName(profileRow.business_name);
       setHeadline(profileRow.headline ?? "");
       setBio(profileRow.bio ?? "");
@@ -145,7 +152,7 @@ export function ProOnboardingPage() {
         accepting_work: accepting,
         min_job_cents: dollarsToCents(minJob),
         max_job_cents: dollarsToCents(maxJob),
-        onboarding_status: "SUBMITTED",
+        ...(onboardingStatus === "COMPLETE" ? {} : { onboarding_status: "SUBMITTED" as const }),
       });
       await setContractorServices(contractorId, selected);
       await upsertContractorArea({
@@ -364,7 +371,7 @@ export function OpportunitiesPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Jobs</h1>
-      <p className="text-sm text-ink-700">Approximate location only. Exact street stays hidden until a booking is confirmed.</p>
+      <p className="text-sm text-ink-700">Approximate location only. Exact street stays hidden until hire + job fee (payments coming soon) or an admin unlock.</p>
       <FormError message={error} />
       {live.length === 0 ? (
         <EmptyState title="No open jobs" body="Nearby matching jobs will land here. At most three contractors can accept. Cancelled jobs leave this list." />
@@ -470,7 +477,7 @@ export function OpportunityDetailPage() {
         <p>{project?.description}</p>
         <p className="mt-2 font-semibold">Approximate location</p>
         <p>{[project?.city, project?.state, project?.zip_code].filter(Boolean).join(", ")}</p>
-        <p className="text-ink-500">Exact street, phone, and email stay hidden until the customer’s booking is confirmed.</p>
+        <p className="text-ink-500">Exact street, phone, and email stay hidden until hire + job fee (payments coming soon) or an admin unlock.</p>
         <p className="mt-2">{project?.timing ? TIMING_LABELS[project.timing] : ""}</p>
       </section>
       <div className="grid grid-cols-2 gap-2">
@@ -732,7 +739,9 @@ export function EstimateBuilderPage() {
           onChange={(e) => setNotes(e.target.value)}
           onBlur={() => saveDetails({ notes })}
         />
-        <span className="mt-1.5 block text-sm text-ink-500">{PRE_HIRE_CONTACT_HINT}</span>
+        <span className="mt-1.5 block text-sm text-ink-500">
+          Contact info is shared after connection through PPP. Do not put a phone, email, link, or social handle here.
+        </span>
       </label>
       <div className="sticky bottom-24 z-20 flex gap-3 bg-cream-50/95 py-3 pb-safe lg:bottom-4">
         <Button

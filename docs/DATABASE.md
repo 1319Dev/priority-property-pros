@@ -133,8 +133,9 @@ Apply `20260918000001` through `20260918000005` after Phase 3. Additive. Full ru
 | `change_orders` | Dual approval. Positive approved deltas count toward the snapshotted fee cap. |
 | `booking_reviews` | Only COMPLETED bookings via RPC. |
 | `booking_events` | Append-only audit for booking/CO/review actions. |
+| `booking_contact_access` | Per-booking private-contact entitlement. Default `LOCKED`. Missing row = no access. CONFIRMED/ACCEPTED do not grant. Apply `20260922000001` then `20260924000001` after estimate-lifecycle. |
 
-New RPCs include `preview_marketplace_fee`, `select_estimate` (now creates a PENDING booking), `cancel_pending_booking`, `confirm_booking_for_testing` (ADMIN), `start_booking`, `complete_booking`, `dispute_booking`, `propose_change_order`, `respond_change_order`, `submit_booking_review`, `booking_job_contact`, `hire_again_contractors`.
+New RPCs include `preview_marketplace_fee`, `select_estimate` (now creates a PENDING booking), `cancel_pending_booking`, `confirm_booking_for_testing` (ADMIN; does **not** grant contact access), `start_booking`, `complete_booking`, `dispute_booking`, `propose_change_order`, `respond_change_order`, `submit_booking_review`, `booking_job_contact` (requires contact entitlement), `admin_grant_booking_contact_access` / `admin_revoke_booking_contact_access` (ADMIN, audited), `hire_again_contractors`.
 
 ## Phase 5A
 
@@ -147,6 +148,7 @@ Apply `20260920000001` through `20260920000003` after Phase 4A. Additive. Full r
 | `update_customer_project` | Owner-only posted edits. Material changes supersede estimates. |
 | `cancel_customer_project` | Owner-only delete (safe) or cancel (preserve history). |
 | `list_my_customer_projects` / `get_my_customer_project` | Customer isolation: `customer_id = auth.uid()` only. |
+| `booking_contact_access` / `booking_has_contact_access` | Server-authoritative private-contact gate. Default LOCKED. |
 
 ## How to inspect
 
