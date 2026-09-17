@@ -1,5 +1,10 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { getSupabaseAnonKey, getSupabaseUrl, isSupabaseConfigured } from "./config";
+import {
+  assertStagingSupabaseTarget,
+  getSupabaseAnonKey,
+  getSupabaseUrl,
+  isSupabaseConfigured,
+} from "./config";
 import type { Database } from "./database.types";
 
 export type TypedSupabaseClient = SupabaseClient<Database>;
@@ -9,6 +14,7 @@ let client: TypedSupabaseClient | null = null;
 export { isSupabaseConfigured };
 
 export function getSupabaseClient(): TypedSupabaseClient | null {
+  assertStagingSupabaseTarget();
   if (!isSupabaseConfigured()) return null;
   if (!client) {
     client = createClient<Database>(getSupabaseUrl(), getSupabaseAnonKey(), {

@@ -26,6 +26,11 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     expect(screen.getAllByLabelText(/priority property pros home/i).length).toBeGreaterThan(0);
   });
 
+  it("hides the staging preview banner when VITE_APP_ENV is not staging", () => {
+    renderApp("/");
+    expect(screen.queryByText(/staging preview — not the live site/i)).not.toBeInTheDocument();
+  });
+
   it("shows the homepage customer tagline", () => {
     renderApp("/");
     const heading = screen.getByRole("heading", { level: 1 });

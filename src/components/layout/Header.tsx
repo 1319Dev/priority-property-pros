@@ -5,7 +5,9 @@ import { Container } from "../ui/Container";
 import { CUSTOMER_CTA } from "../../data/brand";
 import { useAuth } from "../../lib/auth/useAuth";
 import { postLoginPath } from "../../lib/auth/roles";
+import { isStagingAppEnv } from "../../lib/supabase/config";
 import { Skeleton } from "../ui/Skeleton";
+import { StagingPreviewBanner } from "./StagingPreviewBanner";
 
 const links = [
   { to: "/find-a-pro", label: "Find a Pro" },
@@ -18,14 +20,21 @@ export function Header() {
   const accountTo = user ? postLoginPath(account_type, account_status) : "/sign-in";
   const accountLabel = user ? "Account" : "Sign In";
 
+  const staging = isStagingAppEnv();
+
   return (
-    <header className="sticky top-0 z-40 border-b border-forest-800/10 bg-cream-50/90 pt-safe backdrop-blur-md">
+    <header
+      className={`sticky top-0 z-40 border-b border-forest-800/10 bg-cream-50/90 backdrop-blur-md ${
+        staging ? "" : "pt-safe"
+      }`}
+    >
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-gold-500 focus:px-4 focus:py-2 focus:text-forest-950"
       >
         Skip to content
       </a>
+      <StagingPreviewBanner />
       <Container className="flex min-h-16 items-center justify-between gap-4 py-2">
         <NavLink to="/" aria-label="Priority Property Pros home" className="shrink-0">
           <Logo />

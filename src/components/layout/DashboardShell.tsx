@@ -2,6 +2,8 @@ import { NavLink, Outlet } from "react-router-dom";
 import { Logo } from "../brand/Logo";
 import { useAuth } from "../../lib/auth/useAuth";
 import { displayName } from "../../lib/auth/roles";
+import { isStagingAppEnv } from "../../lib/supabase/config";
+import { StagingPreviewBanner } from "./StagingPreviewBanner";
 
 export type DashNavItem = {
   to: string;
@@ -20,9 +22,16 @@ export function DashboardShell({
   const { profile, account_status } = useAuth();
   const name = profile ? displayName(profile.first_name, profile.last_name, profile.email) : "";
 
+  const staging = isStagingAppEnv();
+
   return (
     <div className="paper-grain flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-40 border-b border-forest-800/10 bg-cream-50/90 pt-safe backdrop-blur-md">
+      <header
+        className={`sticky top-0 z-40 border-b border-forest-800/10 bg-cream-50/90 backdrop-blur-md ${
+          staging ? "" : "pt-safe"
+        }`}
+      >
+        <StagingPreviewBanner />
         <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-4 px-4 py-2 sm:px-6">
           <NavLink to="/" aria-label="Priority Property Pros home">
             <Logo />

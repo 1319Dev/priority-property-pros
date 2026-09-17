@@ -4,8 +4,11 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { ToastProvider } from "./components/ui/Toast";
 import { AuthProvider } from "./lib/auth/AuthProvider";
+import { assertStagingSupabaseTarget } from "./lib/supabase/config";
 import "./index.css";
 import { routerBasename } from "./utils/cn";
+
+assertStagingSupabaseTarget();
 
 if (import.meta.env.MODE !== "test") {
   void import("./pwa");
