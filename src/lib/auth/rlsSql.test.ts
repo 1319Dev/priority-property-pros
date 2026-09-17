@@ -218,6 +218,8 @@ describe("Phase 4A SQL migrations", () => {
     expect(sql).toMatch(/Exact street \/ coordinates unlock/);
     expect(sql).toMatch(/FUNCTION public\.booking_job_contact/);
     expect(sql).toMatch(/contact is locked until the booking is confirmed/);
+    expect(sql).toMatch(/DROP POLICY IF EXISTS project_private_locations_select_protected/);
+    expect(sql).toMatch(/Does not open profiles SELECT/);
   });
 
   it("restricts confirmation to admin testing and snapshots fees", () => {
@@ -253,5 +255,9 @@ describe("Phase 4A SQL migrations", () => {
     expect(sql).not.toMatch(/TRUNCATE public\.profiles/i);
     expect(sql).not.toMatch(/DROP TABLE public\.projects/i);
     expect(sql).not.toMatch(/DROP TABLE public\.estimates/i);
+    expect(sql).not.toMatch(/GRANT INSERT ON TABLE public\.bookings/);
+    expect(sql).not.toMatch(/GRANT UPDATE ON TABLE public\.bookings/);
+    expect(sql).toMatch(/v_repeat := public\.pair_has_completed_booking/);
+    expect(sql).toMatch(/compute_fee_from_snapshot/);
   });
 });

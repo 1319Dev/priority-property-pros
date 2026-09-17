@@ -32,8 +32,8 @@ export function canReadCustomerContact(
   if (actor.id === customerId) return true;
   if (!opts.bookingStatus || !bookingUnlocksContact(opts.bookingStatus)) return false;
   if (actor.accountType !== "CONTRACTOR") return false;
-  if (!opts.contractorProfileId || !opts.selectedContractorProfileId) return false;
-  return opts.contractorProfileId === opts.selectedContractorProfileId;
+  if (!opts.selectedContractorProfileId) return false;
+  return Boolean(actor.contractorProfileId) && actor.contractorProfileId === opts.selectedContractorProfileId;
 }
 
 export function opportunityVisibleToCustomer(status: OpportunityStatus): boolean {

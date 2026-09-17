@@ -101,6 +101,82 @@ describe("progressive ORIGINAL fee engine (integer cents)", () => {
   });
 });
 
+describe("ORIGINAL progressive boundary amounts", () => {
+  const cases: Array<{
+    label: string;
+    amount_cents: number;
+    raw_fee_cents: number;
+    fee_cents: number;
+    min_applied: boolean;
+    max_applied: boolean;
+  }> = [
+    { label: "$0.00", amount_cents: 0, raw_fee_cents: 0, fee_cents: 0, min_applied: false, max_applied: false },
+    { label: "$0.01", amount_cents: 1, raw_fee_cents: 0, fee_cents: 1_500, min_applied: true, max_applied: false },
+    { label: "$187.49", amount_cents: 18_749, raw_fee_cents: 1_500, fee_cents: 1_500, min_applied: false, max_applied: false },
+    { label: "$187.50", amount_cents: 18_750, raw_fee_cents: 1_500, fee_cents: 1_500, min_applied: false, max_applied: false },
+    { label: "$499.99", amount_cents: 49_999, raw_fee_cents: 4_000, fee_cents: 4_000, min_applied: false, max_applied: false },
+    { label: "$500.00", amount_cents: 50_000, raw_fee_cents: 4_000, fee_cents: 4_000, min_applied: false, max_applied: false },
+    { label: "$500.01", amount_cents: 50_001, raw_fee_cents: 4_000, fee_cents: 4_000, min_applied: false, max_applied: false },
+    { label: "$2,499.99", amount_cents: 249_999, raw_fee_cents: 18_000, fee_cents: 18_000, min_applied: false, max_applied: false },
+    { label: "$2,500.00", amount_cents: 250_000, raw_fee_cents: 18_000, fee_cents: 18_000, min_applied: false, max_applied: false },
+    { label: "$2,500.01", amount_cents: 250_001, raw_fee_cents: 18_000, fee_cents: 18_000, min_applied: false, max_applied: false },
+    { label: "$9,999.99", amount_cents: 999_999, raw_fee_cents: 55_500, fee_cents: 55_500, min_applied: false, max_applied: false },
+    { label: "$10,000.00", amount_cents: 1_000_000, raw_fee_cents: 55_500, fee_cents: 55_500, min_applied: false, max_applied: false },
+    { label: "$10,000.01", amount_cents: 1_000_001, raw_fee_cents: 55_500, fee_cents: 55_500, min_applied: false, max_applied: false },
+    { label: "$24,999.99", amount_cents: 2_499_999, raw_fee_cents: 108_000, fee_cents: 108_000, min_applied: false, max_applied: false },
+    { label: "$25,000.00", amount_cents: 2_500_000, raw_fee_cents: 108_000, fee_cents: 108_000, min_applied: false, max_applied: false },
+    { label: "$25,000.01", amount_cents: 2_500_001, raw_fee_cents: 108_000, fee_cents: 108_000, min_applied: false, max_applied: false },
+    { label: "$50,000.00", amount_cents: 5_000_000, raw_fee_cents: 170_500, fee_cents: 150_000, min_applied: false, max_applied: true },
+    { label: "$100,000.00", amount_cents: 10_000_000, raw_fee_cents: 295_500, fee_cents: 150_000, min_applied: false, max_applied: true },
+  ];
+
+  it.each(cases)(
+    "prices $label at $fee_cents cents (raw $raw_fee_cents)",
+    ({ amount_cents, raw_fee_cents, fee_cents, min_applied, max_applied }) => {
+      const fee = original(amount_cents);
+      expect(fee.raw_fee_cents).toBe(raw_fee_cents);
+      expect(fee.fee_cents).toBe(fee_cents);
+      expect(fee.min_applied).toBe(min_applied);
+      expect(fee.max_applied).toBe(max_applied);
+      expect(fee.charges_live).toBe(false);
+      expect(fee.payments_live).toBe(false);
+    },
+  );
+
+  it("keeps $500.00 original at exactly $40.00 (first $500 at 8%, not 7% on the whole job)", () => {
+    const fee = original(50_000);
+    expect(fee.brackets.map((row) => [row.rate_bps, row.slice_cents, row.fee_cents])).toEqual([[800, 50_000, 4_000]]);
+    expect(fee.fee_cents).toBe(4_000);
+  });
+
+  it("stops applying the $15 minimum at $187.44 (integer-cent crossover, not $187.50)", () => {
+    const lastMin = original(18_743);
+    expect(lastMin.raw_fee_cents).toBe(1_499);
+    expect(lastMin.fee_cents).toBe(1_500);
+    expect(lastMin.min_applied).toBe(true);
+
+    const firstWithoutMin = original(18_744);
+    expect(firstWithoutMin.raw_fee_cents).toBe(1_500);
+    expect(firstWithoutMin.fee_cents).toBe(1_500);
+    expect(firstWithoutMin.min_applied).toBe(false);
+
+    expect(original(18_749).min_applied).toBe(false);
+    expect(original(18_750).min_applied).toBe(false);
+  });
+
+  it("begins applying the $1,500 maximum at $41,800.20", () => {
+    const lastUncapped = original(4_180_019);
+    expect(lastUncapped.raw_fee_cents).toBe(150_000);
+    expect(lastUncapped.fee_cents).toBe(150_000);
+    expect(lastUncapped.max_applied).toBe(false);
+
+    const firstCapped = original(4_180_020);
+    expect(firstCapped.raw_fee_cents).toBe(150_001);
+    expect(firstCapped.fee_cents).toBe(150_000);
+    expect(firstCapped.max_applied).toBe(true);
+  });
+});
+
 describe("REPEAT fee engine", () => {
   it("uses 2% with a $10 minimum and $500 maximum", () => {
     expect(repeat(25_000).fee_cents).toBe(1_000);
@@ -118,6 +194,55 @@ describe("REPEAT fee engine", () => {
   it("does not share ORIGINAL brackets", () => {
     expect(REPEAT_FEE_BRACKETS).toHaveLength(1);
     expect(REPEAT_FEE_BRACKETS[0].rate_bps).toBe(200);
+  });
+
+  const repeatCases: Array<{
+    label: string;
+    amount_cents: number;
+    raw_fee_cents: number;
+    fee_cents: number;
+    min_applied: boolean;
+    max_applied: boolean;
+  }> = [
+    { label: "$0.00", amount_cents: 0, raw_fee_cents: 0, fee_cents: 0, min_applied: false, max_applied: false },
+    { label: "$0.01", amount_cents: 1, raw_fee_cents: 0, fee_cents: 1_000, min_applied: true, max_applied: false },
+    { label: "$250.00", amount_cents: 25_000, raw_fee_cents: 500, fee_cents: 1_000, min_applied: true, max_applied: false },
+    { label: "$499.74", amount_cents: 49_974, raw_fee_cents: 999, fee_cents: 1_000, min_applied: true, max_applied: false },
+    { label: "$499.75", amount_cents: 49_975, raw_fee_cents: 1_000, fee_cents: 1_000, min_applied: false, max_applied: false },
+    { label: "$500.00", amount_cents: 50_000, raw_fee_cents: 1_000, fee_cents: 1_000, min_applied: false, max_applied: false },
+    { label: "$1,000.00", amount_cents: 100_000, raw_fee_cents: 2_000, fee_cents: 2_000, min_applied: false, max_applied: false },
+    { label: "$2,500.00", amount_cents: 250_000, raw_fee_cents: 5_000, fee_cents: 5_000, min_applied: false, max_applied: false },
+    { label: "$5,000.00", amount_cents: 500_000, raw_fee_cents: 10_000, fee_cents: 10_000, min_applied: false, max_applied: false },
+    { label: "$10,000.00", amount_cents: 1_000_000, raw_fee_cents: 20_000, fee_cents: 20_000, min_applied: false, max_applied: false },
+    { label: "$25,000.00", amount_cents: 2_500_000, raw_fee_cents: 50_000, fee_cents: 50_000, min_applied: false, max_applied: false },
+    { label: "$25,000.24", amount_cents: 2_500_024, raw_fee_cents: 50_000, fee_cents: 50_000, min_applied: false, max_applied: false },
+    { label: "$25,000.25", amount_cents: 2_500_025, raw_fee_cents: 50_001, fee_cents: 50_000, min_applied: false, max_applied: true },
+    { label: "$50,000.00", amount_cents: 5_000_000, raw_fee_cents: 100_000, fee_cents: 50_000, min_applied: false, max_applied: true },
+    { label: "$100,000.00", amount_cents: 10_000_000, raw_fee_cents: 200_000, fee_cents: 50_000, min_applied: false, max_applied: true },
+  ];
+
+  it.each(repeatCases)(
+    "REPEAT prices $label at $fee_cents cents (raw $raw_fee_cents)",
+    ({ amount_cents, raw_fee_cents, fee_cents, min_applied, max_applied }) => {
+      const fee = repeat(amount_cents);
+      expect(fee.raw_fee_cents).toBe(raw_fee_cents);
+      expect(fee.fee_cents).toBe(fee_cents);
+      expect(fee.min_applied).toBe(min_applied);
+      expect(fee.max_applied).toBe(max_applied);
+    },
+  );
+
+  it("stops applying the $10 REPEAT minimum at $499.75", () => {
+    expect(repeat(49_974).min_applied).toBe(true);
+    expect(repeat(49_975).min_applied).toBe(false);
+    expect(repeat(50_000).min_applied).toBe(false);
+  });
+
+  it("begins applying the $500 REPEAT maximum at $25,000.25", () => {
+    expect(repeat(2_500_000).max_applied).toBe(false);
+    expect(repeat(2_500_024).max_applied).toBe(false);
+    expect(repeat(2_500_025).max_applied).toBe(true);
+    expect(repeat(2_500_025).fee_cents).toBe(50_000);
   });
 });
 

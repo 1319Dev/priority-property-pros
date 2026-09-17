@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { MarketplaceActor } from "./privacy";
 import {
+  canReadCustomerContact,
   canReadExactAddress,
   canSelfVerifyCredential,
   estimateVisibleToCustomer,
@@ -39,6 +40,13 @@ describe("privacy and IDOR mirrors", () => {
     ).toBe(true);
     expect(
       canReadExactAddress(otherPro, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED"),
+    ).toBe(false);
+    expect(
+      canReadCustomerContact(otherPro, "cust", {
+        bookingStatus: "CONFIRMED",
+        contractorProfileId: "pro-1",
+        selectedContractorProfileId: "pro-1",
+      }),
     ).toBe(false);
   });
 

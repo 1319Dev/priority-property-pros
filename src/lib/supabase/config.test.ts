@@ -22,5 +22,13 @@ describe("Supabase public config", () => {
     expect(example).toMatch(/your-anon-public-key/);
     expect(example).not.toMatch(/^[^#]*SERVICE_ROLE.*=\s*eyJ/m);
     expect(example).not.toMatch(/sk_live/);
+    expect(example).not.toMatch(/STRIPE_SECRET/);
+  });
+
+  it("does not declare privileged keys on the Vite client type surface", () => {
+    const viteEnv = readFileSync(path.join(root, "src/vite-env.d.ts"), "utf8");
+    expect(viteEnv).not.toMatch(/SERVICE_ROLE/);
+    expect(viteEnv).not.toMatch(/STRIPE_SECRET/);
+    expect(viteEnv).not.toMatch(/DATABASE_URL/);
   });
 });
