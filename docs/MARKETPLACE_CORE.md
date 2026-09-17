@@ -22,8 +22,8 @@ See [DATABASE.md](DATABASE.md), [SECURITY.md](SECURITY.md), and [PHASE4A.md](PHA
 
 `HIGH` / `MEDIUM` / `MORE_INFO_NEEDED` is informational. Posting still requires title, category, and ZIP.
 
-## What is not in Phase 3 or 4A
+## What is not in Phase 3, 4A, or 4B live money
 
-Stripe live charges, payouts, Priority Verified, full messaging, inspection marketplace, or wiping production users.
+Stripe **live** charges, live payouts, Priority Verified, full messaging, inspection marketplace, or wiping production users.
 
-Apply SQL in filename order through `20260918000005_phase4a_rls_grants.sql`. Files after Phase 3 do not delete users. Estimate line items still support Labor / Materials / Equipment / Custom. Booking fees are progressive and versioned. PPP does **not** auto-rank a BEST estimate. Production UI must not fake a paid booking.
+Apply SQL in filename order through `20260919000006_phase4b_rls_grants.sql`. Files after Phase 3 do not delete users. Booking fees are progressive and versioned. PPP does **not** auto-rank a BEST estimate. Production UI must not treat a checkout redirect as a confirmed, live-paid booking.

@@ -218,11 +218,11 @@ describe("Phase 4A pre-merge security checks", () => {
     expect(sql).toMatch(/CONSTRAINT bookings_payments_not_live CHECK \(payments_live = false\)/);
     expect(sql).toMatch(/'payments_live',\s*0,/);
     expect(sql).toMatch(/'charges_live',\s*0,/);
-    expect(sql).not.toMatch(/CREATE TABLE public\.stripe/i);
-    expect(sql).not.toMatch(/payment_intents/i);
-    expect(frontend).not.toMatch(/createPaymentIntent|stripe\.charges|checkout\.sessions/i);
+    expect(sql).toMatch(/payments_live and charges_live must stay 0 until a live-mode launch migration/);
+    expect(sql).not.toMatch(/value_int = 1[\s\S]{0,80}payments_live/);
     expect(frontend).toMatch(/This is not “Pay now succeeded.”|This is not "Pay now succeeded."/);
     expect(frontend).toMatch(/Payment coming soon — booking cannot be confirmed in production yet/);
+    expect(frontend).toMatch(/verified webhook/i);
   });
 
   it("13. no payment-processor secrets or privileged credentials are exposed to the frontend", () => {
@@ -236,7 +236,7 @@ describe("Phase 4A pre-merge security checks", () => {
     expect(viteEnv).not.toMatch(/sk_live/);
     expect(envExample).not.toMatch(/^[^#]*SERVICE_ROLE.*=\s*\S+/m);
     expect(envExample).toMatch(/# SUPABASE_SERVICE_ROLE_KEY=/);
-    expect(workflow).toMatch(/Never add SUPABASE_SERVICE_ROLE_KEY here/);
+    expect(workflow).toMatch(/Never add SUPABASE_SERVICE_ROLE_KEY/);
     expect(workflow).not.toMatch(/SERVICE_ROLE_KEY: \$\{\{/);
     expect(frontend).not.toMatch(/sk_live_[A-Za-z0-9]+/);
     expect(frontend).not.toMatch(/sk_test_[A-Za-z0-9]+/);

@@ -11,7 +11,8 @@ Priority Property Pros treats the **database** as the authority for roles. The w
 | GitHub Pages site | Yes | Static files |
 | `SUPABASE_SERVICE_ROLE_KEY` | **No** | Supabase dashboard only. Never Vite, never git, never Actions |
 | Database password | **No** | Password manager only |
-| Stripe keys | **No** | Not used in Phase 2 |
+| Stripe publishable key (`pk_test_`) | Yes (test) | GitHub **Actions variables**, Vite |
+| Stripe secret / webhook secret | **No** | Supabase Edge Function secrets only. Test-mode `sk_test_` / `whsec_` |
 
 Anyone can read the anon key from the browser. That is expected. Policies must still deny other people’s rows.
 
@@ -76,7 +77,7 @@ Marketplace RPCs (`post_project`, `accept_opportunity`, `pass_opportunity`, `sub
 
 Customer-safe views (`contractor_public_profiles`, `contractor_public_services`, `contractor_public_areas`, `contractor_public_portfolio`, `contractor_verified_credential_badges`) are `SECURITY DEFINER` on purpose: they expose **approved** contractors and only safe columns (no license numbers, no document paths). Underlying tables stay own-or-admin. This is **not** a Priority Verified badge.
 
-There are **no Stripe charges** in Phase 3 or Phase 4A. `fee_preview` and `preview_marketplace_fee` always return `charges_live: false` and `payments_live: false`.
+There are **no live Stripe charges**. `fee_preview` and `preview_marketplace_fee` always return `charges_live: false` and `payments_live: false`. Phase 4B adds Stripe **TEST MODE** only.
 
 ### Phase 4A
 
@@ -86,6 +87,15 @@ There are **no Stripe charges** in Phase 3 or Phase 4A. `fee_preview` and `previ
 - `confirm_booking_for_testing` is ADMIN-only. Customers and contractors cannot spoof CONFIRMED.
 - Repeat pricing and relationships are server-assigned.
 - `ADMIN` is still not self-assignable. Contractor approval and max-3 matching are unchanged. VERIFIER remains; there is no INSPECTOR role.
+
+### Phase 4B
+
+- Customers cannot pay other people’s bookings; contractors cannot start another contractor’s payout onboarding.
+- Connected account ids cannot be patched from the client.
+- Clients cannot set fees, processing costs, earnings, success, transfers, refunds, or CONFIRMED.
+- Webhook signature is mandatory. Replay is unique-event-id safe.
+- Financial tables have RLS + protect triggers. Webhook RPCs are revoked from `authenticated` and granted to `service_role`.
+- `payments_live` / `charges_live` cannot be flipped to 1 without `ppp.allow_live_payments`.
 
 Free-text Q&A can still leak PII. There is no scanner in this phase.
 
@@ -104,7 +114,8 @@ The app builds redirects with `import.meta.env.BASE_URL` so the project path is 
 ## Frontend rules
 
 - Only `@supabase/supabase-js` with the anon key.
-- No service role in `src/`.
+- Optional `VITE_STRIPE_PUBLISHABLE_KEY` (`pk_test_` only).
+- No service role, Stripe secret, or webhook secret in `src/`.
 - Session: wait for `loading` before showing `/app/*` (no flash of protected content).
 - Passwords: 8+ characters on the form; configure stronger rules in Supabase Auth if you want.
 

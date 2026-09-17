@@ -62,7 +62,7 @@ Append-only. `write_audit_log(...)` is for server/SQL. Clients may **select** on
 
 ## What is not in Phase 2
 
-Phase 2 had no projects or estimates. Phase 3 adds them (below). Phase 4A adds bookings, a versioned fee engine, relationships, change orders, and a verified-review guard. Still no live Stripe charges, payouts, or Priority Verified.
+Phase 2 had no projects or estimates. Phase 3 adds them (below). Phase 4A adds bookings and the fee engine. Phase 4B adds Stripe Connect **test-mode** payments. Live charges stay off.
 
 ## Phase 3 marketplace tables
 
@@ -119,7 +119,23 @@ Apply `20260918000001` through `20260918000005` after Phase 3. Additive. Full ru
 | `booking_reviews` | Only COMPLETED bookings via RPC. |
 | `booking_events` | Append-only audit for booking/CO/review actions. |
 
-New RPCs include `preview_marketplace_fee`, `select_estimate` (now creates a PENDING booking), `cancel_pending_booking`, `confirm_booking_for_testing` (ADMIN), `start_booking`, `complete_booking`, `dispute_booking`, `propose_change_order`, `respond_change_order`, `submit_booking_review`, `booking_job_contact`, `hire_again_contractors`.
+New RPCs include `preview_marketplace_fee`, `select_estimate` (now creates a PENDING booking **and a payment schedule**), `cancel_pending_booking`, `confirm_booking_for_testing` (ADMIN, not the real payment path), `confirm_booking_from_payment` (server/webhook only), `start_booking`, `complete_booking`, `dispute_booking`, `propose_change_order`, `respond_change_order`, `submit_booking_review`, `booking_job_contact`, `hire_again_contractors`.
+
+## Phase 4B
+
+Apply `20260919000001` through `20260919000006` after Phase 4A. Additive. Full rules: [PHASE4B.md](PHASE4B.md). `payments_live` and `charges_live` stay 0.
+
+| Table | Purpose |
+| --- | --- |
+| `contractor_stripe_accounts` | Connect Express mapping. Status synced server-side. |
+| `payment_schedules` / `payment_schedule_items` | Deposit / milestone / final / approved CO. |
+| `payments` | PaymentIntent / Checkout refs. Test mode only. |
+| `stripe_events` | Webhook idempotency. Admin-only select. |
+| `ledger_entries` | Append-only integer-cent ledger. |
+| `contractor_transfers` | PENDING → ELIGIBLE → TRANSFERRED / HELD. |
+| `refunds` / `stripe_disputes` / `booking_cancellations` | Refund, chargeback vs PPP dispute, cancellation audit. |
+
+Webhook RPCs are `service_role` only. Clients cannot insert/update financial rows.
 
 ## How to inspect
 

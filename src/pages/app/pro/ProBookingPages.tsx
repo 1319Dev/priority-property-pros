@@ -20,7 +20,11 @@ import {
 } from "../../../lib/marketplace/api";
 import { BOOKING_STATUS_LABELS, bookingUnlocksContact, paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
+import { contractorPaysFeeCopy, noInstantPayoutCopy } from "../../../lib/payments/schedules";
+import { fetchMyConnectAccount, fetchScheduleItems, markMilestoneComplete, fetchBookingTransfers, fetchBookingPaymentOverview } from "../../../lib/payments/api";
+import { PaymentScheduleList, TransferStatusList } from "../../../components/payments/SchedulePanel";
 import type { Booking, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
+import type { ContractorStripeAccount, PaymentScheduleItem } from "../../../lib/payments/types";
 import { useToast } from "../../../hooks/useToast";
 
 function statusLabel(status: string) {
@@ -48,7 +52,8 @@ export function ProBookingsPage() {
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
       <p className="text-sm text-ink-700">
-        Exact street, phone, and email stay hidden until a booking is confirmed. Nothing is marked paid.
+        Exact street, phone, and email stay hidden until a booking is confirmed by a verified payment webhook. Held money
+        is never shown as available.
       </p>
       <FormError message={error} />
       {rows.length === 0 ? (
@@ -80,6 +85,9 @@ export function ProBookingDetailPage() {
   const [cityZip, setCityZip] = useState("");
   const [contact, setContact] = useState<{ street?: string; phone?: string; email?: string } | null>(null);
   const [orders, setOrders] = useState<ChangeOrder[]>([]);
+  const [items, setItems] = useState<PaymentScheduleItem[]>([]);
+  const [connect, setConnect] = useState<ContractorStripeAccount | null>(null);
+  const [transfers, setTransfers] = useState<Array<{ id: string; amount_cents: number; status: string; held_reason?: string | null }>>([]);
   const [error, setError] = useState<string | null>(null);
   const [delta, setDelta] = useState("");
   const [note, setNote] = useState("");
@@ -91,6 +99,10 @@ export function ProBookingDetailPage() {
     setTitle(project.title);
     setCityZip([project.city, project.state, project.zip_code].filter(Boolean).join(", "));
     setOrders((await fetchChangeOrders(bookingId)) as ChangeOrder[]);
+    await fetchBookingPaymentOverview(bookingId).catch(() => undefined);
+    setItems(await fetchScheduleItems(bookingId));
+    setConnect(await fetchMyConnectAccount(row.contractor_profile_id));
+    setTransfers(await fetchBookingTransfers(bookingId));
     if (bookingUnlocksContact(row.status)) {
       const payload = await fetchBookingJobContact(row.id);
       setContact({
@@ -133,10 +145,35 @@ export function ProBookingDetailPage() {
         <p className="mt-3">Job {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
         <p>
           PPP fee {booking.fee_locked ? "" : "preview "}
-          {formatUsdFromCents(booking.fee_cents)} — you would earn {formatUsdFromCents(booking.contractor_earnings_cents)}
+          {formatUsdFromCents(booking.fee_cents)} — expected {formatUsdFromCents(booking.contractor_earnings_cents)} after
+          the contractor-paid marketplace fee
         </p>
-        <p className="text-ink-500">Preview / estimate — payments not live.</p>
+        <p className="text-ink-500">{contractorPaysFeeCopy()}</p>
+        <p className="text-ink-500">{noInstantPayoutCopy()}</p>
+        <p className="mt-2 text-sm">
+          Payout setup: {(connect?.status ?? "NOT_STARTED").replaceAll("_", " ")}
+          {connect?.status === "READY" ? " · can receive transfers" : " · cannot receive transfers yet"}
+        </p>
       </section>
+      <PaymentScheduleList
+        items={items}
+        amountDueNow={items.filter((item) => item.due_now && !["SUCCEEDED", "CANCELLED", "REFUNDED"].includes(item.status)).reduce((sum, item) => sum + item.amount_cents, 0)}
+      />
+      {items.some((item) => item.kind === "MILESTONE" && !item.contractor_completed_at && item.status !== "CANCELLED") ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-14 w-full"
+          onClick={() => {
+            const item = items.find((row) => row.kind === "MILESTONE" && !row.contractor_completed_at);
+            if (!item) return;
+            void markMilestoneComplete(item.id).then(reload).catch((err: Error) => setError(err.message));
+          }}
+        >
+          Mark milestone complete (customer must still approve)
+        </Button>
+      ) : null}
+      <TransferStatusList rows={transfers} />
       {booking.status === "CONFIRMED" ? (
         <Button
           type="button"

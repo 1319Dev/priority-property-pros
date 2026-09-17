@@ -34,8 +34,8 @@ export function CustomerHomePage() {
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Customer</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Hello, {name}.</h1>
         <p className="mt-3 max-w-xl text-ink-700">
-          Post a project, compare estimates, and select one local pro. Selecting a pro starts a booking. Payment is
-          not live, so nothing is marked paid.
+          Post a project, compare estimates, and select one local pro. Selecting a pro starts a booking. Stripe test
+          checkout can collect a deposit; live charges stay off, and a checkout redirect does not confirm the job.
         </p>
       </header>
       <ButtonLink to="/app/customer/projects/new/wizard">Post a project</ButtonLink>

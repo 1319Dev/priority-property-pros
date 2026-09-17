@@ -6,7 +6,7 @@
 
 PPP connects homeowners and property owners with **independent local contractors**. PPP is **not** the contractor. This is not Angi and not Thumbtack.
 
-This repository is **Phase 4A**: the Phase 1 homepage, Phase 2 accounts, Phase 3 posting/matching/estimates, plus a **versioned progressive fee engine, pending bookings (selection ≠ confirmation), relationships / Hire Again, change orders, and a verified-review guard**. There are still **no Stripe charges, no payouts, and no Priority Verified workflow**. Production UI does not fake paid bookings.
+This repository is **Phase 4B**: Phase 1–4A plus **Stripe Connect TEST-MODE** payments (Express onboarding, PaymentIntents/Checkout for card+ACH, verified webhooks, ledger, transfer eligibility). **Live charges stay off** (`payments_live=0`, `charges_live=0`). Production UI does not treat a Stripe redirect as confirmation.
 
 Live public site (Phase 1 behavior stays): **https://1319dev.github.io/priority-property-pros/**
 
@@ -67,12 +67,12 @@ Full click-by-click: **[docs/GITHUB_PAGES_SETUP.md](docs/GITHUB_PAGES_SETUP.md)*
 
 Accounts and posting need a Supabase project. The homepage works without it.
 
-1. **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)** — create project, run SQL (including Phase 3 and Phase 4A files), set redirect URLs.
-2. Add GitHub Actions **variables** (not secrets): `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
-3. Never add the **service role** key.
+1. **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)** — create project, run SQL (including Phase 3, 4A, and 4B files), set redirect URLs.
+2. Add GitHub Actions **variables** (not secrets): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and optionally `VITE_STRIPE_PUBLISHABLE_KEY` (`pk_test_` only).
+3. Never add the **service role** key, `STRIPE_SECRET_KEY`, or `STRIPE_WEBHOOK_SECRET` to Vite or Actions secrets-as-build-env.
 4. Approve real contractors with **[supabase/sql/approve_contractor.sql](supabase/sql/approve_contractor.sql)** (no self-approve).
 
-Security, tables, and marketplace flow: **[docs/SECURITY.md](docs/SECURITY.md)**, **[docs/DATABASE.md](docs/DATABASE.md)**, **[docs/MARKETPLACE_CORE.md](docs/MARKETPLACE_CORE.md)**, **[docs/PHASE4A.md](docs/PHASE4A.md)**.
+Security, tables, and marketplace flow: **[docs/SECURITY.md](docs/SECURITY.md)**, **[docs/DATABASE.md](docs/DATABASE.md)**, **[docs/MARKETPLACE_CORE.md](docs/MARKETPLACE_CORE.md)**, **[docs/PHASE4A.md](docs/PHASE4A.md)**, **[docs/PHASE4B.md](docs/PHASE4B.md)**.
 
 ---
 
@@ -87,10 +87,11 @@ Security, tables, and marketplace flow: **[docs/SECURITY.md](docs/SECURITY.md)**
 - Customer compare + SELECT THIS PRO (creates a **PENDING booking**, does not confirm or charge)
 - Versioned progressive marketplace fee engine (integer cents; ORIGINAL vs REPEAT)
 - Hire Again foundation, change orders with dual approval, verified reviews on COMPLETED bookings only
+- Stripe Connect **test-mode** checkout (card + ACH), connected-account onboarding, webhook ledger, transfer eligibility
 
-## What Phase 4A does **not** include
+## What Phase 4B does **not** include
 
-No Stripe charges, payouts, Priority Verified, full messaging scanners, inspection marketplace, or INSPECTOR role. No client path to become Admin. Production UI must not fake paid/confirmed bookings (`payments_live` / `charges_live` stay false).
+No **live** Stripe charges or payouts, Priority Verified, full messaging scanners, inspection marketplace, or INSPECTOR role. No client path to become Admin. `payments_live` / `charges_live` stay false. Do not put Stripe secret/webhook secrets or `service_role` in Vite.
 
 Copy `.env.example` to `.env.local` for local public values. Never commit a `.env` with private keys.
 

@@ -22,8 +22,9 @@ export function ComingSoonLayout({
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">{title}</h1>
         <p className="mt-4 text-lg leading-relaxed text-ink-700">{body}</p>
         <p className="mt-3 rounded-2xl bg-cream-100 px-4 py-3 text-sm text-ink-700">
-          Customer posting, contractor onboarding, matching, estimates, selection, and pending bookings are live for
-          signed-in accounts. Payments, payouts, and Priority Verified are not.
+          Customer posting, contractor onboarding, matching, estimates, selection, pending bookings, and Stripe
+          test-mode checkout are live for signed-in accounts when configured. Live charges, live payouts, and Priority
+          Verified are not.
         </p>
         {extra}
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">

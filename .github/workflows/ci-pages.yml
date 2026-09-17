@@ -49,9 +49,10 @@ jobs:
           # For a custom domain at the site root, change this to /
           BASE_PATH: /priority-property-pros/
           # PUBLIC only. Set as repo Actions *variables* (not secrets).
-          # Never add SUPABASE_SERVICE_ROLE_KEY here.
+          # Never add SUPABASE_SERVICE_ROLE_KEY or STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET here.
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ vars.VITE_STRIPE_PUBLISHABLE_KEY }}
 
       - name: Upload Pages artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

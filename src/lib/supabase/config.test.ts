@@ -22,7 +22,8 @@ describe("Supabase public config", () => {
     expect(example).toMatch(/your-anon-public-key/);
     expect(example).not.toMatch(/^[^#]*SERVICE_ROLE.*=\s*eyJ/m);
     expect(example).not.toMatch(/sk_live/);
-    expect(example).not.toMatch(/STRIPE_SECRET/);
+    expect(example).not.toMatch(/^[^#]*STRIPE_SECRET.*=/m);
+    expect(example).toMatch(/VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key/);
   });
 
   it("does not declare privileged keys on the Vite client type surface", () => {
@@ -30,5 +31,6 @@ describe("Supabase public config", () => {
     expect(viteEnv).not.toMatch(/SERVICE_ROLE/);
     expect(viteEnv).not.toMatch(/STRIPE_SECRET/);
     expect(viteEnv).not.toMatch(/DATABASE_URL/);
+    expect(viteEnv).toMatch(/VITE_STRIPE_PUBLISHABLE_KEY/);
   });
 });

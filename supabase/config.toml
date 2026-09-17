@@ -1,0 +1,24 @@
+# Phase 4B Edge Functions — Stripe TEST MODE only
+# Secrets (Dashboard → Edge Functions → Secrets), never Vite:
+#   STRIPE_SECRET_KEY          (must start with sk_test_)
+#   STRIPE_WEBHOOK_SECRET      (whsec_...)
+#   SUPABASE_URL               (provided by platform)
+#   SUPABASE_SERVICE_ROLE_KEY  (provided by platform; never client)
+#   STRIPE_PUBLISHABLE_KEY     (optional; pk_test_ only)
+
+project_id = "bersftkjpbzpgtahbqwd"
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.create-payment-intent]
+verify_jwt = true
+
+[functions.create-connect-account-link]
+verify_jwt = true
+
+[functions.create-refund]
+verify_jwt = true
+
+[functions.create-transfer]
+verify_jwt = true

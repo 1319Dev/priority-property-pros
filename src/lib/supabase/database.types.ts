@@ -661,6 +661,114 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      contractor_stripe_accounts: {
+        Row: import("../payments/types").ContractorStripeAccount;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      payment_schedules: {
+        Row: import("../payments/types").PaymentSchedule;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      payment_schedule_items: {
+        Row: import("../payments/types").PaymentScheduleItem;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      payments: {
+        Row: {
+          id: string;
+          booking_id: string;
+          schedule_item_id: string;
+          customer_id: string;
+          amount_cents: number;
+          currency: string;
+          status: string;
+          payment_method_kind: import("../payments/types").PaymentMethodKind | null;
+          stripe_payment_intent_id: string | null;
+          stripe_checkout_session_id: string | null;
+          stripe_charge_id: string | null;
+          processing_cost_cents: number;
+          stripe_mode: "test";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      ledger_entries: {
+        Row: import("../payments/types").LedgerEntry;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      contractor_transfers: {
+        Row: import("../payments/types").ContractorTransfer;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      refunds: {
+        Row: {
+          id: string;
+          booking_id: string;
+          payment_id: string | null;
+          amount_cents: number;
+          status: string;
+          stripe_refund_id: string | null;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      stripe_disputes: {
+        Row: {
+          id: string;
+          booking_id: string | null;
+          kind: import("../payments/types").DisputeKind;
+          status: import("../payments/types").DisputeStatus;
+          stripe_dispute_id: string | null;
+          amount_cents: number;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      booking_cancellations: {
+        Row: {
+          id: string;
+          booking_id: string;
+          category: import("../payments/types").CancellationCategory;
+          initiator: string;
+          reason: string | null;
+          refund_decision: import("../payments/types").RefundDecision;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      stripe_events: {
+        Row: {
+          id: string;
+          stripe_event_id: string;
+          event_type: string;
+          status: string;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: {
       contractor_public_profiles: {
@@ -759,6 +867,15 @@ export type Database = {
       };
       booking_job_contact: { Args: { p_booking_id: string }; Returns: Json };
       hire_again_contractors: { Args: Record<string, never>; Returns: Json };
+      booking_payment_overview: { Args: { p_booking_id: string }; Returns: Json };
+      ensure_payment_schedule: { Args: { p_booking_id: string }; Returns: string };
+      mark_milestone_complete: { Args: { p_schedule_item_id: string }; Returns: Json };
+      approve_milestone: { Args: { p_schedule_item_id: string }; Returns: Json };
+      request_booking_cancellation: {
+        Args: { p_booking_id: string; p_reason?: string | null; p_mutual?: boolean };
+        Returns: Json;
+      };
+      stripe_test_mode: { Args: Record<string, never>; Returns: boolean };
       booking_is_confirmed_for_contractor: { Args: { p_project_id: string }; Returns: boolean };
       current_contractor_profile_id: { Args: Record<string, never>; Returns: string };
       post_project: { Args: { p_project_id: string }; Returns: Json };

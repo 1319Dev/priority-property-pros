@@ -76,10 +76,16 @@ Do not commit `.env.local`.
    22. `20260918000003_phase4a_guards.sql`
    23. `20260918000004_phase4a_rpcs.sql`
    24. `20260918000005_phase4a_rls_grants.sql`
+   25. `20260919000001_phase4b_enums_settings.sql`
+   26. `20260919000002_phase4b_tables.sql`
+   27. `20260919000003_phase4b_guards.sql`
+   28. `20260919000004_phase4b_rpcs.sql`
+   29. `20260919000005_phase4b_more_rpcs.sql`
+   30. `20260919000006_phase4b_rls_grants.sql`
 
 5. If a file says it already exists, stop and ask a developer — do not skip ahead.
 6. Phase 2 Table Editor should list `profiles`, `contractor_profiles`, `verifier_profiles`, `agreements`, `agreement_acceptances`, `audit_logs`.
-7. After Phase 3, you should also see `service_categories`, `projects`, `opportunities`, `estimates`, and related tables. After Phase 4A, you should also see `fee_schedules`, `bookings`, `customer_contractor_relationships`, `change_orders`, and `booking_reviews`. **Do not delete users or profiles.** Optional: `supabase/sql/approve_contractor.sql` to approve a real contractor so matching can include them. There is no website self-approve.
+7. After Phase 3, you should also see `service_categories`, `projects`, `opportunities`, `estimates`, and related tables. After Phase 4A, you should also see `fee_schedules`, `bookings`, `customer_contractor_relationships`, `change_orders`, and `booking_reviews`. After Phase 4B, you should also see `payment_schedules`, `ledger_entries`, `contractor_stripe_accounts`, and `contractor_transfers`. **Do not delete users or profiles.** Optional: `supabase/sql/approve_contractor.sql` to approve a real contractor so matching can include them. There is no website self-approve.
 
 **Email confirm:** keep the current Auth confirm-email setting so testers are not locked out. Before public launch, enable **Confirm email**, add SMTP, and keep the redirect URLs in section D. Do not silently switch to auto-confirm in production.
 
@@ -119,7 +125,8 @@ The live site is built by GitHub Actions. Vite bakes `VITE_*` values in at **bui
 3. Click the **Variables** tab (not Secrets).
 4. **New repository variable** → name `VITE_SUPABASE_URL` → paste the Project URL → Add.
 5. **New repository variable** → name `VITE_SUPABASE_ANON_KEY` → paste the anon public key → Add.
-6. Do **not** create a variable or secret named `SUPABASE_SERVICE_ROLE_KEY`.
+6. Optional: **New repository variable** → name `VITE_STRIPE_PUBLISHABLE_KEY` → paste the Stripe **test** publishable key (`pk_test_...`) → Add.
+7. Do **not** create a variable or secret named `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, or `STRIPE_WEBHOOK_SECRET`.
 7. Open **Actions** → **CI and GitHub Pages** → **Run workflow** on `main` after this Phase 2 branch is merged (or the next push to `main`).
 
 Until those variables exist, CI still **builds** (the homepage stays up). Login on the live site will show “not configured”.
@@ -150,7 +157,7 @@ If it fails with “No auth user”, you signed up with a different email. Check
 - A contractor opens `/app/pro` for onboarding and opportunities (approval is SQL-only).
 - A contractor cannot open `/app/admin`.
 - Forgot password sends mail (once URLs in section D are saved).
-- There is **no** Stripe checkout. Estimate screens show a fee **preview** only. Selecting a pro creates a pending booking; production cannot mark it paid.
+- There is **Stripe test-mode** checkout when Edge Function secrets and `pk_test_` are configured. A success redirect does **not** confirm the booking. Live charges stay off.
 
 ---
 
