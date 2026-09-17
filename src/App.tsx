@@ -29,6 +29,7 @@ import {
 import { CompareEstimatesPage, CustomerProjectDetailPage } from "./pages/app/customer/CustomerMarketplacePages";
 import { CustomerBookingDetailPage, CustomerBookingsPage, HireAgainPage } from "./pages/app/customer/BookingPages";
 import { ProjectWizardPage } from "./pages/app/customer/ProjectWizardPage";
+import { ProjectEditPage } from "./pages/app/customer/ProjectEditPage";
 import { ProHomePage, ProJobsPage, ProMessagesPage } from "./pages/app/ProPages";
 import {
   EstimateBuilderPage,
@@ -73,6 +74,7 @@ export default function App() {
             <Route path="projects" element={<CustomerProjectsPage />} />
             <Route path="projects/new/wizard" element={<ProjectWizardPage />} />
             <Route path="projects/:projectId/wizard" element={<ProjectWizardPage />} />
+            <Route path="projects/:projectId/edit" element={<ProjectEditPage />} />
             <Route path="projects/:projectId/compare" element={<CompareEstimatesPage />} />
             <Route path="projects/:projectId" element={<CustomerProjectDetailPage />} />
             <Route path="bookings" element={<CustomerBookingsPage />} />

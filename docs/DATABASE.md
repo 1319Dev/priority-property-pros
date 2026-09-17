@@ -77,7 +77,7 @@ Apply `supabase/migrations/20260917000001_*.sql` through `20260917000011_*.sql` 
 | `contractor_service_areas` | ZIP list and/or radius (miles + optional lat/lng). |
 | `contractor_portfolio` | Work photos (private storage paths). |
 | `contractor_credentials` | LICENSE / INSURANCE / OTHER with `NOT_SUBMITTED\|PENDING\|VERIFIED\|REJECTED\|EXPIRED`. No self-verify. |
-| `projects` | Customer jobs. Statuses: `DRAFT`, `POSTED`, `MATCHING`, `CONTRACTORS_RESPONDING`, `ESTIMATES_AVAILABLE`, `CONTRACTOR_SELECTED`. Completeness is informational (`HIGH\|MEDIUM\|MORE_INFO_NEEDED`). |
+| `projects` | Customer jobs. Statuses: `DRAFT`, `POSTED`, `MATCHING`, `CONTRACTORS_RESPONDING`, `ESTIMATES_AVAILABLE`, `CONTRACTOR_SELECTED`, `CANCELLED`. Completeness is informational (`HIGH\|MEDIUM\|MORE_INFO_NEEDED`). Customers list only their own rows. |
 | `project_private_locations` | Exact street + coordinates. Not visible to opportunity contractors. |
 | `project_photos` | Private storage paths. |
 | `project_answers` | Answers to `service_questions`. |
@@ -120,6 +120,18 @@ Apply `20260918000001` through `20260918000005` after Phase 3. Additive. Full ru
 | `booking_events` | Append-only audit for booking/CO/review actions. |
 
 New RPCs include `preview_marketplace_fee`, `select_estimate` (now creates a PENDING booking), `cancel_pending_booking`, `confirm_booking_for_testing` (ADMIN), `start_booking`, `complete_booking`, `dispute_booking`, `propose_change_order`, `respond_change_order`, `submit_booking_review`, `booking_job_contact`, `hire_again_contractors`.
+
+## Phase 5A
+
+Apply `20260920000001` through `20260920000003` after Phase 4A. Additive. Full rules: [PHASE5A.md](PHASE5A.md).
+
+| Object | Purpose |
+| --- | --- |
+| `project_notices` | Lightweight in-app banners (not chat). |
+| `projects.scope_revision` / `cancelled_at` | Material-edit invalidation and cancel lifecycle. |
+| `update_customer_project` | Owner-only posted edits. Material changes supersede estimates. |
+| `cancel_customer_project` | Owner-only delete (safe) or cancel (preserve history). |
+| `list_my_customer_projects` / `get_my_customer_project` | Customer isolation: `customer_id = auth.uid()` only. |
 
 ## How to inspect
 

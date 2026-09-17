@@ -5,6 +5,7 @@ export const PROJECT_STATUSES = [
   "CONTRACTORS_RESPONDING",
   "ESTIMATES_AVAILABLE",
   "CONTRACTOR_SELECTED",
+  "CANCELLED",
 ] as const;
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
@@ -37,6 +38,7 @@ export const ESTIMATE_STATUSES = [
   "ACCEPTED",
   "DECLINED",
   "EXPIRED",
+  "SUPERSEDED",
 ] as const;
 export type EstimateStatus = (typeof ESTIMATE_STATUSES)[number];
 
@@ -177,6 +179,9 @@ export type Project = {
   selected_booking_id?: string | null;
   posted_at: string | null;
   selected_at: string | null;
+  scope_revision?: number;
+  cancelled_at?: string | null;
+  cancel_reason?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -292,18 +297,17 @@ export const OPEN_PROJECT_STATUSES: ProjectStatus[] = [
 
 export const CUSTOMER_PROJECT_TABS = [
   { key: "drafts", label: "Drafts", statuses: ["DRAFT"] as ProjectStatus[] },
-  { key: "open", label: "Open", statuses: OPEN_PROJECT_STATUSES },
-  { key: "estimates", label: "Estimates Available", statuses: ["ESTIMATES_AVAILABLE"] as ProjectStatus[] },
   {
-    key: "selected",
-    label: "Contractor Selected",
-    statuses: ["CONTRACTOR_SELECTED"] as ProjectStatus[],
+    key: "active",
+    label: "Active",
+    statuses: ["POSTED", "MATCHING", "CONTRACTORS_RESPONDING", "ESTIMATES_AVAILABLE", "CONTRACTOR_SELECTED"] as ProjectStatus[],
   },
+  { key: "completed", label: "Completed", statuses: [] as ProjectStatus[] },
+  { key: "cancelled", label: "Cancelled", statuses: ["CANCELLED"] as ProjectStatus[] },
 ] as const;
 
 export function customerTabForStatus(status: ProjectStatus): (typeof CUSTOMER_PROJECT_TABS)[number]["key"] {
-  for (const tab of CUSTOMER_PROJECT_TABS) {
-    if ((tab.statuses as readonly ProjectStatus[]).includes(status)) return tab.key;
-  }
-  return "open";
+  if (status === "DRAFT") return "drafts";
+  if (status === "CANCELLED") return "cancelled";
+  return "active";
 }

@@ -34,6 +34,13 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     expect(heading).toHaveTextContent(/one simple place/i);
   });
 
+  it("shows the marketplace tagline in wrapping HTML, not clipped SVG text", () => {
+    const { container } = renderApp("/");
+    expect(screen.getAllByText(/a marketplace, not a crew/i).length).toBeGreaterThan(0);
+    const svgText = Array.from(container.querySelectorAll("svg text")).map((node) => node.textContent ?? "").join(" ");
+    expect(svgText).not.toMatch(/a marketplace, not a crew/i);
+  });
+
   it("lists the Phase 1 services including Handyman and Other", () => {
     renderApp("/");
     expect(screen.getByRole("button", { name: /handyman/i })).toBeInTheDocument();
@@ -105,6 +112,6 @@ describe("Phase 3 marketplace surfaces", () => {
     renderApp("/how-it-works");
     expect(screen.getByText(/up to three local independents/i)).toBeInTheDocument();
     expect(screen.queryByText(/live posting is not on yet/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/payments, payouts, and priority verified are not/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/online payment setup is coming soon/i).length).toBeGreaterThan(0);
   });
 });

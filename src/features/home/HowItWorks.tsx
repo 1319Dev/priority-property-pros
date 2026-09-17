@@ -4,7 +4,7 @@ const steps = [
   {
     n: "01",
     title: "Post the project",
-    body: "Describe the work in plain words. No account required on this public site yet — posting goes live in a later phase.",
+    body: "Describe the work in plain words. Sign in as a customer and post the project.",
   },
   {
     n: "02",

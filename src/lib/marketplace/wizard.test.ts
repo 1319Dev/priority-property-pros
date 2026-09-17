@@ -15,11 +15,12 @@ describe("customer wizard and lists", () => {
     ]);
   });
 
-  it("sorts customer projects into Drafts / Open / Estimates / Selected", () => {
-    expect(CUSTOMER_PROJECT_TABS.map((tab) => tab.key)).toEqual(["drafts", "open", "estimates", "selected"]);
+  it("sorts customer projects into Drafts / Active / Completed / Cancelled", () => {
+    expect(CUSTOMER_PROJECT_TABS.map((tab) => tab.key)).toEqual(["drafts", "active", "completed", "cancelled"]);
     expect(customerTabForStatus("DRAFT")).toBe("drafts");
-    expect(customerTabForStatus("MATCHING")).toBe("open");
-    expect(customerTabForStatus("ESTIMATES_AVAILABLE")).toBe("estimates");
-    expect(customerTabForStatus("CONTRACTOR_SELECTED")).toBe("selected");
+    expect(customerTabForStatus("MATCHING")).toBe("active");
+    expect(customerTabForStatus("ESTIMATES_AVAILABLE")).toBe("active");
+    expect(customerTabForStatus("CONTRACTOR_SELECTED")).toBe("active");
+    expect(customerTabForStatus("CANCELLED")).toBe("cancelled");
   });
 });

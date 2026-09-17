@@ -261,3 +261,41 @@ describe("Phase 4A SQL migrations", () => {
     expect(sql).toMatch(/compute_fee_from_snapshot/);
   });
 });
+
+describe("Phase 5A SQL migrations", () => {
+  const sql = allSql();
+
+  it("adds cancelled project lifecycle without wiping data or enabling Stripe", () => {
+    expect(sql).toMatch(/ADD VALUE IF NOT EXISTS 'CANCELLED'/);
+    expect(sql).toMatch(/ADD VALUE IF NOT EXISTS 'SUPERSEDED'/);
+    expect(sql).toMatch(/CREATE TABLE IF NOT EXISTS public\.project_notices/);
+    expect(sql).toMatch(/FUNCTION public\.update_customer_project/);
+    expect(sql).toMatch(/FUNCTION public\.cancel_customer_project/);
+    expect(sql).toMatch(/FUNCTION public\.list_my_customer_projects/);
+    expect(sql).toMatch(/FUNCTION public\.get_my_customer_project/);
+    expect(sql).not.toMatch(/DROP TABLE public\.projects/i);
+    expect(sql).not.toMatch(/TRUNCATE public\.projects/i);
+    expect(sql).not.toMatch(/DELETE FROM auth\.users/i);
+    expect(sql).toMatch(/CONSTRAINT bookings_charges_not_live CHECK \(charges_live = false\)/);
+    expect(sql).toMatch(/CONSTRAINT bookings_payments_not_live CHECK \(payments_live = false\)/);
+  });
+
+  it("enforces customer project isolation at RLS and RPC level", () => {
+    expect(sql).toMatch(/CREATE POLICY projects_select_owner/);
+    expect(sql).toMatch(/USING \(customer_id = auth\.uid\(\)\)/);
+    expect(sql).toMatch(/CREATE POLICY projects_select_contractor_authorized/);
+    expect(sql).toMatch(/WHERE customer_id = auth\.uid\(\)/);
+    expect(sql).toMatch(/AND customer_id = auth\.uid\(\)/);
+    expect(sql).toMatch(/RAISE EXCEPTION 'not the project owner'/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.update_customer_project\(uuid, jsonb\) FROM PUBLIC, anon/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.list_my_customer_projects\(\) TO authenticated/);
+  });
+
+  it("invalidates estimates on material edits and blocks confirmed-job deletion", () => {
+    expect(sql).toMatch(/SET status = 'SUPERSEDED'/);
+    expect(sql).toMatch(/needs_confirmation/);
+    expect(sql).toMatch(/confirmed or in-progress jobs cannot be deleted/);
+    expect(sql).toMatch(/material project edits must go through update_customer_project/);
+    expect(sql).toMatch(/the service type cannot change after contractors have already priced this job/);
+  });
+});

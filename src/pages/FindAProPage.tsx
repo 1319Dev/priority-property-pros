@@ -5,7 +5,7 @@ export function FindAProPage() {
     <ComingSoonLayout
       eyebrow="Find a Pro"
       title="Browsing local pros comes next."
-      body="In a later phase you will search independent contractors near the property. Today you can still explore the public service list on the homepage."
+      body="Search independent contractors near the property is coming next. Today you can post a project and local independents can respond."
       extra={<SeeServicesLink />}
     />
   );

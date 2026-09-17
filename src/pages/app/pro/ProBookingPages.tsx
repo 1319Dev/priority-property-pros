@@ -48,7 +48,7 @@ export function ProBookingsPage() {
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
       <p className="text-sm text-ink-700">
-        Exact street, phone, and email stay hidden until a booking is confirmed. Nothing is marked paid.
+        Exact street, phone, and email stay hidden until a booking is confirmed. {paymentsComingSoonCopy()}
       </p>
       <FormError message={error} />
       {rows.length === 0 ? (
@@ -135,7 +135,7 @@ export function ProBookingDetailPage() {
           PPP fee {booking.fee_locked ? "" : "preview "}
           {formatUsdFromCents(booking.fee_cents)} — you would earn {formatUsdFromCents(booking.contractor_earnings_cents)}
         </p>
-        <p className="text-ink-500">Preview / estimate — payments not live.</p>
+        <p className="text-ink-500">{paymentsComingSoonCopy()}</p>
       </section>
       {booking.status === "CONFIRMED" ? (
         <Button

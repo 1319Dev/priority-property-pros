@@ -376,6 +376,9 @@ export type Database = {
           selected_booking_id: string | null;
           posted_at: string | null;
           selected_at: string | null;
+          scope_revision: number;
+          cancelled_at: string | null;
+          cancel_reason: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -464,6 +467,21 @@ export type Database = {
           changed_by: string | null;
           note: string | null;
           created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      project_notices: {
+        Row: {
+          id: string;
+          project_id: string;
+          audience: "CUSTOMER" | "CONTRACTOR" | "BOTH";
+          kind: string;
+          title: string;
+          body: string;
+          created_at: string;
+          created_by: string | null;
         };
         Insert: never;
         Update: never;
@@ -767,6 +785,12 @@ export type Database = {
       submit_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       withdraw_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       select_estimate: { Args: { p_project_id: string; p_estimate_id: string }; Returns: Json };
+      list_my_customer_projects: { Args: Record<string, never>; Returns: Json };
+      get_my_customer_project: { Args: { p_project_id: string }; Returns: Json };
+      update_customer_project: { Args: { p_project_id: string; p_patch: Json }; Returns: Json };
+      cancel_customer_project: { Args: { p_project_id: string; p_confirm?: boolean }; Returns: Json };
+      project_has_participation: { Args: { p_project_id: string }; Returns: boolean };
+      contractor_can_read_project: { Args: { p_project_id: string }; Returns: boolean };
     };
     Enums: {
       account_type: AccountType;

@@ -48,10 +48,10 @@ export function CustomerBookingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
-      <p className="text-ink-700">Selecting a pro starts a booking. Payment is not live, so nothing here is marked paid.</p>
+      <p className="text-ink-700">Selecting a pro starts a booking. {paymentsComingSoonCopy()}</p>
       <FormError message={error} />
       {rows.length === 0 ? (
-        <EmptyState title="No bookings yet" body="When you select a contractor, the booking will wait here until payment exists." />
+        <EmptyState title="No bookings yet" body="When you select a contractor, the booking will wait here. Nothing is marked paid." />
       ) : (
         <ul className="space-y-3">
           {rows.map((row) => (
@@ -124,7 +124,7 @@ export function CustomerBookingDetailPage() {
           {formatUsdFromCents(booking.fee_cents)} ({booking.fee_kind === "REPEAT" ? "Hire Again rate" : "original schedule"})
         </p>
         <p>Pro would earn {formatUsdFromCents(booking.contractor_earnings_cents)}</p>
-        <p className="mt-2 text-ink-500">Preview / estimate — payments not live. You are not charged a customer percentage.</p>
+        <p className="mt-2 text-ink-500">{paymentsComingSoonCopy()} You are not charged a customer percentage.</p>
       </section>
       {pending ? (
         <Button
@@ -269,8 +269,8 @@ export function HireAgainPage() {
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Hire again</h1>
       <p className="text-ink-700">
-        Pros you already finished a PPP job with. Repeat pricing is applied by the server, not a checkbox you can tick.
-        The introduction window is {months ?? "—"} months and comes from PPP settings.
+        Pros you already finished a job with. Repeat pricing is applied automatically. You cannot pick original vs repeat
+        yourself. The introduction window is {months ?? "—"} months.
       </p>
       <FormError message={error} />
       {rows.length === 0 ? (
@@ -283,7 +283,7 @@ export function HireAgainPage() {
           {rows.map((row) => (
             <li key={String(row.relationship_id)} className="rounded-3xl border border-forest-800/10 px-5 py-4">
               <p className="font-semibold text-forest-800">{String(row.business_name)}</p>
-              <p className="text-sm text-ink-500">Repeat pricing · not a live charge</p>
+                  <p className="text-sm text-ink-500">Repeat pricing · {paymentsComingSoonCopy()}</p>
               <ButtonLink to="/app/customer/projects/new/wizard" className="mt-3 min-h-14 w-full">
                 Post a new project
               </ButtonLink>

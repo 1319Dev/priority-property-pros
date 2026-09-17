@@ -44,6 +44,10 @@ export function estimateVisibleToCustomer(status: EstimateStatus): boolean {
   return status !== "DRAFT";
 }
 
+export function estimateNeedsNewSubmission(status: EstimateStatus): boolean {
+  return status === "SUPERSEDED" || status === "EXPIRED";
+}
+
 export function canSelfVerifyCredential(
   actor: MarketplaceActor,
   from: CredentialStatus,

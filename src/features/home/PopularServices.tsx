@@ -26,12 +26,12 @@ export function PopularServices() {
               <button
                 type="button"
                 onClick={() => setSelected(service)}
-                className="flex min-h-24 w-full flex-col items-start rounded-2xl border border-forest-800/10 bg-cream-50 px-3 py-3 text-left shadow-[0_1px_0_rgba(255,255,255,0.7)] transition-colors hover:border-gold-500 hover:bg-cream-100"
+                className="flex min-h-24 w-full min-w-0 flex-col items-start rounded-2xl border border-forest-800/10 bg-cream-50 px-3 py-3 text-left shadow-[0_1px_0_rgba(255,255,255,0.7)] transition-colors hover:border-gold-500 hover:bg-cream-100"
               >
                 <span className="font-display text-base font-semibold text-forest-800">
                   {service.name}
                 </span>
-                <span className="mt-1 text-xs leading-snug text-ink-500">{service.blurb}</span>
+                <span className="mt-1 line-clamp-3 text-xs leading-snug text-ink-500">{service.blurb}</span>
               </button>
             </li>
           ))}
@@ -42,7 +42,7 @@ export function PopularServices() {
         title={selected?.name ?? "Service"}
         onClose={() => setSelected(null)}
       >
-        <p className="text-ink-700">{selected?.blurb}. Posting goes live in a later phase — this is the public catalog.</p>
+        <p className="text-ink-700">{selected?.blurb}. Sign in as a customer to post this job. Local independents can then respond.</p>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
           <Button
             onClick={() => {
