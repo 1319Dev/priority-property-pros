@@ -1,4 +1,4 @@
-SQL for Phase 2 and Phase 3. Apply `migrations/` in filename order using the Supabase SQL editor.
+SQL for Phase 2, Phase 3, and Phase 4A. Apply `migrations/` in filename order using the Supabase SQL editor.
 
 Owner steps: [`docs/SUPABASE_SETUP.md`](../docs/SUPABASE_SETUP.md)
 

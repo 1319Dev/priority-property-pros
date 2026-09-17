@@ -27,6 +27,7 @@ import {
   CustomerProjectsPage,
 } from "./pages/app/CustomerPages";
 import { CompareEstimatesPage, CustomerProjectDetailPage } from "./pages/app/customer/CustomerMarketplacePages";
+import { CustomerBookingDetailPage, CustomerBookingsPage, HireAgainPage } from "./pages/app/customer/BookingPages";
 import { ProjectWizardPage } from "./pages/app/customer/ProjectWizardPage";
 import { ProHomePage, ProJobsPage, ProMessagesPage } from "./pages/app/ProPages";
 import {
@@ -35,10 +36,12 @@ import {
   OpportunityDetailPage,
   ProOnboardingPage,
 } from "./pages/app/pro/ProMarketplacePages";
+import { ProBookingDetailPage, ProBookingsPage } from "./pages/app/pro/ProBookingPages";
 import { VerifierHomePage, VerifierMessagesPage, VerifierVisitsPage } from "./pages/app/VerifierPages";
 import {
   AdminApprovalsPage,
   AdminAuditPage,
+  AdminBookingsPage,
   AdminHomePage,
   AdminPeoplePage,
 } from "./pages/app/AdminPages";
@@ -72,6 +75,9 @@ export default function App() {
             <Route path="projects/:projectId/wizard" element={<ProjectWizardPage />} />
             <Route path="projects/:projectId/compare" element={<CompareEstimatesPage />} />
             <Route path="projects/:projectId" element={<CustomerProjectDetailPage />} />
+            <Route path="bookings" element={<CustomerBookingsPage />} />
+            <Route path="bookings/:bookingId" element={<CustomerBookingDetailPage />} />
+            <Route path="hire-again" element={<HireAgainPage />} />
             <Route path="messages" element={<CustomerMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
           </Route>
@@ -83,6 +89,8 @@ export default function App() {
             <Route path="opportunities" element={<OpportunitiesPage />} />
             <Route path="opportunities/:opportunityId/estimate" element={<EstimateBuilderPage />} />
             <Route path="opportunities/:opportunityId" element={<OpportunityDetailPage />} />
+            <Route path="bookings" element={<ProBookingsPage />} />
+            <Route path="bookings/:bookingId" element={<ProBookingDetailPage />} />
             <Route path="onboarding" element={<ProOnboardingPage />} />
             <Route path="messages" element={<ProMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
@@ -102,6 +110,7 @@ export default function App() {
             <Route path="people" element={<AdminPeoplePage />} />
             <Route path="approvals" element={<AdminApprovalsPage />} />
             <Route path="audit" element={<AdminAuditPage />} />
+            <Route path="bookings" element={<AdminBookingsPage />} />
             <Route path="account" element={<AccountPage />} />
           </Route>
         </Route>

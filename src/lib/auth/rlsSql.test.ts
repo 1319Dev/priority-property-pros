@@ -183,3 +183,81 @@ describe("Phase 3 SQL migrations", () => {
     expect(sql).toMatch(/FUNCTION public\.protect_estimate_row/);
   });
 });
+
+const PHASE4A_TABLES = [
+  "fee_schedules",
+  "fee_schedule_brackets",
+  "bookings",
+  "booking_events",
+  "customer_contractor_relationships",
+  "change_orders",
+  "booking_reviews",
+];
+
+describe("Phase 4A SQL migrations", () => {
+  const sql = allSql();
+
+  it("creates booking, fee, relationship, change-order, and review tables with RLS", () => {
+    for (const table of PHASE4A_TABLES) {
+      expect(sql).toMatch(new RegExp(`CREATE TABLE public\\.${table}`, "i"));
+      expect(sql).toMatch(new RegExp(`ALTER TABLE public\\.${table} ENABLE ROW LEVEL SECURITY`, "i"));
+    }
+  });
+
+  it("keeps payments_live and charges_live false and does not add INSPECTOR", () => {
+    expect(sql).toMatch(/'payments_live'/);
+    expect(sql).toMatch(/'charges_live'/);
+    expect(sql).toMatch(/CONSTRAINT bookings_charges_not_live CHECK \(charges_live = false\)/);
+    expect(sql).toMatch(/CONSTRAINT bookings_payments_not_live CHECK \(payments_live = false\)/);
+    expect(sql).not.toMatch(/INSPECTOR/);
+  });
+
+  it("unlocks exact address only after a confirmed booking, not selection", () => {
+    expect(sql).toMatch(/booking_is_confirmed_for_contractor/);
+    expect(sql).toMatch(/OR public\.booking_is_confirmed_for_contractor\(project_id\)/);
+    expect(sql).toMatch(/Exact street \/ coordinates unlock/);
+    expect(sql).toMatch(/FUNCTION public\.booking_job_contact/);
+    expect(sql).toMatch(/contact is locked until the booking is confirmed/);
+    expect(sql).toMatch(/DROP POLICY IF EXISTS project_private_locations_select_protected/);
+    expect(sql).toMatch(/Does not open profiles SELECT/);
+  });
+
+  it("restricts confirmation to admin testing and snapshots fees", () => {
+    expect(sql).toMatch(/FUNCTION public\.confirm_booking_for_testing/);
+    expect(sql).toMatch(/only an admin can confirm a booking until payments are live/);
+    expect(sql).toMatch(/FUNCTION public\.lock_booking_fee/);
+    expect(sql).toMatch(/fee_brackets_snapshot/);
+    expect(sql).toMatch(/FUNCTION public\.compute_fee/);
+    expect(sql).toMatch(/CREATE UNIQUE INDEX fee_schedules_one_active_per_kind/);
+  });
+
+  it("creates relationships on confirm and Hire Again from completed history", () => {
+    expect(sql).toMatch(/FUNCTION public\.ensure_relationship_on_confirm/);
+    expect(sql).toMatch(/FUNCTION public\.hire_again_contractors/);
+    expect(sql).toMatch(/pair_has_completed_booking/);
+    expect(sql).toMatch(/relationship_protection_months/);
+    expect(sql).toMatch(/relationships cannot be written from the client/);
+  });
+
+  it("requires dual approval on change orders and completed bookings for reviews", () => {
+    expect(sql).toMatch(/FUNCTION public\.propose_change_order/);
+    expect(sql).toMatch(/FUNCTION public\.respond_change_order/);
+    expect(sql).toMatch(/change orders cannot be written from the client/);
+    expect(sql).toMatch(/reviews require a completed booking/);
+    expect(sql).toMatch(/only the customer can review this booking/);
+  });
+
+  it("revokes anonymous execute on Phase 4A RPCs and does not delete Phase 3 data", () => {
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.confirm_booking_for_testing\(uuid\) FROM PUBLIC, anon/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.confirm_booking_for_testing\(uuid\) TO authenticated/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.booking_job_contact\(uuid\) FROM PUBLIC, anon/);
+    expect(sql).not.toMatch(/DELETE FROM auth\.users/i);
+    expect(sql).not.toMatch(/TRUNCATE public\.profiles/i);
+    expect(sql).not.toMatch(/DROP TABLE public\.projects/i);
+    expect(sql).not.toMatch(/DROP TABLE public\.estimates/i);
+    expect(sql).not.toMatch(/GRANT INSERT ON TABLE public\.bookings/);
+    expect(sql).not.toMatch(/GRANT UPDATE ON TABLE public\.bookings/);
+    expect(sql).toMatch(/v_repeat := public\.pair_has_completed_booking/);
+    expect(sql).toMatch(/compute_fee_from_snapshot/);
+  });
+});

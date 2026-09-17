@@ -71,10 +71,17 @@ Do not commit `.env.local`.
    17. `20260917000009_phase3_function_grants.sql`
    18. `20260917000010_phase3_phase2_function_grants.sql`
    19. `20260917000011_phase3_estimate_builder_guards.sql`
+   20. `20260918000001_phase4a_fee_engine.sql`
+   21. `20260918000002_phase4a_booking_tables.sql`
+   22. `20260918000003_phase4a_guards.sql`
+   23. `20260918000004_phase4a_rpcs.sql`
+   24. `20260918000005_phase4a_rls_grants.sql`
 
 5. If a file says it already exists, stop and ask a developer — do not skip ahead.
 6. Phase 2 Table Editor should list `profiles`, `contractor_profiles`, `verifier_profiles`, `agreements`, `agreement_acceptances`, `audit_logs`.
-7. After Phase 3, you should also see `service_categories`, `projects`, `opportunities`, `estimates`, and related tables. **Do not delete users or profiles.** Optional: `supabase/sql/approve_contractor.sql` to approve a real contractor so matching can include them. There is no website self-approve.
+7. After Phase 3, you should also see `service_categories`, `projects`, `opportunities`, `estimates`, and related tables. After Phase 4A, you should also see `fee_schedules`, `bookings`, `customer_contractor_relationships`, `change_orders`, and `booking_reviews`. **Do not delete users or profiles.** Optional: `supabase/sql/approve_contractor.sql` to approve a real contractor so matching can include them. There is no website self-approve.
+
+**Email confirm:** keep the current Auth confirm-email setting so testers are not locked out. Before public launch, enable **Confirm email**, add SMTP, and keep the redirect URLs in section D. Do not silently switch to auto-confirm in production.
 
 ---
 
@@ -143,7 +150,7 @@ If it fails with “No auth user”, you signed up with a different email. Check
 - A contractor opens `/app/pro` for onboarding and opportunities (approval is SQL-only).
 - A contractor cannot open `/app/admin`.
 - Forgot password sends mail (once URLs in section D are saved).
-- There is **no** Stripe checkout. Estimate screens show a fee **preview** only.
+- There is **no** Stripe checkout. Estimate screens show a fee **preview** only. Selecting a pro creates a pending booking; production cannot mark it paid.
 
 ---
 

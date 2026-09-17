@@ -18,7 +18,9 @@ import {
   selectEstimate,
   TIMING_LABELS,
 } from "../../../lib/marketplace/api";
+import { computeMarketplaceFee } from "../../../lib/marketplace/feeEngine";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
+import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import { CUSTOMER_PROJECT_TABS, customerTabForStatus, ESTIMATE_ITEM_KIND_LABELS, type EstimateItemKind, type Project } from "../../../lib/marketplace/types";
 import { comparisonDisplayOrder } from "../../../lib/marketplace/flows";
 import { useToast } from "../../../hooks/useToast";
@@ -32,8 +34,8 @@ export function CustomerHomePage() {
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Customer</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Hello, {name}.</h1>
         <p className="mt-3 max-w-xl text-ink-700">
-          Post a project, compare estimates, and select one local pro. PPP is not the contractor. No payment in this
-          phase.
+          Post a project, compare estimates, and select one local pro. Selecting a pro starts a booking. Payment is
+          not live, so nothing is marked paid.
         </p>
       </header>
       <ButtonLink to="/app/customer/projects/new/wizard">Post a project</ButtonLink>
@@ -165,7 +167,7 @@ export function CustomerProjectDetailPage() {
         <p className="mt-3">
           {project.city}, {project.state} {project.zip_code}
         </p>
-        <p>Street (protected until you select a pro): {street ?? "—"}</p>
+        <p>Street (stays private until a booking is confirmed): {street ?? "—"}</p>
         <p>{project.timing ? TIMING_LABELS[project.timing] : ""}</p>
       </section>
       <section className="space-y-3">
@@ -201,6 +203,11 @@ export function CustomerProjectDetailPage() {
       </section>
       {project.status === "ESTIMATES_AVAILABLE" || project.status === "CONTRACTOR_SELECTED" ? (
         <ButtonLink to={`/app/customer/projects/${project.id}/compare`}>Compare estimates</ButtonLink>
+      ) : null}
+      {project.selected_booking_id ? (
+        <ButtonLink to={`/app/customer/bookings/${project.selected_booking_id}`} variant="outline">
+          Open booking
+        </ButtonLink>
       ) : null}
     </div>
   );
@@ -243,7 +250,7 @@ export function CompareEstimatesPage() {
     setError(null);
     try {
       await selectEstimate(projectId, estimateId);
-      toast.push("Contractor selected. Payment is not in this phase.");
+      toast.push(paymentsComingSoonCopy());
       setConfirmId(null);
       const proj = await fetchProject(projectId);
       setProject(proj);
@@ -258,7 +265,8 @@ export function CompareEstimatesPage() {
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Compare estimates</h1>
       <p className="text-ink-700">
-        Factual comparison only. PPP does not rank a “best” estimate. Selecting a pro does not charge a card.
+        Factual comparison only. PPP does not rank a “best” estimate. Selecting a pro starts a pending booking. It does
+        not charge a card and does not share your exact address yet.
       </p>
       <FormError message={error} />
       {rows.length === 0 ? <EmptyState title="No estimates yet" body="Submitted estimates will appear here in the order they arrived." /> : null}
@@ -293,15 +301,31 @@ export function CompareEstimatesPage() {
               </div>
             </dl>
             {estimate.notes ? <p className="mt-3 text-sm">{estimate.notes}</p> : null}
-            <p className="mt-3 text-xs text-ink-500">Platform fee is a contractor preview only. Nothing is charged in Phase 3.</p>
+            {(() => {
+              const bookingFee = computeMarketplaceFee({ amount_cents: estimate.total_cents, kind: "ORIGINAL" });
+              return (
+                <p className="mt-3 text-xs text-ink-500">
+                  Booking fee preview ({bookingFee.label}): {formatUsdFromCents(bookingFee.fee_cents)}. The stored
+                  estimate still keeps its Phase 3 ~7% snapshot. Nothing is charged.
+                </p>
+              );
+            })()}
             {project?.status === "CONTRACTOR_SELECTED" && project.selected_estimate_id === estimate.id ? (
-              <p className="mt-4 font-semibold text-forest-800">Selected</p>
+              <div className="mt-4 space-y-2">
+                <p className="font-semibold text-forest-800">Selected — booking is waiting for payment</p>
+                <p className="text-sm">{paymentsComingSoonCopy()}</p>
+                {project.selected_booking_id ? (
+                  <ButtonLink to={`/app/customer/bookings/${project.selected_booking_id}`} className="min-h-14 w-full">
+                    View booking
+                  </ButtonLink>
+                ) : null}
+              </div>
             ) : project?.status === "CONTRACTOR_SELECTED" ? (
               <p className="mt-4 text-sm text-ink-500">Not selected</p>
             ) : estimate.status === "SUBMITTED" || estimate.status === "REVISED" ? (
               confirmId === estimate.id ? (
                 <div className="mt-4 space-y-2">
-                  <p className="text-sm">Confirm this independent contractor? This cannot be undone here. No payment is taken.</p>
+                  <p className="text-sm">Confirm this independent contractor? This starts a pending booking. No payment is taken and your exact address stays private.</p>
                   <Button type="button" className="min-h-14 w-full" disabled={busy} onClick={() => void confirm(estimate.id)}>
                     Confirm this pro
                   </Button>

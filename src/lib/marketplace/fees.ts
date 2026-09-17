@@ -23,6 +23,7 @@ export function previewFee(
     fee_cents,
     contractor_earnings_cents: Math.max(0, (Math.trunc(totalCents) || 0) - fee_cents),
     charges_live: false,
+    payments_live: false,
   };
 }
 

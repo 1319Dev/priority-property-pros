@@ -16,3 +16,15 @@
 --   update contractor_profiles set approval_status = 'APPROVED' where profile_id = auth.uid() → error
 --   select * from profiles where id <> auth.uid() → 0 rows
 --   select * from audit_logs → 0 rows unless ADMIN
+
+-- Phase 4A (after 20260918000001–05):
+--   customer cannot select * from bookings where customer_id <> auth.uid()
+--   contractor cannot select unrelated bookings
+--   contractor cannot select project_private_locations until booking CONFIRMED
+--   customer/contractor confirm_booking_for_testing → error (admin only)
+--   client update bookings.fee_cents / status → error
+--   client insert customer_contractor_relationships → error
+--   client insert fee_schedules → error
+--   contractor cannot mark a change order APPROVED alone
+--   submit_booking_review on a PENDING booking → error
+
