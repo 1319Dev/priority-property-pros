@@ -1,4 +1,5 @@
 import type { ApprovalStatus, OnboardingStatus } from "../auth/types";
+import type { CredentialStatus } from "./types";
 
 export type ContractorProfileGate = {
   onboarding_status: OnboardingStatus;
@@ -34,6 +35,8 @@ export type HarmlessProfileField = (typeof HARMLESS_PROFILE_FIELDS)[number];
 
 export const IDENTITY_REVIEW_FIELDS = ["license_number", "insurance_carrier"] as const;
 export type IdentityReviewField = (typeof IDENTITY_REVIEW_FIELDS)[number];
+
+export const MATERIAL_CREDENTIAL_FIELDS = ["label", "document_path", "kind", "expires_at"] as const;
 
 export const FORBIDDEN_CONTRACTOR_PROFILE_FIELDS = [
   "approval_status",
@@ -78,6 +81,35 @@ export function harmlessEditStripsApproval(fields: string[]): boolean {
   return false;
 }
 
+export function identityEditStripsApproval(): boolean {
+  return false;
+}
+
+export function identityEditStripsActive(): boolean {
+  return false;
+}
+
+export function verifiedBadgeVisible(status: CredentialStatus | string): boolean {
+  return status === "VERIFIED";
+}
+
+export function applyVerifiedCredentialEdit<T extends { status: CredentialStatus | string }>(
+  current: T,
+  patch: Partial<T> & Record<string, unknown>,
+): T & { identityReview: boolean; badgeVisible: boolean } {
+  const material = MATERIAL_CREDENTIAL_FIELDS.some(
+    (field) => field in patch && patch[field] !== (current as Record<string, unknown>)[field],
+  );
+  const nextStatus =
+    current.status === "VERIFIED" && material ? "PENDING" : ((patch.status as CredentialStatus | undefined) ?? current.status);
+  const next = { ...current, ...patch, status: nextStatus };
+  return {
+    ...next,
+    identityReview: current.status === "VERIFIED" && material,
+    badgeVisible: verifiedBadgeVisible(nextStatus),
+  };
+}
+
 export function allowedManageProfilePatch(
   patch: Record<string, unknown>,
   currentOnboarding: OnboardingStatus,
@@ -100,9 +132,13 @@ export function allowedManageProfilePatch(
 }
 
 export const MANAGE_PROFILE_SECTIONS = [
+  { key: "status", title: "Your Pro Profile", action: "Approved" },
+  { key: "accepting", title: "Accepting Work", action: "Toggle" },
+  { key: "business", title: "Business", action: "Edit" },
+  { key: "about", title: "About", action: "Edit" },
   { key: "services", title: "Services", action: "Edit" },
   { key: "area", title: "Service Area", action: "Edit" },
-  { key: "about", title: "About", action: "Edit" },
+  { key: "experience", title: "Experience", action: "Edit" },
+  { key: "credentials", title: "Credentials", action: "Manage" },
   { key: "portfolio", title: "Portfolio", action: "Manage Photos" },
-  { key: "accepting", title: "Accepting Work", action: "Toggle" },
 ] as const;

@@ -579,6 +579,7 @@ export type Database = {
           view_count: number;
           accepted_at: string | null;
           declined_at: string | null;
+          decline_reason: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -831,7 +832,7 @@ export type Database = {
       submit_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       withdraw_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       select_estimate: { Args: { p_project_id: string; p_estimate_id: string }; Returns: Json };
-      mark_estimate_viewed: { Args: { p_estimate_id: string }; Returns: Json };
+      mark_estimate_viewed: { Args: { p_estimate_id: string; p_project_id?: string | null }; Returns: Json };
       decline_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       list_my_estimates: { Args: Record<string, never>; Returns: Json };
       list_my_notifications: { Args: Record<string, never>; Returns: Json };

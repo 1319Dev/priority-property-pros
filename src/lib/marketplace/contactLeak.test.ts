@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CONTACT_AFTER_CONNECTION_COPY,
+  CONTACT_SCAN_FIELDS,
   detectContactLeak,
 } from "./contactLeak";
 
@@ -28,7 +29,13 @@ describe("anti-circumvention contact detection", () => {
     const result = detectContactLeak("Text 404.555.0100");
     expect(result.blocked).toBe(true);
     expect(result.message).toBe(CONTACT_AFTER_CONNECTION_COPY);
-    expect(CONTACT_AFTER_CONNECTION_COPY).toMatch(/after connection through PPP/i);
+    expect(CONTACT_AFTER_CONNECTION_COPY).toMatch(/after connection through Priority Property Pros/i);
     expect(CONTACT_AFTER_CONNECTION_COPY).not.toMatch(/surveillance|keylogger|scan your device/i);
+  });
+
+  it("scans estimate notes, Q&A, bio, headline, and project text fields", () => {
+    expect(CONTACT_SCAN_FIELDS).toEqual(
+      expect.arrayContaining(["notes", "bio", "headline", "prompt", "answer_text", "title", "description", "label"]),
+    );
   });
 });

@@ -5,6 +5,7 @@ import { HumanStatus, StatusBanner } from "../../../components/ui/StatusBanner";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
 import {
+  addCredential,
   addPortfolioItem,
   deletePortfolioItem,
   fetchContractorAreas,
@@ -16,12 +17,13 @@ import {
   setContractorServices,
   signedContractorDocUrl,
   updateContractorProfile,
+  updateCredential,
   updateProfileAvatar,
   uploadContractorDoc,
   upsertContractorArea,
 } from "../../../lib/marketplace/api";
 import { centsToDollarString, dollarsToCents } from "../../../lib/marketplace/fees";
-import { MANAGE_PROFILE_SECTIONS, showManageProfile } from "../../../lib/marketplace/profileManage";
+import { MANAGE_PROFILE_SECTIONS, showManageProfile, verifiedBadgeVisible } from "../../../lib/marketplace/profileManage";
 import type { ServiceAreaMode, ServiceCategory } from "../../../lib/marketplace/types";
 import { PRO_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
 import { useToast } from "../../../hooks/useToast";
@@ -76,6 +78,7 @@ export function ManageProfileView() {
   const [busy, setBusy] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [badges, setBadges] = useState<{ id: string; label: string; status: string }[]>([]);
+  const [credentials, setCredentials] = useState<Awaited<ReturnType<typeof fetchCredentials>>>([]);
 
   async function load() {
     if (!user) return;
@@ -110,7 +113,8 @@ export function ManageProfileView() {
       setRadius(area.radius_miles?.toString() ?? "");
     }
     const creds = await fetchCredentials(profileRow.id);
-    setBadges(creds.filter((c) => c.status === "VERIFIED").map((c) => ({ id: c.id, label: c.label, status: c.status })));
+    setCredentials(creds);
+    setBadges(creds.filter((c) => verifiedBadgeVisible(c.status)).map((c) => ({ id: c.id, label: c.label, status: c.status })));
     if (profile?.avatar_url) {
       setPhotoUrl((await signedContractorDocUrl(profile.avatar_url)) ?? profile.avatar_url);
     }
@@ -121,21 +125,53 @@ export function ManageProfileView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  async function saveAbout() {
+  async function saveBusiness() {
     if (!contractorId) return;
     setBusy(true);
     setError(null);
     try {
       await updateContractorProfile(contractorId, {
         business_name: businessName,
+        website_url: website || null,
+      });
+      toast.push("Business saved.");
+      setEditing(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveAbout() {
+    if (!contractorId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await updateContractorProfile(contractorId, {
         headline,
         bio,
+      });
+      toast.push("About saved.");
+      setEditing(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveExperience() {
+    if (!contractorId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await updateContractorProfile(contractorId, {
         years_experience: years ? Number(years) : null,
         min_job_cents: dollarsToCents(minJob),
         max_job_cents: dollarsToCents(maxJob),
-        website_url: website || null,
       });
-      toast.push("About saved.");
+      toast.push("Experience saved.");
       setEditing(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed.");
@@ -195,7 +231,8 @@ export function ManageProfileView() {
         insurance_carrier: insurance || null,
       });
       setIdentityReview(true);
-      toast.push("License details saved. PPP will review them. Your approved status stays.");
+      setCredentials(await fetchCredentials(contractorId));
+      toast.push("License details saved. That credential is pending re-verification. Your approved status stays.");
       setEditing(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed.");
@@ -221,61 +258,117 @@ export function ManageProfileView() {
 
   return (
     <div className="mx-auto max-w-xl space-y-5">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
-          <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Manage Profile</h1>
-          <p className="mt-2 text-sm text-ink-700">
-            Update the public card customers see. Onboarding answers stay on file.
-            {` ${PRO_DASHBOARD_PRICING_NOTE}`}
-          </p>
-          <ButtonLink to="/app/pro/account" variant="ghost" size="sm" className="mt-2 px-0">
-            Account
-          </ButtonLink>
-        </div>
-        {approved ? (
-          <span className="shrink-0 rounded-full bg-forest-800 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-cream-50">
-            ✓ Approved
-          </span>
-        ) : null}
+      <header>
+        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
+        <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Your Pro Profile</h1>
+        <p className="mt-2 text-sm text-ink-700">
+          Update the public card customers see. Onboarding answers stay on file.
+          {` ${PRO_DASHBOARD_PRICING_NOTE}`}
+        </p>
+        <ButtonLink to="/app/pro/account" variant="ghost" size="sm" className="mt-2 px-0">
+          Account
+        </ButtonLink>
       </header>
       <FormError message={error} />
+      {approved ? (
+        <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-2xl text-forest-800">Your Pro Profile</h2>
+            <span className="shrink-0 rounded-full bg-forest-800 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-cream-50">
+              ✓ Approved
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-ink-700">Approved status is admin-controlled and stays after ordinary profile edits.</p>
+        </section>
+      ) : null}
       {identityReview ? (
         <StatusBanner
           tone="warning"
-          title="License details are in review"
-          body="Changing license or insurance does not remove your approved status. PPP will re-check those documents."
+          title="Credential re-verification required"
+          body="Changing a verified license, insurance, or credential document marks that credential pending review and hides its verified badge. Your approved and active status stay."
         />
       ) : null}
 
+      <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display text-2xl text-forest-800">Accepting Work</h2>
+            <p className="text-sm text-ink-700">{accepting ? "You are open to new jobs." : "New matching is paused. Historical estimates stay."}</p>
+          </div>
+          <label className="flex min-h-12 items-center gap-2 text-sm font-semibold">
+            <input type="checkbox" checked={accepting} onChange={() => void toggleAccepting()} />
+            {accepting ? "On" : "Off"}
+          </label>
+        </div>
+      </section>
+
       <SectionCard
-        title="Photo"
-        actionLabel="Change"
-        editing={editing === "photo"}
-        onEdit={() => setEditing(editing === "photo" ? null : "photo")}
+        title="Business"
+        actionLabel="Edit"
+        editing={editing === "business"}
+        onEdit={() => setEditing(editing === "business" ? null : "business")}
       >
-        {photoUrl ? <img src={photoUrl} alt="" className="h-24 w-24 rounded-full object-cover" /> : <p className="text-sm text-ink-500">No profile photo yet.</p>}
-        {editing === "photo" && user ? (
-          <input
-            className="mt-3 block"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            aria-label="Upload profile photo"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              if (!file) return;
-              void uploadContractorDoc({ userId: user.id, folder: "portfolio", file })
-                .then(async (path) => {
-                  await updateProfileAvatar(user.id, path);
-                  await refreshProfile();
-                  setPhotoUrl((await signedContractorDocUrl(path)) ?? path);
-                  toast.push("Photo saved.");
-                })
-                .catch((err: Error) => setError(err.message));
-            }}
-          />
-        ) : null}
+        {photoUrl ? <img src={photoUrl} alt="" className="mb-3 h-24 w-24 rounded-full object-cover" /> : <p className="text-sm text-ink-500">No profile photo yet.</p>}
+        {editing === "business" ? (
+          <div className="space-y-3">
+            <TextInput label="Business name" value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
+            <TextInput label="Website" value={website} onChange={(e) => setWebsite(e.target.value)} />
+            {user ? (
+              <input
+                className="block"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                aria-label="Upload profile photo"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (!file) return;
+                  void uploadContractorDoc({ userId: user.id, folder: "portfolio", file })
+                    .then(async (path) => {
+                      await updateProfileAvatar(user.id, path);
+                      await refreshProfile();
+                      setPhotoUrl((await signedContractorDocUrl(path)) ?? path);
+                      toast.push("Photo saved.");
+                    })
+                    .catch((err: Error) => setError(err.message));
+                }}
+              />
+            ) : null}
+            <Button type="button" size="sm" disabled={busy} onClick={() => void saveBusiness()}>
+              Save business
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-1 text-sm text-ink-700">
+            <p className="font-semibold text-forest-800">{businessName || "Your business"}</p>
+            <p>{website || "No website yet."}</p>
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard
+        title="About"
+        actionLabel="Edit"
+        editing={editing === "about"}
+        onEdit={() => setEditing(editing === "about" ? null : "about")}
+      >
+        {editing === "about" ? (
+          <div className="space-y-3">
+            <TextInput label="Headline" value={headline} onChange={(e) => setHeadline(e.target.value)} />
+            <label className="block">
+              <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Bio</span>
+              <textarea className="w-full rounded-2xl border border-forest-800/15 px-4 py-3" rows={4} value={bio} onChange={(e) => setBio(e.target.value)} />
+            </label>
+            <Button type="button" size="sm" disabled={busy} onClick={() => void saveAbout()}>
+              Save about
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-1 text-sm text-ink-700">
+            <p>{headline || "No headline yet."}</p>
+            <p>{bio || "No bio yet."}</p>
+          </div>
+        )}
       </SectionCard>
 
       <SectionCard
@@ -341,35 +434,62 @@ export function ManageProfileView() {
       </SectionCard>
 
       <SectionCard
-        title="About"
+        title="Experience"
         actionLabel="Edit"
-        editing={editing === "about"}
-        onEdit={() => setEditing(editing === "about" ? null : "about")}
+        editing={editing === "experience"}
+        onEdit={() => setEditing(editing === "experience" ? null : "experience")}
       >
-        {editing === "about" ? (
+        {editing === "experience" ? (
           <div className="space-y-3">
-            <TextInput label="Business name" value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
-            <TextInput label="Headline" value={headline} onChange={(e) => setHeadline(e.target.value)} />
-            <label className="block">
-              <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Bio</span>
-              <textarea className="w-full rounded-2xl border border-forest-800/15 px-4 py-3" rows={4} value={bio} onChange={(e) => setBio(e.target.value)} />
-            </label>
             <TextInput label="Years in business" inputMode="numeric" value={years} onChange={(e) => setYears(e.target.value)} />
-            <TextInput label="Website" value={website} onChange={(e) => setWebsite(e.target.value)} />
             <TextInput label="Min job size (USD)" value={minJob} onChange={(e) => setMinJob(e.target.value)} />
             <TextInput label="Max job size (USD)" value={maxJob} onChange={(e) => setMaxJob(e.target.value)} />
-            <Button type="button" size="sm" disabled={busy} onClick={() => void saveAbout()}>
-              Save about
+            <Button type="button" size="sm" disabled={busy} onClick={() => void saveExperience()}>
+              Save experience
             </Button>
           </div>
         ) : (
-          <div className="space-y-1 text-sm text-ink-700">
-            <p className="font-semibold text-forest-800">{businessName || "Your business"}</p>
-            <p>{headline || "No headline yet."}</p>
-            <p>{bio || "No bio yet."}</p>
-            <p>{years ? `${years} years in business` : "Years in business not set."}</p>
-          </div>
+          <p className="text-sm text-ink-700">{years ? `${years} years in business` : "Years in business not set."}</p>
         )}
+      </SectionCard>
+
+      <SectionCard
+        title="Credentials"
+        actionLabel="Manage"
+        editing={editing === "credentials"}
+        onEdit={() => setEditing(editing === "credentials" ? null : "credentials")}
+      >
+        <p className="text-sm text-ink-700">
+          Changing a verified license, insurance, or document marks that credential pending re-verification. Your approved status stays.
+        </p>
+        <ul className="mt-3 space-y-2 text-sm">
+          {credentials.map((cred) => (
+            <li key={cred.id} className="rounded-2xl bg-cream-100 px-3 py-2">
+              <p className="font-semibold text-forest-800">
+                {cred.label} · {cred.kind}
+                {verifiedBadgeVisible(cred.status) ? " · Verified" : ` · ${cred.status.replaceAll("_", " ")}`}
+              </p>
+            </li>
+          ))}
+        </ul>
+        {editing === "credentials" ? (
+          <div className="mt-3 space-y-3">
+            <TextInput label="License number" value={license} onChange={(e) => setLicense(e.target.value)} />
+            <TextInput label="Insurance carrier" value={insurance} onChange={(e) => setInsurance(e.target.value)} />
+            <Button type="button" size="sm" disabled={busy} onClick={() => void saveIdentity()}>
+              Save license details
+            </Button>
+            {contractorId && user ? (
+              <CredentialsManage
+                contractorId={contractorId}
+                userId={user.id}
+                rows={credentials}
+                onChange={setCredentials}
+                onError={setError}
+              />
+            ) : null}
+          </div>
+        ) : null}
       </SectionCard>
 
       {contractorId && user ? (
@@ -381,41 +501,6 @@ export function ManageProfileView() {
           onError={setError}
         />
       ) : null}
-
-      <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="font-display text-2xl text-forest-800">Accepting Work</h2>
-            <p className="text-sm text-ink-700">{accepting ? "You are open to new jobs." : "New matching is paused."}</p>
-          </div>
-          <label className="flex min-h-12 items-center gap-2 text-sm font-semibold">
-            <input type="checkbox" checked={accepting} onChange={() => void toggleAccepting()} />
-            {accepting ? "On" : "Off"}
-          </label>
-        </div>
-      </section>
-
-      <SectionCard
-        title="License & insurance"
-        actionLabel="Request review"
-        editing={editing === "identity"}
-        onEdit={() => setEditing(editing === "identity" ? null : "identity")}
-      >
-        <p className="text-sm text-ink-700">
-          Changing these does not un-approve you. PPP reviews identity documents separately from bio and service area.
-        </p>
-        {editing === "identity" ? (
-          <div className="mt-3 space-y-3">
-            <TextInput label="License number" value={license} onChange={(e) => setLicense(e.target.value)} />
-            <TextInput label="Insurance carrier" value={insurance} onChange={(e) => setInsurance(e.target.value)} />
-            <Button type="button" size="sm" disabled={busy} onClick={() => void saveIdentity()}>
-              Save for review
-            </Button>
-          </div>
-        ) : (
-          <p className="mt-2 text-sm text-ink-500">On file. Values are not shown as a verification badge until PPP reviews them.</p>
-        )}
-      </SectionCard>
 
       <section className="rounded-3xl border border-forest-800/10 px-5 py-4">
         <h2 className="font-display text-2xl text-forest-800">Account status</h2>
@@ -466,6 +551,67 @@ function SectionCard({
       </div>
       {children}
     </section>
+  );
+}
+
+function CredentialsManage({
+  contractorId,
+  userId,
+  rows,
+  onChange,
+  onError,
+}: {
+  contractorId: string;
+  userId: string;
+  rows: Awaited<ReturnType<typeof fetchCredentials>>;
+  onChange: (rows: Awaited<ReturnType<typeof fetchCredentials>>) => void;
+  onError: (message: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-xs uppercase tracking-[0.16em] text-gold-700">Documents</p>
+      {rows.map((row) => (
+        <div key={row.id} className="rounded-2xl bg-cream-100 px-3 py-2 text-sm">
+          <p>
+            {row.label} · {verifiedBadgeVisible(row.status) ? "Verified badge shown" : "Verified badge hidden"}
+          </p>
+          <input
+            className="mt-2 block"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            aria-label={`Replace ${row.label} document`}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (!file) return;
+              void uploadContractorDoc({ userId, folder: "credentials", file })
+                .then((path) => updateCredential(row.id, { document_path: path, status: "PENDING" }))
+                .then(() => fetchCredentials(contractorId))
+                .then(onChange)
+                .catch((err: Error) => onError(err.message));
+            }}
+          />
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          void addCredential({
+            contractor_profile_id: contractorId,
+            kind: "OTHER",
+            label: "Additional credential",
+            status: "NOT_SUBMITTED",
+          })
+            .then(() => fetchCredentials(contractorId))
+            .then(onChange)
+            .catch((err: Error) => onError(err.message));
+        }}
+      >
+        Add credential
+      </Button>
+    </div>
   );
 }
 

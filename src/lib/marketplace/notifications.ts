@@ -1,9 +1,11 @@
+import type { DeclineReason } from "./estimateLifecycle";
 import type { EstimateStatus } from "./types";
 
 export const NOTIFICATION_KINDS = [
   "estimate.viewed",
   "estimate.accepted",
   "estimate.declined",
+  "estimate.not_selected",
   "estimate.received",
   "estimate.updated",
   "estimate.withdrawn",
@@ -25,21 +27,28 @@ export const NOTIFICATION_CATALOG: Record<NotificationKind, NotificationEvent> =
   "estimate.viewed": {
     kind: "estimate.viewed",
     audience: "contractor",
-    title: "Your estimate was viewed",
-    body: "The customer opened your estimate.",
+    title: "Your estimate was viewed.",
+    body: "Your estimate was viewed.",
     oncePerEntity: true,
   },
   "estimate.accepted": {
     kind: "estimate.accepted",
     audience: "contractor",
-    title: "Your estimate was accepted",
+    title: "The customer selected your estimate.",
     body: "The customer selected your estimate.",
     oncePerEntity: true,
   },
   "estimate.declined": {
     kind: "estimate.declined",
     audience: "contractor",
-    title: "Not selected",
+    title: "The customer decided not to move forward with your estimate.",
+    body: "The customer decided not to move forward with your estimate.",
+    oncePerEntity: true,
+  },
+  "estimate.not_selected": {
+    kind: "estimate.not_selected",
+    audience: "contractor",
+    title: "The customer selected another pro for this project.",
     body: "The customer selected another pro for this project.",
     oncePerEntity: true,
   },
@@ -74,10 +83,15 @@ export function shouldNotifyRepeatView(existingViewedNotification: boolean): boo
   return !existingViewedNotification;
 }
 
-export function contractorNotificationForStatus(status: EstimateStatus): NotificationKind | null {
+export function contractorNotificationForStatus(
+  status: EstimateStatus,
+  declineReason?: DeclineReason | string | null,
+): NotificationKind | null {
   if (status === "VIEWED") return "estimate.viewed";
   if (status === "ACCEPTED") return "estimate.accepted";
-  if (status === "DECLINED") return "estimate.declined";
+  if (status === "DECLINED") {
+    return declineReason === "ANOTHER_ESTIMATE_ACCEPTED" ? "estimate.not_selected" : "estimate.declined";
+  }
   return null;
 }
 

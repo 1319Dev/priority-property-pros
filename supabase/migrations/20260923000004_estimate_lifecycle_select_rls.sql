@@ -17,38 +17,70 @@ DECLARE
   ttl integer;
   bid uuid;
   other_row public.estimates;
+  v_account public.account_type;
 BEGIN
   PERFORM public.ppp_set_rpc('select_estimate');
   PERFORM public.expire_stale_pending_bookings();
 
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'auth required';
+  END IF;
+
+  -- Lock the project first so two tabs cannot create two winners.
   SELECT * INTO proj FROM public.projects WHERE id = p_project_id FOR UPDATE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'project not found';
   END IF;
-  IF proj.customer_id IS DISTINCT FROM auth.uid() AND NOT public.is_admin() THEN
+  IF proj.customer_id IS DISTINCT FROM auth.uid() THEN
     RAISE EXCEPTION 'not the project owner';
   END IF;
+
+  SELECT account_type INTO v_account FROM public.profiles WHERE id = auth.uid();
+  IF v_account IS DISTINCT FROM 'CUSTOMER' THEN
+    RAISE EXCEPTION 'only the customer can hire an estimate';
+  END IF;
+
+  -- Idempotent retry of the same winner. A different estimate is a conflict.
   IF proj.status = 'CONTRACTOR_SELECTED' THEN
+    IF proj.selected_estimate_id IS NOT DISTINCT FROM p_estimate_id THEN
+      RETURN jsonb_build_object(
+        'project_id', p_project_id,
+        'estimate_id', p_estimate_id,
+        'booking_id', proj.selected_booking_id,
+        'status', 'CONTRACTOR_SELECTED',
+        'booking_status', 'PENDING',
+        'idempotent', true,
+        'charges_live', false,
+        'payments_live', false,
+        'message', 'Payment coming soon — booking cannot be confirmed in production yet'
+      );
+    END IF;
     RAISE EXCEPTION 'a contractor is already selected';
   END IF;
 
-  SELECT * INTO est FROM public.estimates WHERE id = p_estimate_id FOR UPDATE;
+  -- Lock every estimate on the project before deciding the winner.
+  PERFORM 1 FROM public.estimates WHERE project_id = p_project_id FOR UPDATE;
+
+  SELECT * INTO est FROM public.estimates WHERE id = p_estimate_id;
   IF NOT FOUND OR est.project_id <> p_project_id THEN
     RAISE EXCEPTION 'estimate not found on this project';
+  END IF;
+  IF est.contractor_profile_id IS NOT DISTINCT FROM public.current_contractor_profile_id() THEN
+    RAISE EXCEPTION 'contractors cannot accept their own estimate';
   END IF;
   IF est.status NOT IN ('SUBMITTED', 'SENT', 'REVISED', 'VIEWED') THEN
     RAISE EXCEPTION 'only submitted estimates can be selected';
   END IF;
 
   UPDATE public.estimates
-  SET status = 'ACCEPTED', accepted_at = now()
+  SET status = 'ACCEPTED', accepted_at = now(), decline_reason = NULL
   WHERE id = est.id;
 
   PERFORM public.write_estimate_event(est.id, 'estimate.accepted', jsonb_build_object('status', 'ACCEPTED'));
   PERFORM public.enqueue_notification(
     public.contractor_owner_profile_id(est.contractor_profile_id),
     'estimate.accepted',
-    'Your estimate was accepted',
+    'The customer selected your estimate.',
     'The customer selected your estimate.',
     'estimates',
     est.id,
@@ -60,25 +92,27 @@ BEGIN
     WHERE project_id = p_project_id
       AND id <> est.id
       AND status IN ('DRAFT', 'SUBMITTED', 'SENT', 'REVISED', 'VIEWED')
-    FOR UPDATE
   LOOP
     UPDATE public.estimates
-    SET status = 'DECLINED', declined_at = now()
+    SET
+      status = 'DECLINED',
+      declined_at = now(),
+      decline_reason = 'ANOTHER_ESTIMATE_ACCEPTED'
     WHERE id = other_row.id;
     PERFORM public.write_estimate_event(
       other_row.id,
-      'estimate.declined',
-      jsonb_build_object('reason', 'not_selected_cascade')
+      'estimate.not_selected',
+      jsonb_build_object('reason', 'ANOTHER_ESTIMATE_ACCEPTED')
     );
     IF other_row.status <> 'DRAFT' THEN
       PERFORM public.enqueue_notification(
         public.contractor_owner_profile_id(other_row.contractor_profile_id),
-        'estimate.declined',
-        'Not selected',
+        'estimate.not_selected',
+        'The customer selected another pro for this project.',
         'The customer selected another pro for this project.',
         'estimates',
         other_row.id,
-        jsonb_build_object('project_id', p_project_id, 'reason', 'not_selected_cascade')
+        jsonb_build_object('project_id', p_project_id, 'reason', 'ANOTHER_ESTIMATE_ACCEPTED')
       );
     END IF;
   END LOOP;
@@ -222,6 +256,7 @@ BEGIN
         'view_count', e.view_count,
         'accepted_at', e.accepted_at,
         'declined_at', e.declined_at,
+        'decline_reason', e.decline_reason,
         'withdrawn_at', e.withdrawn_at,
         'created_at', e.created_at
       ) AS item
@@ -406,8 +441,17 @@ REVOKE ALL ON FUNCTION public.protect_estimate_question_contact() FROM PUBLIC, a
 REVOKE ALL ON FUNCTION public.protect_notification_row() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.forbid_estimate_event_mutation() FROM PUBLIC, anon, authenticated;
 
-REVOKE ALL ON FUNCTION public.mark_estimate_viewed(uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.mark_estimate_viewed(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.flag_identity_review(uuid, text[], jsonb) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.demote_verified_credentials_of_kind(uuid, text, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.after_contractor_credential_change() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.after_contractor_profile_identity_change() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.protect_estimate_item_contact() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.protect_project_text_contact() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.protect_project_answer_contact() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.protect_contractor_credentials() FROM PUBLIC, anon, authenticated;
+
+REVOKE ALL ON FUNCTION public.mark_estimate_viewed(uuid, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.mark_estimate_viewed(uuid, uuid) TO authenticated;
 REVOKE ALL ON FUNCTION public.decline_estimate(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.decline_estimate(uuid) TO authenticated;
 REVOKE ALL ON FUNCTION public.list_my_estimates() FROM PUBLIC, anon;
@@ -482,4 +526,173 @@ $$;
 COMMENT ON FUNCTION public.list_my_estimates() IS
   'Contractor estimates list. Does not mark VIEWED.';
 COMMENT ON FUNCTION public.select_estimate(uuid, uuid) IS
-  'Customer hire: ACCEPTED winner; other active estimates DECLINED. Contractor cannot call this as self-accept.';
+  'Customer hire: winner ACCEPTED; other active estimates DECLINED with ANOTHER_ESTIMATE_ACCEPTED. Race-safe project lock + unique ACCEPTED index. Contractor cannot self-accept. Idempotent retry of the same winner.';
+
+COMMENT ON FUNCTION public.match_project(uuid) IS
+  'Live matching: reads current contractor_services, contractor_service_areas, accepting_work, APPROVED+ACTIVE. ON CONFLICT DO NOTHING prevents duplicate opportunities. Historical estimates/jobs are kept.';
+
+-- Surface credential re-verification in Admin review without unapproving.
+CREATE OR REPLACE FUNCTION public.contractor_approval_item(p_contractor_profile_id uuid)
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT jsonb_build_object(
+    'contractor_profile_id', cp.id,
+    'profile_id', p.id,
+    'business_name', cp.business_name,
+    'contact_name', nullif(trim(concat_ws(' ', p.first_name, p.last_name)), ''),
+    'first_name', p.first_name,
+    'last_name', p.last_name,
+    'email', p.email,
+    'phone', p.phone,
+    'categories', (
+      SELECT coalesce(
+        jsonb_agg(
+          jsonb_build_object('id', sc.id, 'name', sc.name, 'slug', sc.slug)
+          ORDER BY sc.sort_order, sc.name
+        ),
+        '[]'::jsonb
+      )
+      FROM public.contractor_services cs
+      JOIN public.service_categories sc ON sc.id = cs.category_id
+      WHERE cs.contractor_profile_id = cp.id
+    ),
+    'service_area', cp.service_area,
+    'service_areas', (
+      SELECT coalesce(
+        jsonb_agg(
+          jsonb_build_object(
+            'id', a.id,
+            'mode', a.mode,
+            'center_zip', a.center_zip,
+            'radius_miles', a.radius_miles,
+            'zip_codes', to_jsonb(a.zip_codes),
+            'label', a.label
+          )
+          ORDER BY a.created_at
+        ),
+        '[]'::jsonb
+      )
+      FROM public.contractor_service_areas a
+      WHERE a.contractor_profile_id = cp.id
+    ),
+    'applied_at', cp.created_at,
+    'account_status', p.account_status,
+    'approval_status', cp.approval_status,
+    'onboarding_status', cp.onboarding_status,
+    'headline', cp.headline,
+    'bio', cp.bio,
+    'primary_trade', cp.primary_trade,
+    'years_experience', cp.years_experience,
+    'license_number', cp.license_number,
+    'insurance_carrier', cp.insurance_carrier,
+    'website_url', cp.website_url,
+    'accepting_work', cp.accepting_work,
+    'min_job_cents', cp.min_job_cents,
+    'max_job_cents', cp.max_job_cents,
+    'approved_at', cp.approved_at,
+    'approved_by', cp.approved_by,
+    'rejected_at', cp.rejected_at,
+    'rejected_by', cp.rejected_by,
+    'rejection_reason', cp.rejection_reason,
+    'info_requested_at', cp.info_requested_at,
+    'info_requested_by', cp.info_requested_by,
+    'info_request_message', cp.info_request_message,
+    'identity_review_required', cp.identity_review_required,
+    'identity_review_at', cp.identity_review_at,
+    'identity_review_fields', to_jsonb(cp.identity_review_fields),
+    'credentials', (
+      SELECT coalesce(
+        jsonb_agg(
+          jsonb_build_object(
+            'id', c.id,
+            'kind', c.kind,
+            'label', c.label,
+            'status', c.status,
+            'expires_at', c.expires_at
+          )
+          ORDER BY c.created_at DESC
+        ),
+        '[]'::jsonb
+      )
+      FROM public.contractor_credentials c
+      WHERE c.contractor_profile_id = cp.id
+    )
+  )
+  FROM public.contractor_profiles cp
+  JOIN public.profiles p ON p.id = cp.profile_id
+  WHERE cp.id = p_contractor_profile_id;
+$$;
+
+CREATE OR REPLACE FUNCTION public.list_contractor_approvals(p_tab text DEFAULT 'PENDING')
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_tab text := upper(coalesce(nullif(btrim(p_tab), ''), 'PENDING'));
+  v_result jsonb;
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_admin() THEN
+    RAISE EXCEPTION 'only an admin can list contractor approvals';
+  END IF;
+  IF v_tab NOT IN ('PENDING', 'APPROVED', 'REJECTED', 'ALL', 'IDENTITY_REVIEW') THEN
+    RAISE EXCEPTION 'unknown approvals tab';
+  END IF;
+
+  IF v_tab = 'IDENTITY_REVIEW' THEN
+    SELECT coalesce(jsonb_agg(q.item ORDER BY q.sort_at DESC NULLS LAST), '[]'::jsonb)
+    INTO v_result
+    FROM (
+      SELECT
+        public.contractor_approval_item(cp.id) AS item,
+        coalesce(cp.identity_review_at, cp.updated_at) AS sort_at
+      FROM public.contractor_profiles cp
+      JOIN public.profiles p ON p.id = cp.profile_id
+      WHERE p.account_type = 'CONTRACTOR'
+        AND cp.identity_review_required = true
+    ) q;
+  ELSIF v_tab IN ('APPROVED', 'REJECTED') THEN
+    SELECT coalesce(jsonb_agg(q.item ORDER BY q.sort_at DESC NULLS LAST), '[]'::jsonb)
+    INTO v_result
+    FROM (
+      SELECT
+        public.contractor_approval_item(cp.id) AS item,
+        CASE
+          WHEN v_tab = 'APPROVED' THEN coalesce(cp.approved_at, cp.updated_at)
+          ELSE coalesce(cp.rejected_at, cp.updated_at)
+        END AS sort_at
+      FROM public.contractor_profiles cp
+      JOIN public.profiles p ON p.id = cp.profile_id
+      WHERE p.account_type = 'CONTRACTOR'
+        AND cp.approval_status::text = v_tab
+    ) q;
+  ELSE
+    SELECT coalesce(jsonb_agg(q.item ORDER BY q.sort_key, q.sort_at ASC), '[]'::jsonb)
+    INTO v_result
+    FROM (
+      SELECT
+        public.contractor_approval_item(cp.id) AS item,
+        CASE cp.approval_status
+          WHEN 'PENDING' THEN 0
+          WHEN 'APPROVED' THEN 1
+          WHEN 'REJECTED' THEN 2
+          ELSE 3
+        END AS sort_key,
+        cp.created_at AS sort_at
+      FROM public.contractor_profiles cp
+      JOIN public.profiles p ON p.id = cp.profile_id
+      WHERE p.account_type = 'CONTRACTOR'
+        AND (v_tab = 'ALL' OR cp.approval_status::text = v_tab)
+    ) q;
+  END IF;
+
+  RETURN coalesce(v_result, '[]'::jsonb);
+END;
+$$;
+

@@ -5,7 +5,7 @@
  */
 
 export const CONTACT_AFTER_CONNECTION_COPY =
-  "Contact info is shared after connection through PPP. Please remove phone numbers, emails, links, and social handles.";
+  "Contact info is shared after connection through Priority Property Pros. Please remove phone numbers, emails, links, and social handles.";
 
 const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
 const URL_RE = /(?:https?:\/\/|www\.)\S+/i;
@@ -47,5 +47,15 @@ export function assertNoContactLeak(text: string | null | undefined): void {
 }
 
 /** Fields that are dedicated public URLs / phones must not be scanned as leaks. */
-export const CONTACT_SCAN_FIELDS = ["notes", "bio", "headline", "prompt", "answer_text", "body"] as const;
+export const CONTACT_SCAN_FIELDS = [
+  "notes",
+  "bio",
+  "headline",
+  "prompt",
+  "answer_text",
+  "body",
+  "title",
+  "description",
+  "label",
+] as const;
 export type ContactScanField = (typeof CONTACT_SCAN_FIELDS)[number];

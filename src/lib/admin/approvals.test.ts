@@ -62,6 +62,9 @@ const baseItem: ContractorApprovalItem = {
   info_requested_at: null,
   info_requested_by: null,
   info_request_message: null,
+  identity_review_required: false,
+  identity_review_at: null,
+  identity_review_fields: [],
   credentials: [{ id: "cred-1", kind: "LICENSE", label: "Business license", status: "PENDING", expires_at: null }],
 };
 
@@ -147,5 +150,18 @@ describe("admin contractor approval decisions", () => {
     expect(formatCategoryNames(baseItem)).toBe("TV Mounting");
     expect(formatServiceAreaSummary(baseItem)).toContain("30318");
     expect(formatServiceAreaSummary({ service_area: "Decatur", service_areas: [] })).toBe("Decatur");
+  });
+
+  it("surfaces identity re-verification without unapproving", () => {
+    const reviewing = {
+      ...baseItem,
+      approval_status: "APPROVED" as const,
+      account_status: "ACTIVE" as const,
+      identity_review_required: true,
+      identity_review_fields: ["license_number"],
+    };
+    expect(filterApprovalQueue([reviewing], "IDENTITY_REVIEW")).toEqual([reviewing]);
+    expect(reviewing.approval_status).toBe("APPROVED");
+    expect(approvedContractorMatchingGate(reviewing)).toBe(true);
   });
 });

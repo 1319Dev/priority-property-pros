@@ -20,6 +20,7 @@ const sent: ContractorEstimateListItem = {
   view_count: 0,
   accepted_at: null,
   declined_at: null,
+  decline_reason: null,
   withdrawn_at: null,
   created_at: "2026-09-17T11:00:00.000Z",
 };
@@ -50,7 +51,12 @@ describe("contractor estimates status copy", () => {
             }}
           />
           <ContractorEstimateCard row={{ ...sent, id: "e3", status: "ACCEPTED" }} />
-          <ContractorEstimateCard row={{ ...sent, id: "e4", status: "DECLINED" }} />
+          <ContractorEstimateCard
+            row={{ ...sent, id: "e4", status: "DECLINED", decline_reason: "ANOTHER_ESTIMATE_ACCEPTED" }}
+          />
+          <ContractorEstimateCard
+            row={{ ...sent, id: "e5", status: "DECLINED", decline_reason: "CUSTOMER_DECLINED" }}
+          />
         </ul>
       </MemoryRouter>,
     );
@@ -58,6 +64,7 @@ describe("contractor estimates status copy", () => {
     expect(screen.getByText(/viewed by customer/i)).toBeInTheDocument();
     expect(screen.getByText(/the customer selected your estimate/i)).toBeInTheDocument();
     expect(screen.getByText(/the customer selected another pro for this project/i)).toBeInTheDocument();
+    expect(screen.getByText(/the customer decided not to move forward with this estimate/i)).toBeInTheDocument();
     expect(screen.queryByText(/rival/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/REJECTED/)).not.toBeInTheDocument();
     expect(screen.getAllByText(/fence repair/i).length).toBeGreaterThan(0);

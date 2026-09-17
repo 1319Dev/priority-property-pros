@@ -59,8 +59,8 @@ export function ContractorEstimateCard({ row }: { row: ContractorEstimateListIte
       <p className="text-sm text-ink-500">
         Submitted {row.submitted_at ? formatViewedTimestamp(row.submitted_at) : "—"}
       </p>
-      {contractorEstimateStatusDetail(row.status as EstimateStatus) ? (
-        <p className="mt-2 text-sm text-ink-700">{contractorEstimateStatusDetail(row.status as EstimateStatus)}</p>
+      {contractorEstimateStatusDetail(row.status as EstimateStatus, row.decline_reason) ? (
+        <p className="mt-2 text-sm text-ink-700">{contractorEstimateStatusDetail(row.status as EstimateStatus, row.decline_reason)}</p>
       ) : null}
       {row.opportunity_id ? (
         <Link

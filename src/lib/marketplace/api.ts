@@ -25,6 +25,11 @@ function asError(error: { message: string } | null, fallback: string): string {
   return error?.message || fallback;
 }
 
+function rejectContactLeak(text: string | null | undefined) {
+  const leak = detectContactLeak(text);
+  if (leak.blocked) throw new Error(leak.message ?? "Contact info is shared after connection through Priority Property Pros.");
+}
+
 export function parseQuestionOptions(value: Json | string[] | null | undefined): string[] {
   if (!Array.isArray(value)) return [];
   const options: string[] = [];
@@ -111,6 +116,8 @@ export async function updateProject(
   id: string,
   patch: Database["public"]["Tables"]["projects"]["Update"] & { draft_step?: number },
 ): Promise<Project> {
+  if (patch.title !== undefined) rejectContactLeak(patch.title);
+  if (patch.description !== undefined) rejectContactLeak(patch.description);
   const { data, error } = await client().from("projects").update(patch).eq("id", id).select().single();
   if (error || !data) throw new Error(asError(error, "Could not save the project."));
   return data as Project;
@@ -157,6 +164,7 @@ export async function fetchProjectAnswers(projectId: string) {
 }
 
 export async function upsertProjectAnswer(projectId: string, questionId: string, answerText: string) {
+  rejectContactLeak(answerText);
   const { error } = await client().from("project_answers").upsert(
     { project_id: projectId, question_id: questionId, answer_text: answerText },
     { onConflict: "project_id,question_id" },
@@ -268,8 +276,11 @@ export async function selectEstimate(projectId: string, estimateId: string): Pro
   return (data ?? {}) as RpcJson;
 }
 
-export async function markEstimateViewed(estimateId: string): Promise<RpcJson> {
-  const { data, error } = await client().rpc("mark_estimate_viewed", { p_estimate_id: estimateId });
+export async function markEstimateViewed(estimateId: string, projectId?: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("mark_estimate_viewed", {
+    p_estimate_id: estimateId,
+    p_project_id: projectId ?? null,
+  });
   if (error) throw new Error(asError(error, "Could not open the estimate."));
   return (data ?? {}) as RpcJson;
 }
@@ -293,6 +304,7 @@ export type ContractorEstimateListItem = {
   view_count: number;
   accepted_at: string | null;
   declined_at: string | null;
+  decline_reason: string | null;
   withdrawn_at: string | null;
   created_at: string;
 };
@@ -527,14 +539,8 @@ export async function updateContractorProfile(
   id: string,
   patch: Database["public"]["Tables"]["contractor_profiles"]["Update"],
 ) {
-  if (patch.bio !== undefined) {
-    const leak = detectContactLeak(patch.bio);
-    if (leak.blocked) throw new Error(leak.message ?? "Contact info is shared after connection through PPP.");
-  }
-  if (patch.headline !== undefined) {
-    const leak = detectContactLeak(patch.headline);
-    if (leak.blocked) throw new Error(leak.message ?? "Contact info is shared after connection through PPP.");
-  }
+  if (patch.bio !== undefined) rejectContactLeak(patch.bio);
+  if (patch.headline !== undefined) rejectContactLeak(patch.headline);
   const { error } = await client().from("contractor_profiles").update(patch).eq("id", id);
   if (error) throw new Error(asError(error, "Could not save your profile."));
 }
@@ -693,13 +699,13 @@ export async function askEstimateQuestion(row: {
   asked_by_contractor_profile_id: string;
   prompt: string;
 }) {
-  const leak = detectContactLeak(row.prompt);
-  if (leak.blocked) throw new Error(leak.message ?? "Contact info is shared after connection through PPP.");
+  rejectContactLeak(row.prompt);
   const { error } = await client().from("estimate_questions").insert(row);
   if (error) throw new Error(asError(error, "Could not send the question."));
 }
 
 export async function answerEstimateQuestion(id: string, answerText: string) {
+  rejectContactLeak(answerText);
   const { error } = await client().from("estimate_questions").update({ answer_text: answerText }).eq("id", id);
   if (error) throw new Error(asError(error, "Could not save the answer."));
 }
@@ -747,6 +753,7 @@ export async function fetchEstimateItems(estimateId: string) {
 }
 
 export async function addEstimateItem(row: Database["public"]["Tables"]["estimate_items"]["Insert"]) {
+  rejectContactLeak(row.label);
   const { error } = await client().from("estimate_items").insert(row);
   if (error) throw new Error(asError(error, "Could not add the line item."));
 }
@@ -755,6 +762,7 @@ export async function updateEstimateItem(
   id: string,
   patch: Database["public"]["Tables"]["estimate_items"]["Update"],
 ) {
+  if (patch.label !== undefined) rejectContactLeak(patch.label);
   const { error } = await client().from("estimate_items").update(patch).eq("id", id);
   if (error) throw new Error(asError(error, "Could not update the line item."));
 }
@@ -768,10 +776,7 @@ export async function updateEstimateDetails(
   id: string,
   patch: Database["public"]["Tables"]["estimates"]["Update"],
 ) {
-  if (patch.notes !== undefined) {
-    const leak = detectContactLeak(patch.notes);
-    if (leak.blocked) throw new Error(leak.message ?? "Contact info is shared after connection through PPP.");
-  }
+  if (patch.notes !== undefined) rejectContactLeak(patch.notes);
   const { error } = await client().from("estimates").update(patch).eq("id", id);
   if (error) throw new Error(asError(error, "Could not save the estimate."));
 }

@@ -64,6 +64,7 @@ export type ContractorProfile = {
   info_request_message: string | null;
   identity_review_required: boolean;
   identity_review_at: string | null;
+  identity_review_fields: string[];
   created_at: string;
   updated_at: string;
 };

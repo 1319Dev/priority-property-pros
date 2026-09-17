@@ -1,4 +1,4 @@
-import type { EstimateStatus } from "./types";
+import type { EstimateStatus, ProjectStatus } from "./types";
 
 /** Product "Sent" is stored as SENT (new) or SUBMITTED (legacy Phase 3). */
 export const SENT_EQUIVALENT: EstimateStatus[] = ["SENT", "SUBMITTED"];
@@ -22,9 +22,20 @@ export const CUSTOMER_VISIBLE_ESTIMATE_STATUSES: EstimateStatus[] = [
   "SUPERSEDED",
 ];
 
-export type EstimateViewSource = "list" | "prefetch" | "dashboard" | "detail";
+export type EstimateViewSource = "list" | "prefetch" | "dashboard" | "detail" | "admin" | "contractor";
 
-export type ContractorEstimateUiStatus = "sent" | "viewed" | "accepted" | "not_selected" | "withdrawn" | "draft" | "expired" | "superseded";
+export type ContractorEstimateUiStatus =
+  | "sent"
+  | "viewed"
+  | "accepted"
+  | "not_selected"
+  | "withdrawn"
+  | "draft"
+  | "expired"
+  | "superseded";
+
+export const DECLINE_REASONS = ["CUSTOMER_DECLINED", "ANOTHER_ESTIMATE_ACCEPTED"] as const;
+export type DeclineReason = (typeof DECLINE_REASONS)[number];
 
 export const CONTRACTOR_ESTIMATE_STATUS_LABELS: Record<ContractorEstimateUiStatus, string> = {
   sent: "Sent — awaiting customer review",
@@ -37,9 +48,16 @@ export const CONTRACTOR_ESTIMATE_STATUS_LABELS: Record<ContractorEstimateUiStatu
   superseded: "Needs a new estimate",
 };
 
+export const NOT_SELECTED_COPY: Record<DeclineReason, string> = {
+  ANOTHER_ESTIMATE_ACCEPTED: "The customer selected another pro for this project.",
+  CUSTOMER_DECLINED: "The customer decided not to move forward with this estimate.",
+};
+
+export const ACCEPTED_COPY = "The customer selected your estimate.";
+
 export const CONTRACTOR_ESTIMATE_STATUS_DETAIL: Partial<Record<ContractorEstimateUiStatus, string>> = {
-  accepted: "The customer selected your estimate.",
-  not_selected: "The customer selected another pro for this project.",
+  accepted: ACCEPTED_COPY,
+  not_selected: NOT_SELECTED_COPY.ANOTHER_ESTIMATE_ACCEPTED,
 };
 
 export function isSentEquivalent(status: EstimateStatus): boolean {
@@ -61,12 +79,51 @@ export function contractorEstimateStatusLabel(status: EstimateStatus): string {
   return CONTRACTOR_ESTIMATE_STATUS_LABELS[contractorEstimateUiStatus(status)];
 }
 
-export function contractorEstimateStatusDetail(status: EstimateStatus): string | null {
-  return CONTRACTOR_ESTIMATE_STATUS_DETAIL[contractorEstimateUiStatus(status)] ?? null;
+export function contractorNotSelectedDetail(reason: DeclineReason | string | null | undefined): string {
+  if (reason === "CUSTOMER_DECLINED") return NOT_SELECTED_COPY.CUSTOMER_DECLINED;
+  if (reason === "ANOTHER_ESTIMATE_ACCEPTED") return NOT_SELECTED_COPY.ANOTHER_ESTIMATE_ACCEPTED;
+  return NOT_SELECTED_COPY.CUSTOMER_DECLINED;
+}
+
+export function contractorEstimateStatusDetail(
+  status: EstimateStatus,
+  declineReason?: DeclineReason | string | null,
+): string | null {
+  const ui = contractorEstimateUiStatus(status);
+  if (ui === "accepted") return ACCEPTED_COPY;
+  if (ui === "not_selected") return contractorNotSelectedDetail(declineReason);
+  return null;
 }
 
 export function shouldMarkEstimateViewed(source: EstimateViewSource): boolean {
   return source === "detail";
+}
+
+export type MarkViewedActor = {
+  authUserId: string | null;
+  accountType: "CUSTOMER" | "CONTRACTOR" | "ADMIN" | "VERIFIER" | null;
+  isAdmin?: boolean;
+  projectCustomerId: string;
+  estimateProjectId: string;
+  requestedProjectId?: string | null;
+  estimateContractorProfileId: string;
+  actorContractorProfileId?: string | null;
+  source: EstimateViewSource;
+};
+
+export function canMarkEstimateViewed(actor: MarkViewedActor): { ok: boolean; reason?: string } {
+  if (!actor.authUserId) return { ok: false, reason: "auth required" };
+  if (actor.accountType !== "CUSTOMER") return { ok: false, reason: "only the customer" };
+  if (actor.isAdmin && actor.accountType !== "CUSTOMER") return { ok: false, reason: "admin tooling" };
+  if (actor.authUserId !== actor.projectCustomerId) return { ok: false, reason: "not the project owner" };
+  if (actor.requestedProjectId && actor.requestedProjectId !== actor.estimateProjectId) {
+    return { ok: false, reason: "estimate does not belong to this project" };
+  }
+  if (actor.actorContractorProfileId && actor.actorContractorProfileId === actor.estimateContractorProfileId) {
+    return { ok: false, reason: "contractors cannot mark their own estimate viewed" };
+  }
+  if (!shouldMarkEstimateViewed(actor.source)) return { ok: false, reason: "not a detail open" };
+  return { ok: true };
 }
 
 export function submitTargetStatus(from: EstimateStatus): EstimateStatus {
@@ -117,7 +174,7 @@ export function canClientSetEstimateStatus(from: EstimateStatus, to: EstimateSta
 
 export function cannotForgeAccepted(actorRole: "CONTRACTOR" | "CUSTOMER" | "ADMIN", to: EstimateStatus): boolean {
   if (to !== "ACCEPTED") return false;
-  return actorRole === "CONTRACTOR";
+  return actorRole !== "CUSTOMER";
 }
 
 export type ViewTracking = {
@@ -150,16 +207,36 @@ export function firstViewedPreserved(before: string | null, after: string | null
   return before === after;
 }
 
-export type CascadeEstimate = { id: string; status: EstimateStatus };
+export type CascadeEstimate = { id: string; status: EstimateStatus; decline_reason?: DeclineReason | null };
 
 export function acceptanceCascade(winnerId: string, rows: CascadeEstimate[]): CascadeEstimate[] {
   return rows.map((row) => {
-    if (row.id === winnerId) return { ...row, status: "ACCEPTED" };
+    if (row.id === winnerId) return { ...row, status: "ACCEPTED" as const, decline_reason: null };
     if (row.status === "DRAFT" || canCustomerSelectFrom(row.status)) {
-      return { ...row, status: "DECLINED" };
+      return { ...row, status: "DECLINED" as const, decline_reason: "ANOTHER_ESTIMATE_ACCEPTED" as const };
     }
     return row;
   });
+}
+
+export function individualDecline(targetId: string, rows: CascadeEstimate[]): CascadeEstimate[] {
+  return rows.map((row) =>
+    row.id === targetId ? { ...row, status: "DECLINED", decline_reason: "CUSTOMER_DECLINED" } : row,
+  );
+}
+
+export type AcceptRaceResult = "accepted" | "idempotent" | "conflict";
+
+export function resolveConcurrentAccept(opts: {
+  projectLockedStatus: ProjectStatus;
+  selectedEstimateId: string | null;
+  candidateEstimateId: string;
+}): AcceptRaceResult {
+  if (opts.projectLockedStatus === "CONTRACTOR_SELECTED") {
+    if (opts.selectedEstimateId === opts.candidateEstimateId) return "idempotent";
+    return "conflict";
+  }
+  return "accepted";
 }
 
 export function rivalIdentityLeaked(detail: { winner_id?: string | null; rival_price_cents?: number | null }): boolean {
@@ -176,3 +253,35 @@ export function formatViewedTimestamp(iso: string | null): string | null {
   if (Number.isNaN(date.getTime())) return null;
   return date.toLocaleString();
 }
+
+const CONTACT_PAYLOAD_KEYS = [
+  "phone",
+  "email",
+  "street",
+  "street_line1",
+  "street_line2",
+  "lat",
+  "lng",
+  "coords",
+  "exact_address",
+];
+
+export function lifecyclePayloadLeaksContact(payload: Record<string, unknown> | null | undefined): boolean {
+  if (!payload) return false;
+  return CONTACT_PAYLOAD_KEYS.some((key) => key in payload && payload[key] != null && payload[key] !== "");
+}
+
+/** ACCEPTED / CONFIRMED on this lifecycle path do not grant phone/email/street. Contact stays on #14 entitlement. */
+export function estimateStatusUnlocksContact(status: EstimateStatus): boolean {
+  void status;
+  return false;
+}
+
+export const LIFECYCLE_EVENTS = [
+  "estimate.submitted",
+  "estimate.first_viewed",
+  "estimate.accepted",
+  "estimate.customer_declined",
+  "estimate.not_selected",
+  "estimate.withdrawn",
+] as const;

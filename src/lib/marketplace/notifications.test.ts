@@ -10,14 +10,25 @@ import {
 } from "./notifications";
 
 describe("in-app notifications", () => {
-  it("notifies the contractor once on first VIEWED, plus ACCEPTED and not-selected", () => {
+  it("notifies the contractor once on first VIEWED, plus ACCEPTED and distinct not-selected copy", () => {
     expect(notificationForFirstView(true)).toBe("estimate.viewed");
     expect(notificationForFirstView(false)).toBeNull();
     expect(shouldNotifyRepeatView(true)).toBe(false);
     expect(contractorNotificationForStatus("VIEWED")).toBe("estimate.viewed");
     expect(contractorNotificationForStatus("ACCEPTED")).toBe("estimate.accepted");
-    expect(contractorNotificationForStatus("DECLINED")).toBe("estimate.declined");
-    expect(NOTIFICATION_CATALOG["estimate.declined"].body).toMatch(/another pro/i);
+    expect(contractorNotificationForStatus("DECLINED", "CUSTOMER_DECLINED")).toBe("estimate.declined");
+    expect(contractorNotificationForStatus("DECLINED", "ANOTHER_ESTIMATE_ACCEPTED")).toBe(
+      "estimate.not_selected",
+    );
+    expect(NOTIFICATION_CATALOG["estimate.viewed"].body).toBe("Your estimate was viewed.");
+    expect(NOTIFICATION_CATALOG["estimate.accepted"].body).toBe("The customer selected your estimate.");
+    expect(NOTIFICATION_CATALOG["estimate.declined"].body).toBe(
+      "The customer decided not to move forward with your estimate.",
+    );
+    expect(NOTIFICATION_CATALOG["estimate.not_selected"].body).toBe(
+      "The customer selected another pro for this project.",
+    );
+    expect(NOTIFICATION_CATALOG["estimate.declined"].body).not.toMatch(/another pro/i);
     expect(NOTIFICATION_CATALOG["estimate.viewed"].oncePerEntity).toBe(true);
   });
 
@@ -35,6 +46,7 @@ describe("in-app notifications", () => {
         "estimate.viewed",
         "estimate.accepted",
         "estimate.declined",
+        "estimate.not_selected",
         "estimate.received",
         "estimate.updated",
         "estimate.withdrawn",

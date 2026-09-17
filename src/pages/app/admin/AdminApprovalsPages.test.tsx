@@ -66,6 +66,9 @@ const pending: ContractorApprovalItem = {
   info_requested_at: "2026-09-10T00:00:00Z",
   info_requested_by: "admin-1",
   info_request_message: "Please upload a current certificate of insurance.",
+  identity_review_required: false,
+  identity_review_at: null,
+  identity_review_fields: [],
   credentials: [{ id: "cred-1", kind: "INSURANCE", label: "General liability", status: "PENDING", expires_at: null }],
 };
 
@@ -83,7 +86,7 @@ function QueueHarness() {
   return (
     <ApprovalsQueueView
       tab={tab}
-      counts={{ PENDING: 1, APPROVED: 1, REJECTED: 0, ALL: 2 }}
+      counts={{ PENDING: 1, APPROVED: 1, REJECTED: 0, IDENTITY_REVIEW: 0, ALL: 2 }}
       items={filterApprovalQueue(items, tab)}
       loading={false}
       onTabChange={setTab}
@@ -97,7 +100,7 @@ function renderQueue(tab: ApprovalTab = "PENDING") {
     <MemoryRouter>
       <ApprovalsQueueView
         tab={tab}
-        counts={{ PENDING: 1, APPROVED: 0, REJECTED: 0, ALL: 1 }}
+        counts={{ PENDING: 1, APPROVED: 0, REJECTED: 0, IDENTITY_REVIEW: 0, ALL: 1 }}
         items={items}
         loading={false}
         onTabChange={() => undefined}

@@ -658,7 +658,7 @@ export function CustomerEstimateDetailPage() {
     async function load() {
       const proj = await fetchMyCustomerProject(projectId);
       setProject(proj);
-      await markEstimateViewed(estimateId);
+      await markEstimateViewed(estimateId, projectId);
       const est = await fetchEstimate(estimateId);
       if (est.project_id !== projectId) throw new Error("Estimate not on this project.");
       setEstimate(est);

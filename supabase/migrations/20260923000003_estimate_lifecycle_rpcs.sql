@@ -1,4 +1,4 @@
--- Estimate submit/view/decline/select + contractor list RPCs.
+-- Estimate submit/view/decline + contractor list RPCs.
 -- Additive. select_estimate still creates a PENDING booking. Payments stay off.
 
 CREATE OR REPLACE FUNCTION public.forbid_estimate_event_mutation()
@@ -34,6 +34,7 @@ DECLARE
   next_status public.estimate_status;
   proj public.projects;
   was_first boolean;
+  item public.estimate_items;
 BEGIN
   PERFORM public.ppp_set_rpc('submit_estimate');
 
@@ -64,6 +65,12 @@ BEGIN
   IF item_count < 1 THEN
     RAISE EXCEPTION 'add at least one line item';
   END IF;
+
+  FOR item IN SELECT * FROM public.estimate_items WHERE estimate_id = est.id LOOP
+    IF public.text_contains_contact_info(item.label) THEN
+      RAISE EXCEPTION '%', public.contact_info_blocked_message();
+    END IF;
+  END LOOP;
 
   PERFORM public.recompute_estimate_totals(est.id);
   SELECT * INTO est FROM public.estimates WHERE id = p_estimate_id;
@@ -185,7 +192,9 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.mark_estimate_viewed(p_estimate_id uuid)
+DROP FUNCTION IF EXISTS public.mark_estimate_viewed(uuid);
+
+CREATE OR REPLACE FUNCTION public.mark_estimate_viewed(p_estimate_id uuid, p_project_id uuid DEFAULT NULL)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -196,16 +205,34 @@ DECLARE
   proj public.projects;
   was_first boolean;
   next_status public.estimate_status;
+  v_account public.account_type;
 BEGIN
   PERFORM public.ppp_set_rpc('mark_estimate_viewed');
+
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'auth required';
+  END IF;
+
+  SELECT account_type INTO v_account FROM public.profiles WHERE id = auth.uid();
+  -- Admin tooling and contractors must NOT count as customer VIEWED analytics.
+  IF v_account IS DISTINCT FROM 'CUSTOMER' THEN
+    RAISE EXCEPTION 'only the customer can mark an estimate viewed';
+  END IF;
 
   SELECT * INTO est FROM public.estimates WHERE id = p_estimate_id FOR UPDATE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'estimate not found';
   END IF;
+  IF p_project_id IS NOT NULL AND est.project_id IS DISTINCT FROM p_project_id THEN
+    RAISE EXCEPTION 'estimate does not belong to this project';
+  END IF;
+
   SELECT * INTO proj FROM public.projects WHERE id = est.project_id FOR UPDATE;
-  IF proj.customer_id IS DISTINCT FROM auth.uid() AND NOT public.is_admin() THEN
+  IF proj.customer_id IS DISTINCT FROM auth.uid() THEN
     RAISE EXCEPTION 'not the project owner';
+  END IF;
+  IF est.contractor_profile_id IS NOT DISTINCT FROM public.current_contractor_profile_id() THEN
+    RAISE EXCEPTION 'contractors cannot mark their own estimate viewed';
   END IF;
   IF est.status NOT IN ('SUBMITTED', 'SENT', 'REVISED', 'VIEWED') THEN
     RAISE EXCEPTION 'estimate is not viewable';
@@ -226,18 +253,17 @@ BEGIN
   WHERE id = est.id
   RETURNING * INTO est;
 
-  PERFORM public.write_estimate_event(
-    est.id,
-    'estimate.viewed',
-    jsonb_build_object('first', was_first, 'view_count', est.view_count, 'status', est.status)
-  );
-
   IF was_first THEN
+    PERFORM public.write_estimate_event(
+      est.id,
+      'estimate.first_viewed',
+      jsonb_build_object('first', true, 'view_count', est.view_count, 'status', est.status)
+    );
     PERFORM public.enqueue_notification(
       public.contractor_owner_profile_id(est.contractor_profile_id),
       'estimate.viewed',
-      'Your estimate was viewed',
-      'The customer opened your estimate.',
+      'Your estimate was viewed.',
+      'Your estimate was viewed.',
       'estimates',
       est.id,
       jsonb_build_object('project_id', est.project_id)
@@ -267,42 +293,67 @@ DECLARE
 BEGIN
   PERFORM public.ppp_set_rpc('decline_estimate');
 
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'auth required';
+  END IF;
+
+  SELECT * INTO est FROM public.estimates WHERE id = p_estimate_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'estimate not found';
+  END IF;
+
+  -- Lock project first to avoid deadlock with select_estimate.
+  SELECT * INTO proj FROM public.projects WHERE id = est.project_id FOR UPDATE;
+  IF proj.customer_id IS DISTINCT FROM auth.uid() THEN
+    RAISE EXCEPTION 'not the project owner';
+  END IF;
+
   SELECT * INTO est FROM public.estimates WHERE id = p_estimate_id FOR UPDATE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'estimate not found';
   END IF;
-  SELECT * INTO proj FROM public.projects WHERE id = est.project_id FOR UPDATE;
-  IF proj.customer_id IS DISTINCT FROM auth.uid() AND NOT public.is_admin() THEN
-    RAISE EXCEPTION 'not the project owner';
+  IF est.project_id IS DISTINCT FROM proj.id THEN
+    RAISE EXCEPTION 'estimate does not belong to this project';
   END IF;
   IF est.status NOT IN ('SUBMITTED', 'SENT', 'REVISED', 'VIEWED') THEN
     RAISE EXCEPTION 'estimate cannot be declined from status %', est.status;
   END IF;
 
   UPDATE public.estimates
-  SET status = 'DECLINED', declined_at = now()
+  SET
+    status = 'DECLINED',
+    declined_at = now(),
+    decline_reason = 'CUSTOMER_DECLINED'
   WHERE id = est.id;
 
+  -- Does not cancel the project or change other active estimates.
   PERFORM public.write_estimate_event(
     est.id,
-    'estimate.declined',
-    jsonb_build_object('reason', 'customer_declined')
+    'estimate.customer_declined',
+    jsonb_build_object('reason', 'CUSTOMER_DECLINED')
   );
   PERFORM public.enqueue_notification(
     public.contractor_owner_profile_id(est.contractor_profile_id),
     'estimate.declined',
-    'Not selected',
-    'The customer declined this estimate.',
+    'The customer decided not to move forward with your estimate.',
+    'The customer decided not to move forward with your estimate.',
     'estimates',
     est.id,
-    jsonb_build_object('project_id', est.project_id, 'reason', 'customer_declined')
+    jsonb_build_object('project_id', est.project_id, 'reason', 'CUSTOMER_DECLINED')
   );
 
-  RETURN jsonb_build_object('estimate_id', est.id, 'status', 'DECLINED');
+  RETURN jsonb_build_object(
+    'estimate_id', est.id,
+    'status', 'DECLINED',
+    'decline_reason', 'CUSTOMER_DECLINED',
+    'project_status', proj.status
+  );
 END;
 $$;
 
-COMMENT ON FUNCTION public.mark_estimate_viewed(uuid) IS
-  'Customer DETAIL open only. List/prefetch must not call this. Sets first_viewed_at once.';
+COMMENT ON FUNCTION public.mark_estimate_viewed(uuid, uuid) IS
+  'Customer DETAIL open only. List/prefetch must not call this. Sets first_viewed_at once. Admin tooling does not count as customer VIEWED.';
 COMMENT ON FUNCTION public.submit_estimate(uuid) IS
   'Submit moves DRAFT → SENT (not VIEWED). Later submits become REVISED.';
+COMMENT ON FUNCTION public.decline_estimate(uuid) IS
+  'Customer declines one estimate (CUSTOMER_DECLINED). Does not cancel the project or cascade other estimates.';
