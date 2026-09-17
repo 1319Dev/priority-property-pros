@@ -1,11 +1,12 @@
 import type { AccountType } from "../auth/types";
-import { BOOKING_STATUSES, type BookingStatus } from "./types";
+import { isStagingAppEnv } from "../supabase/config";
+import { CHARGES_LIVE, PAYMENTS_LIVE, BOOKING_STATUSES, type BookingStatus } from "./types";
 
 export { BOOKING_STATUSES };
 
 export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
-  PENDING: "Waiting for payment",
-  AWAITING_PAYMENT: "Waiting for payment",
+  PENDING: "Pre-booking",
+  AWAITING_PAYMENT: "Pre-booking",
   CONFIRMED: "Confirmed",
   IN_PROGRESS: "In progress",
   COMPLETED: "Completed",
@@ -68,6 +69,96 @@ export function bookingIsAbandoned(status: BookingStatus, expiresAt: string | nu
 
 export function paymentsComingSoonCopy(): string {
   return "Online payment setup is coming soon.";
+}
+
+const FORBIDDEN_CUSTOMER_PAYMENT_COPY: readonly RegExp[] = [
+  /stripe/i,
+  /test\s*mode/i,
+  /payment\s*intent/i,
+  /paymentintent/i,
+  /\bwebhook\b/i,
+  /payments_live/i,
+  /charges_live/i,
+];
+
+export function customerCopyContainsPaymentInternals(text: string): boolean {
+  return FORBIDDEN_CUSTOMER_PAYMENT_COPY.some((pattern) => pattern.test(text));
+}
+
+/** Never render processor internals if a server error leaks them. */
+export function sanitizeCustomerFacingError(
+  message: string | null | undefined,
+  fallback = "Something went wrong. Please try again.",
+): string {
+  const text = (message ?? "").trim();
+  if (!text || customerCopyContainsPaymentInternals(text)) return fallback;
+  return text;
+}
+
+export function postSelectCustomerCopy(): string[] {
+  return [
+    paymentsComingSoonCopy(),
+    preBookingHeadline(),
+    preBookingTitle(),
+    selectionDoesNotConfirmCopy(),
+    contactLockedUntilConfirmedCopy(),
+    "No payment was taken.",
+    "The job is not booked yet.",
+    "Exact address, phone, and email stay private.",
+  ];
+}
+
+/** Customer-facing pause: flags off, or any staging preview. */
+export function paymentsArePaused(input?: {
+  paymentsLive?: boolean;
+  chargesLive?: boolean;
+  appEnv?: string;
+}): boolean {
+  const paymentsLive = input?.paymentsLive ?? PAYMENTS_LIVE;
+  const chargesLive = input?.chargesLive ?? CHARGES_LIVE;
+  if (!paymentsLive || !chargesLive) return true;
+  return isStagingAppEnv(input?.appEnv);
+}
+
+export function preBookingHeadline(): string {
+  return "This is not a confirmed booking.";
+}
+
+export function preBookingTitle(): string {
+  return "Payment setup is paused";
+}
+
+export function selectionDoesNotConfirmCopy(): string {
+  return "Selecting a pro starts a pending booking. It does not confirm the job, take payment, or share your contact details.";
+}
+
+export function contactLockedUntilConfirmedCopy(): string {
+  return "The contractor cannot see your exact address, phone, or email until the booking is confirmed.";
+}
+
+export function customerPayPath(bookingId: string): string {
+  return `/app/customer/bookings/${bookingId}/pay`;
+}
+
+export function customerPreBookingPath(projectId: string): string {
+  return `/app/customer/projects/${projectId}/pre-booking`;
+}
+
+export function bookingIdFromSelectResult(result: { booking_id?: unknown } | null | undefined): string | null {
+  const id = result?.booking_id;
+  return typeof id === "string" && id.length > 0 ? id : null;
+}
+
+/** After hire/select, send the customer to the gated pay screen — never a live checkout. */
+export function afterSelectEstimatePath(input: {
+  projectId: string;
+  bookingId?: string | null;
+  paymentsPaused?: boolean;
+}): string {
+  const paused = input.paymentsPaused ?? paymentsArePaused();
+  if (paused && input.bookingId) return customerPayPath(input.bookingId);
+  if (paused) return customerPreBookingPath(input.projectId);
+  return input.bookingId ? `/app/customer/bookings/${input.bookingId}` : `/app/customer/projects/${input.projectId}`;
 }
 
 export function clientCannotSpoofConfirmed(): boolean {

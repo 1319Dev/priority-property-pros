@@ -26,7 +26,15 @@ import {
 } from "../../../lib/marketplace/api";
 import { computeMarketplaceFee } from "../../../lib/marketplace/feeEngine";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
-import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
+import {
+  afterSelectEstimatePath,
+  bookingIdFromSelectResult,
+  contactLockedUntilConfirmedCopy,
+  paymentsComingSoonCopy,
+  preBookingHeadline,
+  sanitizeCustomerFacingError,
+  selectionDoesNotConfirmCopy,
+} from "../../../lib/marketplace/bookings";
 import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type EstimateItemKind, type Project } from "../../../lib/marketplace/types";
 import { comparisonDisplayOrder } from "../../../lib/marketplace/flows";
 import { planDeleteOrCancel } from "../../../lib/marketplace/lifecycle";
@@ -68,7 +76,7 @@ export function CustomerHomePage() {
         setProjects(nextProjects);
         setBookings(nextBookings as Booking[]);
       })
-      .catch((err: Error) => setError(err.message))
+      .catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)))
       .finally(() => setLoading(false));
   }, [profile]);
 
@@ -81,14 +89,14 @@ export function CustomerHomePage() {
         <HumanStatus label="Customer" />
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Hello, {name}.</h1>
         <p className="mt-3 max-w-xl text-ink-700">
-          Post a project, compare estimates, and choose one local pro. Selecting a pro starts a booking.
+          Post a project, compare estimates, and choose one local pro. Selecting a pro starts a pending booking only.
           {` ${paymentsComingSoonCopy()}`}
         </p>
       </header>
       <ButtonLink to="/app/customer/projects/new/wizard" className="min-h-14">
         Post a project
       </ButtonLink>
-      {error ? <ErrorState message={error} /> : null}
+      {error ? <ErrorState message={sanitizeCustomerFacingError(error)} /> : null}
       {loading ? <LoadingState /> : null}
       {!loading && recent.length === 0 ? (
         <EmptyState title="No projects yet" body="Start a draft when you know what needs doing. Only you will see it." />
@@ -136,7 +144,7 @@ export function CustomerProjectsPage() {
         setProjects(nextProjects);
         setBookings(nextBookings as Booking[]);
       })
-      .catch((err: Error) => setError(err.message))
+      .catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)))
       .finally(() => setLoading(false));
   }, [profile]);
 
@@ -177,7 +185,7 @@ export function CustomerProjectsPage() {
           New
         </ButtonLink>
       </div>
-      <FormError message={error} />
+      <FormError message={error ? sanitizeCustomerFacingError(error) : null} />
       <div className="flex flex-wrap gap-2">
         {CUSTOMER_DASHBOARD_TABS.map((item) => (
           <button
@@ -285,10 +293,17 @@ export function CustomerProjectDetailPage() {
       {project.status === "CANCELLED" ? (
         <StatusBanner tone="warning" title="Cancelled" body="This project left the marketplace. Estimates are kept in your history." />
       ) : null}
+      {project.status === "CONTRACTOR_SELECTED" ? (
+        <StatusBanner
+          tone="info"
+          title={paymentsComingSoonCopy()}
+          body={`${preBookingHeadline()} ${contactLockedUntilConfirmedCopy()}`}
+        />
+      ) : null}
       {notices.slice(0, 3).map((notice) => (
         <StatusBanner key={notice.id} title={notice.title} body={notice.body} tone={notice.kind.includes("CANCEL") ? "warning" : "info"} />
       ))}
-      <FormError message={error} />
+      <FormError message={error ? sanitizeCustomerFacingError(error) : null} />
       <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm">
         <h2 className="font-display text-2xl text-forest-800">Job details</h2>
         <p className="mt-3 whitespace-pre-wrap">{project.description || "No description yet."}</p>
@@ -296,6 +311,7 @@ export function CustomerProjectDetailPage() {
           {project.city}, {project.state} {project.zip_code}
         </p>
         <p>Street (private until a booking is confirmed): {street ?? "—"}</p>
+        <p className="mt-2 text-ink-500">{contactLockedUntilConfirmedCopy()}</p>
         <p>{project.timing ? TIMING_LABELS[project.timing] : ""}</p>
       </section>
       <div className="flex min-w-0 flex-col gap-2">
@@ -315,7 +331,7 @@ export function CustomerProjectDetailPage() {
           </ButtonLink>
         ) : null}
         {project.selected_booking_id ? (
-          <ButtonLink to={`/app/customer/bookings/${project.selected_booking_id}`} variant="outline" className="min-h-14 w-full">
+          <ButtonLink to={`/app/customer/bookings/${project.selected_booking_id}/pay`} variant="outline" className="min-h-14 w-full">
             View booking
           </ButtonLink>
         ) : null}
@@ -364,7 +380,7 @@ export function CustomerProjectDetailPage() {
                   event.preventDefault();
                   void answerEstimateQuestion(item.id, reply[item.id] ?? "")
                     .then(reload)
-                    .catch((err: Error) => setError(err.message));
+                    .catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)));
                 }}
               >
                 <textarea
@@ -394,7 +410,7 @@ export function CustomerProjectDetailPage() {
               toast.push(result.action === "deleted" ? "Draft deleted." : "Project cancelled.");
               navigate("/app/customer/projects");
             })
-            .catch((err: Error) => setError(err.message))
+            .catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)))
             .finally(() => {
               setBusy(false);
               setCancelOpen(false);
@@ -407,7 +423,7 @@ export function CustomerProjectDetailPage() {
 
 export function CompareEstimatesPage() {
   const { projectId = "" } = useParams();
-  const toast = useToast();
+  const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [missing, setMissing] = useState(false);
   const [rows, setRows] = useState<
@@ -445,13 +461,13 @@ export function CompareEstimatesPage() {
     setBusy(true);
     setError(null);
     try {
-      await selectEstimate(projectId, estimateId);
-      toast.push(paymentsComingSoonCopy());
+      const result = await selectEstimate(projectId, estimateId);
       setConfirmId(null);
-      const proj = await fetchMyCustomerProject(projectId);
-      setProject(proj);
+      navigate(afterSelectEstimatePath({ projectId, bookingId: bookingIdFromSelectResult(result) }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Selection failed.");
+      setError(
+        sanitizeCustomerFacingError(err instanceof Error ? err.message : null, "Selection failed."),
+      );
     } finally {
       setBusy(false);
     }
@@ -467,11 +483,11 @@ export function CompareEstimatesPage() {
       <h1 className="font-display text-4xl font-semibold text-forest-800">Compare estimates</h1>
       <p className="text-ink-700">
         Factual comparison only. PPP does not rank a “best” estimate. Up to three local independents can price the job.
-        Selecting a pro starts a pending booking. It does not charge a card and does not share your exact address yet.
+        {` ${selectionDoesNotConfirmCopy()}`} {contactLockedUntilConfirmedCopy()}
       </p>
-      <FormError message={error} />
+      <FormError message={error ? sanitizeCustomerFacingError(error) : null} />
       {rows.length === 0 ? <EmptyState title="No estimates yet" body="Submitted estimates will appear here in the order they arrived." /> : null}
-      <div className="grid gap-4">
+      <div className="grid gap-4" data-estimate-compare="cards">
         {rows.map(({ estimate, items, contractor }) => {
           const outOfDate = estimateNeedsNewSubmission(estimate.status as "SUPERSEDED" | "EXPIRED" | "SUBMITTED");
           return (
@@ -521,11 +537,15 @@ export function CompareEstimatesPage() {
               })()}
               {project?.status === "CONTRACTOR_SELECTED" && project.selected_estimate_id === estimate.id ? (
                 <div className="mt-4 space-y-2">
-                  <p className="font-semibold text-forest-800">Selected — booking is waiting</p>
+                  <p className="font-semibold text-forest-800">Selected — this is still a pre-booking</p>
                   <p className="text-sm">{paymentsComingSoonCopy()}</p>
+                  <p className="text-sm text-ink-700">{contactLockedUntilConfirmedCopy()}</p>
                   {project.selected_booking_id ? (
-                    <ButtonLink to={`/app/customer/bookings/${project.selected_booking_id}`} className="min-h-14 w-full">
-                      View booking
+                    <ButtonLink
+                      to={`/app/customer/bookings/${project.selected_booking_id}/pay`}
+                      className="min-h-14 w-full"
+                    >
+                      View next step
                     </ButtonLink>
                   ) : null}
                 </div>
@@ -537,11 +557,11 @@ export function CompareEstimatesPage() {
                 confirmId === estimate.id ? (
                   <div className="mt-4 space-y-2">
                     <p className="text-sm">
-                      Confirm this independent contractor? This starts a pending booking. No payment is taken and your exact
-                      address stays private.
+                      Select this independent contractor? This starts a pending booking only. No payment is taken, the job
+                      is not booked yet, and your exact address stays private.
                     </p>
                     <Button type="button" className="min-h-14 w-full" disabled={busy} onClick={() => void confirm(estimate.id)}>
-                      Confirm this pro
+                      Yes, select this pro
                     </Button>
                     <Button type="button" variant="ghost" className="min-h-12 w-full" onClick={() => setConfirmId(null)}>
                       Keep comparing

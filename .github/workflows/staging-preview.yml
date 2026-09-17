@@ -1,0 +1,83 @@
+# Temporary Phase 5A staging preview build.
+# Does NOT deploy GitHub Pages. Production Pages stays on .github/workflows/ci-pages.yml (main only).
+name: Phase 5A staging preview
+
+on:
+  push:
+    branches: [phase-5a-staging-preview]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-preview-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-staging-preview:
+    name: Build staging preview artifact
+    runs-on: ubuntu-latest
+    env:
+      VITE_APP_ENV: staging
+      # Staging-only GitHub Actions variables. Never fall back to production VITE_SUPABASE_*.
+      # Public values only. Never add SUPABASE_SERVICE_ROLE_KEY here.
+      VITE_SUPABASE_URL: ${{ vars.STAGING_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.STAGING_SUPABASE_ANON_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Require STAGING_SUPABASE_* variables
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "Set GitHub Actions variables STAGING_SUPABASE_URL and STAGING_SUPABASE_ANON_KEY (public staging values only)."
+            echo "This workflow must not fall back to production VITE_SUPABASE_*."
+            exit 1
+          fi
+
+      - name: Refuse production Supabase on staging preview
+        run: |
+          python3 - <<'PY'
+          import os
+          import sys
+          from urllib.parse import urlparse
+
+          url = (os.environ.get("VITE_SUPABASE_URL") or "").strip()
+          production_ref = "bersftkjpbzpgtahbqwd"
+          staging_ref = "giiskdvitimksdewnelc"
+          host = (urlparse(url).hostname or "").lower()
+          if production_ref in host:
+              sys.exit(
+                  "Staging preview refused: URL hostname contains production ref bersftkjpbzpgtahbqwd"
+              )
+          if staging_ref not in host:
+              sys.exit(
+                  "Staging preview refused: URL hostname must include staging ref giiskdvitimksdewnelc"
+              )
+          print(f"Staging Supabase host OK: {host}")
+          PY
+
+      - name: Build staging frontend
+        run: npm run build
+        env:
+          BASE_PATH: /
+          VITE_APP_ENV: staging
+          VITE_SUPABASE_URL: ${{ env.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ env.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Upload staging preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase5a-staging-preview
+          path: dist
+          if-no-files-found: error

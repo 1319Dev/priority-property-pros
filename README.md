@@ -44,6 +44,23 @@ npx vite preview --base /priority-property-pros/
 
 Then open `http://localhost:4173/priority-property-pros/`.
 
+### Temporary Phase 5A staging preview
+
+This is **not** the live site. The top banner (“STAGING PREVIEW — not the live site”) appears only when `VITE_APP_ENV=staging`. Staging builds must use the staging Supabase project `giiskdvitimksdewnelc` (public URL + anon key only). The client refuses to start if the URL hostname contains production ref `bersftkjpbzpgtahbqwd`.
+
+Local / CI build:
+
+```bash
+VITE_APP_ENV=staging \
+VITE_SUPABASE_URL=https://giiskdvitimksdewnelc.supabase.co \
+VITE_SUPABASE_ANON_KEY=<staging-anon-public-key> \
+npm run build
+```
+
+GitHub Actions on branch `phase-5a-staging-preview` runs `.github/workflows/staging-preview.yml`, which reads **only** `STAGING_SUPABASE_URL` / `STAGING_SUPABASE_ANON_KEY` (never production `VITE_SUPABASE_*`) and uploads artifact `phase5a-staging-preview`. It does **not** deploy GitHub Pages. Production Pages on `main` is unchanged.
+
+Never put the service role key in Vite, git, or Actions. Stripe stays off.
+
 ---
 
 ## Put it on the internet (GitHub Pages)
