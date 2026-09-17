@@ -55,6 +55,8 @@ describe("privacy and IDOR mirrors", () => {
     expect(opportunityVisibleToCustomer("ACCEPTED")).toBe(true);
     expect(estimateVisibleToCustomer("DRAFT")).toBe(false);
     expect(estimateVisibleToCustomer("SUBMITTED")).toBe(true);
+    expect(estimateVisibleToCustomer("SENT")).toBe(true);
+    expect(estimateVisibleToCustomer("VIEWED")).toBe(true);
   });
 
   it("blocks self-verify to VERIFIED", () => {

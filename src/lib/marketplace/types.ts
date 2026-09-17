@@ -33,6 +33,8 @@ export type OpportunityStatus = (typeof OPPORTUNITY_STATUSES)[number];
 export const ESTIMATE_STATUSES = [
   "DRAFT",
   "SUBMITTED",
+  "SENT",
+  "VIEWED",
   "REVISED",
   "WITHDRAWN",
   "ACCEPTED",

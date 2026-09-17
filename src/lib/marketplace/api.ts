@@ -2,6 +2,7 @@ import { getSupabaseClient } from "../supabase/client";
 import type { Database, Json } from "../supabase/database.types";
 import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
 import { reusableEmptyDraft } from "./flows";
+import { detectContactLeak } from "./contactLeak";
 import type {
   Project,
   ProjectPrivateLocation,
@@ -267,6 +268,66 @@ export async function selectEstimate(projectId: string, estimateId: string): Pro
   return (data ?? {}) as RpcJson;
 }
 
+export async function markEstimateViewed(estimateId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("mark_estimate_viewed", { p_estimate_id: estimateId });
+  if (error) throw new Error(asError(error, "Could not open the estimate."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function declineEstimate(estimateId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("decline_estimate", { p_estimate_id: estimateId });
+  if (error) throw new Error(asError(error, "Could not decline this estimate."));
+  return (data ?? {}) as RpcJson;
+}
+
+export type ContractorEstimateListItem = {
+  id: string;
+  project_id: string;
+  opportunity_id: string;
+  project_title: string;
+  status: string;
+  total_cents: number;
+  submitted_at: string | null;
+  first_viewed_at: string | null;
+  last_viewed_at: string | null;
+  view_count: number;
+  accepted_at: string | null;
+  declined_at: string | null;
+  withdrawn_at: string | null;
+  created_at: string;
+};
+
+export async function fetchMyEstimates(): Promise<ContractorEstimateListItem[]> {
+  const { data, error } = await client().rpc("list_my_estimates");
+  if (error) throw new Error(asError(error, "Could not load your estimates."));
+  return Array.isArray(data) ? (data as ContractorEstimateListItem[]) : [];
+}
+
+export type InAppNotificationRow = {
+  id: string;
+  kind: string;
+  title: string;
+  body: string;
+  entity_type: string;
+  entity_id: string | null;
+  payload: Record<string, unknown>;
+  channel: "in_app";
+  read_at: string | null;
+  created_at: string;
+};
+
+export async function fetchMyNotifications(): Promise<InAppNotificationRow[]> {
+  const { data, error } = await client().rpc("list_my_notifications");
+  if (error) throw new Error(asError(error, "Could not load notifications."));
+  return Array.isArray(data) ? (data as InAppNotificationRow[]) : [];
+}
+
+export async function markNotificationRead(id: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("mark_notification_read", { p_notification_id: id });
+  if (error) throw new Error(asError(error, "Could not mark the notification read."));
+  return (data ?? {}) as RpcJson;
+}
+
 export async function fetchFeePreview(totalCents: number) {
   const { data, error } = await client().rpc("fee_preview", { p_total_cents: totalCents });
   if (error) throw new Error(asError(error, "Could not load the fee preview."));
@@ -466,6 +527,14 @@ export async function updateContractorProfile(
   id: string,
   patch: Database["public"]["Tables"]["contractor_profiles"]["Update"],
 ) {
+  if (patch.bio !== undefined) {
+    const leak = detectContactLeak(patch.bio);
+    if (leak.blocked) throw new Error(leak.message ?? "Contact info is shared after connection through PPP.");
+  }
+  if (patch.headline !== undefined) {
+    const leak = detectContactLeak(patch.headline);
+    if (leak.blocked) throw new Error(leak.message ?? "Contact info is shared after connection through PPP.");
+  }
   const { error } = await client().from("contractor_profiles").update(patch).eq("id", id);
   if (error) throw new Error(asError(error, "Could not save your profile."));
 }
@@ -586,6 +655,16 @@ export async function addPortfolioItem(row: Database["public"]["Tables"]["contra
   if (error) throw new Error(asError(error, "Could not add portfolio photo."));
 }
 
+export async function deletePortfolioItem(id: string) {
+  const { error } = await client().from("contractor_portfolio").delete().eq("id", id);
+  if (error) throw new Error(asError(error, "Could not remove the photo."));
+}
+
+export async function updateProfileAvatar(profileId: string, avatarUrl: string | null) {
+  const { error } = await client().from("profiles").update({ avatar_url: avatarUrl }).eq("id", profileId);
+  if (error) throw new Error(asError(error, "Could not save your photo."));
+}
+
 export async function fetchPortfolio(contractorProfileId: string) {
   const { data, error } = await client()
     .from("contractor_portfolio")
@@ -614,6 +693,8 @@ export async function askEstimateQuestion(row: {
   asked_by_contractor_profile_id: string;
   prompt: string;
 }) {
+  const leak = detectContactLeak(row.prompt);
+  if (leak.blocked) throw new Error(leak.message ?? "Contact info is shared after connection through PPP.");
   const { error } = await client().from("estimate_questions").insert(row);
   if (error) throw new Error(asError(error, "Could not send the question."));
 }
@@ -687,6 +768,10 @@ export async function updateEstimateDetails(
   id: string,
   patch: Database["public"]["Tables"]["estimates"]["Update"],
 ) {
+  if (patch.notes !== undefined) {
+    const leak = detectContactLeak(patch.notes);
+    if (leak.blocked) throw new Error(leak.message ?? "Contact info is shared after connection through PPP.");
+  }
   const { error } = await client().from("estimates").update(patch).eq("id", id);
   if (error) throw new Error(asError(error, "Could not save the estimate."));
 }
@@ -696,7 +781,17 @@ export async function fetchProjectEstimates(projectId: string) {
     .from("estimates")
     .select("*")
     .eq("project_id", projectId)
-    .in("status", ["SUBMITTED", "REVISED", "ACCEPTED", "DECLINED", "WITHDRAWN", "EXPIRED", "SUPERSEDED"])
+    .in("status", [
+      "SUBMITTED",
+      "SENT",
+      "REVISED",
+      "VIEWED",
+      "ACCEPTED",
+      "DECLINED",
+      "WITHDRAWN",
+      "EXPIRED",
+      "SUPERSEDED",
+    ])
     .order("submitted_at", { ascending: true });
   if (error) throw new Error(asError(error, "Could not load estimates."));
   return data ?? [];
