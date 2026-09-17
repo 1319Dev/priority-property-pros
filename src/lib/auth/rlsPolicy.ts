@@ -48,6 +48,11 @@ export function canSelfApprove(actor: Actor, from: ApprovalStatus, to: ApprovalS
   return actorIsAdmin(actor);
 }
 
+/** JWT sessions cannot PATCH approval fields. Even admins must use admin RPCs. SQL editor has no JWT. */
+export function canClientPatchApprovalFields(actor: Actor): boolean {
+  return actor.id === null;
+}
+
 export function canMutateAuditLog(): boolean {
   return false;
 }

@@ -70,7 +70,7 @@ Accounts and posting need a Supabase project. The homepage works without it.
 1. **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)** — create project, run SQL (including Phase 3 and Phase 4A files), set redirect URLs.
 2. Add GitHub Actions **variables** (not secrets): `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 3. Never add the **service role** key.
-4. Approve real contractors with **[supabase/sql/approve_contractor.sql](supabase/sql/approve_contractor.sql)** (no self-approve).
+4. Approve real contractors from **Admin → Approvals** after promoting an admin (no self-approve). SQL fallback: **[supabase/sql/approve_contractor.sql](supabase/sql/approve_contractor.sql)**.
 
 Security, tables, and marketplace flow: **[docs/SECURITY.md](docs/SECURITY.md)**, **[docs/DATABASE.md](docs/DATABASE.md)**, **[docs/MARKETPLACE_CORE.md](docs/MARKETPLACE_CORE.md)**, **[docs/PHASE4A.md](docs/PHASE4A.md)**, **[docs/PHASE5A.md](docs/PHASE5A.md)**.
 

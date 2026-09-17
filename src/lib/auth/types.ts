@@ -56,6 +56,12 @@ export type ContractorProfile = {
   approval_status: ApprovalStatus;
   approved_at: string | null;
   approved_by: string | null;
+  rejected_at: string | null;
+  rejected_by: string | null;
+  rejection_reason: string | null;
+  info_requested_at: string | null;
+  info_requested_by: string | null;
+  info_request_message: string | null;
   created_at: string;
   updated_at: string;
 };

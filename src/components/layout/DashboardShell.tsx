@@ -8,6 +8,7 @@ export type DashNavItem = {
   label: string;
   end?: boolean;
   prominent?: boolean;
+  badge?: number;
 };
 
 export function DashboardShell({
@@ -60,7 +61,7 @@ export function DashboardShell({
                   }`
                 }
               >
-                {item.label}
+                <NavLabel item={item} compact />
               </NavLink>
             </li>
           ))}
@@ -77,13 +78,31 @@ export function DashboardShell({
                   }`
                 }
               >
-                {item.label}
+                <NavLabel item={item} />
               </NavLink>
             </li>
           ))}
         </ul>
       </nav>
     </div>
+  );
+}
+
+function NavLabel({ item, compact = false }: { item: DashNavItem; compact?: boolean }) {
+  const showBadge = typeof item.badge === "number" && item.badge > 0;
+  const badgeText = showBadge && item.badge! > 99 ? "99+" : String(item.badge ?? "");
+  return (
+    <span className={`inline-flex items-center ${compact ? "flex-col gap-0.5" : "gap-2"}`}>
+      <span>{item.label}</span>
+      {showBadge ? (
+        <span
+          className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-gold-500 px-1.5 text-[0.62rem] font-bold text-forest-950"
+          aria-label={`${item.badge} pending`}
+        >
+          {badgeText}
+        </span>
+      ) : null}
+    </span>
   );
 }
 

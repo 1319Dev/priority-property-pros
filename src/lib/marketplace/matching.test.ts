@@ -43,6 +43,7 @@ describe("matching eligibility", () => {
 
   it("rejects pending approval, inactive accounts, and wrong category", () => {
     expect(contractorEligibleForProject(pro({ approval_status: "PENDING" }), project).ok).toBe(false);
+    expect(contractorEligibleForProject(pro({ approval_status: "REJECTED" }), project).ok).toBe(false);
     expect(contractorEligibleForProject(pro({ account_status: "PENDING" }), project).ok).toBe(false);
     expect(contractorEligibleForProject(pro({ category_ids: ["paint"] }), project).ok).toBe(false);
     expect(contractorEligibleForProject(pro({ accepting_work: false }), project).ok).toBe(false);

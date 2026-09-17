@@ -1,6 +1,8 @@
 -- Owner helper: approve an existing contractor so matching can include them.
--- Phase 3 does not add a website self-approve button.
--- Replace the email, then run in the SQL editor. Never invent demo contractors.
+-- Prefer Admin → Approvals in the website (admin_approve_contractor RPC).
+-- This SQL remains a dashboard fallback. Never invent demo contractors.
+-- Replace the email, then run in the SQL editor. There is no self-approve.
+-- Paying a signup fee does not approve anyone.
 
 -- UPDATE public.profiles
 -- SET account_status = 'ACTIVE'
