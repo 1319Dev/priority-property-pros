@@ -60,6 +60,21 @@ Append-only. `write_audit_log(...)` is for server/SQL. Clients may **select** on
 
 `is_admin()`: `account_type = ADMIN` and `account_status = ACTIVE` for `auth.uid()`. `SECURITY DEFINER`, `search_path = public`.
 
+## Admin contractor approvals
+
+Apply `20260921000001_admin_contractor_approvals.sql` after Phase 5A. Additive. Website: **Admin → Approvals**.
+
+| RPC | Who | What |
+| --- | --- | --- |
+| `list_contractor_approvals(tab)` | Admin | Queue JSON for Pending / Approved / Rejected / All |
+| `get_contractor_approval(id)` | Admin | One contractor application, including credentials and info-request |
+| `count_pending_contractor_approvals()` | Admin | Pending badge count |
+| `admin_approve_contractor(id)` | Admin | `approval_status = APPROVED`, `profiles.account_status = ACTIVE`, preserve `approved_at`, set `approved_by`, audit `contractor.approved` |
+| `admin_reject_contractor(id, reason)` | Admin | `REJECTED` without deleting. Records timestamp/admin/reason. Audit `contractor.rejected`. Matching will not include them |
+| `admin_request_contractor_info(id, message)` | Admin | Stays `PENDING`. Stores message/admin/timestamp. Audit `contractor.info_requested` |
+
+Matching still requires `ACTIVE` + `APPROVED` + `accepting_work` + category/area. Paying a signup fee never calls these RPCs and never auto-approves. JWT clients cannot PATCH approval fields; even admins must use the RPCs. `protect_contractor_approval` remains. Internal `contractor_approval_item` is not granted to `authenticated`.
+
 ## What is not in Phase 2
 
 Phase 2 had no projects or estimates. Phase 3 adds them (below). Phase 4A adds bookings, a versioned fee engine, relationships, change orders, and a verified-review guard. Still no live Stripe charges, payouts, or Priority Verified.

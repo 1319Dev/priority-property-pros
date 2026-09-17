@@ -4,6 +4,7 @@ import {
   canChangeAccountType,
   canClientAssignAdmin,
   canInsertOwnAcceptance,
+  canClientPatchApprovalFields,
   canMutateAuditLog,
   canReadOtherUsersRow,
   canReadProfile,
@@ -41,6 +42,9 @@ describe("RLS privilege escalation (policy mirror)", () => {
   it("blocks contractors and verifiers from self-approving", () => {
     expect(canSelfApprove(contractor, "PENDING", "APPROVED")).toBe(false);
     expect(canSelfApprove(admin, "PENDING", "APPROVED")).toBe(true);
+    expect(canClientPatchApprovalFields(contractor)).toBe(false);
+    expect(canClientPatchApprovalFields(admin)).toBe(false);
+    expect(canClientPatchApprovalFields(sqlEditor)).toBe(true);
   });
 
   it("forbids every client role from mutating audit_logs", () => {

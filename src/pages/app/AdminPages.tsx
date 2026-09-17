@@ -34,14 +34,7 @@ export function AdminPeoplePage() {
   );
 }
 
-export function AdminApprovalsPage() {
-  return (
-    <EmptyState
-      title="No approval queue"
-      body="Contractor and verifier approval_status cannot be self-served. SQL or a later admin tool will set it."
-    />
-  );
-}
+export { AdminApprovalDetailPage, AdminApprovalsPage } from "./admin/AdminApprovalsPages";
 
 export function AdminAuditPage() {
   return (

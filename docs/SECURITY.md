@@ -44,7 +44,7 @@ Every Phase 2 table has `ENABLE ROW LEVEL SECURITY`. There is **no** policy that
 Protected-column triggers still fire even if someone tampers with a REST call:
 
 - `profiles_protect_columns` — no client `ADMIN` assignment; no owner status/role edits
-- `protect_contractor_approval` / `protect_verifier_approval` — no self-approve
+- `protect_contractor_approval` / `protect_verifier_approval` — no self-approve; contractor approval/reject/info-request only via admin RPCs
 - `forbid_audit_mutation` — audit rows cannot be updated or deleted
 
 ## Attack tests (expected failures)
@@ -54,8 +54,10 @@ These are encoded as unit tests in `src/lib/auth/rlsPolicy.test.ts` and `src/lib
 1. Sign in as customer A. `update profiles set account_type = 'ADMIN' where id = auth.uid()` → error.
 2. Customer A `select * from profiles where id = '<customer B>'` → zero rows.
 3. Contractor `update contractor_profiles set approval_status = 'APPROVED'` on their row → error.
-4. Any user `insert/update/delete audit_logs` via the Data API → denied.
-5. Sign up with metadata `{ "account_type": "ADMIN" }` → profile is `CUSTOMER`.
+4. Admin `update contractor_profiles set approval_status = 'APPROVED'` via the Data API (not the RPC) → error (`approval changes must go through admin RPCs`).
+5. Non-admin `admin_approve_contractor` / `admin_reject_contractor` → error.
+6. Any user `insert/update/delete audit_logs` via the Data API → denied.
+7. Sign up with metadata `{ "account_type": "ADMIN" }` → profile is `CUSTOMER`.
 
 Website route guards (`RequireAuth`, `RequireRole`, `RequireAdmin`) hide screens only. They are **not** security.
 
@@ -85,7 +87,7 @@ There are **no Stripe charges** in Phase 3 or Phase 4A. `fee_preview` and `previ
 - Bookings, fee snapshots, relationships, change-order approvals, and reviews cannot be written from the client except through SECURITY DEFINER RPCs that check `auth.uid()` / `is_admin()`.
 - `confirm_booking_for_testing` is ADMIN-only. Customers and contractors cannot spoof CONFIRMED.
 - Repeat pricing and relationships are server-assigned.
-- `ADMIN` is still not self-assignable. Contractor approval and max-3 matching are unchanged. VERIFIER remains; there is no INSPECTOR role.
+- `ADMIN` is still not self-assignable. Contractor approval is admin-only via RPCs (not self-serve, not a signup fee). Max-3 matching is unchanged. VERIFIER remains; there is no INSPECTOR role.
 
 ### Phase 5A
 
@@ -93,6 +95,13 @@ There are **no Stripe charges** in Phase 3 or Phase 4A. `fee_preview` and `previ
 - `list_my_customer_projects` / `get_my_customer_project` cannot return another customer’s rows.
 - Posted material edits and cancel/delete go through SECURITY DEFINER RPCs that check `auth.uid()`.
 - Exact street still unlocks only after a **confirmed** booking.
+
+### Admin contractor approvals
+
+- `admin_approve_contractor`, `admin_reject_contractor`, and `admin_request_contractor_info` are `SECURITY DEFINER`, check `is_admin()`, and `GRANT EXECUTE` to `authenticated` (revoked from `anon` / `PUBLIC`).
+- JWT clients cannot self-approve. Admins cannot PATCH approval columns from the Data API; `protect_contractor_approval` requires the admin RPCs.
+- Reject does not delete. Matching still requires `ACTIVE` + `APPROVED` (+ `accepting_work` and category/area).
+- Paying a signup fee never auto-approves. This work does not change `payments_live` or `charges_live`.
 
 Free-text Q&A can still leak PII. There is no scanner in this phase.
 

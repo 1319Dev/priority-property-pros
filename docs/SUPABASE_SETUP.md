@@ -79,10 +79,11 @@ Do not commit `.env.local`.
    25. `20260920000001_phase5a_lifecycle.sql`
    26. `20260920000002_phase5a_rpcs.sql`
    27. `20260920000003_phase5a_privacy_rls.sql`
+   28. `20260921000001_admin_contractor_approvals.sql`
 
 5. If a file says it already exists, stop and ask a developer — do not skip ahead.
 6. Phase 2 Table Editor should list `profiles`, `contractor_profiles`, `verifier_profiles`, `agreements`, `agreement_acceptances`, `audit_logs`.
-7. After Phase 3, you should also see `service_categories`, `projects`, `opportunities`, `estimates`, and related tables. After Phase 4A, you should also see `fee_schedules`, `bookings`, `customer_contractor_relationships`, `change_orders`, and `booking_reviews`. After Phase 5A, you should also see `project_notices` and project status `CANCELLED`. **Do not delete users or profiles.** Optional: `supabase/sql/approve_contractor.sql` to approve a real contractor so matching can include them. There is no website self-approve.
+7. After Phase 3, you should also see `service_categories`, `projects`, `opportunities`, `estimates`, and related tables. After Phase 4A, you should also see `fee_schedules`, `bookings`, `customer_contractor_relationships`, `change_orders`, and `booking_reviews`. After Phase 5A, you should also see `project_notices` and project status `CANCELLED`. After the admin approvals migration (`20260921000001`), contractor rows gain reject/info-request columns; **do not delete users or profiles.** Approve real contractors from **Admin → Approvals** (or the optional SQL fallback `supabase/sql/approve_contractor.sql`). There is no website self-approve. Paying a signup fee does not approve anyone.
 
 **Email confirm:** keep the current Auth confirm-email setting so testers are not locked out. Before public launch, enable **Confirm email**, add SMTP, and keep the redirect URLs in section D. Do not silently switch to auto-confirm in production.
 

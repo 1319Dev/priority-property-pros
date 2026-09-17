@@ -72,6 +72,12 @@ export type Database = {
           approval_status: ApprovalStatus;
           approved_at: string | null;
           approved_by: string | null;
+          rejected_at: string | null;
+          rejected_by: string | null;
+          rejection_reason: string | null;
+          info_requested_at: string | null;
+          info_requested_by: string | null;
+          info_request_message: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -791,6 +797,18 @@ export type Database = {
       cancel_customer_project: { Args: { p_project_id: string; p_confirm?: boolean }; Returns: Json };
       project_has_participation: { Args: { p_project_id: string }; Returns: boolean };
       contractor_can_read_project: { Args: { p_project_id: string }; Returns: boolean };
+      list_contractor_approvals: { Args: { p_tab?: string }; Returns: Json };
+      get_contractor_approval: { Args: { p_contractor_profile_id: string }; Returns: Json };
+      count_pending_contractor_approvals: { Args: Record<string, never>; Returns: number };
+      admin_approve_contractor: { Args: { p_contractor_profile_id: string }; Returns: Json };
+      admin_reject_contractor: {
+        Args: { p_contractor_profile_id: string; p_reason?: string | null };
+        Returns: Json;
+      };
+      admin_request_contractor_info: {
+        Args: { p_contractor_profile_id: string; p_message: string };
+        Returns: Json;
+      };
     };
     Enums: {
       account_type: AccountType;

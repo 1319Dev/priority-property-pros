@@ -14,6 +14,8 @@
 -- Privilege-escalation (as a signed-in customer, via the JS client — not this file):
 --   update profiles set account_type = 'ADMIN' where id = auth.uid()  → error
 --   update contractor_profiles set approval_status = 'APPROVED' where profile_id = auth.uid() → error
+--   admin_approve_contractor as a non-admin → error
+--   PATCH contractor_profiles.approval_status as an admin (Data API, not RPC) → error
 --   select * from profiles where id <> auth.uid() → 0 rows
 --   select * from audit_logs → 0 rows unless ADMIN
 

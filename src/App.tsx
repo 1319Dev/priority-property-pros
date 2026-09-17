@@ -41,6 +41,7 @@ import {
 import { ProBookingDetailPage, ProBookingsPage } from "./pages/app/pro/ProBookingPages";
 import { VerifierHomePage, VerifierMessagesPage, VerifierVisitsPage } from "./pages/app/VerifierPages";
 import {
+  AdminApprovalDetailPage,
   AdminApprovalsPage,
   AdminAuditPage,
   AdminBookingsPage,
@@ -113,6 +114,7 @@ export default function App() {
             <Route index element={<AdminHomePage />} />
             <Route path="people" element={<AdminPeoplePage />} />
             <Route path="approvals" element={<AdminApprovalsPage />} />
+            <Route path="approvals/:contractorProfileId" element={<AdminApprovalDetailPage />} />
             <Route path="audit" element={<AdminAuditPage />} />
             <Route path="bookings" element={<AdminBookingsPage />} />
             <Route path="account" element={<AccountPage />} />
