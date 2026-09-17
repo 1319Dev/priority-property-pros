@@ -146,7 +146,7 @@ export const DEMO_PROJECTS: DemoProject[] = [
     zip: "78613",
     timing: "Within a week",
     shortDescription:
-      "Sample posted job with city and ZIP only. Fictional project — no street, phone, or customer name.",
+      "Sample posted job with city and ZIP only. Fictional project — no exact address or contact details.",
   },
   {
     slug: "demo-living-room-tv",

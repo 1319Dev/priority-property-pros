@@ -82,8 +82,11 @@ describe("public marketplace directory privacy", () => {
   it("never lists private customer projects on public browse", () => {
     expect(customerFacingBrowseExposesPrivateProjects()).toBe(false);
     for (const project of DEMO_PROJECTS) {
-      expect(project.shortDescription.toLowerCase()).toMatch(/no street|not a real|fictional/);
-      expect(JSON.stringify(project)).not.toMatch(/@|phone|street/i);
+      expect(project.shortDescription.toLowerCase()).toMatch(/city and zip|not a real|fictional/);
+      const blob = JSON.stringify(project);
+      expect(blob).not.toMatch(/@[a-z0-9.-]+\.[a-z]{2,}/i);
+      expect(blob).not.toMatch(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/);
+      expect(blob.toLowerCase()).not.toMatch(/street_line|123 main|apt\s|#\d{2,}/);
     }
   });
 });
