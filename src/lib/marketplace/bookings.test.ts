@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  afterSelectEstimatePath,
   allowedBookingTransitions,
+  bookingIdFromSelectResult,
   bookingIsAbandoned,
   bookingUnlocksContact,
+  BOOKING_STATUS_LABELS,
   canCompleteBooking,
   canConfirmBooking,
   canCustomerCancelPending,
@@ -10,7 +13,14 @@ import {
   canStartBooking,
   canTransitionBooking,
   clientCannotSpoofConfirmed,
+  contactLockedUntilConfirmedCopy,
+  customerPayPath,
+  customerPreBookingPath,
+  paymentsArePaused,
   paymentsComingSoonCopy,
+  preBookingHeadline,
+  preBookingTitle,
+  selectionDoesNotConfirmCopy,
 } from "./bookings";
 
 describe("booking state machine", () => {
@@ -57,5 +67,34 @@ describe("booking state machine", () => {
     expect(canCompleteBooking("CONTRACTOR", "PENDING")).toBe(false);
     expect(canDisputeBooking("CUSTOMER", "COMPLETED")).toBe(true);
     expect(canDisputeBooking("VERIFIER", "IN_PROGRESS")).toBe(false);
+  });
+});
+
+describe("pre-booking / paused-payment UX boundary", () => {
+  it("pauses payments when flags are off or the app env is staging", () => {
+    expect(paymentsArePaused()).toBe(true);
+    expect(paymentsArePaused({ paymentsLive: false, chargesLive: false, appEnv: "production" })).toBe(true);
+    expect(paymentsArePaused({ paymentsLive: true, chargesLive: false, appEnv: "production" })).toBe(true);
+    expect(paymentsArePaused({ paymentsLive: true, chargesLive: true, appEnv: "staging" })).toBe(true);
+    expect(paymentsArePaused({ paymentsLive: true, chargesLive: true, appEnv: "production" })).toBe(false);
+  });
+
+  it("sends hire/select to the gated pay screen, not a live checkout", () => {
+    expect(BOOKING_STATUS_LABELS.PENDING).toBe("Pre-booking");
+    expect(BOOKING_STATUS_LABELS.AWAITING_PAYMENT).toBe("Pre-booking");
+    expect(bookingIdFromSelectResult({ booking_id: "bk-1" })).toBe("bk-1");
+    expect(bookingIdFromSelectResult({})).toBeNull();
+    expect(afterSelectEstimatePath({ projectId: "p1", bookingId: "bk-1", paymentsPaused: true })).toBe(
+      customerPayPath("bk-1"),
+    );
+    expect(afterSelectEstimatePath({ projectId: "p1", bookingId: null, paymentsPaused: true })).toBe(
+      customerPreBookingPath("p1"),
+    );
+    expect(paymentsComingSoonCopy()).toBe("Online payment setup is coming soon.");
+    expect(preBookingTitle()).toMatch(/paused/i);
+    expect(preBookingHeadline()).toMatch(/not a confirmed booking/i);
+    expect(selectionDoesNotConfirmCopy()).toMatch(/does not confirm the job/i);
+    expect(contactLockedUntilConfirmedCopy()).toMatch(/cannot see your exact address, phone, or email/i);
+    expect(contactLockedUntilConfirmedCopy()).not.toMatch(/can see your exact address/i);
   });
 });

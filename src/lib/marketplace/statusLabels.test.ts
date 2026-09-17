@@ -15,7 +15,7 @@ describe("human project states", () => {
     expect(PROJECT_STATUS_LABELS.MATCHING).toBe("Finding Pros");
     expect(PROJECT_STATUS_LABELS.ESTIMATES_AVAILABLE).toBe("Estimates Received");
     expect(PROJECT_STATUS_LABELS.CANCELLED).toBe("Cancelled");
-    expect(customerLifecycleLabel("CONTRACTOR_SELECTED", "PENDING")).toBe("Booking");
+    expect(customerLifecycleLabel("CONTRACTOR_SELECTED", "PENDING")).toBe("Pre-booking");
     expect(customerLifecycleLabel("CONTRACTOR_SELECTED", "CONFIRMED")).toBe("Active");
     expect(customerLifecycleLabel("CONTRACTOR_SELECTED", "COMPLETED")).toBe("Completed");
     expect(customerLifecycleLabel("CANCELLED")).toBe("Cancelled");
@@ -34,7 +34,7 @@ describe("human project states", () => {
         projectStatus: "CONTRACTOR_SELECTED",
         bookingId: "b1",
         bookingStatus: "PENDING",
-      }).some((item) => item.label === "View booking"),
+      }).some((item) => item.label === "View booking" && item.to === "/app/customer/bookings/b1/pay"),
     ).toBe(true);
     expect(
       customerNextActions({

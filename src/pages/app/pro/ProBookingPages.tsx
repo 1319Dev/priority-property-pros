@@ -18,7 +18,7 @@ import {
   respondChangeOrder,
   startBooking,
 } from "../../../lib/marketplace/api";
-import { BOOKING_STATUS_LABELS, bookingUnlocksContact, paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
+import { BOOKING_STATUS_LABELS, bookingUnlocksContact, contactLockedUntilConfirmedCopy, paymentsComingSoonCopy, preBookingHeadline } from "../../../lib/marketplace/bookings";
 import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
 import type { Booking, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
@@ -48,7 +48,8 @@ export function ProBookingsPage() {
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
       <p className="text-sm text-ink-700">
-        Exact street, phone, and email stay hidden until a booking is confirmed. {paymentsComingSoonCopy()}
+        Exact street, phone, and email stay hidden until a booking is confirmed. {paymentsComingSoonCopy()}{" "}
+        {contactLockedUntilConfirmedCopy()}
       </p>
       <FormError message={error} />
       {rows.length === 0 ? (
@@ -116,7 +117,13 @@ export function ProBookingDetailPage() {
       <h1 className="font-display text-4xl font-semibold text-forest-800">{title}</h1>
       <p className="text-sm text-ink-500">{statusLabel(booking.status)}</p>
       <FormError message={error} />
-      {pending ? <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm font-semibold">{paymentsComingSoonCopy()}</p> : null}
+      {pending ? (
+        <div className="space-y-2 rounded-3xl bg-cream-100 px-5 py-4">
+          <p className="text-sm font-semibold">{preBookingHeadline()}</p>
+          <p className="text-sm font-semibold">{paymentsComingSoonCopy()}</p>
+          <p className="text-sm text-ink-700">{contactLockedUntilConfirmedCopy()}</p>
+        </div>
+      ) : null}
       <section className="rounded-3xl border border-forest-800/10 px-5 py-4 text-sm">
         <p className="font-semibold">Approximate location</p>
         <p>{cityZip}</p>
@@ -128,7 +135,7 @@ export function ProBookingDetailPage() {
             <p>{contact.email || "—"}</p>
           </>
         ) : (
-          <p className="mt-3 text-ink-500">Exact street, phone, and email stay hidden until this booking is confirmed.</p>
+          <p className="mt-3 text-ink-500">{contactLockedUntilConfirmedCopy()}</p>
         )}
         <p className="mt-3">Job {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
         <p>

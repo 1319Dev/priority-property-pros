@@ -1,4 +1,5 @@
 import type { AccountStatus, AccountType } from "../auth/types";
+import { customerPayPath, paymentsArePaused } from "./bookings";
 import type { BookingStatus, OpportunityStatus, ProjectStatus } from "./types";
 
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
@@ -12,8 +13,8 @@ export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
 };
 
 export const BOOKING_HUMAN_LABELS: Record<BookingStatus, string> = {
-  PENDING: "Booking",
-  AWAITING_PAYMENT: "Booking",
+  PENDING: "Pre-booking",
+  AWAITING_PAYMENT: "Pre-booking",
   CONFIRMED: "Active",
   IN_PROGRESS: "Active",
   COMPLETED: "Completed",
@@ -46,7 +47,7 @@ export const CUSTOMER_LIFECYCLE_LABELS: Record<CustomerLifecycleState, string> =
   finding_pros: "Finding Pros",
   estimates_received: "Estimates Received",
   contractor_selected: "Contractor Selected",
-  booking: "Booking",
+  booking: "Pre-booking",
   active: "Active",
   completed: "Completed",
   cancelled: "Cancelled",
@@ -102,11 +103,13 @@ export function customerNextActions(input: {
         { label: "Edit", to: edit, variant: "ghost" },
       ];
     case "contractor_selected":
-    case "booking":
+    case "booking": {
+      const pendingPay = input.bookingId && paymentsArePaused() ? customerPayPath(input.bookingId) : booking;
       return [
-        ...(booking ? [{ label: "View booking", to: booking }] : []),
+        ...(pendingPay ? [{ label: "View booking", to: pendingPay }] : []),
         { label: "View", to: detail, variant: "outline" },
       ];
+    }
     case "active":
       return booking ? [{ label: "View booking", to: booking }] : [{ label: "View", to: detail }];
     case "completed":

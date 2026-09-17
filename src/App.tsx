@@ -28,6 +28,7 @@ import {
 } from "./pages/app/CustomerPages";
 import { CompareEstimatesPage, CustomerProjectDetailPage } from "./pages/app/customer/CustomerMarketplacePages";
 import { CustomerBookingDetailPage, CustomerBookingsPage, HireAgainPage } from "./pages/app/customer/BookingPages";
+import { CustomerPayGatePage, CustomerPreBookingPage } from "./pages/app/customer/PaymentPausedPage";
 import { ProjectWizardPage } from "./pages/app/customer/ProjectWizardPage";
 import { ProjectEditPage } from "./pages/app/customer/ProjectEditPage";
 import { ProHomePage, ProJobsPage, ProMessagesPage } from "./pages/app/ProPages";
@@ -76,8 +77,10 @@ export default function App() {
             <Route path="projects/:projectId/wizard" element={<ProjectWizardPage />} />
             <Route path="projects/:projectId/edit" element={<ProjectEditPage />} />
             <Route path="projects/:projectId/compare" element={<CompareEstimatesPage />} />
+            <Route path="projects/:projectId/pre-booking" element={<CustomerPreBookingPage />} />
             <Route path="projects/:projectId" element={<CustomerProjectDetailPage />} />
             <Route path="bookings" element={<CustomerBookingsPage />} />
+            <Route path="bookings/:bookingId/pay" element={<CustomerPayGatePage />} />
             <Route path="bookings/:bookingId" element={<CustomerBookingDetailPage />} />
             <Route path="hire-again" element={<HireAgainPage />} />
             <Route path="messages" element={<CustomerMessagesPage />} />

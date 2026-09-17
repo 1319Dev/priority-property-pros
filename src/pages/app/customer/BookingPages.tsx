@@ -23,7 +23,7 @@ import {
   submitBookingReview,
   type RpcJson,
 } from "../../../lib/marketplace/api";
-import { BOOKING_STATUS_LABELS, paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
+import { BOOKING_STATUS_LABELS, contactLockedUntilConfirmedCopy, paymentsComingSoonCopy, preBookingHeadline } from "../../../lib/marketplace/bookings";
 import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
 import type { Booking, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
@@ -48,10 +48,13 @@ export function CustomerBookingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
-      <p className="text-ink-700">Selecting a pro starts a booking. {paymentsComingSoonCopy()}</p>
+      <p className="text-ink-700">Selecting a pro starts a pending booking only. {paymentsComingSoonCopy()}</p>
       <FormError message={error} />
       {rows.length === 0 ? (
-        <EmptyState title="No bookings yet" body="When you select a contractor, the booking will wait here. Nothing is marked paid." />
+        <EmptyState
+          title="No bookings yet"
+          body="When you select a contractor, a pre-booking waits here. Nothing is paid or confirmed, and the exact address stays private."
+        />
       ) : (
         <ul className="space-y-3">
           {rows.map((row) => (
@@ -115,7 +118,11 @@ export function CustomerBookingDetailPage() {
       </header>
       <FormError message={error} />
       {pending ? (
-        <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm font-semibold text-forest-800">{paymentsComingSoonCopy()}</p>
+        <div className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-100 px-5 py-4">
+          <p className="font-semibold text-forest-800">{preBookingHeadline()}</p>
+          <p className="text-sm font-semibold text-forest-800">{paymentsComingSoonCopy()}</p>
+          <p className="text-sm text-ink-700">{contactLockedUntilConfirmedCopy()}</p>
+        </div>
       ) : null}
       <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm">
         <p>Job total {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
@@ -124,7 +131,10 @@ export function CustomerBookingDetailPage() {
           {formatUsdFromCents(booking.fee_cents)} ({booking.fee_kind === "REPEAT" ? "Hire Again rate" : "original schedule"})
         </p>
         <p>Pro would earn {formatUsdFromCents(booking.contractor_earnings_cents)}</p>
-        <p className="mt-2 text-ink-500">{paymentsComingSoonCopy()} You are not charged a customer percentage.</p>
+        <p className="mt-2 text-ink-500">
+          {paymentsComingSoonCopy()} You are not charged a customer percentage.{" "}
+          {pending ? contactLockedUntilConfirmedCopy() : null}
+        </p>
       </section>
       {pending ? (
         <Button

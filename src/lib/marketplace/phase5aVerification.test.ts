@@ -43,10 +43,32 @@ describe("Phase 5A security and pause constraints", () => {
     const customerUi =
       readFileSync(path.join(repoRoot, "src/pages/app/customer/CustomerMarketplacePages.tsx"), "utf8") +
       readFileSync(path.join(repoRoot, "src/pages/app/customer/BookingPages.tsx"), "utf8") +
+      readFileSync(path.join(repoRoot, "src/pages/app/customer/PaymentPausedPage.tsx"), "utf8") +
       readFileSync(path.join(repoRoot, "src/features/home/Hero.tsx"), "utf8");
     expect(customerUi).not.toMatch(/BEST estimate/i);
     expect(customerUi).not.toMatch(/Stripe test mode/i);
     expect(customerUi).not.toMatch(/Phase 4B/);
+    expect(customerUi).not.toMatch(/payments_live/);
+    expect(customerUi).not.toMatch(/charges_live/);
+    expect(customerUi).not.toMatch(/PaymentIntent/);
+    expect(customerUi).not.toMatch(/\bwebhook\b/i);
+    expect(customerUi).not.toMatch(/payment succeeded/i);
+    expect(customerUi).not.toMatch(/unlock contact/i);
     expect(customerUi).toMatch(/paymentsComingSoonCopy/);
+    expect(customerUi).toMatch(/preBookingHeadline/);
+    expect(customerUi).toMatch(/contactLockedUntilConfirmedCopy/);
+  });
+
+  it("keeps estimate compare as mobile cards and gates hire/select behind a paused pay screen", () => {
+    const compare = readFileSync(path.join(repoRoot, "src/pages/app/customer/CustomerMarketplacePages.tsx"), "utf8");
+    const app = readFileSync(path.join(repoRoot, "src/App.tsx"), "utf8");
+    expect(compare).not.toMatch(/<table/i);
+    expect(compare).toMatch(/data-estimate-compare="cards"/);
+    expect(compare).toMatch(/afterSelectEstimatePath/);
+    expect(compare).toMatch(/Yes, select this pro/);
+    expect(compare).not.toMatch(/Confirm this pro/);
+    expect(app).toMatch(/bookings\/:bookingId\/pay/);
+    expect(app).toMatch(/projects\/:projectId\/pre-booking/);
+    expect(app).toMatch(/CustomerPayGatePage/);
   });
 });
