@@ -1,0 +1,11 @@
+# Isolated $9.99 signup-fee Edge Functions. NOT Phase 4B job payments / Connect.
+# Secrets (Dashboard → Edge Functions → Secrets), never Vite:
+#   STRIPE_SECRET_KEY                 (must start with sk_test_)
+#   STRIPE_SIGNUP_FEE_WEBHOOK_SECRET  (whsec_... for THIS function only)
+# Do not set payments_live or charges_live to enable this.
+
+[functions.create-signup-fee-checkout]
+verify_jwt = true
+
+[functions.signup-fee-webhook]
+verify_jwt = false

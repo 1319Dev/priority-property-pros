@@ -6,7 +6,7 @@ export function BecomeAProPage() {
     <ComingSoonLayout
       eyebrow="Become a Pro"
       title="Real projects. Real customers. Fair competition."
-      body="Create a contractor account, finish onboarding, and wait for admin approval. You remain an independent business. PPP will not sell the same job to five contractors."
+      body="Create a contractor account for $9.99, finish onboarding, and wait for admin approval. Paying does not skip verification. You remain an independent business. Marketplace fees apply only when you are hired."
       extra={
         <div className="mt-6 flex flex-wrap gap-3">
           <ButtonLink to="/sign-up/contractor">Create a contractor account</ButtonLink>

@@ -132,7 +132,7 @@ describe("Phase 3 marketplace surfaces", () => {
 });
 
 describe("Public marketplace pricing", () => {
-  it("states free/fee messaging on the homepage and links to pricing", () => {
+  it("states $9.99 signup-fee messaging on the homepage and links to pricing", () => {
     renderApp("/");
     expect(screen.getByRole("heading", { name: PRICING_HOMEPAGE_LINE })).toBeInTheDocument();
     const seePricing = screen.getByRole("link", { name: SEE_PRICING_LABEL });

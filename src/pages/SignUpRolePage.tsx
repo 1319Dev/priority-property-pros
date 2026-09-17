@@ -5,12 +5,12 @@ const options = [
   {
     to: "/sign-up/customer",
     label: "I need work done",
-    detail: "Homeowners and property owners. Post projects in a later phase.",
+    detail: "Homeowners and property owners. $9.99 one-time account signup. No homeowner subscription.",
   },
   {
     to: "/sign-up/contractor",
     label: "I want to get hired",
-    detail: "Independent contractors. You stay your own business.",
+    detail: "Independent contractors. Get started for $9.99. No monthly subscription required on the Free plan.",
   },
   {
     to: "/sign-up/verifier",
