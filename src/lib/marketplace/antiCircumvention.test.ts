@@ -18,6 +18,8 @@ describe("pre-hire anti-circumvention", () => {
     expect(findPreHireContact("Website www.priorityfence.net")).toBe("url");
     expect(findPreHireContact("Find us on facebook.com/joesfence")).toBe("url");
     expect(findPreHireContact("DM @joesfence on Instagram")).toBe("social");
+    expect(findPreHireContact("Headline: text me 7135550144")).toBe("phone");
+    expect(findPreHireContact("Service caption: more at mycrew.io/book")).toBe("url");
   });
 
   it("allows ordinary project copy without contact", () => {

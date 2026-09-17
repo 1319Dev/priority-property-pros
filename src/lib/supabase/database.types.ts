@@ -321,6 +321,7 @@ export type Database = {
           description: string | null;
           storage_path: string;
           sort_order: number;
+          privacy_state: "PUBLIC_SAFE" | "PRIVATE" | "REVIEW_REQUIRED";
         };
         Insert: {
           contractor_profile_id: string;
@@ -328,12 +329,14 @@ export type Database = {
           description?: string | null;
           storage_path: string;
           sort_order?: number;
+          privacy_state?: "PUBLIC_SAFE" | "PRIVATE" | "REVIEW_REQUIRED";
         };
         Update: {
           title?: string;
           description?: string | null;
           storage_path?: string;
           sort_order?: number;
+          privacy_state?: "PUBLIC_SAFE" | "PRIVATE" | "REVIEW_REQUIRED";
         };
         Relationships: [];
       };
@@ -741,6 +744,7 @@ export type Database = {
           primary_trade: string | null;
           years_experience: number | null;
           short_description: string | null;
+          about: string | null;
           accepting_work: boolean;
           created_at: string;
           service_area: string | null;
@@ -789,6 +793,18 @@ export type Database = {
           id: string;
           contractor_profile_id: string;
           sort_order: number;
+          caption: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      contractor_public_reviews: {
+        Row: {
+          id: string;
+          contractor_profile_id: string;
+          rating: number;
+          body: string;
         };
         Insert: never;
         Update: never;
@@ -896,7 +912,16 @@ export type Database = {
           rating_count: number;
           badges: Json;
           short_description: string | null;
+          about: string | null;
         }[];
+      };
+      list_public_directory_portfolio: {
+        Args: { p_id: string };
+        Returns: { id: string; caption: string; sort_order: number }[];
+      };
+      list_public_directory_reviews: {
+        Args: { p_id: string };
+        Returns: { id: string; rating: number; body: string }[];
       };
       text_contains_pre_hire_contact: { Args: { p_text?: string | null }; Returns: boolean };
       assert_no_pre_hire_contact: { Args: { p_text?: string | null }; Returns: undefined };

@@ -14,6 +14,20 @@ export type DemoBadge = {
   label: string;
 };
 
+export type DemoPortfolioItem = {
+  id: string;
+  caption: string;
+  sortOrder: number;
+  illustration: "fence" | "interior" | "yard";
+};
+
+export type DemoReview = {
+  id: string;
+  rating: number;
+  body: string;
+  demo: true;
+};
+
 export type DemoContractor = {
   slug: string;
   displayLabel: string;
@@ -25,6 +39,9 @@ export type DemoContractor = {
   ratingCount: number;
   badges: DemoBadge[];
   shortDescription: string;
+  about: string;
+  portfolio: DemoPortfolioItem[];
+  reviews: DemoReview[];
 };
 
 export type DemoHomeowner = {
@@ -70,6 +87,23 @@ export const DEMO_CONTRACTORS: DemoContractor[] = [
       { kind: "INSURANCE", label: "Insurance reviewed" },
     ],
     shortDescription: "Example independent fence work used to show a public pro card. Fictional — not a real business.",
+    about: "EXAMPLE / DEMO PROFILE. This fictional fence specialist shows how a public card looks after approval. No real business name or contact is listed.",
+    portfolio: [
+      {
+        id: "demo-fence-1",
+        caption: "Example screened fence repair photo",
+        sortOrder: 1,
+        illustration: "fence",
+      },
+    ],
+    reviews: [
+      {
+        id: "demo-fence-review-1",
+        rating: 5,
+        body: "Example review — the gate latch was reset and the panel sat true. Fictional customer.",
+        demo: true,
+      },
+    ],
   },
   {
     slug: "example-handyman-pro",
@@ -85,6 +119,23 @@ export const DEMO_CONTRACTORS: DemoContractor[] = [
       { kind: "INSURANCE", label: "Insurance reviewed" },
     ],
     shortDescription: "Demo handyman profile so visitors can browse a sample card. Fictional — not a real contractor.",
+    about: "EXAMPLE / DEMO PROFILE. Sample indoor-repair card used to show services, badges, and example reviews. Not a live contractor.",
+    portfolio: [
+      {
+        id: "demo-handyman-1",
+        caption: "Example screened interior repair photo",
+        sortOrder: 1,
+        illustration: "interior",
+      },
+    ],
+    reviews: [
+      {
+        id: "demo-handyman-review-1",
+        rating: 5,
+        body: "Example review — TV mount was level and the patch blended. Not a real customer.",
+        demo: true,
+      },
+    ],
   },
   {
     slug: "example-lawn-care-pro",
@@ -100,6 +151,16 @@ export const DEMO_CONTRACTORS: DemoContractor[] = [
       { kind: "OTHER", label: "Credential reviewed" },
     ],
     shortDescription: "Example outdoor-care card with no ratings yet, so empty ratings stay honest. Fictional.",
+    about: "EXAMPLE / DEMO PROFILE. This example has zero PPP reviews so the directory can show New to Priority Property Pros instead of a made-up score.",
+    portfolio: [
+      {
+        id: "demo-lawn-1",
+        caption: "Example screened yard cleanup photo",
+        sortOrder: 1,
+        illustration: "yard",
+      },
+    ],
+    reviews: [],
   },
 ];
 

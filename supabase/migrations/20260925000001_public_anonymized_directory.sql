@@ -1,10 +1,23 @@
 -- Public marketplace directory: APPROVED + ACTIVE contractors, anonymized for
 -- logged-out / public visitors. Tightens existing customer-safe views.
--- Does not drop RLS, users, or payment pauses. Does not enable Stripe.
+--
+-- Apply AFTER #14/#16:
+--   20260922000001_contact_access_entitlement.sql
+--   20260923000001_estimate_lifecycle_schema.sql
+--   20260923000002_estimate_lifecycle_helpers.sql
+--   20260923000003_estimate_lifecycle_rpcs.sql
+--   20260923000004_estimate_lifecycle_select_rls.sql
+--   20260924000001_contact_access_lifecycle_compat.sql
+-- Preview DB: giiskdvitimksdewnelc
+-- Do NOT apply to production (bersftkjpbzpgtahbqwd) from this PR.
+--
+-- Additive vs #14/#16: does not drop booking_contact_access, estimate lifecycle
+-- RPCs/helpers, text_contains_contact_info, protect_* triggers, or payment pauses.
+-- Does not enable Stripe. Does not set payments_live / charges_live / signup_fee_enabled.
 
 -- ---------------------------------------------------------------------------
--- Obvious pre-hire contact detection (phones, emails, URLs, social handles).
--- Not surveillance. Same copy as the client helper.
+-- Extra pre-hire contact detection used by public projections.
+-- Wraps #16 text_contains_contact_info; does not replace it.
 -- ---------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.text_contains_pre_hire_contact(p_text text)
@@ -14,20 +27,15 @@ IMMUTABLE
 AS $$
   SELECT CASE
     WHEN p_text IS NULL OR btrim(p_text) = '' THEN false
-    WHEN p_text ~* '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' THEN true
-    WHEN p_text ~* '(https?://|www\.)' THEN true
+    WHEN public.text_contains_contact_info(p_text) THEN true
     WHEN p_text ~* '[A-Za-z0-9.-]+\.(com|net|org|io|co|us|biz|info|app)(/|\y)' THEN true
-    WHEN p_text ~* '(instagram|facebook|tiktok|twitter|linkedin|youtube|whatsapp|telegram|snapchat|nextdoor)\.com' THEN true
-    WHEN p_text ~* '(^|[^A-Za-z0-9])(fb|x)\.com' THEN true
-    WHEN p_text ~* '(^|[^A-Za-z0-9])@[A-Za-z0-9._]{2,}' THEN true
-    WHEN p_text ~* '(\+?1[\s\.-]*)?(\(?[0-9]{3}\)?[\s\.-]*)[0-9]{3}[\s\.-]*[0-9]{4}' THEN true
     WHEN p_text ~ '[^0-9][0-9]{10}([^0-9]|$)' OR p_text ~ '^[0-9]{10}([^0-9]|$)' THEN true
     ELSE false
   END;
 $$;
 
 COMMENT ON FUNCTION public.text_contains_pre_hire_contact(text) IS
-  'True when text contains an obvious phone, email, URL, or social handle. Used to block pre-hire circumvention; not a content surveillance system.';
+  'True when text contains an obvious phone, email, URL, or social handle. Wraps text_contains_contact_info; used for public directory sanitizing. Not surveillance.';
 
 CREATE OR REPLACE FUNCTION public.assert_no_pre_hire_contact(p_text text)
 RETURNS void
@@ -57,57 +65,6 @@ CREATE TRIGGER trg_reject_pre_hire_contact_projects
   BEFORE INSERT OR UPDATE OF title, description ON public.projects
   FOR EACH ROW
   EXECUTE FUNCTION public.reject_pre_hire_contact_projects();
-
-CREATE OR REPLACE FUNCTION public.reject_pre_hire_contact_estimates()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  PERFORM public.assert_no_pre_hire_contact(NEW.notes);
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_reject_pre_hire_contact_estimates ON public.estimates;
-CREATE TRIGGER trg_reject_pre_hire_contact_estimates
-  BEFORE INSERT OR UPDATE OF notes ON public.estimates
-  FOR EACH ROW
-  EXECUTE FUNCTION public.reject_pre_hire_contact_estimates();
-
-CREATE OR REPLACE FUNCTION public.reject_pre_hire_contact_contractor_profiles()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  PERFORM public.assert_no_pre_hire_contact(NEW.business_name);
-  PERFORM public.assert_no_pre_hire_contact(NEW.headline);
-  PERFORM public.assert_no_pre_hire_contact(NEW.bio);
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_reject_pre_hire_contact_contractor_profiles ON public.contractor_profiles;
-CREATE TRIGGER trg_reject_pre_hire_contact_contractor_profiles
-  BEFORE INSERT OR UPDATE OF business_name, headline, bio ON public.contractor_profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION public.reject_pre_hire_contact_contractor_profiles();
-
-CREATE OR REPLACE FUNCTION public.reject_pre_hire_contact_estimate_questions()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  PERFORM public.assert_no_pre_hire_contact(NEW.prompt);
-  PERFORM public.assert_no_pre_hire_contact(NEW.answer_text);
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_reject_pre_hire_contact_estimate_questions ON public.estimate_questions;
-CREATE TRIGGER trg_reject_pre_hire_contact_estimate_questions
-  BEFORE INSERT OR UPDATE OF prompt, answer_text ON public.estimate_questions
-  FOR EACH ROW
-  EXECUTE FUNCTION public.reject_pre_hire_contact_estimate_questions();
 
 CREATE OR REPLACE FUNCTION public.reject_pre_hire_contact_project_answers()
 RETURNS trigger
@@ -205,6 +162,29 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.public_safe_about(p_bio text, p_headline text)
+RETURNS text
+LANGUAGE plpgsql
+IMMUTABLE
+AS $$
+DECLARE
+  v_text text;
+BEGIN
+  v_text := nullif(btrim(coalesce(p_bio, '')), '');
+  IF v_text IS NULL OR public.text_contains_pre_hire_contact(v_text) THEN
+    v_text := nullif(btrim(coalesce(p_headline, '')), '');
+  END IF;
+  IF v_text IS NULL OR public.text_contains_pre_hire_contact(v_text) THEN
+    RETURN 'Independent local contractor. Contact is shared after you connect through Priority Property Pros.';
+  END IF;
+  v_text := regexp_replace(v_text, '\s+', ' ', 'g');
+  IF char_length(v_text) > 600 THEN
+    RETURN left(v_text, 597) || '…';
+  END IF;
+  RETURN v_text;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.generic_credential_badge_label(p_kind text)
 RETURNS text
 LANGUAGE sql
@@ -217,10 +197,70 @@ AS $$
   END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.public_safe_portfolio_caption(p_title text, p_description text)
+RETURNS text
+LANGUAGE plpgsql
+IMMUTABLE
+AS $$
+DECLARE
+  v_text text;
+BEGIN
+  v_text := nullif(btrim(coalesce(p_description, '')), '');
+  IF v_text IS NULL OR public.text_contains_pre_hire_contact(v_text) OR v_text ~* '\.(jpe?g|png|webp|gif|heic|pdf)$' THEN
+    v_text := nullif(btrim(coalesce(p_title, '')), '');
+  END IF;
+  IF v_text IS NULL OR public.text_contains_pre_hire_contact(v_text) OR v_text ~* '\.(jpe?g|png|webp|gif|heic|pdf)$' OR v_text ~ '[/\\]' THEN
+    RETURN 'Screened project photo';
+  END IF;
+  v_text := regexp_replace(v_text, '\s+', ' ', 'g');
+  IF char_length(v_text) > 80 THEN
+    RETURN left(v_text, 77) || '…';
+  END IF;
+  RETURN v_text;
+END;
+$$;
+
 REVOKE ALL ON FUNCTION public.anonymized_pro_label(text, text[]) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.general_service_area(text) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.public_safe_blurb(text, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.public_safe_about(text, text) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.generic_credential_badge_label(text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.public_safe_portfolio_caption(text, text) FROM PUBLIC, anon;
+
+-- ---------------------------------------------------------------------------
+-- Portfolio privacy: conservative default REVIEW_REQUIRED. No AI detection.
+-- ---------------------------------------------------------------------------
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'portfolio_privacy_state') THEN
+    CREATE TYPE public.portfolio_privacy_state AS ENUM ('PUBLIC_SAFE', 'PRIVATE', 'REVIEW_REQUIRED');
+  END IF;
+END
+$$;
+
+ALTER TABLE public.contractor_portfolio
+  ADD COLUMN IF NOT EXISTS privacy_state public.portfolio_privacy_state NOT NULL DEFAULT 'REVIEW_REQUIRED';
+
+COMMENT ON COLUMN public.contractor_portfolio.privacy_state IS
+  'PUBLIC_SAFE = manually screened for public browse. PRIVATE = never public. REVIEW_REQUIRED = default until a human screens it. No automated brand/face detection.';
+
+CREATE OR REPLACE FUNCTION public.reject_pre_hire_contact_portfolio()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  PERFORM public.assert_no_pre_hire_contact(NEW.title);
+  PERFORM public.assert_no_pre_hire_contact(NEW.description);
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_reject_pre_hire_contact_portfolio ON public.contractor_portfolio;
+CREATE TRIGGER trg_reject_pre_hire_contact_portfolio
+  BEFORE INSERT OR UPDATE OF title, description ON public.contractor_portfolio
+  FOR EACH ROW
+  EXECUTE FUNCTION public.reject_pre_hire_contact_portfolio();
 
 -- ---------------------------------------------------------------------------
 -- Directory listing predicate: APPROVED contractor + ACTIVE account.
@@ -252,9 +292,12 @@ REVOKE ALL ON FUNCTION public.contractor_is_directory_listed(uuid) FROM PUBLIC, 
 
 DROP FUNCTION IF EXISTS public.list_public_directory_contractors();
 DROP FUNCTION IF EXISTS public.get_public_directory_contractor(uuid);
+DROP FUNCTION IF EXISTS public.list_public_directory_portfolio(uuid);
+DROP FUNCTION IF EXISTS public.list_public_directory_reviews(uuid);
 
 -- ---------------------------------------------------------------------------
 -- Recreate public contractor views: anonymized, ACTIVE gate, no identity.
+-- Does not drop #14/#16 tables or RPCs.
 -- ---------------------------------------------------------------------------
 
 DROP VIEW IF EXISTS public.contractor_public_profiles;
@@ -267,6 +310,7 @@ SELECT
   cp.primary_trade,
   cp.years_experience,
   public.public_safe_blurb(cp.headline, cp.bio) AS short_description,
+  public.public_safe_about(cp.bio, cp.headline) AS about,
   cp.accepting_work,
   cp.created_at,
   public.general_service_area(cp.service_area) AS service_area
@@ -324,7 +368,7 @@ JOIN public.profiles p ON p.id = cp.profile_id
 WHERE cp.approval_status = 'APPROVED'
   AND p.account_status = 'ACTIVE';
 
--- Portfolio photos are not shown on public cards (branding / vehicle lettering risk).
+-- Only manually screened PUBLIC_SAFE items. No storage path / original filename.
 DROP VIEW IF EXISTS public.contractor_public_portfolio;
 CREATE VIEW public.contractor_public_portfolio
 WITH (security_invoker = false)
@@ -332,11 +376,16 @@ AS
 SELECT
   pf.id,
   pf.contractor_profile_id,
-  pf.sort_order
+  pf.sort_order,
+  public.public_safe_portfolio_caption(pf.title, pf.description) AS caption
 FROM public.contractor_portfolio pf
 JOIN public.contractor_profiles cp ON cp.id = pf.contractor_profile_id
 JOIN public.profiles p ON p.id = cp.profile_id
-WHERE false;
+WHERE pf.privacy_state = 'PUBLIC_SAFE'
+  AND cp.approval_status = 'APPROVED'
+  AND p.account_status = 'ACTIVE'
+  AND NOT public.text_contains_pre_hire_contact(pf.title)
+  AND NOT public.text_contains_pre_hire_contact(coalesce(pf.description, ''));
 
 -- Aggregate ratings only. No customer names, emails, review bodies, or booking ids.
 DROP VIEW IF EXISTS public.contractor_public_ratings;
@@ -355,6 +404,28 @@ WHERE r.is_verified = true
   AND p.account_status = 'ACTIVE'
 GROUP BY r.contractor_profile_id;
 
+DROP VIEW IF EXISTS public.contractor_public_reviews;
+CREATE VIEW public.contractor_public_reviews
+WITH (security_invoker = false)
+AS
+SELECT
+  r.id,
+  r.contractor_profile_id,
+  r.rating,
+  CASE
+    WHEN r.body IS NULL OR btrim(r.body) = '' OR public.text_contains_pre_hire_contact(r.body)
+      THEN 'Verified PPP review.'
+    WHEN char_length(regexp_replace(btrim(r.body), '\s+', ' ', 'g')) > 280
+      THEN left(regexp_replace(btrim(r.body), '\s+', ' ', 'g'), 277) || '…'
+    ELSE regexp_replace(btrim(r.body), '\s+', ' ', 'g')
+  END AS body
+FROM public.booking_reviews r
+JOIN public.contractor_profiles cp ON cp.id = r.contractor_profile_id
+JOIN public.profiles p ON p.id = cp.profile_id
+WHERE r.is_verified = true
+  AND cp.approval_status = 'APPROVED'
+  AND p.account_status = 'ACTIVE';
+
 COMMENT ON VIEW public.contractor_public_profiles IS
   'SECURITY DEFINER on purpose: APPROVED + ACTIVE contractors, anonymized public columns only (display label, trade, general area, years, safe blurb). No business name, email, phone, website, photo, street, or license numbers.';
 COMMENT ON VIEW public.contractor_public_services IS
@@ -362,18 +433,21 @@ COMMENT ON VIEW public.contractor_public_services IS
 COMMENT ON VIEW public.contractor_public_areas IS
   'SECURITY DEFINER on purpose: APPROVED + ACTIVE contractors, general area label only — not street addresses, ZIP lists, or center ZIP.';
 COMMENT ON VIEW public.contractor_public_portfolio IS
-  'Intentionally empty for anon/public browse. Branded / truck / logo photos are not listed on public cards.';
+  'Manually screened PUBLIC_SAFE portfolio only. Caption is sanitized. No storage_path, original filename, EXIF, or branded metadata.';
 COMMENT ON VIEW public.contractor_verified_credential_badges IS
   'SECURITY DEFINER on purpose: generic VERIFIED credential type for APPROVED + ACTIVE contractors only — not a Priority Verified badge and not a license number.';
 COMMENT ON VIEW public.contractor_public_ratings IS
   'SECURITY DEFINER on purpose: verified-review average and count for APPROVED + ACTIVE contractors. No customer or booking identifiers. Empty when no real PPP reviews exist.';
+COMMENT ON VIEW public.contractor_public_reviews IS
+  'Verified PPP review bodies only, contact-stripped, no customer name or booking id. Demo content is never stored here.';
 
 GRANT SELECT ON public.contractor_public_profiles TO anon, authenticated;
 GRANT SELECT ON public.contractor_verified_credential_badges TO anon, authenticated;
 GRANT SELECT ON public.contractor_public_services TO anon, authenticated;
 GRANT SELECT ON public.contractor_public_areas TO anon, authenticated;
 GRANT SELECT ON public.contractor_public_ratings TO anon, authenticated;
-REVOKE ALL ON TABLE public.contractor_public_portfolio FROM anon, authenticated;
+GRANT SELECT ON public.contractor_public_portfolio TO anon, authenticated;
+GRANT SELECT ON public.contractor_public_reviews TO anon, authenticated;
 
 -- Directory views do not open profiles, projects, or reviews to anon.
 REVOKE ALL ON TABLE public.profiles FROM anon;
@@ -381,6 +455,8 @@ REVOKE ALL ON TABLE public.projects FROM anon;
 REVOKE ALL ON TABLE public.booking_reviews FROM anon;
 REVOKE ALL ON TABLE public.project_private_locations FROM anon;
 REVOKE ALL ON TABLE public.contractor_profiles FROM anon;
+REVOKE ALL ON TABLE public.contractor_portfolio FROM anon;
+REVOKE ALL ON TABLE public.booking_contact_access FROM anon;
 
 -- Public directory RPC: APPROVED + ACTIVE, anonymized columns only.
 CREATE OR REPLACE FUNCTION public.list_public_directory_contractors()
@@ -455,24 +531,81 @@ RETURNS TABLE (
   rating_average numeric,
   rating_count integer,
   badges jsonb,
-  short_description text
+  short_description text,
+  about text
 )
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT *
+  SELECT
+    listed.id,
+    listed.display_label,
+    listed.primary_trade,
+    listed.categories,
+    listed.service_area,
+    listed.years_experience,
+    listed.rating_average,
+    listed.rating_count,
+    listed.badges,
+    listed.short_description,
+    public.public_safe_about(cp.bio, cp.headline)
   FROM public.list_public_directory_contractors() listed
+  JOIN public.contractor_profiles cp ON cp.id = listed.id
   WHERE listed.id = p_id;
 $$;
 
+CREATE OR REPLACE FUNCTION public.list_public_directory_portfolio(p_id uuid)
+RETURNS TABLE (
+  id uuid,
+  caption text,
+  sort_order integer
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT pf.id, pf.caption, pf.sort_order
+  FROM public.contractor_public_portfolio pf
+  WHERE pf.contractor_profile_id = p_id
+    AND public.contractor_is_directory_listed(p_id)
+  ORDER BY pf.sort_order, pf.id;
+$$;
+
+CREATE OR REPLACE FUNCTION public.list_public_directory_reviews(p_id uuid)
+RETURNS TABLE (
+  id uuid,
+  rating smallint,
+  body text
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT r.id, r.rating, r.body
+  FROM public.contractor_public_reviews r
+  WHERE r.contractor_profile_id = p_id
+    AND public.contractor_is_directory_listed(p_id)
+  ORDER BY r.id;
+$$;
+
 COMMENT ON FUNCTION public.list_public_directory_contractors() IS
-  'Public marketplace directory. APPROVED + ACTIVE only. Anonymized display label, trade, general area, ratings aggregates, badges. No business name, email, phone, website, photo, street, or license.';
+  'Public marketplace directory. APPROVED + ACTIVE only. Anonymized display label, trade, categories, general area, ratings aggregates, badges. No business name, email, phone, website, photo, street, or license.';
 COMMENT ON FUNCTION public.get_public_directory_contractor(uuid) IS
-  'Single public contractor card. Same anonymized projection as list_public_directory_contractors().';
+  'Single public contractor card plus safe About text. Same anonymized projection as list_public_directory_contractors().';
+COMMENT ON FUNCTION public.list_public_directory_portfolio(uuid) IS
+  'PUBLIC_SAFE screened portfolio captions only. No storage paths or filenames.';
+COMMENT ON FUNCTION public.list_public_directory_reviews(uuid) IS
+  'Verified PPP review bodies only. No customer identity. Demo reviews are never included.';
 
 REVOKE ALL ON FUNCTION public.list_public_directory_contractors() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.get_public_directory_contractor(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.list_public_directory_portfolio(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.list_public_directory_reviews(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.list_public_directory_contractors() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_public_directory_contractor(uuid) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.list_public_directory_portfolio(uuid) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.list_public_directory_reviews(uuid) TO anon, authenticated;

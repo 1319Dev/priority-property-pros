@@ -634,7 +634,10 @@ function PortfolioManage({
   }, [contractorId, onError]);
   return (
     <SectionCard title="Portfolio" actionLabel="Manage Photos" editing={editing} onEdit={onEdit}>
-      <p className="text-sm text-ink-500">{rows.length} photo(s)</p>
+      <p className="text-sm text-ink-500">
+        {rows.length} photo(s). New uploads stay private until a human marks them public-safe. Original filenames are
+        not shown on public browse.
+      </p>
       {editing ? (
         <div className="mt-3 space-y-2">
           <input
@@ -646,7 +649,14 @@ function PortfolioManage({
               event.target.value = "";
               if (!file) return;
               void uploadContractorDoc({ userId, folder: "portfolio", file })
-                .then((path) => addPortfolioItem({ contractor_profile_id: contractorId, title: file.name, storage_path: path }))
+                .then((path) =>
+                  addPortfolioItem({
+                    contractor_profile_id: contractorId,
+                    title: "Portfolio photo",
+                    storage_path: path,
+                    privacy_state: "REVIEW_REQUIRED",
+                  }),
+                )
                 .then(() => fetchPortfolio(contractorId))
                 .then(setRows)
                 .catch((err: Error) => onError(err.message));

@@ -1,5 +1,7 @@
 import { getSupabaseClient } from "../supabase/client";
 import type { Database, Json } from "../supabase/database.types";
+import { assertNoPreHireContact } from "./antiCircumvention";
+import { looksLikeFilename } from "./publicDirectory";
 import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
 import { reusableEmptyDraft } from "./flows";
 import { detectContactLeak } from "./contactLeak";
@@ -29,6 +31,7 @@ function asError(error: { message: string } | null, fallback: string): string {
 function rejectContactLeak(text: string | null | undefined) {
   const leak = detectContactLeak(text);
   if (leak.blocked) throw new Error(leak.message ?? "Contact info is shared after connection through Priority Property Pros.");
+  assertNoPreHireContact(text);
 }
 
 export function parseQuestionOptions(value: Json | string[] | null | undefined): string[] {
@@ -690,7 +693,13 @@ export async function uploadContractorDoc(params: {
 }
 
 export async function addPortfolioItem(row: Database["public"]["Tables"]["contractor_portfolio"]["Insert"]) {
-  const { error } = await client().from("contractor_portfolio").insert(row);
+  rejectContactLeak(row.title);
+  rejectContactLeak(row.description);
+  const { error } = await client().from("contractor_portfolio").insert({
+    ...row,
+    title: looksLikeFilename(row.title ?? "") ? "Portfolio photo" : row.title,
+    privacy_state: row.privacy_state ?? "REVIEW_REQUIRED",
+  });
   if (error) throw new Error(asError(error, "Could not add portfolio photo."));
 }
 
@@ -707,7 +716,7 @@ export async function updateProfileAvatar(profileId: string, avatarUrl: string |
 export async function fetchPortfolio(contractorProfileId: string) {
   const { data, error } = await client()
     .from("contractor_portfolio")
-    .select("id, contractor_profile_id, title, description, storage_path, sort_order")
+    .select("id, contractor_profile_id, title, description, storage_path, sort_order, privacy_state")
     .eq("contractor_profile_id", contractorProfileId)
     .order("sort_order");
   if (error) throw new Error(asError(error, "Could not load portfolio."));
@@ -846,6 +855,19 @@ export type PublicDirectoryRpcRow = {
   rating_count: number | null;
   badges: Json;
   short_description: string | null;
+  about?: string | null;
+};
+
+export type PublicDirectoryPortfolioRow = {
+  id: string;
+  caption: string;
+  sort_order: number;
+};
+
+export type PublicDirectoryReviewRow = {
+  id: string;
+  rating: number;
+  body: string;
 };
 
 function parseDirectoryBadges(value: Json | null | undefined): Array<{ kind: string; label: string }> {
@@ -883,7 +905,7 @@ export async function fetchPublicContractorExtras(id: string) {
     supabase.from("contractor_public_services").select("id, contractor_profile_id, category_id, category_slug, category_name").eq("contractor_profile_id", id),
     supabase.from("contractor_public_areas").select("id, contractor_profile_id, label").eq("contractor_profile_id", id),
     supabase.from("contractor_verified_credential_badges").select("id, contractor_profile_id, kind, label, status, expires_at").eq("contractor_profile_id", id),
-    supabase.from("contractor_public_portfolio").select("id, contractor_profile_id, sort_order").eq("contractor_profile_id", id).order("sort_order"),
+    supabase.from("contractor_public_portfolio").select("id, contractor_profile_id, sort_order, caption").eq("contractor_profile_id", id).order("sort_order"),
   ]);
   return {
     services: services.data ?? [],
@@ -891,6 +913,18 @@ export async function fetchPublicContractorExtras(id: string) {
     badges: badges.data ?? [],
     portfolio: portfolio.data ?? [],
   };
+}
+
+export async function fetchPublicContractorPortfolio(id: string): Promise<PublicDirectoryPortfolioRow[]> {
+  const { data, error } = await client().rpc("list_public_directory_portfolio", { p_id: id });
+  if (error) throw new Error(asError(error, "Could not load screened portfolio."));
+  return (Array.isArray(data) ? data : []) as PublicDirectoryPortfolioRow[];
+}
+
+export async function fetchPublicContractorReviews(id: string): Promise<PublicDirectoryReviewRow[]> {
+  const { data, error } = await client().rpc("list_public_directory_reviews", { p_id: id });
+  if (error) throw new Error(asError(error, "Could not load verified reviews."));
+  return (Array.isArray(data) ? data : []) as PublicDirectoryReviewRow[];
 }
 
 export async function signedContractorDocUrl(path: string): Promise<string | null> {

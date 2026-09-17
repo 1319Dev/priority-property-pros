@@ -19,6 +19,7 @@ export const IDENTITY_STAGES = [
       "Earned approval / credential badges with generic labels (Approved Pro, License reviewed)",
       "Years of experience when provided",
       "Short non-identifying description (contact-stripped; generic fallback otherwise)",
+      "Manually screened PUBLIC_SAFE portfolio captions only — original files and filenames stay private",
     ],
     hidden: [
       "Contractor / business / legal name",
@@ -26,7 +27,7 @@ export const IDENTITY_STAGES = [
       "Exact business address, lat/lng",
       "External review links",
       "License numbers and other trivially identifying credential text",
-      "Branded logos, avatar photos, and portfolio / truck photos",
+      "Branded logos, avatar photos, truck photos, and unscreened portfolio",
       "Identifying captions, file names, and photo metadata",
     ],
   },
@@ -88,8 +89,8 @@ export const IDENTITY_REVEAL_IMPLEMENTED = {
  * Mitigated items are omitted.
  */
 export const FLAGGED_LEAK_PATHS = [
-  "Photo EXIF / GPS metadata is not stripped server-side; public cards hide photos instead of trusting avatars or portfolio images.",
-  "Original upload file names are UUID-prefixed but the sanitized original basename can still contain a business name inside contractor-docs / project-photos private storage.",
+  "Photo EXIF / GPS metadata is not stripped server-side; only manually screened PUBLIC_SAFE captions appear, using generic illustrations rather than original files.",
+  "Original upload file names stay in private contractor-docs storage. Public portfolio rows never include storage_path or the original basename.",
   "Estimate line-item labels and change-order descriptions are not scanned (false positives on measurements such as 2x4). Notes, bios, headlines, project titles/descriptions, and estimate Q&A are scanned.",
   "Obfuscated contact (five five five…, name at gmail dot com) is not detected by design.",
   "Hire Again (completed prior job) currently returns business_name to that customer — post-hire, not gated on PR #14 entitlement. Left unchanged here.",

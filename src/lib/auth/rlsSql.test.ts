@@ -354,12 +354,22 @@ describe("Public contractor directory SQL", () => {
     expect(sql).toMatch(/REVOKE ALL ON TABLE public\.contractor_profiles FROM anon/);
   });
 
-  it("blocks obvious pre-hire contact in project, estimate, and bio text", () => {
+  it("blocks obvious pre-hire contact in public project and portfolio text without replacing #16 scanners", () => {
     expect(sql).toMatch(/FUNCTION public\.text_contains_pre_hire_contact/);
     expect(sql).toMatch(/FUNCTION public\.assert_no_pre_hire_contact/);
+    expect(sql).toMatch(/FUNCTION public\.text_contains_contact_info/);
     expect(sql).toMatch(/trg_reject_pre_hire_contact_projects/);
-    expect(sql).toMatch(/trg_reject_pre_hire_contact_estimates/);
-    expect(sql).toMatch(/trg_reject_pre_hire_contact_contractor_profiles/);
+    expect(sql).toMatch(/trg_reject_pre_hire_contact_portfolio/);
+    expect(sql).toMatch(/portfolio_privacy_state/);
+    expect(sql).toMatch(/PUBLIC_SAFE/);
+    expect(sql).toMatch(/REVIEW_REQUIRED/);
+    expect(sql).toMatch(/list_public_directory_portfolio/);
+    expect(sql).toMatch(/list_public_directory_reviews/);
+    expect(readdirSync(migrationsDir)).toContain("20260925000001_public_anonymized_directory.sql");
+    expect(readdirSync(migrationsDir)).not.toContain("20260923000001_public_anonymized_directory.sql");
     expect(sql).toMatch(/contact information is shared after you''re connected through Priority Property Pros/);
+    expect(sql).not.toMatch(/DROP TABLE public\.booking_contact_access/i);
+    expect(sql).not.toMatch(/DROP FUNCTION public\.text_contains_contact_info/i);
+    expect(sql).not.toMatch(/DROP FUNCTION public\.booking_job_contact/i);
   });
 });

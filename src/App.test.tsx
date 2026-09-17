@@ -134,6 +134,7 @@ describe("Phase 3 marketplace surfaces", () => {
     renderApp("/find-a-pro");
     expect(screen.getByRole("heading", { name: /browse local independents/i })).toBeInTheDocument();
     expect(screen.getAllByText(/example \/ demo/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/view profile/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: /example fence pro/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /example handyman pro/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /example homeowner jordan/i })).toBeInTheDocument();
