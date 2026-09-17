@@ -1,6 +1,7 @@
 import { EmptyState } from "../../components/layout/DashboardShell";
 import { useAuth } from "../../lib/auth/useAuth";
 import { Button } from "../../components/ui/Button";
+import { accountStatusLabel, accountTypeLabel } from "../../lib/marketplace/statusLabels";
 
 export { CustomerHomePage, CustomerProjectsPage } from "./customer/CustomerMarketplacePages";
 
@@ -24,11 +25,11 @@ export function AccountPage() {
       <dl className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm">
         <Row label="Name" value={`${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim() || "—"} />
         <Row label="Email" value={user?.email ?? profile?.email ?? "—"} />
-        <Row label="Role" value={account_type ?? "—"} />
-        <Row label="Status" value={account_status ?? "—"} />
+        <Row label="Role" value={accountTypeLabel(account_type)} />
+        <Row label="Status" value={accountStatusLabel(account_status)} />
       </dl>
       <p className="text-sm text-ink-500">
-        Role and status are stored in the database. The website cannot promote anyone to Admin.
+        Role and status are stored in the database. This website cannot promote anyone to Admin.
       </p>
       <Button type="button" variant="outline" onClick={() => void signOut()}>
         Sign out

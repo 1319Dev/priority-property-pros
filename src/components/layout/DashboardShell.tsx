@@ -38,7 +38,7 @@ export function DashboardShell({
           This account is pending review or email confirmation. You can look around; matching waits on an active, approved contractor.
         </div>
       ) : null}
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-28 sm:px-6 lg:pb-10">
+      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-32 sm:px-6 lg:pb-10">
         <Outlet />
       </main>
       <nav

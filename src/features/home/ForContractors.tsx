@@ -15,8 +15,8 @@ export function ForContractors() {
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-cream-200">
             Priority Property Pros is not a lead marketplace that sells the same homeowner five times.
-            Independent contractors will compete on the actual job: scope, schedule, and price. Applications
-            open in a later phase — this page is the public promise.
+            Independent contractors will compete on the actual job: scope, schedule, and price. Apply to join. An admin
+            still has to approve you before matching.
           </p>
           <ul className="mt-6 grid gap-3 text-sm sm:grid-cols-3">
             <li className="rounded-2xl border border-cream-50/15 px-4 py-3">Real projects from real property owners</li>

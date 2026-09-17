@@ -30,7 +30,7 @@ describe("booking state machine", () => {
     expect(canConfirmBooking({ accountType: "CONTRACTOR", paymentsLive: false })).toBe(false);
     expect(canConfirmBooking({ accountType: "ADMIN", paymentsLive: false })).toBe(true);
     expect(clientCannotSpoofConfirmed()).toBe(true);
-    expect(paymentsComingSoonCopy()).toMatch(/cannot be confirmed in production/i);
+    expect(paymentsComingSoonCopy()).toMatch(/online payment setup is coming soon/i);
   });
 
   it("unlocks contact only after CONFIRMED, not on pending selection", () => {

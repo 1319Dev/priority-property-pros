@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { Button, ButtonLink } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/Input";
+import { ErrorState, LoadingState } from "../../../components/ui/PageState";
+import { HumanStatus, StatusBanner } from "../../../components/ui/StatusBanner";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { displayName } from "../../../lib/auth/roles";
 import { useAuth } from "../../../lib/auth/useAuth";
@@ -23,6 +25,7 @@ import {
   fetchOpportunity,
   fetchMyOpportunities,
   fetchPortfolio,
+  fetchProjectNotices,
   fetchProjectAnswers,
   fetchProjectPhotos,
   fetchServiceCategories,
@@ -43,6 +46,8 @@ import {
 import { centsToDollarString, dollarsToCents, formatUsdFromCents, previewFee } from "../../../lib/marketplace/fees";
 import { computeMarketplaceFee } from "../../../lib/marketplace/feeEngine";
 import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type EstimateItemKind, type ServiceAreaMode, type ServiceCategory } from "../../../lib/marketplace/types";
+import { OPPORTUNITY_STATUS_LABELS, opportunityNextActions } from "../../../lib/marketplace/statusLabels";
+import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import { useToast } from "../../../hooks/useToast";
 
 export function ProHomePage() {
@@ -54,7 +59,7 @@ export function ProHomePage() {
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{name}</h1>
         <p className="mt-3 max-w-xl text-ink-700">
-          Finish onboarding, then respond to opportunities. You cannot approve or verify yourself. At most three
+          Finish onboarding, then respond to nearby jobs. You cannot approve or verify yourself. At most three
           contractors can participate on a job. Exact address unlocks only after a booking is confirmed.
         </p>
       </header>
@@ -338,27 +343,58 @@ export function OpportunitiesPage() {
       .catch((err: Error) => setError(err.message));
   }, [user]);
 
+  const active = rows.filter((row) => row.status === "AVAILABLE" || row.status === "ACCEPTED");
+  const history = rows.filter((row) => row.status !== "AVAILABLE" && row.status !== "ACCEPTED");
+  const live = active.filter((row) => row.projects?.status !== "CANCELLED");
+  const cancelledParticipated = active.filter((row) => row.projects?.status === "CANCELLED").concat(
+    history.filter((row) => row.projects?.status === "CANCELLED" || row.status === "CLOSED"),
+  );
+
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-4xl font-semibold text-forest-800">Opportunities</h1>
+      <h1 className="font-display text-4xl font-semibold text-forest-800">Jobs</h1>
       <p className="text-sm text-ink-700">Approximate location only. Exact street stays hidden until a booking is confirmed.</p>
       <FormError message={error} />
-      {rows.length === 0 ? (
-        <EmptyState title="No opportunities" body="Nearby matching jobs will land here. At most three contractors can accept." />
+      {live.length === 0 ? (
+        <EmptyState title="No open jobs" body="Nearby matching jobs will land here. At most three contractors can accept. Cancelled jobs leave this list." />
       ) : (
         <ul className="space-y-3">
-          {rows.map((row) => (
-            <li key={row.id}>
-              <Link to={`/app/pro/opportunities/${row.id}`} className="block rounded-3xl border border-forest-800/10 px-5 py-4">
-                <p className="font-semibold text-forest-800">{row.projects?.title ?? "Project"}</p>
+          {live.map((row) => {
+            const actions = opportunityNextActions({
+              opportunityId: row.id,
+              status: row.status,
+              projectStatus: row.projects?.status ?? "POSTED",
+            });
+            return (
+              <li key={row.id} className="rounded-3xl border border-forest-800/10 px-5 py-4">
+                <HumanStatus label={OPPORTUNITY_STATUS_LABELS[row.status]} />
+                <p className="mt-2 font-semibold text-forest-800">{row.projects?.title ?? "Project"}</p>
                 <p className="text-sm text-ink-500">
-                  {row.status} · {[row.projects?.city, row.projects?.state, row.projects?.zip_code].filter(Boolean).join(", ")}
+                  {[row.projects?.city, row.projects?.state, row.projects?.zip_code].filter(Boolean).join(", ")}
                 </p>
-              </Link>
-            </li>
-          ))}
+                <Link to={actions[0]?.to ?? `/app/pro/opportunities/${row.id}`} className="mt-3 inline-flex min-h-12 items-center font-semibold text-forest-800">
+                  {actions[0]?.label ?? "View opportunity"}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
+      {cancelledParticipated.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="font-display text-2xl text-forest-800">History</h2>
+          <ul className="space-y-3">
+            {cancelledParticipated.slice(0, 8).map((row) => (
+              <li key={row.id}>
+                <Link to={`/app/pro/opportunities/${row.id}`} className="block rounded-3xl border border-forest-800/10 px-5 py-4">
+                  <HumanStatus label={row.projects?.status === "CANCELLED" ? "Cancelled" : OPPORTUNITY_STATUS_LABELS[row.status]} />
+                  <p className="mt-2 font-semibold text-forest-800">{row.projects?.title ?? "Project"}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -374,6 +410,7 @@ export function OpportunityDetailPage() {
   const [answers, setAnswers] = useState<Awaited<ReturnType<typeof fetchProjectAnswers>>>([]);
   const [questions, setQuestions] = useState<Awaited<ReturnType<typeof fetchServiceQuestions>>>([]);
   const [qa, setQa] = useState<Awaited<ReturnType<typeof fetchEstimateQuestions>>>([]);
+  const [notices, setNotices] = useState<Awaited<ReturnType<typeof fetchProjectNotices>>>([]);
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -387,6 +424,7 @@ export function OpportunityDetailPage() {
     setAnswers(projectAnswers);
     if (opp.projects?.category_id) setQuestions(await fetchServiceQuestions(opp.projects.category_id));
     setQa(await fetchEstimateQuestions(opp.project_id, opp.id));
+    setNotices(await fetchProjectNotices(opp.project_id).catch(() => []));
     setPhotos(
       await Promise.all(
         photoRows.map(async (photo) => ({
@@ -402,19 +440,26 @@ export function OpportunityDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opportunityId]);
 
-  if (!row) return <p className="text-ink-500">{error ?? "Loading…"}</p>;
+  if (!row) return error ? <ErrorState message={error} /> : <LoadingState label="Loading job" />;
   const project = row.projects;
+  const cancelled = project?.status === "CANCELLED";
 
   return (
     <div className="space-y-6">
+      <HumanStatus label={cancelled ? "Cancelled" : OPPORTUNITY_STATUS_LABELS[row.status]} />
       <h1 className="font-display text-4xl font-semibold text-forest-800">{project?.title}</h1>
-      <p className="text-sm text-ink-500">{row.status}</p>
       <FormError message={error} />
+      {cancelled ? (
+        <StatusBanner tone="warning" title="This project was cancelled" body="It is no longer an active opportunity. Your estimate history is kept if you already participated." />
+      ) : null}
+      {notices.map((notice) => (
+        <StatusBanner key={notice.id} title={notice.title} body={notice.body} tone={notice.kind.includes("SCOPE") ? "warning" : "info"} />
+      ))}
       <section className="rounded-3xl border border-forest-800/10 px-5 py-4 text-sm">
         <p>{project?.description}</p>
         <p className="mt-2 font-semibold">Approximate location</p>
         <p>{[project?.city, project?.state, project?.zip_code].filter(Boolean).join(", ")}</p>
-        <p className="text-ink-500">Exact street is hidden until the customer’s booking is confirmed.</p>
+        <p className="text-ink-500">Exact street, phone, and email stay hidden until the customer’s booking is confirmed.</p>
         <p className="mt-2">{project?.timing ? TIMING_LABELS[project.timing] : ""}</p>
       </section>
       <div className="grid grid-cols-2 gap-2">
@@ -432,7 +477,7 @@ export function OpportunityDetailPage() {
           );
         })}
       </ul>
-      {row.status === "AVAILABLE" ? (
+      {row.status === "AVAILABLE" && !cancelled ? (
         <div className="flex gap-3">
           <Button
             type="button"
@@ -468,7 +513,7 @@ export function OpportunityDetailPage() {
           </Button>
         </div>
       ) : null}
-      {row.status === "ACCEPTED" ? (
+      {row.status === "ACCEPTED" && !cancelled ? (
         <section className="space-y-3">
           <h2 className="font-display text-2xl">Ask the customer</h2>
           {qa.map((item) => (
@@ -515,7 +560,7 @@ export function EstimateBuilderPage() {
   const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [estimateId, setEstimateId] = useState<string | null>(null);
-  const [status, setStatus] = useState("DRAFT");
+  const [, setStatus] = useState("DRAFT");
   const [notes, setNotes] = useState("");
   const [duration, setDuration] = useState("");
   const [availableFrom, setAvailableFrom] = useState("");
@@ -568,8 +613,7 @@ export function EstimateBuilderPage() {
     <div className="mx-auto max-w-xl space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Estimate</h1>
       <p className="text-sm text-ink-700">
-        Status: {status.replaceAll("_", " ")}. Line totals are computed in the database. The estimate still stores the
-        Phase 3 ~7% snapshot. Booking fees use the progressive schedule and are only a preview — nothing is charged.
+        Line totals are computed for you. The marketplace fee shown is a preview only. {paymentsComingSoonCopy()}
       </p>
       <FormError message={error} />
       <ul className="space-y-2">
@@ -643,13 +687,9 @@ export function EstimateBuilderPage() {
       </Button>
       <div className="rounded-3xl border border-forest-800/10 px-4 py-3 text-sm">
         <p>Total {formatUsdFromCents(totals.total_cents)}</p>
-        <p>Estimate snapshot (~{totals.fee_bps / 100}%) {formatUsdFromCents(totals.fee_cents)}</p>
-        <p>
-          Booking fee preview {formatUsdFromCents(computeMarketplaceFee({ amount_cents: totals.total_cents }).fee_cents)}{" "}
-          (progressive — payments not live)
-        </p>
+        <p>Marketplace fee preview {formatUsdFromCents(computeMarketplaceFee({ amount_cents: totals.total_cents }).fee_cents)}</p>
         <p>You would earn {formatUsdFromCents(computeMarketplaceFee({ amount_cents: totals.total_cents }).contractor_earnings_cents)}</p>
-        <p className="text-ink-500">Preview only. Live charges are off.</p>
+        <p className="text-ink-500">{paymentsComingSoonCopy()}</p>
       </div>
       <TextInput
         label="Duration (hours)"
@@ -723,7 +763,7 @@ export function ProMessagesPage() {
   return (
     <EmptyState
       title="No messages"
-      body="Full messaging is not in Phase 3. Use pre-estimate questions on an accepted opportunity."
+      body="Full messaging is not built yet. Use questions on an accepted job to ask the customer about the work."
     />
   );
 }

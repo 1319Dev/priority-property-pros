@@ -6,7 +6,7 @@
 
 PPP connects homeowners and property owners with **independent local contractors**. PPP is **not** the contractor. This is not Angi and not Thumbtack.
 
-This repository is **Phase 4A**: the Phase 1 homepage, Phase 2 accounts, Phase 3 posting/matching/estimates, plus a **versioned progressive fee engine, pending bookings (selection ≠ confirmation), relationships / Hire Again, change orders, and a verified-review guard**. There are still **no Stripe charges, no payouts, and no Priority Verified workflow**. Production UI does not fake paid bookings.
+This repository is **Phase 5A**: the Phase 1 homepage, Phase 2 accounts, Phase 3 posting/matching/estimates, Phase 4A booking/fee engine, plus **mobile polish, owner edit/cancel, and customer project isolation**. There are still **no Stripe charges, no payouts, and no Priority Verified workflow**. Production UI does not fake paid bookings.
 
 Live public site (Phase 1 behavior stays): **https://1319dev.github.io/priority-property-pros/**
 
@@ -72,7 +72,7 @@ Accounts and posting need a Supabase project. The homepage works without it.
 3. Never add the **service role** key.
 4. Approve real contractors with **[supabase/sql/approve_contractor.sql](supabase/sql/approve_contractor.sql)** (no self-approve).
 
-Security, tables, and marketplace flow: **[docs/SECURITY.md](docs/SECURITY.md)**, **[docs/DATABASE.md](docs/DATABASE.md)**, **[docs/MARKETPLACE_CORE.md](docs/MARKETPLACE_CORE.md)**, **[docs/PHASE4A.md](docs/PHASE4A.md)**.
+Security, tables, and marketplace flow: **[docs/SECURITY.md](docs/SECURITY.md)**, **[docs/DATABASE.md](docs/DATABASE.md)**, **[docs/MARKETPLACE_CORE.md](docs/MARKETPLACE_CORE.md)**, **[docs/PHASE4A.md](docs/PHASE4A.md)**, **[docs/PHASE5A.md](docs/PHASE5A.md)**.
 
 ---
 

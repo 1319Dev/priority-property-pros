@@ -28,3 +28,13 @@
 --   contractor cannot mark a change order APPROVED alone
 --   submit_booking_review on a PENDING booking → error
 
+-- Phase 5A (after 20260920000001–03):
+--   customer A cannot select * from projects where customer_id <> auth.uid()
+--   customer A get_my_customer_project(B) → 0 rows
+--   customer A update_customer_project(B) → not the project owner
+--   customer A cancel_customer_project(B) → not the project owner
+--   customer A cannot select project_photos / project_answers / project_private_locations for B
+--   contractor still sees authorized opportunity rows only
+--   admin still sees all projects
+--   confirmed booking still required for exact street
+

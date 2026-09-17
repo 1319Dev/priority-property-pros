@@ -87,6 +87,13 @@ There are **no Stripe charges** in Phase 3 or Phase 4A. `fee_preview` and `previ
 - Repeat pricing and relationships are server-assigned.
 - `ADMIN` is still not self-assignable. Contractor approval and max-3 matching are unchanged. VERIFIER remains; there is no INSPECTOR role.
 
+### Phase 5A
+
+- Customer project SELECT is split: owners see `customer_id = auth.uid()` only. Contractors use `contractor_can_read_project`. Admins keep `is_admin()`.
+- `list_my_customer_projects` / `get_my_customer_project` cannot return another customer’s rows.
+- Posted material edits and cancel/delete go through SECURITY DEFINER RPCs that check `auth.uid()`.
+- Exact street still unlocks only after a **confirmed** booking.
+
 Free-text Q&A can still leak PII. There is no scanner in this phase.
 
 Supabase database advisors will still flag SECURITY DEFINER views and authenticated RPC grants. That is expected. Do not drop the views or revoke signed-in access to `post_project` / `accept_opportunity` / `select_estimate`.

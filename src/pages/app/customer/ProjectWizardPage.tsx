@@ -74,6 +74,15 @@ export function ProjectWizardPage() {
           return;
         }
         const row = await fetchProject(projectId);
+        if (row.status !== "DRAFT") {
+          navigate(
+            row.status === "CONTRACTOR_SELECTED" || row.status === "CANCELLED"
+              ? `/app/customer/projects/${row.id}`
+              : `/app/customer/projects/${row.id}/edit`,
+            { replace: true },
+          );
+          return;
+        }
         const [photoRows, answerRows, loc] = await Promise.all([
           fetchProjectPhotos(projectId),
           fetchProjectAnswers(projectId),

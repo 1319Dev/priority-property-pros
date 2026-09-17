@@ -6,7 +6,7 @@ Phase 3 adds posting, contractor onboarding, matching (max 3 participating contr
 
 Phase 4A adds a **pending booking** on selection (not confirmation), a versioned progressive fee engine, relationships / Hire Again, change orders, and a verified-review guard. It does **not** charge cards, take payouts, or launch Priority Verified.
 
-See [DATABASE.md](DATABASE.md), [SECURITY.md](SECURITY.md), and [PHASE4A.md](PHASE4A.md).
+See [DATABASE.md](DATABASE.md), [SECURITY.md](SECURITY.md), [PHASE4A.md](PHASE4A.md), and [PHASE5A.md](PHASE5A.md).
 
 ## Flow
 

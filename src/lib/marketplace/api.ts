@@ -75,20 +75,33 @@ export async function createOrReuseDraftProject(customerId: string): Promise<Pro
   return createDraftProject(customerId);
 }
 
-export async function fetchCustomerProjects(customerId: string): Promise<Project[]> {
-  const { data, error } = await client()
-    .from("projects")
-    .select(
-      "id, customer_id, category_id, title, description, status, completeness, city, state, zip_code, timing, preferred_date, budget_min_cents, budget_max_cents, draft_step, selected_contractor_profile_id, selected_estimate_id, selected_booking_id, posted_at, selected_at, created_at, updated_at",
-    )
-    .eq("customer_id", customerId)
-    .order("updated_at", { ascending: false });
-  if (error) throw new Error(asError(error, "Could not load projects."));
-  return (data ?? []) as Project[];
+export async function fetchCustomerProjects(customerId?: string): Promise<Project[]> {
+  void customerId;
+  const { data, error } = await client().rpc("list_my_customer_projects");
+  if (error) {
+    const fallback = await client()
+      .from("projects")
+      .select(
+        "id, customer_id, category_id, title, description, status, completeness, city, state, zip_code, timing, preferred_date, budget_min_cents, budget_max_cents, draft_step, selected_contractor_profile_id, selected_estimate_id, selected_booking_id, posted_at, selected_at, scope_revision, cancelled_at, cancel_reason, created_at, updated_at",
+      )
+      .order("updated_at", { ascending: false });
+    if (fallback.error) throw new Error(asError(error, "Could not load projects."));
+    return (fallback.data ?? []) as Project[];
+  }
+  return (Array.isArray(data) ? data : []) as Project[];
+}
+
+export async function fetchMyCustomerProject(id: string): Promise<Project> {
+  const { data, error } = await client().rpc("get_my_customer_project", { p_project_id: id });
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!error && row) return row as Project;
+  const fallback = await client().from("projects").select("*").eq("id", id).maybeSingle();
+  if (fallback.error || !fallback.data) throw new Error("Project not found.");
+  return fallback.data as Project;
 }
 
 export async function fetchProject(id: string): Promise<Project> {
-  const { data, error } = await client().from("projects").select("*").eq("id", id).single();
+  const { data, error } = await client().from("projects").select("*").eq("id", id).maybeSingle();
   if (error || !data) throw new Error(asError(error, "Project not found."));
   return data as Project;
 }
@@ -190,6 +203,35 @@ export async function postProject(projectId: string): Promise<RpcJson> {
   const { data, error } = await client().rpc("post_project", { p_project_id: projectId });
   if (error) throw new Error(asError(error, "Could not post the project."));
   return (data ?? {}) as RpcJson;
+}
+
+export async function updateCustomerProject(projectId: string, patch: Record<string, unknown>): Promise<RpcJson> {
+  const { data, error } = await client().rpc("update_customer_project", {
+    p_project_id: projectId,
+    p_patch: patch as Json,
+  });
+  if (error) throw new Error(asError(error, "Could not save the project."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function cancelCustomerProject(projectId: string, confirm = false): Promise<RpcJson> {
+  const { data, error } = await client().rpc("cancel_customer_project", {
+    p_project_id: projectId,
+    p_confirm: confirm,
+  });
+  if (error) throw new Error(asError(error, "Could not update the project."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function fetchProjectNotices(projectId: string) {
+  const { data, error } = await client()
+    .from("project_notices")
+    .select("id, project_id, audience, kind, title, body, created_at")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false })
+    .limit(8);
+  if (error) throw new Error(asError(error, "Could not load updates."));
+  return data ?? [];
 }
 
 export async function acceptOpportunity(opportunityId: string): Promise<RpcJson> {
@@ -654,7 +696,7 @@ export async function fetchProjectEstimates(projectId: string) {
     .from("estimates")
     .select("*")
     .eq("project_id", projectId)
-    .in("status", ["SUBMITTED", "REVISED", "ACCEPTED", "DECLINED", "WITHDRAWN"])
+    .in("status", ["SUBMITTED", "REVISED", "ACCEPTED", "DECLINED", "WITHDRAWN", "EXPIRED", "SUPERSEDED"])
     .order("submitted_at", { ascending: true });
   if (error) throw new Error(asError(error, "Could not load estimates."));
   return data ?? [];

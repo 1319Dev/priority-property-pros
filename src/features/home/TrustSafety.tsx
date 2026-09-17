@@ -16,8 +16,8 @@ export function TrustSafety() {
           <div className="rounded-3xl border border-forest-800/10 bg-cream-50 p-6">
             <h3 className="font-display text-2xl text-forest-800">What PPP is</h3>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink-700">
-              <li>A marketplace that will connect property owners with independent local contractors.</li>
-              <li>A public homepage today. Live posting, accounts, and payments come in later phases.</li>
+              <li>A marketplace that connects property owners with independent local contractors.</li>
+              <li>Live posting and estimates for signed-in accounts. Online payment setup is coming soon.</li>
             </ul>
           </div>
           <div className="rounded-3xl border border-forest-800/10 bg-cream-50 p-6">

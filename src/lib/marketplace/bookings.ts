@@ -67,7 +67,7 @@ export function bookingIsAbandoned(status: BookingStatus, expiresAt: string | nu
 }
 
 export function paymentsComingSoonCopy(): string {
-  return "Payment coming soon — booking cannot be confirmed in production yet.";
+  return "Online payment setup is coming soon.";
 }
 
 export function clientCannotSpoofConfirmed(): boolean {
