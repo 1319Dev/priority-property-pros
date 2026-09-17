@@ -1,5 +1,6 @@
 import { EmptyState } from "../../components/layout/DashboardShell";
 import { useAuth } from "../../lib/auth/useAuth";
+import { CUSTOMER_DASHBOARD_PRICING_NOTE, PRO_DASHBOARD_PRICING_NOTE } from "../../data/pricing";
 import { Button } from "../../components/ui/Button";
 import { accountStatusLabel, accountTypeLabel } from "../../lib/marketplace/statusLabels";
 
@@ -30,6 +31,8 @@ export function AccountPage() {
       </dl>
       <p className="text-sm text-ink-500">
         Role and status are stored in the database. This website cannot promote anyone to Admin.
+        {account_type === "CUSTOMER" ? ` ${CUSTOMER_DASHBOARD_PRICING_NOTE}` : ""}
+        {account_type === "CONTRACTOR" ? ` ${PRO_DASHBOARD_PRICING_NOTE}` : ""}
       </p>
       <Button type="button" variant="outline" onClick={() => void signOut()}>
         Sign out

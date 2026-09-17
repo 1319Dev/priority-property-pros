@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => {
           name: "Priority Property Pros",
           short_name: "PPP",
           description:
-            "Your project. Local pros. One simple place. A local home-services marketplace connecting property owners with independent contractors.",
+            "Join Priority Property Pros for a one-time $9.99 signup fee. Your project. Local pros. One simple place. A local home-services marketplace connecting property owners with independent contractors.",
           theme_color: "#1A3C2E",
           background_color: "#FBF8F1",
           display: "standalone",

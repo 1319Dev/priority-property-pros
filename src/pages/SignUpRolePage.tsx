@@ -1,21 +1,24 @@
 import { Link } from "react-router-dom";
 import { AuthCard } from "../lib/auth/AuthCard";
+import { SIGNUP_ROLE_LEDE } from "../data/pricing";
 
 const options = [
   {
     to: "/sign-up/customer",
     label: "I need work done",
-    detail: "Homeowners and property owners. Post projects in a later phase.",
+    detail:
+      "Homeowners and property owners. Post projects, compare estimates, and hire. One-time $9.99 signup — not a monthly subscription.",
   },
   {
     to: "/sign-up/contractor",
     label: "I want to get hired",
-    detail: "Independent contractors. You stay your own business.",
+    detail:
+      "Independent contractors. One-time $9.99 signup, then a $0/month Free plan plus marketplace fees when hired.",
   },
   {
     to: "/sign-up/verifier",
     label: "I want to verify completed jobs",
-    detail: "Independent completion verifiers. Priority Verified is not live yet.",
+    detail: "Independent completion verifiers. One-time $9.99 signup. Priority Verified is not live yet.",
   },
 ];
 
@@ -24,6 +27,7 @@ export function SignUpRolePage() {
     <AuthCard
       eyebrow="Create account"
       title="How will you use Priority Property Pros?"
+      lede={SIGNUP_ROLE_LEDE}
       footer={
         <>
           Already have an account?{" "}

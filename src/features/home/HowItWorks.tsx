@@ -1,4 +1,5 @@
 import { Container, SectionHeading } from "../../components/ui/Container";
+import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING } from "../../data/pricing";
 
 const steps = [
   {
@@ -30,6 +31,7 @@ export function HowItWorks() {
         <SectionHeading
           eyebrow="How PPP works"
           title="Four steps. No mystery middleman."
+          kicker={`${HOMEPAGE_SIGNUP_HEADLINE} ${HOMEPAGE_SIGNUP_SUPPORTING}`}
         />
         <h2 id="how-heading" className="sr-only">
           How PPP works
