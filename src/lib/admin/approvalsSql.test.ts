@@ -38,6 +38,8 @@ describe("Admin contractor approvals SQL and client contract", () => {
     expect(sql).toMatch(/FUNCTION public\.admin_reject_contractor\(p_contractor_profile_id uuid, p_reason text/);
     expect(sql).toMatch(/FUNCTION public\.admin_request_contractor_info\(p_contractor_profile_id uuid, p_message text\)/);
     expect(sql).toMatch(/FUNCTION public\.list_contractor_approvals\(p_tab text/);
+    expect(sql).toMatch(/IDENTITY_REVIEW/);
+    expect(sql).toMatch(/identity_review_required/);
     expect(sql).toMatch(/FUNCTION public\.get_contractor_approval\(p_contractor_profile_id uuid\)/);
     expect(sql).toMatch(/FUNCTION public\.count_pending_contractor_approvals\(\)/);
     expect(sql).toMatch(/only an admin can approve a contractor/);

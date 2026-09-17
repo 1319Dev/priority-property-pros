@@ -9,6 +9,7 @@ import {
   opportunityVisibleToCustomer,
   sanitizeUploadName,
 } from "./privacy";
+import { estimateStatusUnlocksContact } from "./estimateLifecycle";
 
 const customer: MarketplaceActor = { id: "cust", accountType: "CUSTOMER", accountStatus: "ACTIVE" };
 const pro: MarketplaceActor = {
@@ -55,6 +56,15 @@ describe("privacy and IDOR mirrors", () => {
     expect(opportunityVisibleToCustomer("ACCEPTED")).toBe(true);
     expect(estimateVisibleToCustomer("DRAFT")).toBe(false);
     expect(estimateVisibleToCustomer("SUBMITTED")).toBe(true);
+    expect(estimateVisibleToCustomer("SENT")).toBe(true);
+    expect(estimateVisibleToCustomer("VIEWED")).toBe(true);
+  });
+
+  it("does not treat ACCEPTED as a contact unlock on the estimate lifecycle path", () => {
+    expect(estimateStatusUnlocksContact("ACCEPTED")).toBe(false);
+    expect(
+      canReadExactAddress(pro, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "PENDING"),
+    ).toBe(false);
   });
 
   it("blocks self-verify to VERIFIED", () => {

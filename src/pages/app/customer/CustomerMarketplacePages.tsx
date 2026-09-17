@@ -12,7 +12,9 @@ import { useAuth } from "../../../lib/auth/useAuth";
 import {
   answerEstimateQuestion,
   cancelCustomerProject,
+  declineEstimate,
   fetchCustomerProjects,
+  fetchEstimate,
   fetchEstimateItems,
   fetchEstimateQuestions,
   fetchMyBookings,
@@ -21,6 +23,8 @@ import {
   fetchProjectEstimates,
   fetchProjectNotices,
   fetchPublicContractor,
+  fetchPublicContractorExtras,
+  markEstimateViewed,
   selectEstimate,
   TIMING_LABELS,
 } from "../../../lib/marketplace/api";
@@ -28,7 +32,7 @@ import { computeMarketplaceFee } from "../../../lib/marketplace/feeEngine";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import { CUSTOMER_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
-import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type EstimateItemKind, type Project } from "../../../lib/marketplace/types";
+import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type EstimateItemKind, type EstimateStatus, type Project } from "../../../lib/marketplace/types";
 import { comparisonDisplayOrder } from "../../../lib/marketplace/flows";
 import { planDeleteOrCancel } from "../../../lib/marketplace/lifecycle";
 import {
@@ -39,6 +43,7 @@ import {
   type CustomerDashboardTab,
 } from "../../../lib/marketplace/statusLabels";
 import { estimateNeedsNewSubmission } from "../../../lib/marketplace/privacy";
+import { canCustomerDeclineFrom, canCustomerSelectFrom } from "../../../lib/marketplace/estimateLifecycle";
 import { useToast } from "../../../hooks/useToast";
 
 function bookingByProject(bookings: Booking[]) {
@@ -420,6 +425,7 @@ export function CompareEstimatesPage() {
       estimate: Awaited<ReturnType<typeof fetchProjectEstimates>>[number];
       items: Awaited<ReturnType<typeof fetchEstimateItems>>;
       contractor: Awaited<ReturnType<typeof fetchPublicContractor>>;
+      extras: Awaited<ReturnType<typeof fetchPublicContractorExtras>>;
     }[]
   >([]);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -437,6 +443,12 @@ export function CompareEstimatesPage() {
           estimate,
           items: await fetchEstimateItems(estimate.id),
           contractor: await fetchPublicContractor(estimate.contractor_profile_id),
+          extras: await fetchPublicContractorExtras(estimate.contractor_profile_id).catch(() => ({
+            services: [],
+            areas: [],
+            badges: [],
+            portfolio: [],
+          })),
         })),
       );
       setRows(detailed);
@@ -462,6 +474,34 @@ export function CompareEstimatesPage() {
     }
   }
 
+  async function decline(estimateId: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      await declineEstimate(estimateId);
+      toast.push("Estimate declined.");
+      const estimates = comparisonDisplayOrder(await fetchProjectEstimates(projectId)).slice(0, 3);
+      const detailed = await Promise.all(
+        estimates.map(async (estimate) => ({
+          estimate,
+          items: await fetchEstimateItems(estimate.id),
+          contractor: await fetchPublicContractor(estimate.contractor_profile_id),
+          extras: await fetchPublicContractorExtras(estimate.contractor_profile_id).catch(() => ({
+            services: [],
+            areas: [],
+            badges: [],
+            portfolio: [],
+          })),
+        })),
+      );
+      setRows(detailed);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Decline failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading) return <LoadingState label="Loading estimates" />;
   if (missing) {
     return <NotFoundState title="Project not found" body="You can only compare estimates on your own projects." />;
@@ -477,14 +517,34 @@ export function CompareEstimatesPage() {
       <FormError message={error} />
       {rows.length === 0 ? <EmptyState title="No estimates yet" body="Submitted estimates will appear here in the order they arrived." /> : null}
       <div className="grid gap-4">
-        {rows.map(({ estimate, items, contractor }) => {
-          const outOfDate = estimateNeedsNewSubmission(estimate.status as "SUPERSEDED" | "EXPIRED" | "SUBMITTED");
+        {rows.map(({ estimate, items, contractor, extras }) => {
+          const status = estimate.status as EstimateStatus;
+          const outOfDate = estimateNeedsNewSubmission(status);
+          const selectable = canCustomerSelectFrom(status) && project?.status !== "CONTRACTOR_SELECTED";
+          const declinable = canCustomerDeclineFrom(status) && project?.status !== "CONTRACTOR_SELECTED";
           return (
             <article key={estimate.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 p-5">
               <h2 className="font-display text-2xl text-forest-800">{contractor?.business_name || "Local pro"}</h2>
               <p className="text-sm text-ink-500">
-                {outOfDate ? "Needs a new estimate" : estimate.status === "ACCEPTED" ? "Selected" : "Submitted"}
+                {outOfDate
+                  ? "Needs a new estimate"
+                  : status === "ACCEPTED"
+                    ? "Selected"
+                    : status === "DECLINED"
+                      ? "Not selected"
+                      : status === "VIEWED"
+                        ? "Viewed"
+                        : "Sent"}
               </p>
+              <p className="text-sm text-ink-700">{contractor?.headline || contractor?.bio || "Independent contractor"}</p>
+              {extras.badges.length > 0 ? (
+                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">
+                  {extras.badges.map((badge) => badge.label).join(" · ")}
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-ink-500">Verification badges appear only after PPP verifies credentials.</p>
+              )}
+              <p className="mt-1 text-xs text-ink-500">Phone, email, and street stay hidden until a hire is entitled.</p>
               {outOfDate ? (
                 <StatusBanner
                   tone="warning"
@@ -538,30 +598,162 @@ export function CompareEstimatesPage() {
                 <p className="mt-4 text-sm text-ink-500">Not selected</p>
               ) : outOfDate ? (
                 <p className="mt-4 text-sm text-ink-500">Waiting on a new estimate from this pro.</p>
-              ) : estimate.status === "SUBMITTED" || estimate.status === "REVISED" ? (
-                confirmId === estimate.id ? (
-                  <div className="mt-4 space-y-2">
-                    <p className="text-sm">
-                      Confirm this independent contractor? This starts a pending booking. No payment is taken and your exact
-                      address stays private.
-                    </p>
-                    <Button type="button" className="min-h-14 w-full" disabled={busy} onClick={() => void confirm(estimate.id)}>
-                      Confirm this pro
+              ) : (
+                <div className="mt-4 space-y-2">
+                  <ButtonLink
+                    to={`/app/customer/projects/${projectId}/estimates/${estimate.id}`}
+                    variant="outline"
+                    className="min-h-14 w-full"
+                  >
+                    View
+                  </ButtonLink>
+                  {selectable && confirmId === estimate.id ? (
+                    <>
+                      <p className="text-sm">
+                        Confirm this independent contractor? This starts a pending booking. No payment is taken and your exact
+                        address stays private.
+                      </p>
+                      <Button type="button" className="min-h-14 w-full" disabled={busy} onClick={() => void confirm(estimate.id)}>
+                        Confirm this pro
+                      </Button>
+                      <Button type="button" variant="ghost" className="min-h-12 w-full" onClick={() => setConfirmId(null)}>
+                        Keep comparing
+                      </Button>
+                    </>
+                  ) : null}
+                  {selectable && confirmId !== estimate.id ? (
+                    <Button type="button" className="min-h-14 w-full" onClick={() => setConfirmId(estimate.id)}>
+                      Select / Hire
                     </Button>
-                    <Button type="button" variant="ghost" className="min-h-12 w-full" onClick={() => setConfirmId(null)}>
-                      Keep comparing
+                  ) : null}
+                  {declinable ? (
+                    <Button type="button" variant="outline" className="min-h-12 w-full" disabled={busy} onClick={() => void decline(estimate.id)}>
+                      Decline
                     </Button>
-                  </div>
-                ) : (
-                  <Button type="button" className="mt-4 min-h-14 w-full" onClick={() => setConfirmId(estimate.id)}>
-                    Select this pro
-                  </Button>
-                )
-              ) : null}
+                  ) : null}
+                </div>
+              )}
             </article>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+export function CustomerEstimateDetailPage() {
+  const { projectId = "", estimateId = "" } = useParams();
+  const toast = useToast();
+  const [project, setProject] = useState<Project | null>(null);
+  const [estimate, setEstimate] = useState<Awaited<ReturnType<typeof fetchEstimate>> | null>(null);
+  const [items, setItems] = useState<Awaited<ReturnType<typeof fetchEstimateItems>>>([]);
+  const [contractor, setContractor] = useState<Awaited<ReturnType<typeof fetchPublicContractor>>>(null);
+  const [badges, setBadges] = useState<Awaited<ReturnType<typeof fetchPublicContractorExtras>>["badges"]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [missing, setMissing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      const proj = await fetchMyCustomerProject(projectId);
+      setProject(proj);
+      await markEstimateViewed(estimateId, projectId);
+      const est = await fetchEstimate(estimateId);
+      if (est.project_id !== projectId) throw new Error("Estimate not on this project.");
+      setEstimate(est);
+      setItems(await fetchEstimateItems(est.id));
+      setContractor(await fetchPublicContractor(est.contractor_profile_id));
+      const extras = await fetchPublicContractorExtras(est.contractor_profile_id).catch(() => ({
+        services: [],
+        areas: [],
+        badges: [],
+        portfolio: [],
+      }));
+      setBadges(extras.badges);
+    }
+    void load()
+      .catch(() => setMissing(true))
+      .then(() => undefined);
+  }, [projectId, estimateId]);
+
+  if (missing) {
+    return <NotFoundState title="Estimate not found" body="You can only open estimates on your own projects." />;
+  }
+  if (!estimate || !project) return <LoadingState label="Opening estimate" />;
+  const status = estimate.status as EstimateStatus;
+  const selectable = canCustomerSelectFrom(status) && project.status !== "CONTRACTOR_SELECTED";
+  const declinable = canCustomerDeclineFrom(status) && project.status !== "CONTRACTOR_SELECTED";
+
+  return (
+    <div className="space-y-6">
+      <ButtonLink to={`/app/customer/projects/${projectId}/compare`} variant="ghost" size="sm">
+        Back to comparison
+      </ButtonLink>
+      <h1 className="font-display text-4xl font-semibold text-forest-800">{contractor?.business_name || "Estimate"}</h1>
+      <p className="text-sm text-ink-500">Opening this page marks the estimate viewed. Phone, email, and street stay hidden.</p>
+      <FormError message={error} />
+      {badges.length > 0 ? (
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">{badges.map((b) => b.label).join(" · ")}</p>
+      ) : (
+        <p className="text-xs text-ink-500">Only PPP-verified badges are shown.</p>
+      )}
+      <p className="text-lg font-semibold">{formatUsdFromCents(estimate.total_cents)}</p>
+      <ul className="space-y-1 text-sm">
+        {items.map((item) => (
+          <li key={item.id}>
+            {ESTIMATE_ITEM_KIND_LABELS[(item.kind as EstimateItemKind) ?? "CUSTOM"]}: {item.label} · {item.quantity}{" "}
+            {item.unit_label || "each"} × {formatUsdFromCents(item.unit_cents)} = {formatUsdFromCents(item.line_total_cents)}
+          </li>
+        ))}
+      </ul>
+      <p className="text-sm">Duration: {estimate.duration_hours != null ? `${estimate.duration_hours} hours` : "Not stated"}</p>
+      <p className="text-sm">Available from: {estimate.available_from ?? "Not stated"}</p>
+      {estimate.notes ? <p className="text-sm">{estimate.notes}</p> : null}
+      {selectable ? (
+        confirm ? (
+          <div className="space-y-2">
+            <Button
+              type="button"
+              className="min-h-14 w-full"
+              disabled={busy}
+              onClick={() => {
+                setBusy(true);
+                void selectEstimate(projectId, estimate.id)
+                  .then(() => toast.push(paymentsComingSoonCopy()))
+                  .catch((err: Error) => setError(err.message))
+                  .finally(() => setBusy(false));
+              }}
+            >
+              Confirm this pro
+            </Button>
+            <Button type="button" variant="ghost" className="min-h-12 w-full" onClick={() => setConfirm(false)}>
+              Keep reviewing
+            </Button>
+          </div>
+        ) : (
+          <Button type="button" className="min-h-14 w-full" onClick={() => setConfirm(true)}>
+            Select / Hire
+          </Button>
+        )
+      ) : null}
+      {declinable ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-12 w-full"
+          disabled={busy}
+          onClick={() => {
+            setBusy(true);
+            void declineEstimate(estimate.id)
+              .then(() => toast.push("Estimate declined."))
+              .catch((err: Error) => setError(err.message))
+              .finally(() => setBusy(false));
+          }}
+        >
+          Decline
+        </Button>
+      ) : null}
     </div>
   );
 }

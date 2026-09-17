@@ -3,9 +3,9 @@ import { DashboardShell } from "../../components/layout/DashboardShell";
 const items = [
   { to: "/app/pro", label: "Home", end: true },
   { to: "/app/pro/opportunities", label: "Jobs" },
+  { to: "/app/pro/estimates", label: "Estimates" },
   { to: "/app/pro/bookings", label: "Bookings" },
-  { to: "/app/pro/onboarding", label: "Profile" },
-  { to: "/app/pro/account", label: "Account" },
+  { to: "/app/pro/profile", label: "Profile" },
 ];
 
 export function ProShell() {
