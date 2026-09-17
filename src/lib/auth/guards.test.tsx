@@ -15,6 +15,8 @@ function profile(type: AccountType, status: AccountStatus = "ACTIVE"): Profile {
     avatar_url: null,
     account_type: type,
     account_status: status,
+    signup_fee_status: "PAID",
+    signup_fee_paid_at: "2026-01-01T00:00:00Z",
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
   };
@@ -29,6 +31,7 @@ function auth(partial: Partial<AuthContextValue>): AuthContextValue {
     profile: null,
     account_type: null,
     account_status: null,
+    signup_fee_status: null,
     signIn: async () => ({ error: null }),
     signUp: async () => ({ error: null, needsEmailConfirm: true }),
     signOut: async () => undefined,
@@ -55,6 +58,7 @@ function renderGuard(entry: string, value: AuthContextValue) {
           </Route>
           <Route path="/sign-in" element={<div>sign-in</div>} />
           <Route path="/account/status" element={<div>status-page</div>} />
+          <Route path="/account/activate" element={<div>activate-page</div>} />
           <Route path="/app/pro" element={<div>pro-home</div>} />
         </Routes>
       </MemoryRouter>
@@ -113,9 +117,43 @@ describe("protected routes", () => {
         profile: p,
         account_type: "CUSTOMER",
         account_status: "ACTIVE",
+        signup_fee_status: "PAID",
       }),
     );
     expect(screen.queryByText("admin-home")).not.toBeInTheDocument();
     expect(screen.getByText("customer-home")).toBeInTheDocument();
+  });
+
+  it("blocks an unpaid customer from a protected customer URL", () => {
+    const p = { ...profile("CUSTOMER"), signup_fee_status: "UNPAID" as const, signup_fee_paid_at: null };
+    renderGuard(
+      "/app/customer",
+      auth({
+        user: { id: "user-1", email: "pat@example.com", email_confirmed_at: "2026-01-01" } as AuthContextValue["user"],
+        profile: p,
+        account_type: "CUSTOMER",
+        account_status: "ACTIVE",
+        signup_fee_status: "UNPAID",
+      }),
+    );
+    expect(screen.getByText("activate-page")).toBeInTheDocument();
+    expect(screen.queryByText("customer-home")).not.toBeInTheDocument();
+  });
+
+  it("blocks an unpaid contractor from a protected pro URL", () => {
+    const p = { ...profile("CONTRACTOR", "PENDING"), signup_fee_status: "UNPAID" as const, signup_fee_paid_at: null };
+    renderGuard(
+      "/app/customer",
+      auth({
+        user: { id: "user-1", email: "pat@example.com", email_confirmed_at: "2026-01-01" } as AuthContextValue["user"],
+        profile: p,
+        account_type: "CONTRACTOR",
+        account_status: "PENDING",
+        signup_fee_status: "UNPAID",
+      }),
+    );
+    expect(screen.getByText("activate-page")).toBeInTheDocument();
+    expect(screen.queryByText("pro-home")).not.toBeInTheDocument();
+    expect(screen.queryByText("customer-home")).not.toBeInTheDocument();
   });
 });

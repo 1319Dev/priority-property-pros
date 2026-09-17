@@ -3,6 +3,8 @@ import { Skeleton } from "../../components/ui/Skeleton";
 import { BLOCKED_STATUSES, ROLE_HOME } from "./roles";
 import { useAuth } from "./useAuth";
 import type { AccountType } from "./types";
+import { needsSignupFeePayment } from "../signupFee/policy";
+import { SIGNUP_FEE_ACTIVATE_PATH } from "../signupFee/api";
 
 function AuthLoadingScreen() {
   return (
@@ -17,7 +19,7 @@ function AuthLoadingScreen() {
 }
 
 export function RequireAuth() {
-  const { loading, user, profile, account_status } = useAuth();
+  const { loading, user, profile, account_status, account_type } = useAuth();
   const location = useLocation();
 
   if (loading) return <AuthLoadingScreen />;
@@ -29,6 +31,10 @@ export function RequireAuth() {
   }
   if (user && !user.email_confirmed_at && !profile) {
     return <Navigate to="/auth/verify?state=check-email" replace />;
+  }
+  const onActivate = location.pathname.startsWith(SIGNUP_FEE_ACTIVATE_PATH);
+  if (needsSignupFeePayment(account_type ?? profile?.account_type, profile?.signup_fee_status) && !onActivate) {
+    return <Navigate to={SIGNUP_FEE_ACTIVATE_PATH} replace />;
   }
   return <Outlet />;
 }

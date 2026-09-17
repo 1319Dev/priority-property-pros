@@ -22,7 +22,8 @@ BEGIN
   UPDATE public.profiles
   SET
     account_type = 'ADMIN',
-    account_status = 'ACTIVE'
+    account_status = 'ACTIVE',
+    signup_fee_status = 'NOT_REQUIRED'
   WHERE id = admin_id;
 
   INSERT INTO public.audit_logs (actor_id, action, entity_type, entity_id, metadata)

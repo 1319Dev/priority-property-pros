@@ -26,10 +26,16 @@ describe("signup metadata", () => {
 
 describe("post-login routing", () => {
   it("sends each role to its dashboard", () => {
-    expect(postLoginPath("CUSTOMER", "ACTIVE")).toBe("/app/customer");
-    expect(postLoginPath("CONTRACTOR", "PENDING")).toBe("/app/pro");
+    expect(postLoginPath("CUSTOMER", "ACTIVE", "PAID")).toBe("/app/customer");
+    expect(postLoginPath("CONTRACTOR", "PENDING", "PAID")).toBe("/app/pro");
     expect(postLoginPath("VERIFIER", "PENDING")).toBe("/app/verifier");
     expect(postLoginPath("ADMIN", "ACTIVE")).toBe("/app/admin");
+    expect(postLoginPath("CUSTOMER", "ACTIVE", "NOT_REQUIRED")).toBe("/app/customer");
+  });
+
+  it("sends unpaid customer and contractor accounts to activation", () => {
+    expect(postLoginPath("CUSTOMER", "ACTIVE", "UNPAID")).toBe("/account/activate");
+    expect(postLoginPath("CONTRACTOR", "PENDING", "UNPAID")).toBe("/account/activate");
   });
 
   it("sends suspended accounts to the status page", () => {

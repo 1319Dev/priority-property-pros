@@ -7,7 +7,7 @@ import { AuthCard, FormError } from "../lib/auth/AuthCard";
 import { useAuth } from "../lib/auth/useAuth";
 
 export function SignInPage() {
-  const { signIn, configured, refreshProfile, account_type, account_status, user, loading } = useAuth();
+  const { signIn, configured, refreshProfile, account_type, account_status, signup_fee_status, user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from;
@@ -18,9 +18,10 @@ export function SignInPage() {
 
   useEffect(() => {
     if (!loading && user && account_type) {
-      navigate(from || postLoginPath(account_type, account_status), { replace: true });
+      const dest = postLoginPath(account_type, account_status, signup_fee_status);
+      navigate(dest === "/account/activate" ? dest : from || dest, { replace: true });
     }
-  }, [loading, user, account_type, account_status, from, navigate]);
+  }, [loading, user, account_type, account_status, signup_fee_status, from, navigate]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();

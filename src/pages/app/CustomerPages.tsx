@@ -27,6 +27,16 @@ export function AccountPage() {
         <Row label="Email" value={user?.email ?? profile?.email ?? "—"} />
         <Row label="Role" value={accountTypeLabel(account_type)} />
         <Row label="Status" value={accountStatusLabel(account_status)} />
+        <Row
+          label="Signup fee"
+          value={
+            profile?.signup_fee_status === "PAID"
+              ? "Paid $9.99"
+              : profile?.signup_fee_status === "NOT_REQUIRED"
+                ? "Not required"
+                : "Unpaid"
+          }
+        />
       </dl>
       <p className="text-sm text-ink-500">
         Role and status are stored in the database. This website cannot promote anyone to Admin.

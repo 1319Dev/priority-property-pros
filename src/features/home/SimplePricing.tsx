@@ -1,6 +1,11 @@
 import { ButtonLink } from "../../components/ui/Button";
 import { Container } from "../../components/ui/Container";
-import { PRICING_HOMEPAGE_LINE, PRICING_PATH, SEE_PRICING_LABEL } from "../../data/pricing";
+import {
+  CONTRACTOR_SIGNUP_FEE_SENTENCE,
+  PRICING_HOMEPAGE_LINE,
+  PRICING_PATH,
+  SEE_PRICING_LABEL,
+} from "../../data/pricing";
 
 export function SimplePricing() {
   return (
@@ -14,6 +19,7 @@ export function SimplePricing() {
             <h2 id="pricing-heading" className="mt-2 font-display text-2xl font-semibold sm:text-3xl">
               {PRICING_HOMEPAGE_LINE}
             </h2>
+            <p className="mt-2 text-sm leading-relaxed text-cream-200">{CONTRACTOR_SIGNUP_FEE_SENTENCE}</p>
           </div>
           <ButtonLink to={PRICING_PATH} variant="gold" size="lg" className="shrink-0 self-start sm:self-center">
             {SEE_PRICING_LABEL}

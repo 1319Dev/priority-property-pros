@@ -24,6 +24,9 @@ export type OnboardingStatus = (typeof ONBOARDING_STATUSES)[number];
 export const APPROVAL_STATUSES = ["PENDING", "APPROVED", "REJECTED", "SUSPENDED"] as const;
 export type ApprovalStatus = (typeof APPROVAL_STATUSES)[number];
 
+export const SIGNUP_FEE_STATUSES = ["UNPAID", "PAID", "NOT_REQUIRED"] as const;
+export type SignupFeeStatus = (typeof SIGNUP_FEE_STATUSES)[number];
+
 export type Profile = {
   id: string;
   email: string;
@@ -33,6 +36,8 @@ export type Profile = {
   avatar_url: string | null;
   account_type: AccountType;
   account_status: AccountStatus;
+  signup_fee_status: SignupFeeStatus;
+  signup_fee_paid_at: string | null;
   created_at: string;
   updated_at: string;
 };

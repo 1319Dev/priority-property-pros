@@ -1,6 +1,6 @@
 import { createContext } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import type { AccountStatus, AccountType, Profile, SignUpInput } from "./types";
+import type { AccountStatus, AccountType, Profile, SignUpInput, SignupFeeStatus } from "./types";
 
 export type AuthContextValue = {
   configured: boolean;
@@ -10,6 +10,7 @@ export type AuthContextValue = {
   profile: Profile | null;
   account_type: AccountType | null;
   account_status: AccountStatus | null;
+  signup_fee_status: SignupFeeStatus | null;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (input: SignUpInput) => Promise<{ error: string | null; needsEmailConfirm: boolean }>;
   signOut: () => Promise<void>;

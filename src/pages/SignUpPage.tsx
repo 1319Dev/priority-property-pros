@@ -5,12 +5,25 @@ import { TextInput } from "../components/ui/Input";
 import { AuthCard, FormError } from "../lib/auth/AuthCard";
 import { isPublicSignupType } from "../lib/auth/roles";
 import type { PublicSignupType } from "../lib/auth/types";
+import { CUSTOMER_SIGNUP_FEE_SENTENCE, CONTRACTOR_SIGNUP_FEE_SENTENCE } from "../data/pricing";
 import { useAuth } from "../lib/auth/useAuth";
 
-const copy: Record<PublicSignupType, { eyebrow: string; title: string }> = {
-  CUSTOMER: { eyebrow: "Customer", title: "Create a customer account." },
-  CONTRACTOR: { eyebrow: "Priority Pro", title: "Apply as an independent contractor." },
-  VERIFIER: { eyebrow: "Verifier", title: "Apply as an independent verifier." },
+const copy: Record<PublicSignupType, { eyebrow: string; title: string; fee: string }> = {
+  CUSTOMER: {
+    eyebrow: "Customer",
+    title: "Create a customer account.",
+    fee: CUSTOMER_SIGNUP_FEE_SENTENCE,
+  },
+  CONTRACTOR: {
+    eyebrow: "Priority Pro",
+    title: "Apply as an independent contractor.",
+    fee: CONTRACTOR_SIGNUP_FEE_SENTENCE,
+  },
+  VERIFIER: {
+    eyebrow: "Verifier",
+    title: "Apply as an independent verifier.",
+    fee: "Verifier applications are reviewed separately and do not use the homeowner/contractor $9.99 signup fee.",
+  },
 };
 
 export function SignUpPage() {
@@ -91,6 +104,7 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
         </>
       }
     >
+      <p className="rounded-2xl bg-cream-100 px-4 py-3 text-sm text-ink-700">{labels.fee}</p>
       <form className="space-y-4" onSubmit={onSubmit}>
         <div className="grid gap-4 sm:grid-cols-2">
           <TextInput

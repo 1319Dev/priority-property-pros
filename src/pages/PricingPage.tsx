@@ -3,11 +3,15 @@ import { Container } from "../components/ui/Container";
 import { CONTRACTOR_CTA, CUSTOMER_CTA } from "../data/brand";
 import {
   FEE_WHEN_HIRED_SENTENCE,
+  FREE_PLAN_MONTHLY,
   HOMEOWNER_PRICING_SUMMARY,
   ORIGINAL_FEE_BRACKETS_PUBLIC,
   ORIGINAL_FEE_INTRO,
   ORIGINAL_MAX_FEE,
   ORIGINAL_MIN_FEE,
+  PRIORITY_PRO_FEE_INTRO,
+  PRIORITY_PRO_MONTHLY,
+  PRIORITY_PRO_YEARLY,
   PRICING_PAGE_INTRO,
   PRICING_PAGE_TITLE,
   PRO_PRICING_SUMMARY,
@@ -35,6 +39,23 @@ export function PricingPage() {
           <article className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-6">
             <h2 className="font-display text-2xl text-forest-800">For pros</h2>
             <p className="mt-2 text-sm leading-relaxed text-ink-700">{PRO_PRICING_SUMMARY}</p>
+          </article>
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <article className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-6">
+            <h2 className="font-display text-2xl text-forest-800">Free contractor plan</h2>
+            <p className="mt-2 text-sm leading-relaxed text-ink-700">
+              {FREE_PLAN_MONTHLY} after the $9.99 signup fee. Sliding marketplace fee on first-time jobs. 2% on
+              hire-again jobs.
+            </p>
+          </article>
+          <article className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-6">
+            <h2 className="font-display text-2xl text-forest-800">Priority Pro</h2>
+            <p className="mt-2 text-sm leading-relaxed text-ink-700">
+              Still requires $9.99 to start. Then {PRIORITY_PRO_MONTHLY} or {PRIORITY_PRO_YEARLY}.{" "}
+              {PRIORITY_PRO_FEE_INTRO}
+            </p>
           </article>
         </div>
 
@@ -76,6 +97,22 @@ export function PricingPage() {
         </div>
 
         <p className="mt-6 text-base leading-relaxed text-ink-700">{FEE_WHEN_HIRED_SENTENCE}</p>
+
+        <div id="faq" className="mt-10 space-y-4">
+          <h2 className="font-display text-2xl text-forest-800">FAQ</h2>
+          <p className="text-sm leading-relaxed text-ink-700">
+            Is signup free? No. Customers and contractors pay $9.99 once to activate an account.
+          </p>
+          <p className="text-sm leading-relaxed text-ink-700">
+            Do homeowners pay a monthly fee or a PPP marketplace fee when hiring? No.
+          </p>
+          <p className="text-sm leading-relaxed text-ink-700">
+            Does paying $9.99 approve a contractor? No. Admin approval and verification are separate.
+          </p>
+          <p className="text-sm leading-relaxed text-ink-700">
+            Are job payments live? No. The $9.99 signup fee is isolated from homeowner-to-contractor job payments.
+          </p>
+        </div>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <ButtonLink to="/post-project">{CUSTOMER_CTA}</ButtonLink>

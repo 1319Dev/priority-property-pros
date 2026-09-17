@@ -8,6 +8,7 @@ import {
   canReadOtherUsersRow,
   canReadProfile,
   canSelfApprove,
+  canClientMarkSignupFeePaid,
 } from "./rlsPolicy";
 import type { Actor } from "./rlsPolicy";
 
@@ -51,5 +52,9 @@ describe("RLS privilege escalation (policy mirror)", () => {
     expect(canInsertOwnAcceptance(customer, "user-a")).toBe(true);
     expect(canInsertOwnAcceptance(customer, "user-b")).toBe(false);
     expect(canInsertOwnAcceptance(other, "user-a")).toBe(false);
+  });
+
+  it("blocks clients from marking the signup fee paid", () => {
+    expect(canClientMarkSignupFeePaid()).toBe(false);
   });
 });

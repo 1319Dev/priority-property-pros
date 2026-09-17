@@ -12,7 +12,7 @@ async function fetchProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, email, first_name, last_name, phone, avatar_url, account_type, account_status, created_at, updated_at",
+      "id, email, first_name, last_name, phone, avatar_url, account_type, account_status, signup_fee_status, signup_fee_paid_at, created_at, updated_at",
     )
     .eq("id", userId)
     .maybeSingle();
@@ -143,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       account_type: profile?.account_type ?? null,
       account_status: profile?.account_status ?? null,
+      signup_fee_status: profile?.signup_fee_status ?? null,
       signIn,
       signUp,
       signOut,

@@ -31,6 +31,8 @@ export type Database = {
           avatar_url: string | null;
           account_type: AccountType;
           account_status: AccountStatus;
+          signup_fee_status: import("../auth/types").SignupFeeStatus;
+          signup_fee_paid_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -752,6 +754,10 @@ export type Database = {
     };
     Functions: {
       is_admin: { Args: Record<string, never>; Returns: boolean };
+      signup_fee_state_for_me: { Args: Record<string, never>; Returns: Json };
+      signup_fee_isolation_flags: { Args: Record<string, never>; Returns: Json };
+      signup_fee_is_satisfied: { Args: { p_profile_id: string }; Returns: boolean };
+      assert_signup_fee_paid: { Args: { p_profile_id: string }; Returns: null };
       current_fee_bps: { Args: Record<string, never>; Returns: number };
       fee_preview: { Args: { p_total_cents: number }; Returns: Json };
       preview_marketplace_fee: { Args: { p_amount_cents: number; p_kind?: string }; Returns: Json };
@@ -806,6 +812,7 @@ export type Database = {
       service_area_mode: ServiceAreaMode;
       question_kind: QuestionKind;
       estimate_item_kind: EstimateItemKind;
+      signup_fee_status: import("../auth/types").SignupFeeStatus;
       booking_status: import("../marketplace/types").BookingStatus;
       fee_schedule_kind: import("../marketplace/types").FeeScheduleKind;
       relationship_status: import("../marketplace/types").RelationshipStatus;
