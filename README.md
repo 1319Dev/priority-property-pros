@@ -57,7 +57,7 @@ VITE_SUPABASE_ANON_KEY=<staging-anon-public-key> \
 npm run build
 ```
 
-GitHub Actions on branch `phase-5a-staging-preview` runs `.github/workflows/staging-preview.yml`, which reads `STAGING_SUPABASE_URL` / `STAGING_SUPABASE_ANON_KEY` (or `VITE_*`) and uploads artifact `phase5a-staging-preview`. It does **not** deploy GitHub Pages. Production Pages on `main` is unchanged.
+GitHub Actions on branch `phase-5a-staging-preview` runs `.github/workflows/staging-preview.yml`, which reads **only** `STAGING_SUPABASE_URL` / `STAGING_SUPABASE_ANON_KEY` (never production `VITE_SUPABASE_*`) and uploads artifact `phase5a-staging-preview`. It does **not** deploy GitHub Pages. Production Pages on `main` is unchanged.
 
 Never put the service role key in Vite, git, or Actions. Stripe stays off.
 

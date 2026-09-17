@@ -20,10 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_APP_ENV: staging
-      # Prefer dedicated staging variables; VITE_* is a fallback for local/CI wiring.
+      # Staging-only GitHub Actions variables. Never fall back to production VITE_SUPABASE_*.
       # Public values only. Never add SUPABASE_SERVICE_ROLE_KEY here.
-      VITE_SUPABASE_URL: ${{ vars.STAGING_SUPABASE_URL || vars.VITE_SUPABASE_URL }}
-      VITE_SUPABASE_ANON_KEY: ${{ vars.STAGING_SUPABASE_ANON_KEY || vars.VITE_SUPABASE_ANON_KEY }}
+      VITE_SUPABASE_URL: ${{ vars.STAGING_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.STAGING_SUPABASE_ANON_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,6 +36,14 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      - name: Require STAGING_SUPABASE_* variables
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "Set GitHub Actions variables STAGING_SUPABASE_URL and STAGING_SUPABASE_ANON_KEY (public staging values only)."
+            echo "This workflow must not fall back to production VITE_SUPABASE_*."
+            exit 1
+          fi
 
       - name: Refuse production Supabase on staging preview
         run: |

@@ -63,8 +63,9 @@ describe("staging preview wiring (no secrets, no Pages deploy)", () => {
     const pagesWorkflow = readFileSync(path.join(root, ".github/workflows/ci-pages.yml"), "utf8");
     expect(stagingWorkflow).toMatch(/branches:\s*\[phase-5a-staging-preview\]/);
     expect(stagingWorkflow).toMatch(/VITE_APP_ENV:\s*staging/);
-    expect(stagingWorkflow).toMatch(/STAGING_SUPABASE_URL/);
-    expect(stagingWorkflow).toMatch(/STAGING_SUPABASE_ANON_KEY/);
+    expect(stagingWorkflow).toMatch(/vars\.STAGING_SUPABASE_URL/);
+    expect(stagingWorkflow).toMatch(/vars\.STAGING_SUPABASE_ANON_KEY/);
+    expect(stagingWorkflow).not.toMatch(/vars\.VITE_SUPABASE_/);
     expect(stagingWorkflow).toMatch(/name:\s*phase5a-staging-preview/);
     expect(stagingWorkflow).not.toMatch(/deploy-pages/);
     expect(stagingWorkflow).not.toMatch(/upload-pages-artifact/);
