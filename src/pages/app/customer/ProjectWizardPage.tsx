@@ -441,7 +441,7 @@ export function ProjectWizardPage() {
       {step === 5 ? (
         <div className="space-y-4">
           <p className="text-sm text-ink-700">
-            Your exact street stays protected until you select a contractor. Matched pros only see city and ZIP.
+            Your exact street stays protected until the hired contractor has job-fee access (payments coming soon) or an admin unlocks that booking. Matched pros only see city and ZIP.
           </p>
           <TextInput label="Street address" value={street} onChange={(e) => setStreet(e.target.value)} autoComplete="street-address" />
           <TextInput label="Apt / unit (optional)" value={street2} onChange={(e) => setStreet2(e.target.value)} />

@@ -4,6 +4,7 @@ import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./pr
 import { reusableEmptyDraft } from "./flows";
 import { detectContactLeak } from "./contactLeak";
 import type {
+  BookingContactAccess,
   Project,
   ProjectPrivateLocation,
   QuestionKind,
@@ -466,6 +467,36 @@ export async function submitBookingReview(bookingId: string, rating: number, bod
 export async function fetchBookingJobContact(bookingId: string): Promise<RpcJson> {
   const { data, error } = await client().rpc("booking_job_contact", { p_booking_id: bookingId });
   if (error) throw new Error(asError(error, "Contact is still locked."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function fetchBookingContactAccess(bookingId: string): Promise<BookingContactAccess | null> {
+  const { data, error } = await client()
+    .from("booking_contact_access")
+    .select(
+      "booking_id, status, granted_at, granted_by, grant_reason, grant_source, revoked_at, created_at, updated_at",
+    )
+    .eq("booking_id", bookingId)
+    .maybeSingle();
+  if (error) throw new Error(asError(error, "Could not load contact access."));
+  return (data as BookingContactAccess | null) ?? null;
+}
+
+export async function adminGrantBookingContactAccess(bookingId: string, reason: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("admin_grant_booking_contact_access", {
+    p_booking_id: bookingId,
+    p_reason: reason,
+  });
+  if (error) throw new Error(asError(error, "Could not grant contact access."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function adminRevokeBookingContactAccess(bookingId: string, reason: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("admin_revoke_booking_contact_access", {
+    p_booking_id: bookingId,
+    p_reason: reason,
+  });
+  if (error) throw new Error(asError(error, "Could not revoke contact access."));
   return (data ?? {}) as RpcJson;
 }
 

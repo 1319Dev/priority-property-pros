@@ -82,8 +82,8 @@ There are **no Stripe charges** in Phase 3 or Phase 4A. `fee_preview` and `previ
 
 ### Phase 4A
 
-- Exact street unlocks only via `booking_is_confirmed_for_contractor`, not on `CONTRACTOR_SELECTED`.
-- Phone/email after confirm go through `booking_job_contact`, not open `profiles` SELECT.
+- Exact street unlocks only via `booking_contact_access` entitlement (`UNLOCKED` or `ADMIN_OVERRIDE`) for the hired contractor. `booking_is_confirmed_for_contractor` now delegates to that helper. Selection and CONFIRMED are not enough.
+- Phone/email after entitlement go through `booking_job_contact`, not open `profiles` SELECT. CONFIRMED does not grant access. `admin_grant_booking_contact_access` is ADMIN-only, per booking, audited.
 - Bookings, fee snapshots, relationships, change-order approvals, and reviews cannot be written from the client except through SECURITY DEFINER RPCs that check `auth.uid()` / `is_admin()`.
 - `confirm_booking_for_testing` is ADMIN-only. Customers and contractors cannot spoof CONFIRMED.
 - Repeat pricing and relationships are server-assigned.
@@ -94,7 +94,7 @@ There are **no Stripe charges** in Phase 3 or Phase 4A. `fee_preview` and `previ
 - Customer project SELECT is split: owners see `customer_id = auth.uid()` only. Contractors use `contractor_can_read_project`. Admins keep `is_admin()`.
 - `list_my_customer_projects` / `get_my_customer_project` cannot return another customer’s rows.
 - Posted material edits and cancel/delete go through SECURITY DEFINER RPCs that check `auth.uid()`.
-- Exact street still unlocks only after a **confirmed** booking.
+- Exact street still unlocks only after **contact entitlement** (hire + job fee, or a targeted admin override). CONFIRMED alone is not enough.
 
 ### Admin contractor approvals
 
@@ -103,7 +103,17 @@ There are **no Stripe charges** in Phase 3 or Phase 4A. `fee_preview` and `previ
 - Reject does not delete. Matching still requires `ACTIVE` + `APPROVED` (+ `accepting_work` and category/area).
 - Paying a signup fee never auto-approves. This work does not change `payments_live` or `charges_live`.
 
-Free-text Q&A can still leak PII. There is no scanner in this phase.
+### Contact-access entitlement
+
+Private street, phone, email, and coordinates are gated by `booking_contact_access.status`:
+
+- `LOCKED` (default, including existing CONFIRMED bookings)
+- `UNLOCKED` (reserved for a future successful job-fee payment; stub is not wired while `payments_live`/`charges_live` are off)
+- `ADMIN_OVERRIDE` (targeted admin RPC with reason + audit log)
+
+`booking_job_contact` and `project_private_locations` RLS require that entitlement for the hired contractor. Unrelated contractors never inherit access. Missing entitlement rows are treated as no access. ACCEPTED and CONFIRMED never unlock. This work does not change `payments_live` or `charges_live`.
+
+Estimate-lifecycle scanners block obvious phone / email / URL / handle patterns in notes, bios, and messages. Dedicated street / phone / email / coordinates stay on this entitlement path. Unauthorized RPC, notification, and estimate_event payloads must not include those private fields.
 
 Supabase database advisors will still flag SECURITY DEFINER views and authenticated RPC grants. That is expected. Do not drop the views or revoke signed-in access to `post_project` / `accept_opportunity` / `select_estimate`.
 

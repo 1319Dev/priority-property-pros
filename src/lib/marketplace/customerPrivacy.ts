@@ -105,5 +105,6 @@ export const CUSTOMER_ISOLATION_RULES = [
   "Direct table/API reads cannot list or fetch another customer's projects.",
   "Customer-facing search/find/browse never lists private project records.",
   "Contractors still see only authorized opportunity fields under matching/participation rules.",
+  "Private street, phone, email, and coordinates stay locked until contact entitlement (hire + job fee or admin override), never merely because a booking is CONFIRMED.",
   "Admins retain intended cross-project access.",
 ] as const;

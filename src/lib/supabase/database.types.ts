@@ -695,6 +695,12 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      booking_contact_access: {
+        Row: import("../marketplace/types").BookingContactAccess;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       estimate_events: {
         Row: {
           id: string;
@@ -823,6 +829,10 @@ export type Database = {
         Returns: Json;
       };
       booking_job_contact: { Args: { p_booking_id: string }; Returns: Json };
+      booking_has_contact_access: { Args: { p_booking_id: string }; Returns: boolean };
+      contractor_has_contact_access_on_project: { Args: { p_project_id: string }; Returns: boolean };
+      admin_grant_booking_contact_access: { Args: { p_booking_id: string; p_reason: string }; Returns: Json };
+      admin_revoke_booking_contact_access: { Args: { p_booking_id: string; p_reason?: string | null }; Returns: Json };
       hire_again_contractors: { Args: Record<string, never>; Returns: Json };
       booking_is_confirmed_for_contractor: { Args: { p_project_id: string }; Returns: boolean };
       current_contractor_profile_id: { Args: Record<string, never>; Returns: string };
@@ -872,6 +882,8 @@ export type Database = {
       question_kind: QuestionKind;
       estimate_item_kind: EstimateItemKind;
       booking_status: import("../marketplace/types").BookingStatus;
+      contact_access_status: import("../marketplace/types").ContactAccessStatus;
+      contact_grant_source: import("../marketplace/types").ContactGrantSource;
       fee_schedule_kind: import("../marketplace/types").FeeScheduleKind;
       relationship_status: import("../marketplace/types").RelationshipStatus;
       change_order_status: import("../marketplace/types").ChangeOrderStatus;

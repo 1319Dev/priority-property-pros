@@ -10,6 +10,7 @@ import {
   canStartBooking,
   canTransitionBooking,
   clientCannotSpoofConfirmed,
+  contactAccessAllowsReveal,
   paymentsComingSoonCopy,
 } from "./bookings";
 
@@ -33,14 +34,17 @@ describe("booking state machine", () => {
     expect(paymentsComingSoonCopy()).toMatch(/online payment setup is coming soon/i);
   });
 
-  it("unlocks contact only after CONFIRMED, not on pending selection", () => {
+  it("never unlocks contact from booking status; entitlement is required", () => {
     expect(bookingUnlocksContact("PENDING")).toBe(false);
     expect(bookingUnlocksContact("AWAITING_PAYMENT")).toBe(false);
     expect(bookingUnlocksContact("CANCELLED")).toBe(false);
-    expect(bookingUnlocksContact("CONFIRMED")).toBe(true);
-    expect(bookingUnlocksContact("IN_PROGRESS")).toBe(true);
-    expect(bookingUnlocksContact("COMPLETED")).toBe(true);
-    expect(bookingUnlocksContact("DISPUTED")).toBe(true);
+    expect(bookingUnlocksContact("CONFIRMED")).toBe(false);
+    expect(bookingUnlocksContact("IN_PROGRESS")).toBe(false);
+    expect(bookingUnlocksContact("COMPLETED")).toBe(false);
+    expect(bookingUnlocksContact("DISPUTED")).toBe(false);
+    expect(contactAccessAllowsReveal("LOCKED")).toBe(false);
+    expect(contactAccessAllowsReveal("UNLOCKED")).toBe(true);
+    expect(contactAccessAllowsReveal("ADMIN_OVERRIDE")).toBe(true);
   });
 
   it("treats stale pending bookings as abandoned without a relationship", () => {

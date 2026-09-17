@@ -1,4 +1,5 @@
 import type { EstimateStatus, ProjectStatus } from "./types";
+import { unauthorizedPayloadLeaksPrivateContact } from "./bookings";
 
 /** Product "Sent" is stored as SENT (new) or SUBMITTED (legacy Phase 3). */
 export const SENT_EQUIVALENT: EstimateStatus[] = ["SENT", "SUBMITTED"];
@@ -254,21 +255,8 @@ export function formatViewedTimestamp(iso: string | null): string | null {
   return date.toLocaleString();
 }
 
-const CONTACT_PAYLOAD_KEYS = [
-  "phone",
-  "email",
-  "street",
-  "street_line1",
-  "street_line2",
-  "lat",
-  "lng",
-  "coords",
-  "exact_address",
-];
-
 export function lifecyclePayloadLeaksContact(payload: Record<string, unknown> | null | undefined): boolean {
-  if (!payload) return false;
-  return CONTACT_PAYLOAD_KEYS.some((key) => key in payload && payload[key] != null && payload[key] !== "");
+  return unauthorizedPayloadLeaksPrivateContact(payload);
 }
 
 /** ACCEPTED / CONFIRMED on this lifecycle path do not grant phone/email/street. Contact stays on #14 entitlement. */

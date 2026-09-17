@@ -37,6 +37,8 @@ describe("Phase 5A security and pause constraints", () => {
     expect(sql).toMatch(/CREATE POLICY projects_select_owner/);
     expect(sql).toMatch(/list_my_customer_projects/);
     expect(sql).toMatch(/get_my_customer_project/);
+    expect(sql).toMatch(/CREATE TABLE public\.booking_contact_access/);
+    expect(sql).toMatch(/contact is locked until hire and job-fee entitlement or admin override/);
   });
 
   it("does not rank estimates or show Stripe test-mode copy to customers", () => {

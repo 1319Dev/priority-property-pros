@@ -21,8 +21,9 @@ A customer may see **only their own projects**. This is enforced in Postgres, no
 - Edit, cancel, photos, answers, notices, private location, estimates, and bookings keep owner (or separately authorized contractor/admin) checks
 - Changing a project ID in the URL yields **not found**, not another customer’s job
 - Find-a-pro / public browse does not list private project records
-- Contractors still see only authorized opportunity fields (city/ZIP, not street/phone/email until a booking is **confirmed**)
+- Contractors still see only authorized opportunity fields (city/ZIP, not street/phone/email until contact entitlement after hire + job fee, or a targeted admin override)
 - Admins keep intended cross-project access
+- A booking becoming **CONFIRMED** does **not** unlock private contact
 
 ## Human project states
 

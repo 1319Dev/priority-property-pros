@@ -97,6 +97,24 @@ export const CHANGE_ORDER_STATUSES = [
 ] as const;
 export type ChangeOrderStatus = (typeof CHANGE_ORDER_STATUSES)[number];
 
+export const CONTACT_ACCESS_STATUSES = ["LOCKED", "UNLOCKED", "ADMIN_OVERRIDE"] as const;
+export type ContactAccessStatus = (typeof CONTACT_ACCESS_STATUSES)[number];
+
+export const CONTACT_GRANT_SOURCES = ["JOB_FEE_PAYMENT", "ADMIN_OVERRIDE", "SYSTEM"] as const;
+export type ContactGrantSource = (typeof CONTACT_GRANT_SOURCES)[number];
+
+export type BookingContactAccess = {
+  booking_id: string;
+  status: ContactAccessStatus;
+  granted_at: string | null;
+  granted_by: string | null;
+  grant_reason: string | null;
+  grant_source: ContactGrantSource;
+  revoked_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type FeeBracket = {
   min_amount_cents: number;
   max_amount_cents: number | null;

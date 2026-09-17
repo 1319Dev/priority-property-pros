@@ -26,7 +26,7 @@ const otherPro: MarketplaceActor = {
 };
 
 describe("privacy and IDOR mirrors", () => {
-  it("hides exact street from opportunity contractors until booking confirmation", () => {
+  it("hides exact street from opportunity contractors until contact entitlement", () => {
     const project = {
       customer_id: "cust",
       selected_contractor_profile_id: null,
@@ -38,15 +38,19 @@ describe("privacy and IDOR mirrors", () => {
     ).toBe(false);
     expect(
       canReadExactAddress(pro, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED"),
+    ).toBe(false);
+    expect(
+      canReadExactAddress(pro, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED", "UNLOCKED"),
     ).toBe(true);
     expect(
-      canReadExactAddress(otherPro, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED"),
+      canReadExactAddress(otherPro, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED", "UNLOCKED"),
     ).toBe(false);
     expect(
       canReadCustomerContact(otherPro, "cust", {
         bookingStatus: "CONFIRMED",
         contractorProfileId: "pro-1",
         selectedContractorProfileId: "pro-1",
+        contactAccess: "UNLOCKED",
       }),
     ).toBe(false);
   });

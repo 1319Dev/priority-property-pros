@@ -363,7 +363,7 @@ export function OpportunitiesPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Jobs</h1>
-      <p className="text-sm text-ink-700">Approximate location only. Exact street stays hidden until a booking is confirmed.</p>
+      <p className="text-sm text-ink-700">Approximate location only. Exact street stays hidden until hire + job fee (payments coming soon) or an admin unlock.</p>
       <FormError message={error} />
       {live.length === 0 ? (
         <EmptyState title="No open jobs" body="Nearby matching jobs will land here. At most three contractors can accept. Cancelled jobs leave this list." />
@@ -469,7 +469,7 @@ export function OpportunityDetailPage() {
         <p>{project?.description}</p>
         <p className="mt-2 font-semibold">Approximate location</p>
         <p>{[project?.city, project?.state, project?.zip_code].filter(Boolean).join(", ")}</p>
-        <p className="text-ink-500">Exact street, phone, and email stay hidden until the customer’s booking is confirmed.</p>
+        <p className="text-ink-500">Exact street, phone, and email stay hidden until hire + job fee (payments coming soon) or an admin unlock.</p>
         <p className="mt-2">{project?.timing ? TIMING_LABELS[project.timing] : ""}</p>
       </section>
       <div className="grid grid-cols-2 gap-2">

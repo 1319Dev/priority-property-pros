@@ -1,7 +1,13 @@
 import type { Actor } from "../auth/rlsPolicy";
 import { actorIsAdmin } from "../auth/rlsPolicy";
-import { bookingUnlocksContact } from "./bookings";
-import type { BookingStatus, CredentialStatus, EstimateStatus, OpportunityStatus } from "./types";
+import { contactAccessAllowsReveal } from "./bookings";
+import type {
+  BookingStatus,
+  ContactAccessStatus,
+  CredentialStatus,
+  EstimateStatus,
+  OpportunityStatus,
+} from "./types";
 
 export type MarketplaceActor = Actor & {
   contractorProfileId?: string | null;
@@ -14,23 +20,31 @@ export function canReadExactAddress(
     selected_contractor_profile_id: string | null;
   },
   bookingStatus: BookingStatus | null = null,
+  contactAccess: ContactAccessStatus | null = null,
 ): boolean {
   if (!actor.id) return false;
   if (actorIsAdmin(actor)) return true;
   if (actor.id === project.customer_id) return true;
-  if (!bookingStatus || !bookingUnlocksContact(bookingStatus)) return false;
+  if (bookingStatus === "CANCELLED") return false;
+  if (!contactAccessAllowsReveal(contactAccess)) return false;
   return Boolean(actor.contractorProfileId) && actor.contractorProfileId === project.selected_contractor_profile_id;
 }
 
 export function canReadCustomerContact(
   actor: MarketplaceActor,
   customerId: string,
-  opts: { bookingStatus: BookingStatus | null; contractorProfileId?: string | null; selectedContractorProfileId?: string | null },
+  opts: {
+    bookingStatus: BookingStatus | null;
+    contractorProfileId?: string | null;
+    selectedContractorProfileId?: string | null;
+    contactAccess?: ContactAccessStatus | null;
+  },
 ): boolean {
   if (!actor.id) return false;
   if (actorIsAdmin(actor)) return true;
   if (actor.id === customerId) return true;
-  if (!opts.bookingStatus || !bookingUnlocksContact(opts.bookingStatus)) return false;
+  if (opts.bookingStatus === "CANCELLED") return false;
+  if (!contactAccessAllowsReveal(opts.contactAccess)) return false;
   if (actor.accountType !== "CONTRACTOR") return false;
   if (!opts.selectedContractorProfileId) return false;
   return Boolean(actor.contractorProfileId) && actor.contractorProfileId === opts.selectedContractorProfileId;

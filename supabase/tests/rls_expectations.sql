@@ -22,7 +22,12 @@
 -- Phase 4A (after 20260918000001–05):
 --   customer cannot select * from bookings where customer_id <> auth.uid()
 --   contractor cannot select unrelated bookings
---   contractor cannot select project_private_locations until booking CONFIRMED
+--   contractor cannot select project_private_locations until contact entitlement
+--   CONFIRMED booking without booking_contact_access UNLOCKED/ADMIN_OVERRIDE → booking_job_contact locked
+--   hired contractor with entitlement → street/phone/email/lat/lng
+--   different contractor on the same project → locked
+--   admin_grant_booking_contact_access as non-admin → error
+--   admin_grant_booking_contact_access as admin → ADMIN_OVERRIDE + audit_logs row
 --   customer/contractor confirm_booking_for_testing → error (admin only)
 --   client update bookings.fee_cents / status → error
 --   client insert customer_contractor_relationships → error
@@ -38,5 +43,5 @@
 --   customer A cannot select project_photos / project_answers / project_private_locations for B
 --   contractor still sees authorized opportunity rows only
 --   admin still sees all projects
---   confirmed booking still required for exact street
+--   confirmed booking is not enough for exact street; contact entitlement required
 
