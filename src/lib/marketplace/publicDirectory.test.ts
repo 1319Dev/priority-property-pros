@@ -20,7 +20,6 @@ import {
   formatPublicRating,
   isDirectoryListedContractor,
   isUuid,
-  PRIVATE_DIRECTORY_KEYS,
   PUBLIC_CONTRACTOR_DIRECTORY_FIELDS,
   stripPrivateDirectoryFields,
   toPublicContractorCard,
