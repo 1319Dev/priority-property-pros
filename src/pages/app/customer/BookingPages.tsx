@@ -25,7 +25,9 @@ import {
 } from "../../../lib/marketplace/api";
 import { BOOKING_STATUS_LABELS, paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
+import { contractorPaysFeeCopy } from "../../../lib/payments/schedules";
 import type { Booking, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
+import { CustomerPayPanel } from "./PaymentPages";
 import { useToast } from "../../../hooks/useToast";
 
 function statusLabel(status: string) {
@@ -48,7 +50,10 @@ export function CustomerBookingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
-      <p className="text-ink-700">Selecting a pro starts a booking. Payment is not live, so nothing here is marked paid.</p>
+      <p className="text-ink-700">
+        Selecting a pro starts a booking. Stripe test checkout can collect a deposit or full payment. Live charges stay
+        off, and a “success” redirect does not confirm the job.
+      </p>
       <FormError message={error} />
       {rows.length === 0 ? (
         <EmptyState title="No bookings yet" body="When you select a contractor, the booking will wait here until payment exists." />
@@ -115,7 +120,9 @@ export function CustomerBookingDetailPage() {
       </header>
       <FormError message={error} />
       {pending ? (
-        <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm font-semibold text-forest-800">{paymentsComingSoonCopy()}</p>
+        <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm font-semibold text-forest-800">
+          {paymentsComingSoonCopy()} Stripe test mode is not live money.
+        </p>
       ) : null}
       <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm">
         <p>Job total {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
@@ -124,8 +131,9 @@ export function CustomerBookingDetailPage() {
           {formatUsdFromCents(booking.fee_cents)} ({booking.fee_kind === "REPEAT" ? "Hire Again rate" : "original schedule"})
         </p>
         <p>Pro would earn {formatUsdFromCents(booking.contractor_earnings_cents)}</p>
-        <p className="mt-2 text-ink-500">Preview / estimate — payments not live. You are not charged a customer percentage.</p>
+        <p className="mt-2 text-ink-500">{contractorPaysFeeCopy()}</p>
       </section>
+      <CustomerPayPanel bookingId={booking.id} canPay={pending || booking.status === "CONFIRMED" || booking.status === "IN_PROGRESS"} />
       {pending ? (
         <Button
           type="button"

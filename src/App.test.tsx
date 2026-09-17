@@ -105,6 +105,6 @@ describe("Phase 3 marketplace surfaces", () => {
     renderApp("/how-it-works");
     expect(screen.getByText(/up to three local independents/i)).toBeInTheDocument();
     expect(screen.queryByText(/live posting is not on yet/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/payments, payouts, and priority verified are not/i)).toBeInTheDocument();
+    expect(screen.getByText(/live charges, live payouts, and priority verified are not/i)).toBeInTheDocument();
   });
 });

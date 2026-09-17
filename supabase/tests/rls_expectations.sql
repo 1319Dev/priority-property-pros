@@ -25,6 +25,14 @@
 --   client update bookings.fee_cents / status → error
 --   client insert customer_contractor_relationships → error
 --   client insert fee_schedules → error
+-- Phase 4B (after 20260919000001–06):
+--   customer cannot pay another customer's booking (create-payment-intent 403)
+--   contractor cannot replace another contractor's stripe_account_id
+--   client cannot insert ledger_entries / payments / transfers
+--   unauthenticated webhook without Stripe-Signature → 400
+--   replay of the same stripe_event_id is a no-op
+--   payments_live / charges_live remain 0
+
 --   contractor cannot mark a change order APPROVED alone
 --   submit_booking_review on a PENDING booking → error
 

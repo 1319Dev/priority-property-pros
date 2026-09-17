@@ -163,10 +163,11 @@ Simplest non-programmer rollback:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
+- `VITE_STRIPE_PUBLISHABLE_KEY` (optional, `pk_test_` only)
 
 Click-by-click: [SUPABASE_SETUP.md](SUPABASE_SETUP.md) section E.
 
-Do **not** add Stripe keys, database passwords, or a Supabase **service role** key to this repository or to Actions.
+Do **not** add Stripe **secret** keys, webhook secrets, database passwords, or a Supabase **service role** key to this repository or to Actions.
 
 `.env.example` lists public placeholders. Copy to `.env.local` on your computer only.
 

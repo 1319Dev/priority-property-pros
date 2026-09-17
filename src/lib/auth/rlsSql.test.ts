@@ -261,3 +261,64 @@ describe("Phase 4A SQL migrations", () => {
     expect(sql).toMatch(/compute_fee_from_snapshot/);
   });
 });
+
+const PHASE4B_TABLES = [
+  "contractor_stripe_accounts",
+  "payment_schedules",
+  "payment_schedule_items",
+  "payments",
+  "stripe_events",
+  "ledger_entries",
+  "contractor_transfers",
+  "refunds",
+  "stripe_disputes",
+  "booking_cancellations",
+];
+
+describe("Phase 4B SQL migrations", () => {
+  const sql = allSql();
+
+  it("creates financial tables with RLS and no client writes", () => {
+    for (const table of PHASE4B_TABLES) {
+      expect(sql).toMatch(new RegExp(`CREATE TABLE public\\.${table}`, "i"));
+      expect(sql).toMatch(new RegExp(`ALTER TABLE public\\.${table} ENABLE ROW LEVEL SECURITY`, "i"));
+    }
+    expect(sql).not.toMatch(/GRANT INSERT ON TABLE public\.ledger_entries/);
+    expect(sql).not.toMatch(/GRANT UPDATE ON TABLE public\.payments/);
+    expect(sql).not.toMatch(/GRANT DELETE ON TABLE public\.stripe_events/);
+  });
+
+  it("keeps payments_live and charges_live at 0 and rejects live keys in constraints", () => {
+    expect(sql).toMatch(/payments_live and charges_live must stay 0/);
+    expect(sql).toMatch(/CONSTRAINT contractor_stripe_accounts_test_mode CHECK \(stripe_mode = 'test'\)/);
+    expect(sql).toMatch(/CONSTRAINT payments_test_mode CHECK \(stripe_mode = 'test'\)/);
+    expect(sql).toMatch(/FUNCTION public\.confirm_booking_from_payment/);
+    expect(sql).toMatch(/only an admin can confirm a booking until payments are live/);
+  });
+
+  it("does not rewrite Phase 4A fee schedules", () => {
+    expect(sql).toMatch(/PPP original progressive v1/);
+    expect(sql).toMatch(/0, 50000, 800, 1/);
+    expect(sql).toMatch(/2500000, NULL, 250, 5/);
+    expect(sql).toMatch(/min_fee_cents integer NOT NULL,\s*\n\s*max_fee_cents integer NOT NULL/i);
+    expect(sql).not.toMatch(/UPDATE public\.fee_schedules SET/);
+    expect(sql).not.toMatch(/UPDATE public\.fee_schedule_brackets SET/);
+    expect(sql).not.toMatch(/DROP TABLE public\.fee_schedules/i);
+  });
+
+  it("makes ledger immutable and webhooks server-only and idempotent", () => {
+    expect(sql).toMatch(/ledger entries are immutable; corrections are new rows/);
+    expect(sql).toMatch(/FUNCTION public\.claim_stripe_event/);
+    expect(sql).toMatch(/stripe financial RPCs are server-only/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.claim_stripe_event\(text, text, jsonb\) TO service_role/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.confirm_booking_from_payment\(uuid\) FROM PUBLIC, anon, authenticated/);
+  });
+
+  it("abandons pending bookings without unlocking contact or reopening expired estimates", () => {
+    expect(sql).toMatch(/reopened_expired_estimates', false/);
+    expect(sql).toMatch(/relationship_created', false/);
+    expect(sql).toMatch(/FUNCTION public\.reopen_project_after_abandoned_booking/);
+    expect(sql).not.toMatch(/DELETE FROM auth\.users/i);
+  });
+});
+

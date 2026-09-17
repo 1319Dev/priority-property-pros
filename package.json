@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Priority Property Pros — Phase 4A booking core and progressive fee engine on the Phase 3 marketplace.",
+  "description": "Priority Property Pros — Phase 4B Stripe Connect TEST-MODE payments on the Phase 4A booking core.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build && node scripts/copy-404.mjs",

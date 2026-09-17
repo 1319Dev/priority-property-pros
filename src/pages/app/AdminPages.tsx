@@ -4,6 +4,8 @@ import { Button } from "../../components/ui/Button";
 import { FormError } from "../../lib/auth/AuthCard";
 import { confirmBookingForTesting, expireStalePendingBookings, fetchBooking } from "../../lib/marketplace/api";
 import { paymentsComingSoonCopy } from "../../lib/marketplace/bookings";
+import { adminCreateRefund, adminCreateTransfer, fetchBookingPayments, fetchBookingTransfers } from "../../lib/payments/api";
+import { dollarsToCents, formatUsdFromCents } from "../../lib/marketplace/fees";
 import { useToast } from "../../hooks/useToast";
 
 export function AdminHomePage() {
@@ -58,16 +60,28 @@ export function AdminBookingsPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [payments, setPayments] = useState<Array<{ id: string; amount_cents: number; status: string }>>([]);
+  const [transfers, setTransfers] = useState<Array<{ id: string; amount_cents: number; status: string }>>([]);
+  const [refundAmount, setRefundAmount] = useState("");
 
   useEffect(() => {
     void expireStalePendingBookings().catch(() => undefined);
   }, []);
 
+  async function lookup() {
+    const id = bookingId.trim();
+    const row = await fetchBooking(id);
+    setStatus(row.status);
+    setPayments(await fetchBookingPayments(id));
+    setTransfers(await fetchBookingTransfers(id));
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Test booking confirm</h1>
       <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm font-semibold text-forest-800">
-        TEST ONLY. This is not “Pay now succeeded.” {paymentsComingSoonCopy()} Customers and contractors cannot call this.
+        TEST ONLY. This is not “Pay now succeeded.” {paymentsComingSoonCopy()} The real confirmation path is a verified
+        Stripe webhook. Customers and contractors cannot call this.
       </p>
       <FormError message={error} />
       <label className="block">
@@ -87,8 +101,7 @@ export function AdminBookingsPage() {
         onClick={() => {
           setBusy(true);
           setError(null);
-          void fetchBooking(bookingId.trim())
-            .then((row) => setStatus(row.status))
+          void lookup()
             .catch((err: Error) => setError(err.message))
             .finally(() => setBusy(false));
         }}
@@ -114,6 +127,64 @@ export function AdminBookingsPage() {
       >
         Confirm for testing (no charge)
       </Button>
+      {payments.length > 0 ? (
+        <section className="space-y-2 text-sm">
+          <h2 className="font-display text-2xl">Test refunds</h2>
+          <p>Server-side only. Success history is kept. Live mode is off.</p>
+          {payments.map((payment) => (
+            <div key={payment.id} className="rounded-2xl border px-4 py-3">
+              <p>
+                {formatUsdFromCents(payment.amount_cents)} · {payment.status}
+              </p>
+              <input
+                className="mt-2 min-h-12 w-full rounded-2xl border px-3"
+                placeholder="Refund USD"
+                value={refundAmount}
+                onChange={(e) => setRefundAmount(e.target.value)}
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="mt-2"
+                onClick={() => {
+                  const cents = dollarsToCents(refundAmount) ?? 0;
+                  void adminCreateRefund(payment.id, cents, "admin_test")
+                    .then(() => toast.push("Refund recorded (test mode)."))
+                    .catch((err: Error) => setError(err.message));
+                }}
+              >
+                Refund
+              </Button>
+            </div>
+          ))}
+        </section>
+      ) : null}
+      {transfers.length > 0 ? (
+        <section className="space-y-2 text-sm">
+          <h2 className="font-display text-2xl">Test transfers</h2>
+          {transfers.map((transfer) => (
+            <div key={transfer.id} className="rounded-2xl border px-4 py-3">
+              <p>
+                {formatUsdFromCents(transfer.amount_cents)} · {transfer.status}
+              </p>
+              {transfer.status === "ELIGIBLE" ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => {
+                    void adminCreateTransfer(transfer.id)
+                      .then(() => toast.push("Transfer submitted (test mode, not a same-day withdrawal)."))
+                      .catch((err: Error) => setError(err.message));
+                  }}
+                >
+                  Send test transfer
+                </Button>
+              ) : null}
+            </div>
+          ))}
+        </section>
+      ) : null}
     </div>
   );
 }
