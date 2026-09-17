@@ -5,6 +5,20 @@ import logoSvg from "./assets/logo.svg?url";
 import wordmarkSvg from "./assets/wordmark.svg?url";
 import App from "./App";
 import { ToastProvider } from "./components/ui/Toast";
+import {
+  FEE_WHEN_HIRED_SENTENCE,
+  HOMEOWNER_PRICING_SUMMARY,
+  ORIGINAL_FEE_BRACKETS_PUBLIC,
+  ORIGINAL_MAX_FEE,
+  ORIGINAL_MIN_FEE,
+  PRICING_HOMEPAGE_LINE,
+  PRICING_PAGE_TITLE,
+  PRO_PRICING_SUMMARY,
+  REPEAT_FEE_RATE,
+  REPEAT_MAX_FEE,
+  REPEAT_MIN_FEE,
+  SEE_PRICING_LABEL,
+} from "./data/pricing";
 import { SERVICES } from "./data/services";
 import { AuthProvider } from "./lib/auth/AuthProvider";
 
@@ -53,6 +67,7 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     renderApp("/");
     expect(screen.getAllByRole("link", { name: /find a pro/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /how it works/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /^pricing$/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /become a pro/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /sign in/i }).length).toBeGreaterThan(0);
   });
@@ -113,5 +128,30 @@ describe("Phase 3 marketplace surfaces", () => {
     expect(screen.getByText(/up to three local independents/i)).toBeInTheDocument();
     expect(screen.queryByText(/live posting is not on yet/i)).not.toBeInTheDocument();
     expect(screen.getAllByText(/online payment setup is coming soon/i).length).toBeGreaterThan(0);
+  });
+});
+
+describe("Public marketplace pricing", () => {
+  it("states free/fee messaging on the homepage and links to pricing", () => {
+    renderApp("/");
+    expect(screen.getByRole("heading", { name: PRICING_HOMEPAGE_LINE })).toBeInTheDocument();
+    const seePricing = screen.getByRole("link", { name: SEE_PRICING_LABEL });
+    expect(seePricing).toHaveAttribute("href", "/pricing");
+  });
+
+  it("publishes homeowner, pro, original, and repeat fee facts without processor jargon", () => {
+    const { container } = renderApp("/pricing");
+    expect(screen.getByRole("heading", { name: PRICING_PAGE_TITLE })).toBeInTheDocument();
+    expect(screen.getByText(HOMEOWNER_PRICING_SUMMARY)).toBeInTheDocument();
+    expect(screen.getByText(PRO_PRICING_SUMMARY)).toBeInTheDocument();
+    expect(screen.getByText(FEE_WHEN_HIRED_SENTENCE)).toBeInTheDocument();
+    for (const bracket of ORIGINAL_FEE_BRACKETS_PUBLIC) {
+      expect(screen.getByText(bracket.range)).toBeInTheDocument();
+      expect(screen.getAllByText(bracket.rate).length).toBeGreaterThan(0);
+    }
+    expect(screen.getByText(`Minimum ${ORIGINAL_MIN_FEE}. Maximum ${ORIGINAL_MAX_FEE}.`)).toBeInTheDocument();
+    expect(screen.getByText(REPEAT_FEE_RATE)).toBeInTheDocument();
+    expect(screen.getByText(`Minimum ${REPEAT_MIN_FEE}. Maximum ${REPEAT_MAX_FEE}.`)).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/stripe|paymentintent|webhooks?|payments_live|charges_live|test mode/i);
   });
 });

@@ -10,6 +10,7 @@ import { Skeleton } from "../ui/Skeleton";
 const links = [
   { to: "/find-a-pro", label: "Find a Pro" },
   { to: "/how-it-works", label: "How It Works" },
+  { to: "/pricing", label: "Pricing" },
   { to: "/become-a-pro", label: "Become a Pro" },
 ];
 
