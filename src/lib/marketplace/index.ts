@@ -10,5 +10,7 @@ export {
   paymentsArePaused,
   afterSelectEstimatePath,
   contactLockedUntilConfirmedCopy,
+  sanitizeCustomerFacingError,
+  customerCopyContainsPaymentInternals,
 } from "./bookings";
 export * from "./types";

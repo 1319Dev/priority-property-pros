@@ -14,12 +14,15 @@ import {
   canTransitionBooking,
   clientCannotSpoofConfirmed,
   contactLockedUntilConfirmedCopy,
+  customerCopyContainsPaymentInternals,
   customerPayPath,
   customerPreBookingPath,
   paymentsArePaused,
   paymentsComingSoonCopy,
+  postSelectCustomerCopy,
   preBookingHeadline,
   preBookingTitle,
+  sanitizeCustomerFacingError,
   selectionDoesNotConfirmCopy,
 } from "./bookings";
 
@@ -96,5 +99,23 @@ describe("pre-booking / paused-payment UX boundary", () => {
     expect(selectionDoesNotConfirmCopy()).toMatch(/does not confirm the job/i);
     expect(contactLockedUntilConfirmedCopy()).toMatch(/cannot see your exact address, phone, or email/i);
     expect(contactLockedUntilConfirmedCopy()).not.toMatch(/can see your exact address/i);
+  });
+
+  it("never exposes Stripe or payment internals in post-select customer copy or leaked errors", () => {
+    for (const copy of postSelectCustomerCopy()) {
+      expect(customerCopyContainsPaymentInternals(copy)).toBe(false);
+    }
+    expect(sanitizeCustomerFacingError("Could not select this contractor.")).toBe(
+      "Could not select this contractor.",
+    );
+    expect(sanitizeCustomerFacingError("Stripe TEST MODE PaymentIntent webhook failed", "Selection failed.")).toBe(
+      "Selection failed.",
+    );
+    expect(sanitizeCustomerFacingError("payments_live must stay false")).toBe(
+      "Something went wrong. Please try again.",
+    );
+    expect(sanitizeCustomerFacingError("charges_live check failed")).toBe(
+      "Something went wrong. Please try again.",
+    );
   });
 });

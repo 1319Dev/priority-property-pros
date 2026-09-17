@@ -71,6 +71,43 @@ export function paymentsComingSoonCopy(): string {
   return "Online payment setup is coming soon.";
 }
 
+const FORBIDDEN_CUSTOMER_PAYMENT_COPY: readonly RegExp[] = [
+  /stripe/i,
+  /test\s*mode/i,
+  /payment\s*intent/i,
+  /paymentintent/i,
+  /\bwebhook\b/i,
+  /payments_live/i,
+  /charges_live/i,
+];
+
+export function customerCopyContainsPaymentInternals(text: string): boolean {
+  return FORBIDDEN_CUSTOMER_PAYMENT_COPY.some((pattern) => pattern.test(text));
+}
+
+/** Never render processor internals if a server error leaks them. */
+export function sanitizeCustomerFacingError(
+  message: string | null | undefined,
+  fallback = "Something went wrong. Please try again.",
+): string {
+  const text = (message ?? "").trim();
+  if (!text || customerCopyContainsPaymentInternals(text)) return fallback;
+  return text;
+}
+
+export function postSelectCustomerCopy(): string[] {
+  return [
+    paymentsComingSoonCopy(),
+    preBookingHeadline(),
+    preBookingTitle(),
+    selectionDoesNotConfirmCopy(),
+    contactLockedUntilConfirmedCopy(),
+    "No payment was taken.",
+    "The job is not booked yet.",
+    "Exact address, phone, and email stay private.",
+  ];
+}
+
 /** Customer-facing pause: flags off, or any staging preview. */
 export function paymentsArePaused(input?: {
   paymentsLive?: boolean;
@@ -112,7 +149,7 @@ export function bookingIdFromSelectResult(result: { booking_id?: unknown } | nul
   return typeof id === "string" && id.length > 0 ? id : null;
 }
 
-/** After hire/select, send the customer to the gated pay screen — never a live Stripe checkout. */
+/** After hire/select, send the customer to the gated pay screen — never a live checkout. */
 export function afterSelectEstimatePath(input: {
   projectId: string;
   bookingId?: string | null;

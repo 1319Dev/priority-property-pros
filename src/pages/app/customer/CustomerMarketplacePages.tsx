@@ -32,6 +32,7 @@ import {
   contactLockedUntilConfirmedCopy,
   paymentsComingSoonCopy,
   preBookingHeadline,
+  sanitizeCustomerFacingError,
   selectionDoesNotConfirmCopy,
 } from "../../../lib/marketplace/bookings";
 import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type EstimateItemKind, type Project } from "../../../lib/marketplace/types";
@@ -75,7 +76,7 @@ export function CustomerHomePage() {
         setProjects(nextProjects);
         setBookings(nextBookings as Booking[]);
       })
-      .catch((err: Error) => setError(err.message))
+      .catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)))
       .finally(() => setLoading(false));
   }, [profile]);
 
@@ -95,7 +96,7 @@ export function CustomerHomePage() {
       <ButtonLink to="/app/customer/projects/new/wizard" className="min-h-14">
         Post a project
       </ButtonLink>
-      {error ? <ErrorState message={error} /> : null}
+      {error ? <ErrorState message={sanitizeCustomerFacingError(error)} /> : null}
       {loading ? <LoadingState /> : null}
       {!loading && recent.length === 0 ? (
         <EmptyState title="No projects yet" body="Start a draft when you know what needs doing. Only you will see it." />
@@ -143,7 +144,7 @@ export function CustomerProjectsPage() {
         setProjects(nextProjects);
         setBookings(nextBookings as Booking[]);
       })
-      .catch((err: Error) => setError(err.message))
+      .catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)))
       .finally(() => setLoading(false));
   }, [profile]);
 
@@ -184,7 +185,7 @@ export function CustomerProjectsPage() {
           New
         </ButtonLink>
       </div>
-      <FormError message={error} />
+      <FormError message={error ? sanitizeCustomerFacingError(error) : null} />
       <div className="flex flex-wrap gap-2">
         {CUSTOMER_DASHBOARD_TABS.map((item) => (
           <button
@@ -302,7 +303,7 @@ export function CustomerProjectDetailPage() {
       {notices.slice(0, 3).map((notice) => (
         <StatusBanner key={notice.id} title={notice.title} body={notice.body} tone={notice.kind.includes("CANCEL") ? "warning" : "info"} />
       ))}
-      <FormError message={error} />
+      <FormError message={error ? sanitizeCustomerFacingError(error) : null} />
       <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm">
         <h2 className="font-display text-2xl text-forest-800">Job details</h2>
         <p className="mt-3 whitespace-pre-wrap">{project.description || "No description yet."}</p>
@@ -379,7 +380,7 @@ export function CustomerProjectDetailPage() {
                   event.preventDefault();
                   void answerEstimateQuestion(item.id, reply[item.id] ?? "")
                     .then(reload)
-                    .catch((err: Error) => setError(err.message));
+                    .catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)));
                 }}
               >
                 <textarea
@@ -409,7 +410,7 @@ export function CustomerProjectDetailPage() {
               toast.push(result.action === "deleted" ? "Draft deleted." : "Project cancelled.");
               navigate("/app/customer/projects");
             })
-            .catch((err: Error) => setError(err.message))
+            .catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)))
             .finally(() => {
               setBusy(false);
               setCancelOpen(false);
@@ -464,7 +465,9 @@ export function CompareEstimatesPage() {
       setConfirmId(null);
       navigate(afterSelectEstimatePath({ projectId, bookingId: bookingIdFromSelectResult(result) }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Selection failed.");
+      setError(
+        sanitizeCustomerFacingError(err instanceof Error ? err.message : null, "Selection failed."),
+      );
     } finally {
       setBusy(false);
     }
@@ -482,7 +485,7 @@ export function CompareEstimatesPage() {
         Factual comparison only. PPP does not rank a “best” estimate. Up to three local independents can price the job.
         {` ${selectionDoesNotConfirmCopy()}`} {contactLockedUntilConfirmedCopy()}
       </p>
-      <FormError message={error} />
+      <FormError message={error ? sanitizeCustomerFacingError(error) : null} />
       {rows.length === 0 ? <EmptyState title="No estimates yet" body="Submitted estimates will appear here in the order they arrived." /> : null}
       <div className="grid gap-4" data-estimate-compare="cards">
         {rows.map(({ estimate, items, contractor }) => {

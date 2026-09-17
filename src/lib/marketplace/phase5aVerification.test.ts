@@ -40,23 +40,30 @@ describe("Phase 5A security and pause constraints", () => {
   });
 
   it("does not rank estimates or show Stripe test-mode copy to customers", () => {
+    const customerDir = path.join(repoRoot, "src/pages/app/customer");
     const customerUi =
-      readFileSync(path.join(repoRoot, "src/pages/app/customer/CustomerMarketplacePages.tsx"), "utf8") +
-      readFileSync(path.join(repoRoot, "src/pages/app/customer/BookingPages.tsx"), "utf8") +
-      readFileSync(path.join(repoRoot, "src/pages/app/customer/PaymentPausedPage.tsx"), "utf8") +
-      readFileSync(path.join(repoRoot, "src/features/home/Hero.tsx"), "utf8");
+      readdirSync(customerDir)
+        .filter((name) => name.endsWith(".tsx"))
+        .sort()
+        .map((name) => readFileSync(path.join(customerDir, name), "utf8"))
+        .join("\n\n") + readFileSync(path.join(repoRoot, "src/features/home/Hero.tsx"), "utf8");
     expect(customerUi).not.toMatch(/BEST estimate/i);
-    expect(customerUi).not.toMatch(/Stripe test mode/i);
+    expect(customerUi).not.toMatch(/Stripe/i);
+    expect(customerUi).not.toMatch(/TEST MODE/i);
+    expect(customerUi).not.toMatch(/test mode/i);
     expect(customerUi).not.toMatch(/Phase 4B/);
     expect(customerUi).not.toMatch(/payments_live/);
     expect(customerUi).not.toMatch(/charges_live/);
-    expect(customerUi).not.toMatch(/PaymentIntent/);
+    expect(customerUi).not.toMatch(/PaymentIntent/i);
+    expect(customerUi).not.toMatch(/payment\s*intent/i);
     expect(customerUi).not.toMatch(/\bwebhook\b/i);
     expect(customerUi).not.toMatch(/payment succeeded/i);
     expect(customerUi).not.toMatch(/unlock contact/i);
     expect(customerUi).toMatch(/paymentsComingSoonCopy/);
+    expect(paymentsComingSoonCopy()).toBe("Online payment setup is coming soon.");
     expect(customerUi).toMatch(/preBookingHeadline/);
     expect(customerUi).toMatch(/contactLockedUntilConfirmedCopy/);
+    expect(customerUi).toMatch(/sanitizeCustomerFacingError/);
   });
 
   it("keeps estimate compare as mobile cards and gates hire/select behind a paused pay screen", () => {

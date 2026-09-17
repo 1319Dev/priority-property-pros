@@ -32,10 +32,13 @@ describe("paused payment / pre-booking screen", () => {
     expect(screen.queryByText(/payment succeeded/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/your booking is confirmed/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/unlock contact/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Stripe/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/TEST MODE/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/test mode/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Phase 4B/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/payments_live/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/charges_live/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/PaymentIntent/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/webhook/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/test mode/i)).not.toBeInTheDocument();
   });
 });

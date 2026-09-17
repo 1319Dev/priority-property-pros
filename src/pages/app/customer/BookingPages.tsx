@@ -23,7 +23,13 @@ import {
   submitBookingReview,
   type RpcJson,
 } from "../../../lib/marketplace/api";
-import { BOOKING_STATUS_LABELS, contactLockedUntilConfirmedCopy, paymentsComingSoonCopy, preBookingHeadline } from "../../../lib/marketplace/bookings";
+import {
+  BOOKING_STATUS_LABELS,
+  contactLockedUntilConfirmedCopy,
+  paymentsComingSoonCopy,
+  preBookingHeadline,
+  sanitizeCustomerFacingError,
+} from "../../../lib/marketplace/bookings";
 import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
 import type { Booking, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
@@ -42,14 +48,14 @@ export function CustomerBookingsPage() {
     void expireStalePendingBookings()
       .then(() => fetchMyBookings("customer", profile.id))
       .then((data) => setRows(data as Booking[]))
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)));
   }, [profile]);
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
       <p className="text-ink-700">Selecting a pro starts a pending booking only. {paymentsComingSoonCopy()}</p>
-      <FormError message={error} />
+      <FormError message={error ? sanitizeCustomerFacingError(error) : null} />
       {rows.length === 0 ? (
         <EmptyState
           title="No bookings yet"
@@ -101,7 +107,7 @@ export function CustomerBookingDetailPage() {
   }
 
   useEffect(() => {
-    void reload().catch((err: Error) => setError(err.message));
+    void reload().catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId]);
 
@@ -116,7 +122,7 @@ export function CustomerBookingDetailPage() {
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{title}</h1>
         <p className="mt-2 text-ink-700">{contractor}</p>
       </header>
-      <FormError message={error} />
+      <FormError message={error ? sanitizeCustomerFacingError(error) : null} />
       {pending ? (
         <div className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-100 px-5 py-4">
           <p className="font-semibold text-forest-800">{preBookingHeadline()}</p>
@@ -149,7 +155,7 @@ export function CustomerBookingDetailPage() {
                 toast.push("Booking cancelled. The exact address was never shared.");
                 return reload();
               })
-              .catch((err: Error) => setError(err.message))
+              .catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)))
               .finally(() => setBusy(false));
           }}
         >
@@ -165,7 +171,7 @@ export function CustomerBookingDetailPage() {
             setBusy(true);
             void completeBooking(booking.id)
               .then(() => reload())
-              .catch((err: Error) => setError(err.message))
+              .catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)))
               .finally(() => setBusy(false));
           }}
         >
@@ -178,7 +184,7 @@ export function CustomerBookingDetailPage() {
           variant="ghost"
           className="min-h-12 w-full"
           onClick={() => {
-            void disputeBooking(booking.id).then(() => reload()).catch((err: Error) => setError(err.message));
+            void disputeBooking(booking.id).then(() => reload()).catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)));
           }}
         >
           Open a dispute
@@ -225,7 +231,7 @@ export function CustomerBookingDetailPage() {
                 setDelta("");
                 setNote("");
                 return reload();
-              }).catch((err: Error) => setError(err.message));
+              }).catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)));
             }}
           >
             Propose a change
@@ -244,7 +250,7 @@ export function CustomerBookingDetailPage() {
             onClick={() => {
               void submitBookingReview(booking.id, Number(rating), body)
                 .then(() => reload())
-                .catch((err: Error) => setError(err.message));
+                .catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)));
             }}
           >
             Submit review
@@ -272,7 +278,7 @@ export function HireAgainPage() {
         setRows(pros);
         setMonths(protection);
       })
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(sanitizeCustomerFacingError(err.message)));
   }, []);
 
   return (
@@ -282,7 +288,7 @@ export function HireAgainPage() {
         Pros you already finished a job with. Repeat pricing is applied automatically. You cannot pick original vs repeat
         yourself. The introduction window is {months ?? "—"} months.
       </p>
-      <FormError message={error} />
+      <FormError message={error ? sanitizeCustomerFacingError(error) : null} />
       {rows.length === 0 ? (
         <EmptyState
           title="No Hire Again pros yet"
