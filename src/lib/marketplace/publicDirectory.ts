@@ -314,9 +314,7 @@ export function toPublicContractorProfile(
   const reviews = (extras.reviews ?? []).filter((review) => extras.demo || !review.demo);
   return {
     ...card,
-    about: extras.about?.trim()
-      ? publicAboutText(extras.about, null)
-      : publicAboutText(extras.bio, extras.headline || card.shortDescription),
+    about: publicAboutText(extras.about, extras.bio ?? extras.headline ?? card.shortDescription),
     services: (extras.services ?? card.categories).filter(Boolean),
     portfolio: extras.portfolio ?? [],
     reviews,
@@ -395,7 +393,7 @@ export function toPublicSafeReview(input: {
   return review;
 }
 
-export function recommendedDirectoryScore(card: PublicContractorCard): number {
+export function recommendedDirectoryScore(card: DirectoryFilterable): number {
   const reviewed = card.ratingCount > 0 ? 1_000_000 : 0;
   const rating = (card.ratingAverage ?? 0) * 1_000;
   const count = card.ratingCount * 10;
@@ -403,7 +401,12 @@ export function recommendedDirectoryScore(card: PublicContractorCard): number {
   return reviewed + rating + count + years;
 }
 
-export function applyDirectoryFilters<T extends PublicContractorCard>(cards: T[], filters: DirectoryFilters = {}): T[] {
+export type DirectoryFilterable = Pick<
+  PublicContractorCard,
+  "categories" | "serviceArea" | "yearsExperience" | "ratingAverage" | "ratingCount" | "displayLabel"
+>;
+
+export function applyDirectoryFilters<T extends DirectoryFilterable>(cards: T[], filters: DirectoryFilters = {}): T[] {
   const service = filters.service?.trim().toLowerCase();
   const area = filters.area?.trim().toLowerCase();
   const minRating = filters.minRating ?? null;

@@ -193,18 +193,18 @@ export function FindAProPage() {
     };
   }, [configured]);
 
-  const filters: DirectoryFilters = {
-    service,
-    area,
-    minRating: minRating ? Number(minRating) : null,
-    minExperience: minExperience ? Number(minExperience) : null,
-    sort,
-  };
-  const filteredLive = useMemo(() => applyDirectoryFilters(live, filters), [live, service, area, minRating, minExperience, sort]);
-  const filteredDemos = useMemo(
-    () => applyDirectoryFilters(DEMO_CONTRACTORS, filters),
+  const filters = useMemo<DirectoryFilters>(
+    () => ({
+      service,
+      area,
+      minRating: minRating ? Number(minRating) : null,
+      minExperience: minExperience ? Number(minExperience) : null,
+      sort,
+    }),
     [service, area, minRating, minExperience, sort],
   );
+  const filteredLive = useMemo(() => applyDirectoryFilters(live, filters), [live, filters]);
+  const filteredDemos = useMemo(() => applyDirectoryFilters(DEMO_CONTRACTORS, filters), [filters]);
 
   return (
     <section className="py-8 sm:py-12">

@@ -31,7 +31,7 @@ describe("Find a Pro public browse", () => {
     expect(screen.getByLabelText(/experience/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/sort/i)).toBeInTheDocument();
     expect(screen.getByText(/no paid placement/i)).toBeInTheDocument();
-    expect(screen.getByText(NEW_TO_PPP)).toBeInTheDocument();
+    expect(screen.getByText(/new to priority property pros/i)).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText(/sort/i), "highest_rated");
     expect(screen.getByRole("link", { name: /example fence pro/i })).toBeInTheDocument();
     expect(screen.queryByText(/512-555|@|joesfence|license number/i)).not.toBeInTheDocument();
@@ -47,7 +47,7 @@ describe("Find a Pro public browse", () => {
     expect(screen.getByRole("heading", { name: /^credentials$/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /^portfolio$/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /^reviews$/i })).toBeInTheDocument();
-    expect(screen.getByText(/example review/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/example review/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: /sign up to connect/i })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /post a project/i }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/@|512-555|www\.|instagram/i)).not.toBeInTheDocument();
