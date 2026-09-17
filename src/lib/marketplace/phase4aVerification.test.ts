@@ -8,6 +8,7 @@ import {
   canConfirmBooking,
   canTransitionBooking,
   clientCannotSpoofConfirmed,
+  contactAccessAllowsReveal,
 } from "./bookings";
 import { contractorCanUnilaterallyIncrease } from "./changeOrders";
 import { computeMarketplaceFee, feeBasisCents, ORIGINAL_FEE_BRACKETS } from "./feeEngine";
@@ -57,6 +58,10 @@ const selectedProject = { customer_id: "cust", selected_contractor_profile_id: "
 describe("Phase 4A pre-merge security checks", () => {
   const sql = allSql();
   const frontend = srcFiles();
+  const latestContact = readFileSync(
+    path.join(repoRoot, "supabase/migrations/20260922000001_contact_access_entitlement.sql"),
+    "utf8",
+  );
 
   it("1. selecting an estimate does not unlock exact address, phone, or email", () => {
     expect(canReadExactAddress(pro, selectedProject, "PENDING")).toBe(false);
@@ -69,43 +74,53 @@ describe("Phase 4A pre-merge security checks", () => {
     expect(sql).toMatch(/INSERT INTO public\.bookings \(/);
     expect(sql).toMatch(/'PENDING'/);
     expect(sql).toMatch(/DROP POLICY IF EXISTS project_private_locations_select_protected/);
-    expect(sql).toMatch(/OR public\.booking_is_confirmed_for_contractor\(project_id\)/);
+    expect(latestContact).toMatch(/OR public\.contractor_has_contact_access_on_project\(project_id\)/);
     expect(sql).toMatch(/profiles_select_own_or_admin/);
     expect(sql).toMatch(/Does not open profiles SELECT/);
   });
 
-  it("2. pending / awaiting-payment bookings do not unlock private info", () => {
+  it("2. pending / awaiting-payment / CONFIRMED-without-entitlement bookings do not unlock private info", () => {
     expect(bookingUnlocksContact("PENDING")).toBe(false);
     expect(bookingUnlocksContact("AWAITING_PAYMENT")).toBe(false);
+    expect(bookingUnlocksContact("CONFIRMED")).toBe(false);
     expect(canReadExactAddress(pro, selectedProject, "AWAITING_PAYMENT")).toBe(false);
+    expect(canReadExactAddress(pro, selectedProject, "CONFIRMED", "LOCKED")).toBe(false);
     expect(
       canReadCustomerContact(pro, "cust", {
         bookingStatus: "AWAITING_PAYMENT",
         selectedContractorProfileId: "pro-1",
       }),
     ).toBe(false);
-    expect(sql).toMatch(/contact is locked until the booking is confirmed/);
-    expect(sql).toMatch(/unlocked := b\.status IN \('CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'DISPUTED'\)/);
+    expect(latestContact).toMatch(/contact is locked until hire and job-fee entitlement or admin override/);
+    expect(latestContact).toMatch(/entitled := public\.booking_has_contact_access\(b\.id\)/);
+    expect(latestContact).not.toMatch(/unlocked := b\.status IN \('CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'DISPUTED'\)/);
   });
 
-  it("3. only the booked contractor sees private info after CONFIRMED (or later allowed)", () => {
+  it("3. only the booked contractor sees private info after contact entitlement, never CONFIRMED alone", () => {
     for (const status of ["CONFIRMED", "IN_PROGRESS", "COMPLETED", "DISPUTED"] as const) {
-      expect(bookingUnlocksContact(status)).toBe(true);
-      expect(canReadExactAddress(pro, selectedProject, status)).toBe(true);
+      expect(bookingUnlocksContact(status)).toBe(false);
+      expect(canReadExactAddress(pro, selectedProject, status, "LOCKED")).toBe(false);
+      expect(contactAccessAllowsReveal("LOCKED")).toBe(false);
+      expect(canReadExactAddress(pro, selectedProject, status, "UNLOCKED")).toBe(true);
       expect(
-        canReadCustomerContact(pro, "cust", { bookingStatus: status, selectedContractorProfileId: "pro-1" }),
+        canReadCustomerContact(pro, "cust", {
+          bookingStatus: status,
+          selectedContractorProfileId: "pro-1",
+          contactAccess: "UNLOCKED",
+        }),
       ).toBe(true);
-      expect(canReadExactAddress(stranger, selectedProject, status)).toBe(false);
+      expect(canReadExactAddress(stranger, selectedProject, status, "UNLOCKED")).toBe(false);
       expect(
         canReadCustomerContact(stranger, "cust", {
           bookingStatus: status,
           contractorProfileId: "pro-1",
           selectedContractorProfileId: "pro-1",
+          contactAccess: "UNLOCKED",
         }),
       ).toBe(false);
     }
-    expect(sql).toMatch(/b\.contractor_profile_id = public\.current_contractor_profile_id\(\)/);
-    expect(sql).toMatch(/AND b\.status IN \('CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'DISPUTED'\)/);
+    expect(latestContact).toMatch(/b\.contractor_profile_id = public\.current_contractor_profile_id\(\)/);
+    expect(latestContact).toMatch(/a\.status IN \('UNLOCKED', 'ADMIN_OVERRIDE'\)/);
   });
 
   it("4. customers and contractors cannot fake CONFIRMED", () => {

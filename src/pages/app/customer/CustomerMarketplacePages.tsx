@@ -295,7 +295,7 @@ export function CustomerProjectDetailPage() {
         <p className="mt-3">
           {project.city}, {project.state} {project.zip_code}
         </p>
-        <p>Street (private until a booking is confirmed): {street ?? "—"}</p>
+        <p>Street (private until hire + job fee or an admin unlock): {street ?? "—"}</p>
         <p>{project.timing ? TIMING_LABELS[project.timing] : ""}</p>
       </section>
       <div className="flex min-w-0 flex-col gap-2">

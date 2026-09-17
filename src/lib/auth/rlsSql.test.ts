@@ -212,14 +212,18 @@ describe("Phase 4A SQL migrations", () => {
     expect(sql).not.toMatch(/INSPECTOR/);
   });
 
-  it("unlocks exact address only after a confirmed booking, not selection", () => {
+  it("unlocks exact address only after contact entitlement, not selection or CONFIRMED", () => {
     expect(sql).toMatch(/booking_is_confirmed_for_contractor/);
-    expect(sql).toMatch(/OR public\.booking_is_confirmed_for_contractor\(project_id\)/);
+    expect(sql).toMatch(/contractor_has_contact_access_on_project/);
+    expect(sql).toMatch(/OR public\.contractor_has_contact_access_on_project\(project_id\)/);
     expect(sql).toMatch(/Exact street \/ coordinates unlock/);
     expect(sql).toMatch(/FUNCTION public\.booking_job_contact/);
-    expect(sql).toMatch(/contact is locked until the booking is confirmed/);
+    expect(sql).toMatch(/contact is locked until hire and job-fee entitlement or admin override/);
     expect(sql).toMatch(/DROP POLICY IF EXISTS project_private_locations_select_protected/);
     expect(sql).toMatch(/Does not open profiles SELECT/);
+    expect(sql).toMatch(/CREATE TABLE public\.booking_contact_access/);
+    expect(sql).toMatch(/FUNCTION public\.booking_has_contact_access/);
+    expect(sql).toMatch(/FUNCTION public\.admin_grant_booking_contact_access/);
   });
 
   it("restricts confirmation to admin testing and snapshots fees", () => {
@@ -251,6 +255,7 @@ describe("Phase 4A SQL migrations", () => {
     expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.confirm_booking_for_testing\(uuid\) FROM PUBLIC, anon/);
     expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.confirm_booking_for_testing\(uuid\) TO authenticated/);
     expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.booking_job_contact\(uuid\) FROM PUBLIC, anon/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.admin_grant_booking_contact_access\(uuid, text\) FROM PUBLIC, anon/);
     expect(sql).not.toMatch(/DELETE FROM auth\.users/i);
     expect(sql).not.toMatch(/TRUNCATE public\.profiles/i);
     expect(sql).not.toMatch(/DROP TABLE public\.projects/i);
@@ -259,6 +264,24 @@ describe("Phase 4A SQL migrations", () => {
     expect(sql).not.toMatch(/GRANT UPDATE ON TABLE public\.bookings/);
     expect(sql).toMatch(/v_repeat := public\.pair_has_completed_booking/);
     expect(sql).toMatch(/compute_fee_from_snapshot/);
+  });
+});
+
+describe("Contact-access entitlement SQL migrations", () => {
+  const sql = allSql();
+
+  it("does not key private contact off CONFIRMED or Stripe, and keeps payment flags off", () => {
+    expect(sql).toMatch(/CREATE TYPE public\.contact_access_status AS ENUM/);
+    expect(sql).toMatch(/CREATE TABLE public\.booking_contact_access/);
+    expect(sql).toMatch(/FUNCTION public\.booking_has_contact_access/);
+    expect(sql).toMatch(/FUNCTION public\.admin_grant_booking_contact_access/);
+    expect(sql).toMatch(/FUNCTION public\.admin_revoke_booking_contact_access/);
+    expect(sql).toMatch(/job-fee contact unlock is disabled while payments are off/);
+    expect(sql).not.toMatch(/GRANT EXECUTE ON FUNCTION public\.grant_booking_contact_access_from_job_fee/);
+    expect(sql).toMatch(/CONSTRAINT bookings_payments_not_live CHECK \(payments_live = false\)/);
+    expect(sql).toMatch(/CONSTRAINT bookings_charges_not_live CHECK \(charges_live = false\)/);
+    expect(sql).not.toMatch(/payments_live',\s*1/);
+    expect(sql).not.toMatch(/charges_live',\s*1/);
   });
 });
 

@@ -1,5 +1,5 @@
 import type { AccountType } from "../auth/types";
-import { BOOKING_STATUSES, type BookingStatus } from "./types";
+import { BOOKING_STATUSES, type BookingStatus, type ContactAccessStatus } from "./types";
 
 export { BOOKING_STATUSES };
 
@@ -56,8 +56,22 @@ export function canDisputeBooking(actor: BookingActorRole | null, status: Bookin
   return status === "CONFIRMED" || status === "IN_PROGRESS" || status === "COMPLETED";
 }
 
+/** Booking status alone never unlocks private contact. Use contactAccessAllowsReveal. */
 export function bookingUnlocksContact(status: BookingStatus): boolean {
-  return status === "CONFIRMED" || status === "IN_PROGRESS" || status === "COMPLETED" || status === "DISPUTED";
+  void status;
+  return false;
+}
+
+export function contactAccessAllowsReveal(status: ContactAccessStatus | null | undefined): boolean {
+  return status === "UNLOCKED" || status === "ADMIN_OVERRIDE";
+}
+
+export function privateContactLockedCopy(): string {
+  return "Private street, phone, and email stay locked until the hired contractor has job-fee access (payments coming soon) or an admin unlocks this specific booking.";
+}
+
+export function privateContactHintCopy(): string {
+  return "Stays private until hire + job fee (payments coming soon) or an admin unlock.";
 }
 
 export function bookingIsAbandoned(status: BookingStatus, expiresAt: string | null, nowMs = Date.now()): boolean {
