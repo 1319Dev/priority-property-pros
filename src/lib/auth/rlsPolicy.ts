@@ -55,3 +55,7 @@ export function canMutateAuditLog(): boolean {
 export function canInsertOwnAcceptance(actor: Actor, profileId: string): boolean {
   return Boolean(actor.id) && actor.id === profileId;
 }
+
+export function canClientMarkSignupFeePaid(): boolean {
+  return false;
+}

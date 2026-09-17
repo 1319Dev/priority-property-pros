@@ -9,13 +9,16 @@ ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS signup_fee_paid_at timestamptz,
   ADD COLUMN IF NOT EXISTS signup_fee_charge_id uuid;
 
+-- Grandfather existing accounts: every profiles row that already exists when this
+-- migration runs is NOT_REQUIRED. New CUSTOMER/CONTRACTOR inserts keep the UNPAID
+-- column default and handle_new_user (later migration) sets UNPAID explicitly.
+-- Distinguisher: pre-existing profile rows vs rows inserted after this ALTER.
 UPDATE public.profiles
 SET signup_fee_status = 'NOT_REQUIRED'
-WHERE account_type IN ('VERIFIER', 'ADMIN')
-  AND signup_fee_status = 'UNPAID';
+WHERE signup_fee_status = 'UNPAID';
 
 COMMENT ON COLUMN public.profiles.signup_fee_status IS
-  'Independent of email verification, account_status, contractor approval, membership, and job payments.';
+  'Independent of email verification, account_status, contractor approval, membership, and job payments. Existing profiles at migration time are NOT_REQUIRED (grandfathered). New CUSTOMER/CONTRACTOR signups are UNPAID until the isolated $9.99 fee is paid.';
 
 INSERT INTO public.platform_settings (key, value_int, description)
 VALUES

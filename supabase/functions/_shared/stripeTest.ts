@@ -28,6 +28,18 @@ export async function stripeForm(secret: string, path: string, params: Record<st
   return data;
 }
 
+export async function stripeGet(secret: string, path: string): Promise<Record<string, unknown>> {
+  const key = requireTestSecret(secret);
+  const res = await fetch(`https://api.stripe.com/v1/${path}`, {
+    headers: { Authorization: `Bearer ${key}` },
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error("Stripe request failed");
+  }
+  return data;
+}
+
 export function signupFeeAmount(): number {
   return SIGNUP_FEE_CENTS;
 }

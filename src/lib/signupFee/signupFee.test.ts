@@ -24,11 +24,16 @@ import {
   accountStatusAfterSignupPayment,
   approvalAfterSignupPayment,
   assertSignupFeeAmount,
+  canContractorAcceptWork,
   canCreateSignupFeeCharge,
+  canCustomerCreateProject,
+  canceledCheckoutLeavesUnpaid,
+  canClientMarkSignupFeePaid,
   needsSignupFeePayment,
   payingSignupFeeActivatesJobPayments,
   payingSignupFeeApprovesContractor,
   payingSignupFeeEnablesConnectPayouts,
+  successUrlMarksSignupFeePaid,
 } from "./policy";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -145,5 +150,51 @@ describe("$9.99 isolated signup fee", () => {
     expect(proOriginal.fee_cents).toBe(2_000);
     expect(sql).toMatch(/CONSTRAINT bookings_payments_not_live CHECK \(payments_live = false\)/);
     expect(sql).toMatch(/CONSTRAINT bookings_charges_not_live CHECK \(charges_live = false\)/);
+  });
+
+  it("grandfathers existing profiles and charges only new CUSTOMER/CONTRACTOR signups", () => {
+    expect(sql).toMatch(/pre-existing profile rows vs rows inserted after this ALTER/);
+    expect(sql).toMatch(/SET signup_fee_status = 'NOT_REQUIRED'/);
+    expect(sql).toMatch(/IF safe_type IN \('CUSTOMER', 'CONTRACTOR'\) THEN/);
+    expect(sql).toMatch(/initial_fee := 'UNPAID'/);
+    expect(needsSignupFeePayment("CUSTOMER", "NOT_REQUIRED")).toBe(false);
+  });
+
+  it("blocks unpaid customers from posting and unpaid contractors from accepting work", () => {
+    expect(canCustomerCreateProject("UNPAID")).toBe(false);
+    expect(canCustomerCreateProject("PAID")).toBe(true);
+    expect(canCustomerCreateProject("NOT_REQUIRED")).toBe(true);
+    expect(canContractorAcceptWork("UNPAID")).toBe(false);
+    expect(canContractorAcceptWork("PAID")).toBe(true);
+    expect(sql).toMatch(/RAISE EXCEPTION 'signup fee required'/);
+    expect(sql).toMatch(/TRIGGER projects_require_signup_fee/);
+    expect(sql).toMatch(/TRIGGER opportunities_require_signup_fee/);
+    expect(sql).toMatch(/TRIGGER estimates_require_signup_fee/);
+    expect(sql).toMatch(/'post_project'/);
+    expect(sql).toMatch(/'accept_opportunity'/);
+    expect(sql).toMatch(/'submit_estimate'/);
+    expect(sql).toMatch(/signup_fee_is_satisfied\(auth\.uid\(\)\)/);
+  });
+
+  it("does not mark paid from a success URL, cancel, or a client write", () => {
+    expect(successUrlMarksSignupFeePaid()).toBe(false);
+    expect(canceledCheckoutLeavesUnpaid()).toBe(true);
+    expect(canClientMarkSignupFeePaid()).toBe(false);
+    expect(sql).toMatch(/signup fee fields cannot be changed from the client/);
+    const duplicateEvent = applySignupFeePaid({
+      profile_id: "u1",
+      amount_cents: 999,
+      current_signup_fee_status: "UNPAID",
+      current_account_status: "ACTIVE",
+      current_approval_status: null,
+      already_processed_event: true,
+    });
+    expect(duplicateEvent.duplicate).toBe(true);
+    expect(duplicateEvent.signup_fee_status).toBe("UNPAID");
+    const frontend =
+      readFileSync(path.join(repoRoot, "src/pages/ActivateAccountPage.tsx"), "utf8") +
+      readFileSync(path.join(repoRoot, "src/lib/signupFee/api.ts"), "utf8");
+    expect(frontend).not.toMatch(/apply_signup_fee_paid/);
+    expect(frontend).toMatch(/confirm-signup-fee-session/);
   });
 });

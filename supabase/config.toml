@@ -7,5 +7,8 @@
 [functions.create-signup-fee-checkout]
 verify_jwt = true
 
+[functions.confirm-signup-fee-session]
+verify_jwt = true
+
 [functions.signup-fee-webhook]
 verify_jwt = false

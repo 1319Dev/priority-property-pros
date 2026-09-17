@@ -16,6 +16,7 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import { AccountStatusPage } from "./pages/AccountStatusPage";
+import { ActivateAccountPage } from "./pages/ActivateAccountPage";
 import { TrustPage } from "./pages/TrustPage";
 import { CustomerShell } from "./pages/app/CustomerShell";
 import { ProShell } from "./pages/app/ProShell";
@@ -70,6 +71,7 @@ export default function App() {
       </Route>
 
       <Route element={<RequireAuth />}>
+        <Route path="/account/activate" element={<ActivateAccountPage />} />
         <Route element={<RequireRole role="CUSTOMER" />}>
           <Route path="/app/customer" element={<CustomerShell />}>
             <Route index element={<CustomerHomePage />} />

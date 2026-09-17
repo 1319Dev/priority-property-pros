@@ -7,7 +7,7 @@ import { postLoginPath } from "../lib/auth/roles";
 import { useAuth } from "../lib/auth/useAuth";
 
 export function ResetPasswordPage() {
-  const { updatePassword, configured, account_type, account_status, user, loading } = useAuth();
+  const { updatePassword, configured, account_type, account_status, signup_fee_status, user, loading } = useAuth();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +26,7 @@ export function ResetPasswordPage() {
       setError(result.error);
       return;
     }
-    navigate(postLoginPath(account_type, account_status), { replace: true });
+    navigate(postLoginPath(account_type, account_status, signup_fee_status), { replace: true });
   }
 
   return (

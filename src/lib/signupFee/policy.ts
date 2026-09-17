@@ -65,3 +65,23 @@ export function membershipAfterSignupPayment(plan: ContractorPlanId | null | und
 export function defaultContractorPlan(): ContractorPlanId {
   return CONTRACTOR_PLANS.FREE.id;
 }
+
+export function canCustomerCreateProject(signupFeeStatus: SignupFeeStatus | null | undefined): boolean {
+  return isSignupFeePaid(signupFeeStatus);
+}
+
+export function canContractorAcceptWork(signupFeeStatus: SignupFeeStatus | null | undefined): boolean {
+  return isSignupFeePaid(signupFeeStatus);
+}
+
+export function successUrlMarksSignupFeePaid(): boolean {
+  return false;
+}
+
+export function canceledCheckoutLeavesUnpaid(): boolean {
+  return true;
+}
+
+export function canClientMarkSignupFeePaid(): boolean {
+  return false;
+}

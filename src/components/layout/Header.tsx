@@ -15,8 +15,8 @@ const links = [
 ];
 
 export function Header() {
-  const { loading, user, account_type, account_status } = useAuth();
-  const accountTo = user ? postLoginPath(account_type, account_status) : "/sign-in";
+  const { loading, user, account_type, account_status, signup_fee_status } = useAuth();
+  const accountTo = user ? postLoginPath(account_type, account_status, signup_fee_status) : "/sign-in";
   const accountLabel = user ? "Account" : "Sign In";
 
   return (

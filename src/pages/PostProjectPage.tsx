@@ -2,13 +2,17 @@ import { Navigate, useSearchParams } from "react-router-dom";
 import { ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
 import { useAuth } from "../lib/auth/useAuth";
+import { needsSignupFeePayment } from "../lib/signupFee/policy";
 
 export function PostProjectPage() {
-  const { loading, user, account_type } = useAuth();
+  const { loading, user, account_type, signup_fee_status } = useAuth();
   const [params] = useSearchParams();
   const query = params.toString();
 
   if (!loading && user && account_type === "CUSTOMER") {
+    if (needsSignupFeePayment(account_type, signup_fee_status)) {
+      return <Navigate to="/account/activate" replace />;
+    }
     return <Navigate to={`/app/customer/projects/new/wizard${query ? `?${query}` : ""}`} replace />;
   }
 

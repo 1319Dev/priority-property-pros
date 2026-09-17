@@ -1,5 +1,7 @@
-import type { AccountStatus, AccountType, PublicSignupType } from "./types";
+import type { AccountStatus, AccountType, PublicSignupType, SignupFeeStatus } from "./types";
 import { PUBLIC_SIGNUP_TYPES } from "./types";
+import { needsSignupFeePayment } from "../signupFee/policy";
+import { SIGNUP_FEE_ACTIVATE_PATH } from "../signupFee/api";
 
 export const ROLE_HOME: Record<AccountType, string> = {
   CUSTOMER: "/app/customer",
@@ -22,9 +24,14 @@ export function sanitizeSignupAccountType(value: unknown): PublicSignupType {
   return "CUSTOMER";
 }
 
-export function postLoginPath(accountType: AccountType | null, accountStatus: AccountStatus | null): string {
+export function postLoginPath(
+  accountType: AccountType | null,
+  accountStatus: AccountStatus | null,
+  signupFeeStatus: SignupFeeStatus | null = null,
+): string {
   if (!accountType) return "/sign-in";
   if (accountStatus && BLOCKED_STATUSES.includes(accountStatus)) return "/account/status";
+  if (needsSignupFeePayment(accountType, signupFeeStatus)) return SIGNUP_FEE_ACTIVATE_PATH;
   return ROLE_HOME[accountType];
 }
 
