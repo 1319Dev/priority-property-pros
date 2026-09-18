@@ -9,32 +9,32 @@ import sharp from "sharp";
 const jobs = [
   {
     id: "hero-contractor",
-    src: "/opt/cursor/artifacts/assets/hero-contractor-property-owner.png",
+    src: "/tmp/marketing-masters/hero-walkthrough-looking.png",
     widths: [640, 960, 1280],
   },
   {
     id: "service-fence",
-    src: "/opt/cursor/artifacts/assets/service-privacy-fence.png",
+    src: "/tmp/marketing-masters/service-fence-midbuild.png",
     widths: [480, 768, 1152],
   },
   {
     id: "service-landscaping",
-    src: "/cursor/stores/bc-6944f6bd-63e5-580a-b327-0bad43f862e5/artifacts/assets/service-landscaping.png",
+    src: "/tmp/marketing-masters/service-landscaping-edger.png",
     widths: [480, 768, 1152],
   },
   {
     id: "service-handyman",
-    src: "/opt/cursor/artifacts/assets/service-handyman-interior.png",
+    src: "/tmp/marketing-masters/service-handyman-nailer-tight.png",
     widths: [480, 768, 1152],
   },
   {
     id: "service-plumbing",
-    src: "/cursor/stores/bc-6944f6bd-63e5-580a-b327-0bad43f862e5/artifacts/assets/service-plumbing.png",
+    src: "/tmp/marketing-masters/service-plumbing-waterheater.png",
     widths: [480, 768, 1152],
   },
   {
     id: "service-electrical",
-    src: "/opt/cursor/artifacts/assets/service-electrical-hvac.png",
+    src: "/tmp/marketing-masters/service-electrical-receptacle.png",
     widths: [480, 768, 1152],
   },
   {

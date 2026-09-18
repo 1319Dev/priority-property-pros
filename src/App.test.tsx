@@ -65,13 +65,13 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
       screen.getAllByText(/whatever your property needs, find the right local professional/i).length,
     ).toBeGreaterThan(0);
     expect(
-      screen.getByAltText(/contractor reviews a job with a property owner/i),
+      screen.getByAltText(/property owner and a local professional/i),
     ).toBeInTheDocument();
     expect(screen.getByAltText(/fencing contractor/i)).toBeInTheDocument();
     expect(screen.getByAltText(/lawn professional/i)).toBeInTheDocument();
-    expect(screen.getByAltText(/handyman uses a drill/i)).toBeInTheDocument();
-    expect(screen.getByAltText(/plumber works under a kitchen sink/i)).toBeInTheDocument();
-    expect(screen.getAllByAltText(/electrician/i).length).toBeGreaterThan(0);
+    expect(screen.getByAltText(/finish nailer into primed baseboard/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/water-heater flex connector/i)).toBeInTheDocument();
+    expect(screen.getAllByAltText(/electrician in safety glasses/i).length).toBeGreaterThan(0);
     expect(screen.getAllByAltText(/finished suburban home/i).length).toBeGreaterThan(0);
   });
 
