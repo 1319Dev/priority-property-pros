@@ -70,6 +70,90 @@ export const QUESTION_KINDS = ["TEXT", "SINGLE_CHOICE", "MULTI_CHOICE", "BOOLEAN
 export type QuestionKind = (typeof QUESTION_KINDS)[number];
 
 export const MAX_PARTICIPATING_CONTRACTORS = 3;
+/** Authoritative flat Connection Fee. Server must store this exact integer. */
+export const CONNECTION_FEE_CENTS = 499;
+export const CONNECTION_FEE_USD = "$4.99";
+export const MAX_COMPLETED_CONNECTIONS = 3;
+export const SIGNUP_FEE_ENABLED = false;
+/** Intended Stripe mode if payments are ever enabled. Does not enable Stripe.js or live keys. */
+export const STRIPE_TEST_MODE = true;
+/** No Stripe.js / Connect / PaymentIntent in the browser. Checkout is an Edge Function redirect. */
+export const STRIPE_ENABLED = false;
+
+export const PROJECT_CONNECTION_STATUSES = [
+  "INITIATED",
+  "RESERVED",
+  "PAYMENT_DISABLED",
+  "PAID",
+  "COMPLETED",
+  "FAILED",
+  "CANCELLED",
+  "EXPIRED",
+] as const;
+export type ProjectConnectionStatus = (typeof PROJECT_CONNECTION_STATUSES)[number];
+
+export const CONNECTION_CONTACT_GRANT_SOURCES = [
+  "CONNECTION_FEE_PAYMENT",
+  "ADMIN_OVERRIDE",
+  "SYSTEM",
+] as const;
+/** @deprecated Connection-backed grants use ContactGrantSource on booking_contact_access. */
+export type ConnectionContactGrantSource = (typeof CONNECTION_CONTACT_GRANT_SOURCES)[number];
+
+export type ProjectConnection = {
+  id: string;
+  project_id: string;
+  contractor_profile_id: string;
+  customer_id: string;
+  status: ProjectConnectionStatus;
+  fee_cents: number;
+  currency: string;
+  idempotency_key: string | null;
+  reservation_slot: number | null;
+  payments_live: false;
+  charges_live: false;
+  reserved_at: string | null;
+  reserved_until?: string | null;
+  needs_refund?: boolean;
+  refund_reason?: string | null;
+  stripe_checkout_session_id?: string | null;
+  paid_at: string | null;
+  completed_at: string | null;
+  cancelled_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Projection of a connection-backed booking_contact_access row. Not a second store. */
+export type ConnectionContactAccess = {
+  id?: string;
+  booking_id: null;
+  connection_id: string;
+  project_id: string;
+  contractor_profile_id: string;
+  status: ContactAccessStatus;
+  granted_at: string | null;
+  granted_by: string | null;
+  grant_reason: string | null;
+  grant_source: ContactGrantSource;
+  revoked_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ConnectionAvailability = {
+  project_id: string;
+  max: number;
+  occupied: number;
+  remaining: number;
+  completed: number;
+  accepting_connections: boolean;
+  full: boolean;
+  fee_cents: number;
+  checkout_enabled?: boolean;
+  payments_live: false;
+  charges_live: false;
+};
 export const BOOKING_STATUSES = [
   "PENDING",
   "AWAITING_PAYMENT",
@@ -100,11 +184,20 @@ export type ChangeOrderStatus = (typeof CHANGE_ORDER_STATUSES)[number];
 export const CONTACT_ACCESS_STATUSES = ["LOCKED", "UNLOCKED", "ADMIN_OVERRIDE"] as const;
 export type ContactAccessStatus = (typeof CONTACT_ACCESS_STATUSES)[number];
 
-export const CONTACT_GRANT_SOURCES = ["JOB_FEE_PAYMENT", "ADMIN_OVERRIDE", "SYSTEM"] as const;
+export const CONTACT_GRANT_SOURCES = [
+  "JOB_FEE_PAYMENT",
+  "CONNECTION_FEE_PAYMENT",
+  "ADMIN_OVERRIDE",
+  "SYSTEM",
+] as const;
 export type ContactGrantSource = (typeof CONTACT_GRANT_SOURCES)[number];
 
 export type BookingContactAccess = {
-  booking_id: string;
+  id?: string;
+  booking_id: string | null;
+  connection_id?: string | null;
+  project_id?: string;
+  contractor_profile_id?: string;
   status: ContactAccessStatus;
   granted_at: string | null;
   granted_by: string | null;
@@ -202,6 +295,9 @@ export type Project = {
   scope_revision?: number;
   cancelled_at?: string | null;
   cancel_reason?: string | null;
+  accepting_connections?: boolean;
+  connections_closed_at?: string | null;
+  connections_closed_by?: string | null;
   created_at: string;
   updated_at: string;
 };

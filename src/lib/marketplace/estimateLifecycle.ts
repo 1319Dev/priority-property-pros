@@ -141,6 +141,23 @@ export function canWithdrawFrom(status: EstimateStatus): boolean {
   return canSubmitFrom(status);
 }
 
+export const WITHDRAW_ESTIMATE_LABEL = "Withdraw Estimate";
+export const WITHDRAW_ESTIMATE_TITLE = "Withdraw this estimate?";
+export const WITHDRAW_ESTIMATE_BODY =
+  "The customer will be notified. Your estimate is marked Withdrawn and kept in history. It is not deleted. Submitting or withdrawing an estimate is never charged.";
+export const WITHDRAW_ESTIMATE_CONFIRM = "Withdraw Estimate";
+
+export function customerEstimateStatusLabel(status: EstimateStatus): string {
+  if (status === "WITHDRAWN") return "Withdrawn";
+  if (status === "ACCEPTED") return "Selected";
+  if (status === "DECLINED") return "Not selected";
+  if (status === "VIEWED") return "Viewed";
+  if (status === "EXPIRED") return "Expired";
+  if (status === "SUPERSEDED") return "Needs a new estimate";
+  if (status === "DRAFT") return "Draft";
+  return "Sent";
+}
+
 export function canCustomerSelectFrom(status: EstimateStatus): boolean {
   return isSentEquivalent(status) || status === "REVISED" || status === "VIEWED";
 }

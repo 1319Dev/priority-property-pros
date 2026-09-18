@@ -15,8 +15,7 @@ export function ForContractors() {
             {CONTRACTOR_TAGLINE}
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-cream-200">
-            Priority Property Pros is not a lead marketplace that sells the same homeowner five times.
-            Independent contractors will compete on the actual job: scope, schedule, and price. Apply to join. An admin
+            Independent contractors compete on the actual job: scope, schedule, and price. Apply to join. An admin
             still has to approve you before matching.
           </p>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-cream-100">
@@ -24,8 +23,8 @@ export function ForContractors() {
           </p>
           <ul className="mt-6 grid gap-3 text-sm sm:grid-cols-3">
             <li className="rounded-2xl border border-cream-50/15 px-4 py-3">Real projects from real property owners</li>
-            <li className="rounded-2xl border border-cream-50/15 px-4 py-3">Fair shot — not pay-to-play junk leads</li>
-            <li className="rounded-2xl border border-cream-50/15 px-4 py-3">You remain an independent business</li>
+            <li className="rounded-2xl border border-cream-50/15 px-4 py-3">See the opportunity first, then choose to connect</li>
+            <li className="rounded-2xl border border-cream-50/15 px-4 py-3">$4.99 per connection — no percentage of the job</li>
           </ul>
           <div className="mt-8">
             <ButtonLink to="/become-a-pro" variant="gold" size="lg">

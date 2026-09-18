@@ -9,8 +9,8 @@ const steps = [
   },
   {
     n: "02",
-    title: "Local pros respond",
-    body: "Independent contractors in your area compete fairly. PPP does not sell a stack of junk leads.",
+    title: "Local pros can connect",
+    body: "Independent contractors browse anonymized opportunities. Up to three can connect for $4.99 each. Connecting does not guarantee a hire.",
   },
   {
     n: "03",

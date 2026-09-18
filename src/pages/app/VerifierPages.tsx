@@ -12,8 +12,8 @@ export function VerifierHomePage() {
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{name}</h1>
         <p className="mt-3 max-w-xl text-ink-700">
           Priority Verified is not live. This dashboard is a shell so independent verifiers can hold an account
-          without implying inspections happen today. Accounts use a one-time $9.99 signup fee, not a monthly
-          subscription.
+          without implying inspections happen today. Accounts use a one-time $9.99 account activation, not a monthly
+          subscription. PPP does not inspect or certify workmanship.
         </p>
       </header>
       <EmptyState

@@ -45,6 +45,7 @@ import {
   OpportunityDetailPage,
   ProOnboardingPage,
 } from "./pages/app/pro/ProMarketplacePages";
+import { ConnectionCheckoutReturnPage } from "./pages/app/pro/ConnectionCheckoutReturnPage";
 import { ProProfilePage } from "./pages/app/pro/ProProfilePages";
 import { ProEstimatesPage } from "./pages/app/pro/ProEstimatesPages";
 import { ProBookingDetailPage, ProBookingsPage } from "./pages/app/pro/ProBookingPages";
@@ -109,6 +110,7 @@ export default function App() {
             <Route path="opportunities" element={<OpportunitiesPage />} />
             <Route path="opportunities/:opportunityId/estimate" element={<EstimateBuilderPage />} />
             <Route path="opportunities/:opportunityId" element={<OpportunityDetailPage />} />
+            <Route path="connections/return" element={<ConnectionCheckoutReturnPage />} />
             <Route path="bookings" element={<ProBookingsPage />} />
             <Route path="bookings/:bookingId" element={<ProBookingDetailPage />} />
             <Route path="estimates" element={<ProEstimatesPage />} />

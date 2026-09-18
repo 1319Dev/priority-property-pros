@@ -157,10 +157,10 @@ describe("contact-access entitlement helpers", () => {
   });
 
   it("describes the locked state without implying CONFIRMED unlocks privacy", () => {
-    expect(privateContactLockedCopy()).toMatch(/job-fee access/i);
+    expect(privateContactLockedCopy()).toMatch(/\$4\.99 connection entitlement/i);
     expect(privateContactLockedCopy()).toMatch(/admin/i);
     expect(privateContactLockedCopy()).not.toMatch(/until (the )?booking is confirmed/i);
-    expect(privateContactHintCopy()).toMatch(/hire \+ job fee/i);
+    expect(privateContactHintCopy()).toMatch(/\$4\.99 connection entitlement/i);
     expect(unauthorizedPayloadLeaksPrivateContact({ project_id: "p1" })).toBe(false);
     expect(unauthorizedPayloadLeaksPrivateContact({ phone: "404-555-0100" })).toBe(true);
   });

@@ -48,7 +48,7 @@ export function CustomerBookingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
-      <p className="text-ink-700">Selecting a pro starts a booking. {paymentsComingSoonCopy()}</p>
+        <p className="text-ink-700">Selecting a pro starts a booking. PPP does not take a percentage of the job. {paymentsComingSoonCopy()}</p>
       <FormError message={error} />
       {rows.length === 0 ? (
         <EmptyState title="No bookings yet" body="When you select a contractor, the booking will wait here. Nothing is marked paid." />
@@ -59,8 +59,7 @@ export function CustomerBookingsPage() {
               <Link to={`/app/customer/bookings/${row.id}`} className="block rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
                 <p className="font-semibold text-forest-800">{statusLabel(row.status)}</p>
                 <p className="mt-1 text-sm text-ink-500">
-                  Job {formatUsdFromCents(row.billable_amount_cents || row.amount_cents)} · PPP fee preview{" "}
-                  {formatUsdFromCents(row.fee_cents)}
+                  Job {formatUsdFromCents(row.billable_amount_cents || row.amount_cents)}
                 </p>
               </Link>
             </li>
@@ -119,12 +118,10 @@ export function CustomerBookingDetailPage() {
       ) : null}
       <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm">
         <p>Job total {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
-        <p>
-          PPP fee {booking.fee_locked ? "" : "preview "}
-          {formatUsdFromCents(booking.fee_cents)} ({booking.fee_kind === "REPEAT" ? "Hire Again rate" : "original schedule"})
+        <p className="mt-2 text-ink-500">
+          PPP does not take a percentage of this job. Project payment is between you and the contractor.{" "}
+          {paymentsComingSoonCopy()}
         </p>
-        <p>Pro would earn {formatUsdFromCents(booking.contractor_earnings_cents)}</p>
-        <p className="mt-2 text-ink-500">{paymentsComingSoonCopy()} You are not charged a customer percentage.</p>
       </section>
       {pending ? (
         <Button

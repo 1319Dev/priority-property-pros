@@ -6,18 +6,14 @@ import wordmarkSvg from "./assets/wordmark.svg?url";
 import App from "./App";
 import { ToastProvider } from "./components/ui/Toast";
 import {
-  FEE_WHEN_HIRED_SENTENCE,
+  CONNECTION_FEE_PER_LABEL,
   HOMEOWNER_PRICING_SUMMARY,
-  ORIGINAL_FEE_BRACKETS_PUBLIC,
-  ORIGINAL_MAX_FEE,
-  ORIGINAL_MIN_FEE,
   PRICING_HOMEPAGE_LINE,
   PRICING_PAGE_TITLE,
+  PRICING_PRIMARY,
   PRO_PRICING_SUMMARY,
-  REPEAT_FEE_RATE,
-  REPEAT_MAX_FEE,
-  REPEAT_MIN_FEE,
   SEE_PRICING_LABEL,
+  SIGNUP_FEE_ONE_TIME_LABEL,
 } from "./data/pricing";
 import { SERVICES } from "./data/services";
 import { AuthProvider } from "./lib/auth/AuthProvider";
@@ -142,7 +138,7 @@ describe("Phase 3 marketplace surfaces", () => {
     expect(screen.getByRole("link", { name: /example: cedar fence repair/i })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /post a project/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /get estimates/i }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/join priority property pros for a one-time \$9\.99 signup fee/i).length).toBeGreaterThan(
+    expect(screen.getAllByText(/join priority property pros for a one-time \$9\.99 account activation/i).length).toBeGreaterThan(
       0,
     );
     expect(screen.queryByText(/free signup/i)).not.toBeInTheDocument();
@@ -151,43 +147,37 @@ describe("Phase 3 marketplace surfaces", () => {
 });
 
 describe("Public marketplace pricing", () => {
-  it("states the one-time signup fee on the homepage and links to pricing", () => {
+  it("states the one-time account activation on the homepage and links to pricing", () => {
     renderApp("/");
     expect(screen.getByRole("heading", { name: PRICING_HOMEPAGE_LINE })).toBeInTheDocument();
-    expect(screen.getAllByText(/no monthly homeowner subscription/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/\$9\.99 one-time signup fee/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\$0\/month/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\$9\.99 one-time account activation/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/free to join/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/accounts are free/i)).not.toBeInTheDocument();
     const seePricing = screen.getByRole("link", { name: SEE_PRICING_LABEL });
     expect(seePricing).toHaveAttribute("href", "/pricing");
   });
 
-  it("publishes homeowner, pro, original, and repeat fee facts without processor jargon", () => {
+  it("publishes homeowner, contractor, and $4.99 connection facts without processor jargon", () => {
     const { container } = renderApp("/pricing");
     expect(screen.getByRole("heading", { name: PRICING_PAGE_TITLE })).toBeInTheDocument();
     expect(screen.getByText(HOMEOWNER_PRICING_SUMMARY)).toBeInTheDocument();
     expect(screen.getByText(PRO_PRICING_SUMMARY)).toBeInTheDocument();
-    expect(screen.getByText(FEE_WHEN_HIRED_SENTENCE)).toBeInTheDocument();
-    expect(screen.getAllByText(/one-time signup fee/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/not \$9\.99\/month/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/free plan/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(PRICING_PRIMARY).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(SIGNUP_FEE_ONE_TIME_LABEL).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(CONNECTION_FEE_PER_LABEL).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/\$0\/month/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/priority pro/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/\$49\/month or \$499\/year/i).length).toBeGreaterThan(0);
-    for (const bracket of ORIGINAL_FEE_BRACKETS_PUBLIC) {
-      expect(screen.getByText(bracket.range)).toBeInTheDocument();
-      expect(screen.getAllByText(bracket.rate).length).toBeGreaterThan(0);
-    }
-    expect(screen.getByText(`Minimum ${ORIGINAL_MIN_FEE}. Maximum ${ORIGINAL_MAX_FEE}.`)).toBeInTheDocument();
-    expect(screen.getByText(REPEAT_FEE_RATE)).toBeInTheDocument();
-    expect(screen.getByText(`Minimum ${REPEAT_MIN_FEE}. Maximum ${REPEAT_MAX_FEE}.`)).toBeInTheDocument();
+    expect(screen.getAllByText(/priority pro — coming soon/i).length).toBeGreaterThan(0);
+    expect(container.textContent).not.toMatch(/8%|3\.5%|2\.5%/);
+    expect(container.textContent).not.toMatch(/\$49\/month|\$499\/year/);
     expect(container.textContent).not.toMatch(/stripe|paymentintent|webhooks?|payments_live|charges_live|test mode/i);
-    expect(container.textContent).not.toMatch(/free to join|free signup|accounts are free/i);
+    expect(container.textContent).not.toMatch(/free to join|free signup|accounts are free|pay when you win|no lead fees/i);
   });
 
-  it("mentions the one-time signup fee on signup and for-pros surfaces", () => {
+  it("mentions the one-time account activation on signup and for-pros surfaces", () => {
     renderApp("/sign-up");
-    expect(screen.getByText(/one-time \$9\.99 signup fee/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/one-time \$9\.99 account activation/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/not \$9\.99 a month/i)).toBeInTheDocument();
     expect(screen.queryByText(/free to join/i)).not.toBeInTheDocument();
   });

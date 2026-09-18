@@ -5,9 +5,12 @@ import { looksLikeFilename } from "./publicDirectory";
 import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
 import { reusableEmptyDraft } from "./flows";
 import { detectContactLeak } from "./contactLeak";
+import { customerFacingConnectionCheckoutError, CONNECTION_RECONCILE_CUSTOMER_ERROR } from "./connectionCheckout";
 import type {
   BookingContactAccess,
+  ConnectionAvailability,
   Project,
+  ProjectConnection,
   ProjectPrivateLocation,
   QuestionKind,
   ServiceAreaMode,
@@ -92,7 +95,7 @@ export async function fetchCustomerProjects(customerId?: string): Promise<Projec
     const fallback = await client()
       .from("projects")
       .select(
-        "id, customer_id, category_id, title, description, status, completeness, city, state, zip_code, timing, preferred_date, budget_min_cents, budget_max_cents, draft_step, selected_contractor_profile_id, selected_estimate_id, selected_booking_id, posted_at, selected_at, scope_revision, cancelled_at, cancel_reason, created_at, updated_at",
+        "id, customer_id, category_id, title, description, status, completeness, city, state, zip_code, timing, preferred_date, budget_min_cents, budget_max_cents, draft_step, selected_contractor_profile_id, selected_estimate_id, selected_booking_id, posted_at, selected_at, scope_revision, cancelled_at, cancel_reason, accepting_connections, connections_closed_at, connections_closed_by, created_at, updated_at",
       )
       .order("updated_at", { ascending: false });
     if (fallback.error) throw new Error(asError(error, "Could not load projects."));
@@ -475,11 +478,17 @@ export async function fetchBookingJobContact(bookingId: string): Promise<RpcJson
   return (data ?? {}) as RpcJson;
 }
 
+export async function fetchProjectJobContact(projectId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("project_job_contact", { p_project_id: projectId });
+  if (error) throw new Error(asError(error, "Contact is still locked."));
+  return (data ?? {}) as RpcJson;
+}
+
 export async function fetchBookingContactAccess(bookingId: string): Promise<BookingContactAccess | null> {
   const { data, error } = await client()
     .from("booking_contact_access")
     .select(
-      "booking_id, status, granted_at, granted_by, grant_reason, grant_source, revoked_at, created_at, updated_at",
+      "id, booking_id, connection_id, project_id, contractor_profile_id, status, granted_at, granted_by, grant_reason, grant_source, revoked_at, created_at, updated_at",
     )
     .eq("booking_id", bookingId)
     .maybeSingle();
@@ -533,6 +542,7 @@ export type OpportunityRow = Database["public"]["Tables"]["opportunities"]["Row"
     | "completeness"
     | "category_id"
     | "preferred_date"
+    | "accepting_connections"
   > | null;
 };
 
@@ -931,6 +941,115 @@ export async function signedContractorDocUrl(path: string): Promise<string | nul
   const { data, error } = await client().storage.from("contractor-docs").createSignedUrl(path, 3600);
   if (error) return null;
   return data.signedUrl;
+}
+
+export async function fetchConnectionFeeCheckoutFlags(): Promise<{
+  enabled: boolean;
+  fee_cents: number;
+  stripe_test_mode: boolean;
+}> {
+  const { data, error } = await client().rpc("connection_fee_checkout_flags");
+  if (error) throw new Error(asError(error, "Could not load connection checkout flags."));
+  const row = (data ?? {}) as Record<string, unknown>;
+  return {
+    enabled: row.enabled === true,
+    fee_cents: Number(row.fee_cents ?? 499),
+    stripe_test_mode: row.stripe_test_mode !== false,
+  };
+}
+
+export async function startConnectionCheckout(input: {
+  projectId: string;
+  opportunityId?: string;
+  origin?: string;
+}): Promise<RpcJson> {
+  const { data, error } = await client().functions.invoke("create-connection-checkout", {
+    body: {
+      project_id: input.projectId,
+      opportunity_id: input.opportunityId ?? null,
+      origin: input.origin ?? (typeof window !== "undefined" ? window.location.origin : ""),
+    },
+  });
+  if (error) {
+    console.error("create-connection-checkout failed", error, data);
+    throw new Error(await customerFacingConnectionCheckoutError(data, error));
+  }
+  return (data ?? {}) as RpcJson;
+}
+
+export async function reconcileConnectionCheckout(sessionId: string): Promise<RpcJson> {
+  const { data, error } = await client().functions.invoke("reconcile-connection-checkout", {
+    body: { session_id: sessionId },
+  });
+  if (error) {
+    console.error("reconcile-connection-checkout failed", error, data);
+    throw new Error(
+      await customerFacingConnectionCheckoutError(data, error, CONNECTION_RECONCILE_CUSTOMER_ERROR),
+    );
+  }
+  return (data ?? {}) as RpcJson;
+}
+
+export async function requestProjectConnection(projectId: string, idempotencyKey?: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("request_project_connection", {
+    p_project_id: projectId,
+    p_idempotency_key: idempotencyKey ?? null,
+  });
+  if (error) throw new Error(asError(error, "Could not request a connection."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function fetchProjectConnectionAvailability(projectId: string): Promise<ConnectionAvailability> {
+  const { data, error } = await client().rpc("project_connection_availability", {
+    p_project_id: projectId,
+  });
+  if (error) throw new Error(asError(error, "Could not load connection availability."));
+  const row = (data ?? {}) as Record<string, unknown>;
+  return {
+    project_id: String(row.project_id ?? projectId),
+    max: Number(row.max ?? 3),
+    occupied: Number(row.occupied ?? 0),
+    remaining: Number(row.remaining ?? 3),
+    completed: Number(row.completed ?? 0),
+    accepting_connections: row.accepting_connections !== false,
+    full: Boolean(row.full),
+    fee_cents: Number(row.fee_cents ?? 499),
+    checkout_enabled: Boolean(row.checkout_enabled),
+    payments_live: false,
+    charges_live: false,
+  };
+}
+
+export async function stopNewProjectConnections(projectId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("stop_new_project_connections", {
+    p_project_id: projectId,
+  });
+  if (error) throw new Error(asError(error, "Could not stop new connections."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function fetchMyProjectConnections(projectId?: string): Promise<ProjectConnection[]> {
+  const { data, error } = await client().rpc("list_my_project_connections", {
+    p_project_id: projectId ?? null,
+  });
+  if (error) throw new Error(asError(error, "Could not load connections."));
+  return (Array.isArray(data) ? data : []) as ProjectConnection[];
+}
+
+export async function submitContentReport(input: {
+  targetType: string;
+  targetId?: string | null;
+  reason: string;
+  notes?: string | null;
+}): Promise<RpcJson> {
+  const { data, error } = await client().rpc("submit_content_report", {
+    p_target_type: input.targetType,
+    p_target_id: input.targetId ?? null,
+    p_reason: input.reason,
+    p_notes: input.notes ?? null,
+  });
+  if (error) throw new Error(asError(error, "Could not submit the report."));
+  return (data ?? {}) as RpcJson;
 }
 
 export const TIMING_LABELS: Record<TimingPreference, string> = {

@@ -4,6 +4,7 @@ import { CompletenessBadge } from "../../../components/marketplace/CompletenessB
 import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/Input";
 import { FormError } from "../../../lib/auth/AuthCard";
+import { PHOTO_UPLOAD_GUIDANCE } from "../../../lib/marketplace/photoSafety";
 import { useAuth } from "../../../lib/auth/useAuth";
 import {
   createOrReuseDraftProject,
@@ -328,7 +329,7 @@ export function ProjectWizardPage() {
 
       {step === 3 ? (
         <div className="space-y-4">
-          <p className="text-sm text-ink-700">Photos stay private. Only you, PPP, and matched contractors can see them.</p>
+          <p className="text-sm text-ink-700">Photos stay private before a paid connection. {PHOTO_UPLOAD_GUIDANCE}</p>
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp,image/heic"
@@ -443,7 +444,7 @@ export function ProjectWizardPage() {
       {step === 5 ? (
         <div className="space-y-4">
           <p className="text-sm text-ink-700">
-            Your exact street stays protected until the hired contractor has job-fee access (payments coming soon) or an admin unlocks that booking. Matched pros only see city and ZIP.
+            Your exact street stays protected until a contractor has a paid $4.99 connection entitlement (payments coming soon) or an admin unlocks that record. Matched pros only see city and state before connecting.
           </p>
           <TextInput label="Street address" value={street} onChange={(e) => setStreet(e.target.value)} autoComplete="street-address" />
           <TextInput label="Apt / unit (optional)" value={street2} onChange={(e) => setStreet2(e.target.value)} />

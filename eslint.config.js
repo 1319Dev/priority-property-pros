@@ -6,7 +6,7 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist", "dev-dist", "coverage", "public/icons"],
+    ignores: ["dist", "dev-dist", "coverage", "public/icons", "supabase/functions"],
   },
   {
     files: ["**/*.{ts,tsx}"],

@@ -1,0 +1,18 @@
+# Connection Fee TEST Checkout Edge Functions.
+# DO NOT deploy to production bersftkjpbzpgtahbqwd.
+# Staging only: giiskdvitimksdewnelc — after the owner sets secrets.
+# Secrets (Dashboard → Edge Functions → Secrets), never Vite / never git:
+#   STRIPE_SECRET_KEY              (sk_test_ only)
+#   STRIPE_CONNECTION_PRICE_ID     (price_1UH1RsPYJQAIQDv721IhjKS0)
+#   STRIPE_ACTIVATION_PRICE_ID     (config only; unused by these functions)
+#   STRIPE_WEBHOOK_SECRET          (whsec_ for connection-fee-webhook)
+# Do not set payments_live or charges_live to enable this.
+
+[functions.create-connection-checkout]
+verify_jwt = true
+
+[functions.reconcile-connection-checkout]
+verify_jwt = true
+
+[functions.connection-fee-webhook]
+verify_jwt = false

@@ -1,0 +1,51 @@
+-- Connection Fee TEST Checkout expectations.
+-- Do NOT run against production bersftkjpbzpgtahbqwd.
+-- Staging only after secrets: giiskdvitimksdewnelc
+--
+-- payments_live=0 charges_live=0 signup_fee_enabled=0 stripe_test_mode=1
+-- connection_fee_checkout_enabled=0 until owner enables staging.
+--
+-- Eligibility for public.reserve_connection_checkout (20260928000003+):
+--   Matched contractor + opportunity AVAILABLE → may reserve (Participate is optional).
+--   Matched contractor + opportunity ACCEPTED → may still reserve.
+--   Unmatched contractor (no opportunity row for that project) → ineligible contractor.
+--   Opportunity PASSED / EXPIRED / CLOSED → ineligible contractor.
+--   Project CANCELLED → project is cancelled.
+-- Unchanged: APPROVED + ACTIVE contractor, accepting_connections, max-3 occupancy,
+-- require_service_role, stripe_test_mode=1, no #14 grant on reserve.
+--
+-- Manual SQL-editor checks (staging only, never production):
+-- 1. Confirm the live function source includes AVAILABLE or ACCEPTED:
+--    select pg_get_functiondef('public.reserve_connection_checkout(uuid,uuid,text)'::regprocedure);
+--    Expect: o.status IN ('AVAILABLE', 'ACCEPTED')
+-- 2. AVAILABLE walkthrough contractor on a project with empty project_connections
+--    should no longer fail at reserve before Stripe is reached.
+-- 3. A second contractor with no opportunity on that project still raises
+--    'ineligible contractor'.
+-- 4. PASSED opportunity for the same contractor cannot reserve.
+-- 5. ACCEPTED opportunity can still reserve.
+-- 7. connection-fee-webhook must boot: webhookSecret (STRIPE_WEBHOOK_SECRET / whsec_)
+--    is distinct from stripeSecret (STRIPE_SECRET_KEY / sk_test_). Duplicate `const secret`
+--    caused worker boot SyntaxError and HTTP 503.
+-- 8. stripe_payment_intent_id stores only pi_... . Fulfillment source is
+--    connection_checkout_events.processor_event_id and
+--    connection_checkout_sessions.fulfillment_reference (evt_... or reconcile:cs_test_...).
+--    There is no stripe_events table in this repo; webhook inserts connection_checkout_events.
+-- 9. After 20260928000004, non-pi_ historical PI values are moved to fulfillment_reference.
+--    Replay of cs_test_a1b7iOf0SYA0cavV946FURjAkPP4pE17Zs4xddMm4XIx2uhTfFaCWXkKwu should
+--    then store the real pi_... without rewriting #14 entitlement.
+-- 10. Adversarial / lifecycle hardening (automated in
+--     src/lib/marketplace/connectionMarketplaceHardening.test.ts — do not burn new $4.99 charges):
+--     1) Abandoned checkout: RESERVED occupies a TTL slot; expire_stale releases it; no PAID/#14.
+--     2) Duplicate contractor+project: PAID/#14 cannot reserve again (no second session/slot/charge).
+--     3) Final-slot race: unique slot 1–3 + FOR UPDATE; at most one winner; Stripe after slot gone
+--        → paid_but_reservation_not_active needs_refund, no grant, never a 4th PAID.
+--     4) Stop New Connections: reserve rejects; fulfill does not check accepting_connections so
+--        in-flight RESERVED may finalize; existing UNLOCKED #14 kept.
+--     5) Tampering: client cannot set price/amount/contractor; fulfill requires 499 / USD / Price ID.
+--     6) Webhook + reconcile replay: processor_event_id UNIQUE; already-PAID is idempotent.
+--     7) Contact privacy: unpaid has no #14 row; helper is project_id+contractor_profile_id;
+--        admin_revoke_connection_contact_access sets LOCKED+revoked_at.
+--     8) UX: start/reconcile never surface FunctionsHttpError; Connect/Checkout/Connected CTA.
+-- 11. Do not refund cs_test_a1b7iOf0SYA0cavV946FURjAkPP4pE17Zs4xddMm4XIx2uhTfFaCWXkKwu.
+

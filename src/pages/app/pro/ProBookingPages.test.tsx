@@ -8,7 +8,7 @@ describe("Project Contact section", () => {
   it("shows a professional locked message with no empty contact fields", () => {
     render(<ProjectContactSection entitled={false} contact={null} />);
     expect(screen.getByRole("heading", { name: /project contact/i })).toBeInTheDocument();
-    expect(screen.getByText(/project contact is locked for this booking/i)).toBeInTheDocument();
+    expect(screen.getByText(/project contact is locked/i)).toBeInTheDocument();
     expect(screen.queryByText(/^phone$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^email$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^street$/i)).not.toBeInTheDocument();
@@ -25,7 +25,7 @@ describe("Project Contact section", () => {
     expect(screen.getByText("12 Oak St")).toBeInTheDocument();
     expect(screen.getByText("404-555-0100")).toBeInTheDocument();
     expect(screen.getByText("pat@example.com")).toBeInTheDocument();
-    expect(screen.queryByText(/project contact is locked for this booking/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/project contact is locked/i)).not.toBeInTheDocument();
   });
 });
 

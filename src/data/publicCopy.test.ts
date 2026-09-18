@@ -5,17 +5,16 @@ import { describe, expect, it } from "vitest";
 import {
   CONTRACTOR_SIGNUP_HEADLINE,
   CONTRACTOR_SIGNUP_SUPPORTING,
-  FREE_PLAN_NAME,
-  FREE_PLAN_PRICE,
   HOMEPAGE_SIGNUP_HEADLINE,
   HOMEPAGE_SIGNUP_SUPPORTING,
+  MONTHLY_PRICE,
   SIGNUP_FEE_NOT_MONTHLY,
   SIGNUP_FEE_SHORT,
 } from "./pricing";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
-/** Outdated phrases that imply creating an account costs nothing. */
+/** Outdated phrases that imply creating an account costs nothing or that PPP takes job %. */
 const PROHIBITED_ACCOUNT_COPY = [
   /\bfree to join\b/i,
   /\bfree signup\b/i,
@@ -39,6 +38,8 @@ const PROHIBITED_ACCOUNT_COPY = [
   /\bfree for (customers|pros|contractors)\b/i,
   /\bsign ?ups? (are|is) free\b/i,
   /\bit'?s free to (join|post|hire|sign)\b/i,
+  /\bpay when you win\b/i,
+  /\bno lead fees\b/i,
 ];
 
 const PUBLIC_COPY_ROOTS = [
@@ -50,7 +51,12 @@ const PUBLIC_COPY_ROOTS = [
 
 function isSkippedFile(filePath: string): boolean {
   const base = path.basename(filePath);
-  return /\.test\.(ts|tsx)$/.test(base) || base === "database.types.ts";
+  return (
+    /\.test\.(ts|tsx)$/.test(base) ||
+    base === "database.types.ts" ||
+    base === "legacyPricing.ts" ||
+    base === "feeEngine.ts"
+  );
 }
 
 function collectPublicCopyFiles(entry: string, acc: string[] = []): string[] {
@@ -74,15 +80,14 @@ function publicFacingFiles(): string[] {
 }
 
 describe("public pricing copy", () => {
-  it("states a one-time $9.99 signup fee, not a monthly signup charge", () => {
-    expect(HOMEPAGE_SIGNUP_HEADLINE).toMatch(/one-time \$9\.99 signup fee/i);
-    expect(HOMEPAGE_SIGNUP_SUPPORTING).toMatch(/no monthly homeowner subscription/i);
-    expect(CONTRACTOR_SIGNUP_HEADLINE).toMatch(/one-time \$9\.99 signup fee/i);
-    expect(CONTRACTOR_SIGNUP_SUPPORTING).toMatch(/\$0\/month Free plan/i);
-    expect(SIGNUP_FEE_SHORT).toBe("$9.99 one-time signup fee");
+  it("states a one-time $9.99 account activation and $4.99 connection fee", () => {
+    expect(HOMEPAGE_SIGNUP_HEADLINE).toMatch(/one-time \$9\.99 account activation/i);
+    expect(HOMEPAGE_SIGNUP_SUPPORTING).toMatch(/\$4\.99/i);
+    expect(CONTRACTOR_SIGNUP_HEADLINE).toMatch(/one-time \$9\.99 account activation/i);
+    expect(CONTRACTOR_SIGNUP_SUPPORTING).toMatch(/\$4\.99 only when you choose to connect/i);
+    expect(SIGNUP_FEE_SHORT).toBe("$9.99 one-time account activation");
     expect(SIGNUP_FEE_NOT_MONTHLY).toMatch(/not \$9\.99\/month/i);
-    expect(FREE_PLAN_NAME).toBe("Free plan");
-    expect(FREE_PLAN_PRICE).toBe("$0/month");
+    expect(MONTHLY_PRICE).toBe("$0/month");
   });
 
   it("does not use outdated free-account language in public-facing application copy", () => {
@@ -98,10 +103,11 @@ describe("public pricing copy", () => {
     expect(hits).toEqual([]);
   });
 
-  it("still allows contractor Free plan / $0/month wording in shared pricing copy", () => {
+  it("keeps $0/month wording without a paid monthly plan", () => {
     const pricing = readFileSync(path.join(repoRoot, "src/data/pricing.ts"), "utf8");
-    expect(pricing).toMatch(/Free plan/);
     expect(pricing).toMatch(/\$0\/month/);
     expect(pricing).not.toMatch(/Free to join/i);
+    expect(pricing).not.toMatch(/\$49\/month/);
+    expect(pricing).not.toMatch(/8%/);
   });
 });

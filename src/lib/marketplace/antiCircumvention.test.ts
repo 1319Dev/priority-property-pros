@@ -4,9 +4,11 @@ import {
   containsPreHireContact,
   findPreHireContact,
   PRE_HIRE_CONTACT_MESSAGE,
+  preConnectionContactBlocked,
   preHireContactError,
 } from "./antiCircumvention";
-import { computeMarketplaceFee } from "./feeEngine";
+import { connectionFeeCents } from "./connectionFee";
+import { CHARGES_LIVE, PAYMENTS_LIVE } from "./types";
 
 describe("pre-hire anti-circumvention", () => {
   it("rejects obvious phones, emails, URLs, and social handles", () => {
@@ -22,6 +24,13 @@ describe("pre-hire anti-circumvention", () => {
     expect(findPreHireContact("Service caption: more at mycrew.io/book")).toBe("url");
   });
 
+  it("blocks exact street and QR mentions without flagging ordinary project copy", () => {
+    expect(findPreHireContact("Meet me at 123 Oak Street after lunch.")).toBe("street");
+    expect(findPreHireContact("Scan the QR code on my truck.")).toBe("qr");
+    expect(containsPreHireContact("Replace 40 ft of cedar fence before the weekend.")).toBe(false);
+    expect(containsPreHireContact("Need 8-10 ft gate hardware and 2x4 bracing.")).toBe(false);
+  });
+
   it("allows ordinary project copy without contact", () => {
     expect(containsPreHireContact("Replace 40 ft of cedar fence before the weekend.")).toBe(false);
     expect(containsPreHireContact("Need 8-10 ft gate hardware and 2x4 bracing.")).toBe(false);
@@ -35,10 +44,14 @@ describe("pre-hire anti-circumvention", () => {
     expect(() => assertNoPreHireContact("Need a new gate latch.")).not.toThrow();
   });
 
-  it("does not change marketplace fee math or enable live charges", () => {
-    const fee = computeMarketplaceFee({ amount_cents: 100_000, kind: "ORIGINAL" });
-    expect(fee.fee_cents).toBe(7_500);
-    expect(fee.payments_live).toBe(false);
-    expect(fee.charges_live).toBe(false);
+  it("does not incorrectly block connected / entitled parties", () => {
+    expect(preConnectionContactBlocked("Call 713-555-0142", true)).toBe(false);
+    expect(preConnectionContactBlocked("Call 713-555-0142", false)).toBe(true);
+  });
+
+  it("keeps the $4.99 connection price and payments off", () => {
+    expect(connectionFeeCents()).toBe(499);
+    expect(PAYMENTS_LIVE).toBe(false);
+    expect(CHARGES_LIVE).toBe(false);
   });
 });
