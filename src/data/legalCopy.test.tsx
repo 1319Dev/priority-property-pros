@@ -5,12 +5,12 @@ import { LEGAL_DOCUMENTS, LEGAL_PAGES, ATTORNEY_REVIEW_REQUIRED } from "./legal"
 import { TRUST_WHAT_DOES_NOT_EXIST, TRUST_WHAT_EXISTS } from "./trustSafety";
 import { MARKETING_IMAGES } from "./marketingImages";
 import {
+  CONNECTION_FEE,
+  CONNECTION_FEE_DESCRIPTION,
   CONTRACTOR_VALUE_HEADLINE,
   NO_PAY_TO_WIN,
-  ORIGINAL_FEE_BRACKETS_PUBLIC,
   PRIORITY_PRO_STATUS,
 } from "./pricing";
-import { ORIGINAL_FEE_BRACKETS, publicFeeBracketsFromConfig } from "../lib/marketplace/feeEngine";
 import { LegalIndexPage, LegalPage } from "../pages/LegalPage";
 import { TrustPage } from "../pages/TrustPage";
 import { PricingPage } from "../pages/PricingPage";
@@ -62,11 +62,8 @@ describe("legal and trust copy", () => {
 
 describe("pricing schedule source of truth", () => {
   it("flat $4.99 Connection Fee model", () => {
-    // Historical brackets still exist for reference but are deprecated
-    expect(ORIGINAL_FEE_BRACKETS_PUBLIC).toEqual(
-      publicFeeBracketsFromConfig(ORIGINAL_FEE_BRACKETS).map((row) => ({ range: row.range, rate: row.rate })),
-    );
-    expect(ORIGINAL_FEE_BRACKETS_PUBLIC[0]).toEqual({ range: "$0–$499.99", rate: "8%" });
+    expect(CONNECTION_FEE).toBe("$4.99");
+    expect(CONNECTION_FEE_DESCRIPTION).toMatch(/\$4\.99 flat Connection Fee/i);
     expect(PRIORITY_PRO_STATUS).toBe("Coming Soon");
     expect(CONTRACTOR_VALUE_HEADLINE).toMatch(/no lead fees.*no bid fees.*pay.*4\.99.*when you connect/i);
     expect(NO_PAY_TO_WIN).toMatch(/no pay-to-win/i);

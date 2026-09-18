@@ -2,6 +2,7 @@ import { ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
 import { CONTRACTOR_CTA, CUSTOMER_CTA } from "../data/brand";
 import {
+  CONNECTION_FEE,
   CONTRACTOR_SIGNUP_HEADLINE,
   CONTRACTOR_SIGNUP_SUPPORTING,
   FEE_WHEN_HIRED_SENTENCE,
@@ -10,10 +11,7 @@ import {
   FREE_PLAN_PRICE,
   HOMEOWNER_PRICING_SUMMARY,
   HOMEPAGE_SIGNUP_HEADLINE,
-  ORIGINAL_FEE_BRACKETS_PUBLIC,
   ORIGINAL_FEE_INTRO,
-  ORIGINAL_MAX_FEE,
-  ORIGINAL_MIN_FEE,
   PRICING_FAQ,
   PRICING_PAGE_INTRO,
   PRICING_PAGE_TITLE,
@@ -30,8 +28,6 @@ import {
   CONTRACTOR_VALUE_POINTS,
   REPEAT_FEE_INTRO,
   REPEAT_FEE_RATE,
-  REPEAT_MAX_FEE,
-  REPEAT_MIN_FEE,
   SIGNUP_FEE,
   SIGNUP_FEE_NOT_MONTHLY,
   SIGNUP_FEE_SHORT,
@@ -92,7 +88,7 @@ export function PricingPage() {
             </p>
             <h2 className="mt-2 font-display text-2xl text-forest-800">{PRIORITY_PRO_NAME}</h2>
             <p className="mt-2 text-sm font-semibold text-forest-800">
-              {PRIORITY_PRO_PRICE_MONTH} or {PRIORITY_PRO_PRICE_YEAR} · {PRIORITY_PRO_FEE_RATE} marketplace fee
+              {PRIORITY_PRO_PRICE_MONTH} or {PRIORITY_PRO_PRICE_YEAR} · {PRIORITY_PRO_FEE_RATE} Connection Fee
             </p>
             <p className="mt-2 text-sm leading-relaxed text-ink-700">{PRIORITY_PRO_DETAIL}</p>
           </article>
@@ -127,21 +123,11 @@ export function PricingPage() {
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">
             First job with a pro
           </p>
-          <h2 className="mt-2 font-display text-2xl text-forest-800 sm:text-3xl">Original marketplace fee</h2>
+          <h2 className="mt-2 font-display text-2xl text-forest-800 sm:text-3xl">Connection Fee</h2>
           <p className="mt-3 text-sm leading-relaxed text-ink-700 sm:text-base">{ORIGINAL_FEE_INTRO}</p>
-          <ul className="mt-5 space-y-2">
-            {ORIGINAL_FEE_BRACKETS_PUBLIC.map((bracket) => (
-              <li
-                key={bracket.range}
-                className="flex min-h-12 items-center justify-between gap-4 rounded-2xl bg-cream-100 px-4 py-3 text-sm sm:text-base"
-              >
-                <span className="text-ink-700">{bracket.range}</span>
-                <span className="font-semibold text-forest-800">{bracket.rate}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-4 text-sm leading-relaxed text-ink-700">
-            Minimum {ORIGINAL_MIN_FEE}. Maximum {ORIGINAL_MAX_FEE}.
+          <p className="mt-5 flex min-h-12 items-center justify-between gap-4 rounded-2xl bg-cream-100 px-4 py-3 text-sm sm:text-base">
+            <span className="text-ink-700">Flat rate per connection</span>
+            <span className="font-semibold text-forest-800">{CONNECTION_FEE}</span>
           </p>
         </div>
 
@@ -149,14 +135,11 @@ export function PricingPage() {
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">
             Hire again
           </p>
-          <h2 className="mt-2 font-display text-2xl text-forest-800 sm:text-3xl">Repeat marketplace fee</h2>
+          <h2 className="mt-2 font-display text-2xl text-forest-800 sm:text-3xl">Repeat Connection Fee</h2>
           <p className="mt-3 text-sm leading-relaxed text-ink-700 sm:text-base">{REPEAT_FEE_INTRO}</p>
           <p className="mt-5 flex min-h-12 items-center justify-between gap-4 rounded-2xl bg-cream-100 px-4 py-3 text-sm sm:text-base">
-            <span className="text-ink-700">Flat rate</span>
+            <span className="text-ink-700">Flat rate per connection</span>
             <span className="font-semibold text-forest-800">{REPEAT_FEE_RATE}</span>
-          </p>
-          <p className="mt-4 text-sm leading-relaxed text-ink-700">
-            Minimum {REPEAT_MIN_FEE}. Maximum {REPEAT_MAX_FEE}.
           </p>
         </div>
 

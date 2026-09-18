@@ -83,9 +83,9 @@ Security, tables, and marketplace flow: **[docs/SECURITY.md](docs/SECURITY.md)**
 - Customer POST A PROJECT wizard (drafts, photos, DB questions, protected street address)
 - Contractor onboarding (services, area, portfolio, credentials — no self-verify)
 - Matching with an atomic max of 3 participating contractors
-- Pre-estimate Q&A, estimates with validated totals and a **~7% fee preview** (`charges_live: false`)
+- Pre-estimate Q&A, estimates with validated totals and a **$4.99 flat Connection Fee preview** (`charges_live: false`)
 - Customer compare + SELECT THIS PRO (creates a **PENDING booking**, does not confirm or charge)
-- Versioned progressive marketplace fee engine (integer cents; ORIGINAL vs REPEAT)
+- Versioned marketplace fee engine (integer cents; flat $4.99 Connection Fee model)
 - Hire Again foundation, change orders with dual approval, verified reviews on COMPLETED bookings only
 
 ## What Phase 4A does **not** include
