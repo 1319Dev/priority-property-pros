@@ -6,7 +6,7 @@
 
 PPP connects homeowners and property owners with **independent local contractors**. PPP is **not** the contractor. This is not Angi and not Thumbtack.
 
-This repository is **Phase 5A**: the Phase 1 homepage, Phase 2 accounts, Phase 3 posting/matching/estimates, Phase 4A booking/fee engine, plus **mobile polish, owner edit/cancel, and customer project isolation**. There are still **no Stripe charges, no payouts, and no Priority Verified workflow**. Production UI does not fake paid bookings.
+This repository is **Phase 5A plus the $4.99 connection marketplace (payments OFF)**: the Phase 1 homepage, Phase 2 accounts, Phase 3 posting/matching/estimates, Phase 4A booking/fee engine (legacy, unused by active UI), plus **mobile polish, owner edit/cancel, customer project isolation**, anonymized public browse, contact-access entitlement, and a flat **$4.99 Connection Fee** lifecycle. There are still **no Stripe charges, no payouts, and no Priority Verified workflow**. Production UI does not fake paid bookings or paid connections.
 
 Live public site (Phase 1 behavior stays): **https://1319dev.github.io/priority-property-pros/**
 
@@ -72,7 +72,7 @@ Accounts and posting need a Supabase project. The homepage works without it.
 3. Never add the **service role** key.
 4. Approve real contractors from **Admin → Approvals** after promoting an admin (no self-approve). SQL fallback: **[supabase/sql/approve_contractor.sql](supabase/sql/approve_contractor.sql)**.
 
-Security, tables, and marketplace flow: **[docs/SECURITY.md](docs/SECURITY.md)**, **[docs/DATABASE.md](docs/DATABASE.md)**, **[docs/MARKETPLACE_CORE.md](docs/MARKETPLACE_CORE.md)**, **[docs/PHASE4A.md](docs/PHASE4A.md)**, **[docs/PHASE5A.md](docs/PHASE5A.md)**.
+Security, tables, and marketplace flow: **[docs/SECURITY.md](docs/SECURITY.md)**, **[docs/DATABASE.md](docs/DATABASE.md)**, **[docs/MARKETPLACE_CORE.md](docs/MARKETPLACE_CORE.md)**, **[docs/PHASE4A.md](docs/PHASE4A.md)**, **[docs/PHASE5A.md](docs/PHASE5A.md)**, **[docs/CONNECTION_MARKETPLACE.md](docs/CONNECTION_MARKETPLACE.md)**.
 
 ---
 

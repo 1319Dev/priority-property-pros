@@ -1,5 +1,12 @@
 import type { FeeScheduleKind, FeeBracket, MarketplaceFeePreview } from "./types";
 
+/**
+ * LEGACY / DEPRECATED progressive job-fee engine.
+ * Kept for historical bookings and tests. The active product uses a flat $4.99
+ * Connection Fee (`connectionFee.ts`). Do not import this from new UI.
+ */
+export const LEGACY_PROGRESSIVE_FEE_ENGINE = true;
+
 /** First $500 at 8%, next $2,000 at 7%, next $7,500 at 5%, next $15,000 at 3.5%, remainder at 2.5%. */
 export const ORIGINAL_FEE_BRACKETS: FeeBracket[] = [
   { min_amount_cents: 0, max_amount_cents: 50_000, rate_bps: 800 },

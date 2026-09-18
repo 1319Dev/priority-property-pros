@@ -5,7 +5,7 @@
  */
 
 export const CONTACT_AFTER_CONNECTION_COPY =
-  "Contact info is shared after connection through Priority Property Pros. Please remove phone numbers, emails, links, and social handles.";
+  "Please keep communication on Priority Property Pros until you connect. Please remove phone numbers, emails, links, social handles, QR codes, and exact street addresses.";
 
 const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
 const URL_RE = /(?:https?:\/\/|www\.)\S+/i;

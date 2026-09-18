@@ -17,8 +17,8 @@ export function TrustSafety() {
           <div className="rounded-3xl border border-forest-800/10 bg-cream-50 p-6">
             <h3 className="font-display text-2xl text-forest-800">What PPP is</h3>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink-700">
-              <li>A marketplace that connects property owners with independent local contractors.</li>
-              <li>Live posting and estimates for signed-in accounts. Online payment setup is coming soon.</li>
+              <li>A technology marketplace that connects homeowners, property owners, landlords, property managers, and businesses with independent local contractors.</li>
+              <li>Live posting, estimates, and a $4.99 Connection Fee lifecycle. Online payment setup is coming soon. Clicking Connect does not unlock contact while payments are off.</li>
               <li>{SIGNUP_FEE_NOT_MONTHLY}</li>
             </ul>
           </div>
@@ -26,8 +26,8 @@ export function TrustSafety() {
             <h3 className="font-display text-2xl text-forest-800">What PPP is not</h3>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink-700">
               <li>PPP is not the contractor and does not employ the people who do the work.</li>
-              <li>We do not currently verify licenses, insurance, or workmanship.</li>
-              <li>We do not claim jobs are guaranteed, bonded, or code-inspected by PPP.</li>
+              <li>We do not currently verify licenses, insurance, or workmanship. Admin approval is not a workmanship inspection.</li>
+              <li>We do not claim jobs are guaranteed, bonded, or code-inspected by PPP. PPP does not process project payments or take a percentage of the job.</li>
             </ul>
           </div>
         </div>

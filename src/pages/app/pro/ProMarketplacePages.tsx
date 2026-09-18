@@ -26,14 +26,17 @@ import {
   fetchOpportunity,
   fetchMyOpportunities,
   fetchPortfolio,
+  fetchProjectConnectionAvailability,
   fetchProjectNotices,
   fetchProjectAnswers,
   fetchProjectPhotos,
   fetchServiceCategories,
   fetchServiceQuestions,
   passOpportunity,
+  requestProjectConnection,
   setContractorServices,
   signedProjectPhotoUrl,
+  submitContentReport,
   submitEstimate,
   TIMING_LABELS,
   updateContractorProfile,
@@ -44,11 +47,19 @@ import {
   withdrawEstimate,
   type OpportunityRow,
 } from "../../../lib/marketplace/api";
-import { centsToDollarString, dollarsToCents, formatUsdFromCents, previewFee } from "../../../lib/marketplace/fees";
-import { computeMarketplaceFee } from "../../../lib/marketplace/feeEngine";
-import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type EstimateItemKind, type ServiceAreaMode, type ServiceCategory } from "../../../lib/marketplace/types";
+import { centsToDollarString, dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
+import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type EstimateItemKind, type EstimateStatus, type ServiceAreaMode, type ServiceCategory } from "../../../lib/marketplace/types";
 import { OPPORTUNITY_STATUS_LABELS, opportunityNextActions } from "../../../lib/marketplace/statusLabels";
 import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
+import {
+  CONNECT_BUTTON_LABEL,
+  CONNECT_PAYMENTS_OFF_COPY,
+  connectionAvailabilityCopy,
+} from "../../../lib/marketplace/connectionLifecycle";
+import { canWithdrawFrom, WITHDRAW_ESTIMATE_BODY, WITHDRAW_ESTIMATE_CONFIRM, WITHDRAW_ESTIMATE_TITLE } from "../../../lib/marketplace/estimateLifecycle";
+import { PHOTO_OCR_RISK_NOTE, PHOTO_REPORT_LABEL } from "../../../lib/marketplace/photoSafety";
+import { ConnectConfirmDialog } from "../../../components/marketplace/ConnectConfirm";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../hooks/useToast";
 import { PRO_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
 import { ProNotificationsList } from "./ProEstimatesPages";
@@ -62,8 +73,10 @@ export function ProHomePage() {
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{name}</h1>
         <p className="mt-3 max-w-xl text-ink-700">
-          Respond to nearby jobs and track estimates. You cannot approve or verify yourself. At most three
-          contractors can participate on a job. Exact address unlocks only after a hire and contact entitlement.
+          Respond to nearby jobs and track estimates. You cannot approve or verify yourself. Browse anonymized
+          opportunities first. Pay $4.99 only when you choose to connect — that does not guarantee a hire.
+          Exact address unlocks only after a paid connection entitlement or an admin unlock. Submitting an estimate
+          is never charged.
           {` ${PRO_DASHBOARD_PRICING_NOTE}`}
         </p>
       </header>
@@ -371,10 +384,13 @@ export function OpportunitiesPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Jobs</h1>
-      <p className="text-sm text-ink-700">Approximate location only. Exact street stays hidden until hire + job fee (payments coming soon) or an admin unlock.</p>
+      <p className="text-sm text-ink-700">
+        Approximate location only. Exact street stays hidden until a paid $4.99 connection entitlement (payments coming
+        soon) or an admin unlock. Browse first — connecting is voluntary.
+      </p>
       <FormError message={error} />
       {live.length === 0 ? (
-        <EmptyState title="No open jobs" body="Nearby matching jobs will land here. At most three contractors can accept. Cancelled jobs leave this list." />
+        <EmptyState title="No open jobs" body="Nearby matching jobs will land here. You can browse anonymized opportunities at no charge. At most three paid connections per project. Cancelled jobs leave this list." />
       ) : (
         <ul className="space-y-3">
           {live.map((row) => {
@@ -429,16 +445,22 @@ export function OpportunityDetailPage() {
   const [questions, setQuestions] = useState<Awaited<ReturnType<typeof fetchServiceQuestions>>>([]);
   const [qa, setQa] = useState<Awaited<ReturnType<typeof fetchEstimateQuestions>>>([]);
   const [notices, setNotices] = useState<Awaited<ReturnType<typeof fetchProjectNotices>>>([]);
+  const [availability, setAvailability] = useState<Awaited<ReturnType<typeof fetchProjectConnectionAvailability>> | null>(
+    null,
+  );
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
+  const [connectOpen, setConnectOpen] = useState(false);
 
   async function reload() {
     const opp = await fetchOpportunity(opportunityId);
     setRow(opp);
-    const [photoRows, projectAnswers] = await Promise.all([
+    const [photoRows, projectAnswers, spots] = await Promise.all([
       fetchProjectPhotos(opp.project_id),
       fetchProjectAnswers(opp.project_id),
+      fetchProjectConnectionAvailability(opp.project_id).catch(() => null),
     ]);
+    setAvailability(spots);
     setAnswers(projectAnswers);
     if (opp.projects?.category_id) setQuestions(await fetchServiceQuestions(opp.projects.category_id));
     setQa(await fetchEstimateQuestions(opp.project_id, opp.id));
@@ -461,6 +483,12 @@ export function OpportunityDetailPage() {
   if (!row) return error ? <ErrorState message={error} /> : <LoadingState label="Loading job" />;
   const project = row.projects;
   const cancelled = project?.status === "CANCELLED";
+  const spotsLabel = availability
+    ? connectionAvailabilityCopy(availability.remaining, {
+        accepting: availability.accepting_connections,
+        max: availability.max,
+      })
+    : "3 connection spots available";
 
   return (
     <div className="space-y-6">
@@ -476,15 +504,44 @@ export function OpportunityDetailPage() {
       <section className="rounded-3xl border border-forest-800/10 px-5 py-4 text-sm">
         <p>{project?.description}</p>
         <p className="mt-2 font-semibold">Approximate location</p>
-        <p>{[project?.city, project?.state, project?.zip_code].filter(Boolean).join(", ")}</p>
-        <p className="text-ink-500">Exact street, phone, and email stay hidden until hire + job fee (payments coming soon) or an admin unlock.</p>
+        <p>{[project?.city, project?.state].filter(Boolean).join(", ")}</p>
+        <p className="text-ink-500">
+          Exact street, phone, email, name, and precise coordinates stay hidden until a paid $4.99 connection
+          entitlement or an admin unlock. Clicking Connect does not unlock contact while payments are off.
+        </p>
         <p className="mt-2">{project?.timing ? TIMING_LABELS[project.timing] : ""}</p>
+        {project?.budget_min_cents != null || project?.budget_max_cents != null ? (
+          <p className="mt-2">
+            Rough budget{" "}
+            {project.budget_min_cents != null ? formatUsdFromCents(project.budget_min_cents) : "open"} –{" "}
+            {project.budget_max_cents != null ? formatUsdFromCents(project.budget_max_cents) : "open"}
+          </p>
+        ) : null}
+        <p className="mt-3 font-semibold text-forest-800">{spotsLabel}</p>
       </section>
       <div className="grid grid-cols-2 gap-2">
         {photos.map((photo) => (
-          <img key={photo.id} src={photo.url} alt="" className="h-28 w-full rounded-2xl object-cover" />
+          <figure key={photo.id} className="space-y-1">
+            <img src={photo.url} alt="" className="h-28 w-full rounded-2xl object-cover" />
+            <button
+              type="button"
+              className="text-xs font-semibold text-forest-800"
+              onClick={() => {
+                void submitContentReport({
+                  targetType: "project_photo",
+                  targetId: photo.id,
+                  reason: "Unsafe photo before connection",
+                })
+                  .then(() => toast.push("Report received. A moderator can review this photo."))
+                  .catch((err: Error) => setError(err.message));
+              }}
+            >
+              {PHOTO_REPORT_LABEL}
+            </button>
+          </figure>
         ))}
       </div>
+      <p className="text-xs text-ink-500">{PHOTO_OCR_RISK_NOTE}</p>
       <ul className="space-y-2 text-sm">
         {answers.map((answer) => {
           const question = questions.find((q) => q.id === answer.question_id);
@@ -496,27 +553,37 @@ export function OpportunityDetailPage() {
         })}
       </ul>
       {row.status === "AVAILABLE" && !cancelled ? (
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3">
           <Button
             type="button"
+            className="min-h-14 w-full"
+            disabled={busy || availability?.full}
+            onClick={() => setConnectOpen(true)}
+          >
+            {CONNECT_BUTTON_LABEL}
+          </Button>
+          <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
             className="min-h-14 flex-1"
             disabled={busy}
             onClick={() => {
               setBusy(true);
               void acceptOpportunity(row.id)
                 .then(() => {
-                  toast.push("You are participating. Max 3 contractors.");
+                  toast.push("You are participating. Submitting an estimate is never charged.");
                   return reload();
                 })
                 .catch((err: Error) => setError(err.message))
                 .finally(() => setBusy(false));
             }}
           >
-            Accept
+            Participate
           </Button>
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             className="min-h-14 flex-1"
             disabled={busy}
             onClick={() => {
@@ -529,10 +596,19 @@ export function OpportunityDetailPage() {
           >
             Pass
           </Button>
+          </div>
         </div>
       ) : null}
       {row.status === "ACCEPTED" && !cancelled ? (
         <section className="space-y-3">
+          <Button
+            type="button"
+            className="min-h-14 w-full"
+            disabled={busy || availability?.full}
+            onClick={() => setConnectOpen(true)}
+          >
+            {CONNECT_BUTTON_LABEL}
+          </Button>
           <h2 className="font-display text-2xl">Ask the customer</h2>
           {qa.map((item) => (
             <div key={item.id} className="rounded-2xl bg-cream-100 px-3 py-2 text-sm">
@@ -568,6 +644,22 @@ export function OpportunityDetailPage() {
           <ButtonLink to={`/app/pro/opportunities/${row.id}/estimate`}>Build estimate</ButtonLink>
         </section>
       ) : null}
+      <ConnectConfirmDialog
+        open={connectOpen}
+        busy={busy}
+        onClose={() => setConnectOpen(false)}
+        onConfirm={() => {
+          setBusy(true);
+          void requestProjectConnection(row.project_id)
+            .then(() => {
+              toast.push(CONNECT_PAYMENTS_OFF_COPY);
+              setConnectOpen(false);
+              return reload();
+            })
+            .catch((err: Error) => setError(err.message))
+            .finally(() => setBusy(false));
+        }}
+      />
     </div>
   );
 }
@@ -578,7 +670,8 @@ export function EstimateBuilderPage() {
   const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [estimateId, setEstimateId] = useState<string | null>(null);
-  const [, setStatus] = useState("DRAFT");
+  const [status, setStatus] = useState<EstimateStatus>("DRAFT");
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [duration, setDuration] = useState("");
   const [availableFrom, setAvailableFrom] = useState("");
@@ -589,7 +682,7 @@ export function EstimateBuilderPage() {
   const [qty, setQty] = useState("1");
   const [unitLabel, setUnitLabel] = useState("hours");
   const [unit, setUnit] = useState("");
-  const [totals, setTotals] = useState(previewFee(0));
+  const [totalCents, setTotalCents] = useState(0);
 
   async function load() {
     if (!user) return;
@@ -602,14 +695,14 @@ export function EstimateBuilderPage() {
       contractorProfileId: profile.id,
     });
     setEstimateId(estimate.id);
-    setStatus(estimate.status);
+    setStatus(estimate.status as EstimateStatus);
     setNotes(estimate.notes ?? "");
     setDuration(estimate.duration_hours != null ? String(estimate.duration_hours) : "");
     setAvailableFrom(estimate.available_from ?? "");
     setValidUntil(estimate.valid_until ?? "");
     const lineItems = await fetchEstimateItems(estimate.id);
     setItems(lineItems);
-    setTotals(previewFee(lineItems.reduce((sum, item) => sum + item.line_total_cents, 0), estimate.fee_bps));
+    setTotalCents(lineItems.reduce((sum, item) => sum + item.line_total_cents, 0));
   }
 
   function saveDetails(patch: {
@@ -631,7 +724,8 @@ export function EstimateBuilderPage() {
     <div className="mx-auto max-w-xl space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Estimate</h1>
       <p className="text-sm text-ink-700">
-        Line totals are computed for you. The marketplace fee shown is a preview only. {paymentsComingSoonCopy()}
+        Line totals are computed for you. Submitting an estimate is never charged. PPP does not take a percentage of
+        the job. {paymentsComingSoonCopy()}
       </p>
       <FormError message={error} />
       <ul className="space-y-2">
@@ -704,10 +798,8 @@ export function EstimateBuilderPage() {
         Add line
       </Button>
       <div className="rounded-3xl border border-forest-800/10 px-4 py-3 text-sm">
-        <p>Total {formatUsdFromCents(totals.total_cents)}</p>
-        <p>Marketplace fee preview {formatUsdFromCents(computeMarketplaceFee({ amount_cents: totals.total_cents }).fee_cents)}</p>
-        <p>You would earn {formatUsdFromCents(computeMarketplaceFee({ amount_cents: totals.total_cents }).contractor_earnings_cents)}</p>
-        <p className="text-ink-500">{paymentsComingSoonCopy()}</p>
+        <p>Total {formatUsdFromCents(totalCents)}</p>
+        <p className="text-ink-500">No PPP percentage is taken from this estimate. Connection is a separate $4.99 choice.</p>
       </div>
       <TextInput
         label="Duration (hours)"
@@ -739,9 +831,7 @@ export function EstimateBuilderPage() {
           onChange={(e) => setNotes(e.target.value)}
           onBlur={() => saveDetails({ notes })}
         />
-        <span className="mt-1.5 block text-sm text-ink-500">
-          Contact info is shared after connection through PPP. Do not put a phone, email, link, or social handle here.
-        </span>
+        <span className="mt-1.5 block text-sm text-ink-500">{PRE_HIRE_CONTACT_HINT}</span>
       </label>
       <div className="sticky bottom-24 z-20 flex gap-3 bg-cream-50/95 py-3 pb-safe lg:bottom-4">
         <Button
@@ -752,7 +842,7 @@ export function EstimateBuilderPage() {
             void submitEstimate(estimateId)
               .then((result) => {
                 toast.push("Estimate submitted. Nothing was charged.");
-                setStatus(String(result.status ?? "SUBMITTED"));
+                setStatus((String(result.status ?? "SENT") as EstimateStatus) || "SENT");
                 return load();
               })
               .catch((err: Error) => setError(err.message));
@@ -760,18 +850,35 @@ export function EstimateBuilderPage() {
         >
           Submit estimate
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          className="min-h-14 flex-1"
-          onClick={() => {
-            if (!estimateId) return;
-            void withdrawEstimate(estimateId).then(load).catch((err: Error) => setError(err.message));
-          }}
-        >
-          Withdraw
-        </Button>
+        {canWithdrawFrom(status) ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-14 flex-1"
+            onClick={() => setWithdrawOpen(true)}
+          >
+            Withdraw Estimate
+          </Button>
+        ) : null}
       </div>
+      <ConfirmDialog
+        open={withdrawOpen}
+        title={WITHDRAW_ESTIMATE_TITLE}
+        body={WITHDRAW_ESTIMATE_BODY}
+        confirmLabel={WITHDRAW_ESTIMATE_CONFIRM}
+        cancelLabel="Keep estimate"
+        onClose={() => setWithdrawOpen(false)}
+        onConfirm={() => {
+          if (!estimateId) return;
+          void withdrawEstimate(estimateId)
+            .then(() => {
+              toast.push("Estimate withdrawn. History was kept.");
+              setWithdrawOpen(false);
+              return load();
+            })
+            .catch((err: Error) => setError(err.message));
+        }}
+      />
     </div>
   );
 }

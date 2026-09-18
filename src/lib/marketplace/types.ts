@@ -70,6 +70,78 @@ export const QUESTION_KINDS = ["TEXT", "SINGLE_CHOICE", "MULTI_CHOICE", "BOOLEAN
 export type QuestionKind = (typeof QUESTION_KINDS)[number];
 
 export const MAX_PARTICIPATING_CONTRACTORS = 3;
+/** Authoritative flat Connection Fee. Server must store this exact integer. */
+export const CONNECTION_FEE_CENTS = 499;
+export const CONNECTION_FEE_USD = "$4.99";
+export const MAX_COMPLETED_CONNECTIONS = 3;
+export const SIGNUP_FEE_ENABLED = false;
+/** Intended Stripe mode if payments are ever enabled. Does not enable Stripe. */
+export const STRIPE_TEST_MODE = true;
+export const STRIPE_ENABLED = false;
+
+export const PROJECT_CONNECTION_STATUSES = [
+  "INITIATED",
+  "RESERVED",
+  "PAYMENT_DISABLED",
+  "PAID",
+  "COMPLETED",
+  "FAILED",
+  "CANCELLED",
+  "EXPIRED",
+] as const;
+export type ProjectConnectionStatus = (typeof PROJECT_CONNECTION_STATUSES)[number];
+
+export const CONNECTION_CONTACT_GRANT_SOURCES = [
+  "CONNECTION_FEE_PAYMENT",
+  "ADMIN_OVERRIDE",
+  "SYSTEM",
+] as const;
+export type ConnectionContactGrantSource = (typeof CONNECTION_CONTACT_GRANT_SOURCES)[number];
+
+export type ProjectConnection = {
+  id: string;
+  project_id: string;
+  contractor_profile_id: string;
+  customer_id: string;
+  status: ProjectConnectionStatus;
+  fee_cents: number;
+  currency: string;
+  idempotency_key: string | null;
+  reservation_slot: number | null;
+  payments_live: false;
+  charges_live: false;
+  reserved_at: string | null;
+  paid_at: string | null;
+  completed_at: string | null;
+  cancelled_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ConnectionContactAccess = {
+  connection_id: string;
+  status: ContactAccessStatus;
+  granted_at: string | null;
+  granted_by: string | null;
+  grant_reason: string | null;
+  grant_source: ConnectionContactGrantSource;
+  revoked_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ConnectionAvailability = {
+  project_id: string;
+  max: number;
+  occupied: number;
+  remaining: number;
+  completed: number;
+  accepting_connections: boolean;
+  full: boolean;
+  fee_cents: number;
+  payments_live: false;
+  charges_live: false;
+};
 export const BOOKING_STATUSES = [
   "PENDING",
   "AWAITING_PAYMENT",
@@ -202,6 +274,9 @@ export type Project = {
   scope_revision?: number;
   cancelled_at?: string | null;
   cancel_reason?: string | null;
+  accepting_connections?: boolean;
+  connections_closed_at?: string | null;
+  connections_closed_by?: string | null;
   created_at: string;
   updated_at: string;
 };

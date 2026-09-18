@@ -8,7 +8,7 @@ const points = [
   },
   {
     title: "One-time signup",
-    body: `${HOMEPAGE_SIGNUP_HEADLINE} ${HOMEPAGE_SIGNUP_SUPPORTING} There is no PPP marketplace fee when you hire.`,
+    body: `${HOMEPAGE_SIGNUP_HEADLINE} ${HOMEPAGE_SIGNUP_SUPPORTING}`,
   },
   {
     title: "Local independents",

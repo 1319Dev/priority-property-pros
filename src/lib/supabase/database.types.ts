@@ -391,6 +391,9 @@ export type Database = {
           scope_revision: number;
           cancelled_at: string | null;
           cancel_reason: string | null;
+          accepting_connections: boolean;
+          connections_closed_at: string | null;
+          connections_closed_by: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -925,6 +928,27 @@ export type Database = {
       };
       text_contains_pre_hire_contact: { Args: { p_text?: string | null }; Returns: boolean };
       assert_no_pre_hire_contact: { Args: { p_text?: string | null }; Returns: undefined };
+      connection_fee_cents: { Args: Record<string, never>; Returns: number };
+      connection_has_contact_access: { Args: { p_connection_id: string }; Returns: boolean };
+      project_connection_availability: { Args: { p_project_id: string }; Returns: Json };
+      request_project_connection: {
+        Args: { p_project_id: string; p_idempotency_key?: string | null };
+        Returns: Json;
+      };
+      stop_new_project_connections: { Args: { p_project_id: string }; Returns: Json };
+      list_my_project_connections: { Args: { p_project_id?: string | null }; Returns: Json };
+      submit_content_report: {
+        Args: { p_target_type: string; p_target_id?: string | null; p_reason: string; p_notes?: string | null };
+        Returns: Json;
+      };
+      admin_grant_connection_contact_access: {
+        Args: { p_connection_id: string; p_reason: string };
+        Returns: Json;
+      };
+      admin_revoke_connection_contact_access: {
+        Args: { p_connection_id: string; p_reason?: string | null };
+        Returns: Json;
+      };
     };
     Enums: {
       account_type: AccountType;
@@ -946,6 +970,8 @@ export type Database = {
       fee_schedule_kind: import("../marketplace/types").FeeScheduleKind;
       relationship_status: import("../marketplace/types").RelationshipStatus;
       change_order_status: import("../marketplace/types").ChangeOrderStatus;
+      project_connection_status: import("../marketplace/types").ProjectConnectionStatus;
+      connection_contact_grant_source: import("../marketplace/types").ConnectionContactGrantSource;
     };
   };
 };

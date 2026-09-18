@@ -87,7 +87,7 @@ export function ProBookingsPage() {
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
       <p className="text-sm text-ink-700">
-        Exact street, phone, and email stay hidden until hire and job-fee access. {paymentsComingSoonCopy()}
+        Exact street, phone, and email stay hidden until a paid $4.99 connection entitlement. {paymentsComingSoonCopy()}
       </p>
       <FormError message={error} />
       {rows.length === 0 ? (
@@ -98,10 +98,7 @@ export function ProBookingsPage() {
             <li key={row.id}>
               <Link to={`/app/pro/bookings/${row.id}`} className="block rounded-3xl border border-forest-800/10 px-5 py-4">
                 <p className="font-semibold text-forest-800">{statusLabel(row.status)}</p>
-                <p className="text-sm text-ink-500">
-                  {formatUsdFromCents(row.billable_amount_cents || row.amount_cents)} · fee preview{" "}
-                  {formatUsdFromCents(row.fee_cents)}
-                </p>
+                <p className="text-sm text-ink-500">{formatUsdFromCents(row.billable_amount_cents || row.amount_cents)}</p>
               </Link>
             </li>
           ))}
@@ -163,11 +160,9 @@ export function ProBookingDetailPage() {
         <p className="font-semibold">Approximate location</p>
         <p>{cityZip}</p>
         <p className="mt-3">Job {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
-        <p>
-          PPP fee {booking.fee_locked ? "" : "preview "}
-          {formatUsdFromCents(booking.fee_cents)} — you would earn {formatUsdFromCents(booking.contractor_earnings_cents)}
+        <p className="text-ink-500">
+          PPP does not take a percentage of this job. Project payment is between you and the customer. {paymentsComingSoonCopy()}
         </p>
-        <p className="text-ink-500">{paymentsComingSoonCopy()}</p>
       </section>
       <ProjectContactSection entitled={contactAccessRowAllowsReveal(contactAccess)} contact={contact} />
       {booking.status === "CONFIRMED" ? (

@@ -7,7 +7,9 @@ import { reusableEmptyDraft } from "./flows";
 import { detectContactLeak } from "./contactLeak";
 import type {
   BookingContactAccess,
+  ConnectionAvailability,
   Project,
+  ProjectConnection,
   ProjectPrivateLocation,
   QuestionKind,
   ServiceAreaMode,
@@ -92,7 +94,7 @@ export async function fetchCustomerProjects(customerId?: string): Promise<Projec
     const fallback = await client()
       .from("projects")
       .select(
-        "id, customer_id, category_id, title, description, status, completeness, city, state, zip_code, timing, preferred_date, budget_min_cents, budget_max_cents, draft_step, selected_contractor_profile_id, selected_estimate_id, selected_booking_id, posted_at, selected_at, scope_revision, cancelled_at, cancel_reason, created_at, updated_at",
+        "id, customer_id, category_id, title, description, status, completeness, city, state, zip_code, timing, preferred_date, budget_min_cents, budget_max_cents, draft_step, selected_contractor_profile_id, selected_estimate_id, selected_booking_id, posted_at, selected_at, scope_revision, cancelled_at, cancel_reason, accepting_connections, connections_closed_at, connections_closed_by, created_at, updated_at",
       )
       .order("updated_at", { ascending: false });
     if (fallback.error) throw new Error(asError(error, "Could not load projects."));
@@ -533,6 +535,7 @@ export type OpportunityRow = Database["public"]["Tables"]["opportunities"]["Row"
     | "completeness"
     | "category_id"
     | "preferred_date"
+    | "accepting_connections"
   > | null;
 };
 
@@ -931,6 +934,67 @@ export async function signedContractorDocUrl(path: string): Promise<string | nul
   const { data, error } = await client().storage.from("contractor-docs").createSignedUrl(path, 3600);
   if (error) return null;
   return data.signedUrl;
+}
+
+export async function requestProjectConnection(projectId: string, idempotencyKey?: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("request_project_connection", {
+    p_project_id: projectId,
+    p_idempotency_key: idempotencyKey ?? null,
+  });
+  if (error) throw new Error(asError(error, "Could not request a connection."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function fetchProjectConnectionAvailability(projectId: string): Promise<ConnectionAvailability> {
+  const { data, error } = await client().rpc("project_connection_availability", {
+    p_project_id: projectId,
+  });
+  if (error) throw new Error(asError(error, "Could not load connection availability."));
+  const row = (data ?? {}) as Record<string, unknown>;
+  return {
+    project_id: String(row.project_id ?? projectId),
+    max: Number(row.max ?? 3),
+    occupied: Number(row.occupied ?? 0),
+    remaining: Number(row.remaining ?? 3),
+    completed: Number(row.completed ?? 0),
+    accepting_connections: row.accepting_connections !== false,
+    full: Boolean(row.full),
+    fee_cents: Number(row.fee_cents ?? 499),
+    payments_live: false,
+    charges_live: false,
+  };
+}
+
+export async function stopNewProjectConnections(projectId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("stop_new_project_connections", {
+    p_project_id: projectId,
+  });
+  if (error) throw new Error(asError(error, "Could not stop new connections."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function fetchMyProjectConnections(projectId?: string): Promise<ProjectConnection[]> {
+  const { data, error } = await client().rpc("list_my_project_connections", {
+    p_project_id: projectId ?? null,
+  });
+  if (error) throw new Error(asError(error, "Could not load connections."));
+  return (Array.isArray(data) ? data : []) as ProjectConnection[];
+}
+
+export async function submitContentReport(input: {
+  targetType: string;
+  targetId?: string | null;
+  reason: string;
+  notes?: string | null;
+}): Promise<RpcJson> {
+  const { data, error } = await client().rpc("submit_content_report", {
+    p_target_type: input.targetType,
+    p_target_id: input.targetId ?? null,
+    p_reason: input.reason,
+    p_notes: input.notes ?? null,
+  });
+  if (error) throw new Error(asError(error, "Could not submit the report."));
+  return (data ?? {}) as RpcJson;
 }
 
 export const TIMING_LABELS: Record<TimingPreference, string> = {
