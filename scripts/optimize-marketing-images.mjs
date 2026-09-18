@@ -19,7 +19,7 @@ const jobs = [
   },
   {
     id: "service-landscaping",
-    src: "/tmp/marketing-masters/service-landscaping-edger.png",
+    src: "/tmp/marketing-masters/service-landscaping-mulch.png",
     widths: [480, 768, 1152],
   },
   {
@@ -29,12 +29,12 @@ const jobs = [
   },
   {
     id: "service-plumbing",
-    src: "/tmp/marketing-masters/service-plumbing-waterheater.png",
+    src: "/tmp/marketing-masters/service-plumbing-channellocks.png",
     widths: [480, 768, 1152],
   },
   {
     id: "service-electrical",
-    src: "/tmp/marketing-masters/service-electrical-receptacle.png",
+    src: "/tmp/marketing-masters/service-electrical-duplex-close.png",
     widths: [480, 768, 1152],
   },
   {
