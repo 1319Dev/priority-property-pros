@@ -20,7 +20,7 @@ export type RpcJson = Record<string, unknown>;
 
 function client() {
   const supabase = getSupabaseClient();
-  if (!supabase) throw new Error("Supabase is not configured yet.");
+  if (!supabase) throw new Error("The marketplace is not connected yet.");
   return supabase;
 }
 
@@ -394,10 +394,19 @@ export async function fetchChangeOrders(bookingId: string) {
   return data ?? [];
 }
 
+export async function fetchBookingReviews(bookingId: string) {
+  const { data, error } = await client()
+    .from("booking_reviews")
+    .select("*")
+    .eq("booking_id", bookingId)
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(asError(error, "Could not load reviews."));
+  return data ?? [];
+}
+
 export async function fetchBookingReview(bookingId: string) {
-  const { data, error } = await client().from("booking_reviews").select("*").eq("booking_id", bookingId).maybeSingle();
-  if (error) throw new Error(asError(error, "Could not load the review."));
-  return data;
+  const rows = await fetchBookingReviews(bookingId);
+  return rows[0] ?? null;
 }
 
 export async function fetchBookingEvents(bookingId: string) {
@@ -940,3 +949,82 @@ export const TIMING_LABELS: Record<TimingPreference, string> = {
   SPECIFIC_DATE: "A specific date",
   FLEXIBLE: "Flexible",
 };
+
+export async function fetchMyRatingStats(): Promise<RpcJson> {
+  const { data, error } = await client().rpc("my_rating_stats");
+  if (error) throw new Error(asError(error, "Could not load ratings."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function fetchPublicFeeSchedule(): Promise<RpcJson> {
+  const { data, error } = await client().rpc("list_public_fee_schedule");
+  if (error) throw new Error(asError(error, "Could not load the fee schedule."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function createTrustDispute(input: {
+  category: string;
+  explanation: string;
+  disputedReviewId?: string | null;
+  evidencePath?: string | null;
+}): Promise<RpcJson> {
+  const { data, error } = await client().rpc("create_trust_dispute", {
+    p_category: input.category,
+    p_explanation: input.explanation,
+    p_disputed_review_id: input.disputedReviewId ?? null,
+    p_evidence_path: input.evidencePath ?? null,
+  });
+  if (error) throw new Error(asError(error, "Could not file the dispute."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function fetchMyTrustDisputes(): Promise<RpcJson[]> {
+  const { data, error } = await client().rpc("list_my_trust_disputes");
+  if (error) throw new Error(asError(error, "Could not load disputes."));
+  return (Array.isArray(data) ? data : []) as RpcJson[];
+}
+
+export async function fetchMyTrustDispute(id: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("get_my_trust_dispute", { p_dispute_id: id });
+  if (error) throw new Error(asError(error, "Could not load the dispute."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function fetchAdminTrustDisputes(status?: string | null): Promise<RpcJson[]> {
+  const { data, error } = await client().rpc("list_admin_trust_disputes", { p_status: status ?? null });
+  if (error) throw new Error(asError(error, "Could not load the dispute queue."));
+  return (Array.isArray(data) ? data : []) as RpcJson[];
+}
+
+export async function fetchAdminTrustDispute(id: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("get_admin_trust_dispute", { p_dispute_id: id });
+  if (error) throw new Error(asError(error, "Could not load the dispute."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function resolveAdminTrustDispute(
+  id: string,
+  resolution: string,
+  note?: string,
+): Promise<RpcJson> {
+  const { data, error } = await client().rpc("admin_resolve_trust_dispute", {
+    p_dispute_id: id,
+    p_resolution: resolution,
+    p_note: note ?? null,
+  });
+  if (error) throw new Error(asError(error, "Could not resolve the dispute."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function requestAccountDeletion(confirmPhrase: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("request_account_deletion", { p_confirm_phrase: confirmPhrase });
+  if (error) throw new Error(asError(error, "Could not close the account."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function uploadDisputeEvidence(userId: string, disputeFolder: string, file: File): Promise<string> {
+  const path = `${userId}/${disputeFolder}/${sanitizeUploadName(file.name)}`;
+  const { error } = await client().storage.from("dispute-evidence").upload(path, file, { upsert: false });
+  if (error) throw new Error(asError(error, "Could not upload evidence."));
+  return path;
+}

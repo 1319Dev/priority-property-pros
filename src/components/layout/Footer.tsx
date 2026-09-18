@@ -11,6 +11,12 @@ const footerLinks = [
   { to: "/become-a-pro", label: "Become a pro" },
   { to: "/post-project", label: "Post a project" },
   { to: "/trust", label: "Trust & safety" },
+  { to: "/legal/terms", label: "Terms" },
+  { to: "/legal/privacy", label: "Privacy" },
+  { to: "/legal/marketplace-disclaimer", label: "Marketplace disclaimer" },
+  { to: "/legal/community-guidelines", label: "Community guidelines" },
+  { to: "/legal/dispute-policy", label: "Dispute policy" },
+  { to: "/legal/suspension-termination", label: "Suspension & termination" },
   { to: "/sign-in", label: "Sign in" },
   { to: "/sign-up", label: "Create account" },
 ];

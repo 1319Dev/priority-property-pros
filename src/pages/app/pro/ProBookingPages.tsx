@@ -11,6 +11,8 @@ import {
   fetchBooking,
   fetchBookingContactAccess,
   fetchBookingJobContact,
+  fetchBookingReviews,
+  submitBookingReview,
   fetchChangeOrders,
   fetchContractorProfileByUser,
   fetchMyBookings,
@@ -87,7 +89,8 @@ export function ProBookingsPage() {
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
       <p className="text-sm text-ink-700">
-        Exact street, phone, and email stay hidden until hire and job-fee access. {paymentsComingSoonCopy()}
+        Exact street, phone, and email stay hidden until you are hired and connected through Priority Property Pros.{" "}
+        {paymentsComingSoonCopy()}
       </p>
       <FormError message={error} />
       {rows.length === 0 ? (
@@ -123,6 +126,9 @@ export function ProBookingDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [delta, setDelta] = useState("");
   const [note, setNote] = useState("");
+  const [reviews, setReviews] = useState<Awaited<ReturnType<typeof fetchBookingReviews>>>([]);
+  const [rating, setRating] = useState("5");
+  const [reviewBody, setReviewBody] = useState("");
 
   async function reload() {
     const row = (await fetchBooking(bookingId)) as Booking;
@@ -131,6 +137,7 @@ export function ProBookingDetailPage() {
     setTitle(project.title);
     setCityZip([project.city, project.state, project.zip_code].filter(Boolean).join(", "));
     setOrders((await fetchChangeOrders(bookingId)) as ChangeOrder[]);
+    setReviews(await fetchBookingReviews(bookingId));
     const access = await fetchBookingContactAccess(row.id).catch(() => null);
     setContactAccess(access);
     if (contactAccessRowAllowsReveal(access)) {
@@ -237,6 +244,38 @@ export function ProBookingDetailPage() {
           </Button>
         </section>
       )}
+      {booking.status === "COMPLETED" && !reviews.some((row) => row.reviewer_role === "CONTRACTOR") ? (
+        <section className="space-y-3">
+          <h2 className="font-display text-2xl text-forest-800">Review this homeowner</h2>
+          <p className="text-sm text-ink-700">
+            1–5 stars after a completed job. Written comments are optional. You can only review this homeowner once for
+            this job.
+          </p>
+          <TextInput label="Rating (1–5)" inputMode="numeric" value={rating} onChange={(e) => setRating(e.target.value)} />
+          <textarea className="w-full rounded-2xl border px-4 py-3" value={reviewBody} onChange={(e) => setReviewBody(e.target.value)} />
+          <Button
+            type="button"
+            className="min-h-14 w-full"
+            onClick={() => {
+              void submitBookingReview(booking.id, Number(rating), reviewBody)
+                .then(() => reload())
+                .catch((err: Error) => setError(err.message));
+            }}
+          >
+            Submit review
+          </Button>
+        </section>
+      ) : null}
+      {reviews.length > 0 ? (
+        <ul className="space-y-2">
+          {reviews.map((row) => (
+            <li key={row.id} className="rounded-3xl bg-cream-100 px-5 py-4 text-sm">
+              {row.reviewer_role === "CONTRACTOR" ? "Your review" : "Homeowner review"} · {row.rating} / 5
+              {row.body ? <p className="mt-2">{row.body}</p> : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import type { ApprovalTab, ContractorApprovalItem } from "./approvals";
 
 function client() {
   const supabase = getSupabaseClient();
-  if (!supabase) throw new Error("Supabase is not configured yet.");
+  if (!supabase) throw new Error("The marketplace is not connected yet.");
   return supabase;
 }
 

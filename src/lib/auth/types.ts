@@ -10,6 +10,9 @@ export const ACCOUNT_STATUSES = [
   "SUSPENDED",
   "DISABLED",
   "DELETED",
+  "DEACTIVATED",
+  "DELETION_REQUESTED",
+  "DELETED_ANONYMIZED",
 ] as const;
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
 
@@ -33,6 +36,10 @@ export type Profile = {
   avatar_url: string | null;
   account_type: AccountType;
   account_status: AccountStatus;
+  restriction_reason?: "RATING_SUSPENSION" | "ADMIN_SUSPENSION" | "USER_DEACTIVATION" | "DELETION_REQUEST" | null;
+  restriction_at?: string | null;
+  deletion_requested_at?: string | null;
+  anonymized_at?: string | null;
   created_at: string;
   updated_at: string;
 };

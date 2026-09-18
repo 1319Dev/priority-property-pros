@@ -13,6 +13,7 @@ interface ImportMetaEnv {
   readonly VITE_PUBLIC_APP_NAME?: string;
   readonly VITE_PUBLIC_COMPANY_NAME?: string;
   readonly VITE_PUBLIC_SUPPORT_EMAIL?: string;
+  readonly VITE_PUBLIC_ENVIRONMENT?: string;
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_ANON_KEY?: string;
 }

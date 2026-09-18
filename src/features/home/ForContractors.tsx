@@ -1,5 +1,11 @@
 import { CONTRACTOR_CTA, CONTRACTOR_TAGLINE } from "../../data/brand";
-import { CONTRACTOR_SIGNUP_HEADLINE, CONTRACTOR_SIGNUP_SUPPORTING, SIGNUP_FEE_SHORT } from "../../data/pricing";
+import {
+  CONTRACTOR_SIGNUP_HEADLINE,
+  CONTRACTOR_SIGNUP_SUPPORTING,
+  CONTRACTOR_VALUE_HEADLINE,
+  CONTRACTOR_VALUE_POINTS,
+  SIGNUP_FEE_SHORT,
+} from "../../data/pricing";
 import { ButtonLink } from "../../components/ui/Button";
 import { Container } from "../../components/ui/Container";
 
@@ -14,11 +20,17 @@ export function ForContractors() {
           <h2 id="pros-heading" className="mt-3 max-w-xl font-display text-3xl font-semibold sm:text-4xl">
             {CONTRACTOR_TAGLINE}
           </h2>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-cream-100">{CONTRACTOR_VALUE_HEADLINE}</p>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-cream-200">
             Priority Property Pros is not a lead marketplace that sells the same homeowner five times.
             Independent contractors will compete on the actual job: scope, schedule, and price. Apply to join. An admin
             still has to approve you before matching.
           </p>
+          <ul className="mt-4 max-w-2xl list-disc space-y-2 pl-5 text-sm text-cream-200">
+            {CONTRACTOR_VALUE_POINTS.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
+          </ul>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-cream-100">
             {CONTRACTOR_SIGNUP_HEADLINE} {CONTRACTOR_SIGNUP_SUPPORTING}
           </p>

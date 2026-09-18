@@ -32,8 +32,9 @@ describe("post-login routing", () => {
     expect(postLoginPath("ADMIN", "ACTIVE")).toBe("/app/admin");
   });
 
-  it("sends suspended accounts to the status page", () => {
-    expect(postLoginPath("CUSTOMER", "SUSPENDED")).toBe("/account/status");
+  it("lets suspended accounts sign in so they can appeal", () => {
+    expect(postLoginPath("CUSTOMER", "SUSPENDED")).toBe("/app/customer");
     expect(postLoginPath("ADMIN", "DISABLED")).toBe("/account/status");
+    expect(postLoginPath("CUSTOMER", "DELETED_ANONYMIZED")).toBe("/account/status");
   });
 });

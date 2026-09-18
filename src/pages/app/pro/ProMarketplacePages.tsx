@@ -63,7 +63,8 @@ export function ProHomePage() {
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{name}</h1>
         <p className="mt-3 max-w-xl text-ink-700">
           Respond to nearby jobs and track estimates. You cannot approve or verify yourself. At most three
-          contractors can participate on a job. Exact address unlocks only after a hire and contact entitlement.
+          contractors can participate on a job. Exact address unlocks only after you are hired and connected through
+          Priority Property Pros.
           {` ${PRO_DASHBOARD_PRICING_NOTE}`}
         </p>
       </header>

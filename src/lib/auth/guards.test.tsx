@@ -75,7 +75,7 @@ describe("protected routes", () => {
     expect(screen.queryByText("customer-home")).not.toBeInTheDocument();
   });
 
-  it("sends suspended users to the status page", () => {
+  it("lets suspended users open the app so they can appeal", () => {
     const p = profile("CUSTOMER", "SUSPENDED");
     renderGuard(
       "/app/customer",
@@ -84,6 +84,21 @@ describe("protected routes", () => {
         profile: p,
         account_type: "CUSTOMER",
         account_status: "SUSPENDED",
+      }),
+    );
+    expect(screen.getByText("customer-home")).toBeInTheDocument();
+    expect(screen.queryByText("status-page")).not.toBeInTheDocument();
+  });
+
+  it("sends deleted accounts to the status page", () => {
+    const p = profile("CUSTOMER", "DELETED_ANONYMIZED");
+    renderGuard(
+      "/app/customer",
+      auth({
+        user: { id: "user-1", email: "pat@example.com", email_confirmed_at: "2026-01-01" } as AuthContextValue["user"],
+        profile: p,
+        account_type: "CUSTOMER",
+        account_status: "DELETED_ANONYMIZED",
       }),
     );
     expect(screen.getByText("status-page")).toBeInTheDocument();

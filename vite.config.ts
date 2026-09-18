@@ -81,7 +81,7 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
-          globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest,woff,woff2,txt}"],
+          globPatterns: ["**/*.{js,css,html,svg,png,jpg,ico,webmanifest,woff,woff2,txt}"],
           navigateFallback: "index.html",
           navigateFallbackDenylist: [/^\/offline\.html$/],
           additionalManifestEntries: [{ url: "offline.html", revision: "phase1" }],

@@ -35,9 +35,8 @@ export function NotConfiguredBanner() {
       className="mt-6 rounded-2xl border border-gold-500/40 bg-cream-100 px-4 py-3 text-sm text-ink-700"
       role="status"
     >
-      Live login is not connected yet. The owner still needs to create a Supabase project and add the public
-      URL + anon key. See <span className="font-semibold text-forest-800">docs/SUPABASE_SETUP.md</span>. You
-      can still browse the homepage.
+      Live login is not connected yet. The site owner still needs to finish account setup. You can still
+      browse the homepage.
     </div>
   );
 }

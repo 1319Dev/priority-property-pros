@@ -18,6 +18,7 @@ describe("Supabase public config", () => {
     const example = readFileSync(path.join(root, ".env.example"), "utf8");
     expect(example).toMatch(/VITE_SUPABASE_URL=/);
     expect(example).toMatch(/VITE_SUPABASE_ANON_KEY=/);
+    expect(example).toMatch(/VITE_PUBLIC_ENVIRONMENT/);
     expect(example).toMatch(/YOUR-PROJECT-REF/);
     expect(example).toMatch(/your-anon-public-key/);
     expect(example).not.toMatch(/^[^#]*SERVICE_ROLE.*=\s*eyJ/m);

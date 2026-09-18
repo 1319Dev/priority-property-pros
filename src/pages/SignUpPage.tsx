@@ -205,7 +205,19 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
             required
           />
           <span>
-            I agree to the Terms of Use and Privacy Policy. PPP is a marketplace, not the contractor.
+            I agree to the{" "}
+            <Link to="/legal/terms" className="font-semibold text-forest-800 underline">
+              Terms of Use
+            </Link>
+            {", "}
+            <Link to="/legal/privacy" className="font-semibold text-forest-800 underline">
+              Privacy Policy
+            </Link>
+            {", and "}
+            <Link to="/legal/marketplace-disclaimer" className="font-semibold text-forest-800 underline">
+              Marketplace Disclaimer
+            </Link>
+            . PPP is a marketplace, not the contractor. Legal pages need attorney review before launch.
           </span>
         </label>
         <FormError message={error} />

@@ -1,0 +1,23 @@
+-- Trust & safety checks for the SQL editor after 20260926000001–05.
+-- Preview only: giiskdvitimksdewnelc. Do not apply to production.
+--
+-- Reviews:
+--   1. Customer review on PENDING booking → error
+--   2. Contractor review on COMPLETED booking → ok
+--   3. Second review from the same side → error
+--   4. Self-review / stranger UUID → error
+--   5. Direct insert into booking_reviews → error
+-- Ratings:
+--   6. Three 3-star eligible reviews → SUSPENDED / RATING_SUSPENSION
+--   7. Average exactly 4.00 with 3 reviews → stays ACTIVE
+--   8. Unrounded 3.75 (display 3.8) → suspends
+-- Disputes:
+--   9. Anon select/create trust_disputes → denied
+--  10. Admin resolve own dispute → error
+--  11. Self-unsuspend via admin_resolve → error
+-- Deletion:
+--  12. request_account_deletion('DELETE') → DELETED_ANONYMIZED, directory hidden
+--  13. Deleted/suspended post_project / accept_opportunity / submit_estimate / select_estimate → error
+-- Privacy:
+--  14. Missing contact entitlement still hides street/phone/email
+--  15. Public directory still anonymized and ACTIVE-only

@@ -4,7 +4,7 @@ import type { ServiceAreaMode } from "./types";
 export type MatchingContractor = {
   id: string;
   account_type: "CONTRACTOR";
-  account_status: "ACTIVE" | "PENDING" | "SUSPENDED" | "DISABLED" | "DELETED";
+  account_status: "ACTIVE" | "PENDING" | "SUSPENDED" | "DISABLED" | "DELETED" | "DEACTIVATED" | "DELETION_REQUESTED" | "DELETED_ANONYMIZED";
   approval_status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
   accepting_work: boolean;
   category_ids: string[];
