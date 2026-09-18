@@ -8,15 +8,9 @@ import { ToastProvider } from "./components/ui/Toast";
 import {
   FEE_WHEN_HIRED_SENTENCE,
   HOMEOWNER_PRICING_SUMMARY,
-  ORIGINAL_FEE_BRACKETS_PUBLIC,
-  ORIGINAL_MAX_FEE,
-  ORIGINAL_MIN_FEE,
   PRICING_HOMEPAGE_LINE,
   PRICING_PAGE_TITLE,
   PRO_PRICING_SUMMARY,
-  REPEAT_FEE_RATE,
-  REPEAT_MAX_FEE,
-  REPEAT_MIN_FEE,
   SEE_PRICING_LABEL,
 } from "./data/pricing";
 import { SERVICES } from "./data/services";
@@ -162,7 +156,7 @@ describe("Public marketplace pricing", () => {
     expect(seePricing).toHaveAttribute("href", "/pricing");
   });
 
-  it("publishes homeowner, pro, original, and repeat fee facts without processor jargon", () => {
+  it("publishes homeowner, pro, flat $4.99 Connection Fee without processor jargon", () => {
     const { container } = renderApp("/pricing");
     expect(screen.getByRole("heading", { name: PRICING_PAGE_TITLE })).toBeInTheDocument();
     expect(screen.getByText(HOMEOWNER_PRICING_SUMMARY)).toBeInTheDocument();
@@ -174,13 +168,9 @@ describe("Public marketplace pricing", () => {
     expect(screen.getAllByText(/\$0\/month/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/priority pro/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/\$49\/month or \$499\/year/i).length).toBeGreaterThan(0);
-    for (const bracket of ORIGINAL_FEE_BRACKETS_PUBLIC) {
-      expect(screen.getByText(bracket.range)).toBeInTheDocument();
-      expect(screen.getAllByText(bracket.rate).length).toBeGreaterThan(0);
-    }
-    expect(screen.getByText(`Minimum ${ORIGINAL_MIN_FEE}. Maximum ${ORIGINAL_MAX_FEE}.`)).toBeInTheDocument();
-    expect(screen.getAllByText(REPEAT_FEE_RATE).length).toBeGreaterThan(0);
-    expect(screen.getByText(`Minimum ${REPEAT_MIN_FEE}. Maximum ${REPEAT_MAX_FEE}.`)).toBeInTheDocument();
+    // Flat $4.99 Connection Fee
+    expect(screen.getAllByText(/\$4\.99/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/flat \$4\.99.*regardless of project value/i).length).toBeGreaterThan(0);
     expect(container.textContent).not.toMatch(/stripe|paymentintent|webhooks?|payments_live|charges_live|test mode/i);
     expect(container.textContent).not.toMatch(/free to join|free signup|accounts are free/i);
   });

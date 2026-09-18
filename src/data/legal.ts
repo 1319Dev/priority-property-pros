@@ -65,7 +65,8 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
       {
         heading: "What PPP does and does not do",
         paragraphs: [
-          "PPP earns revenue from the $9.99 activation fee, contractor Connection Fees when homeowners select them, and future Priority Pro subscriptions.",
+          "PPP earns revenue from the $9.99 activation fee, a flat $4.99 Connection Fee when homeowners select contractors, and future Priority Pro subscriptions.",
+          "The Connection Fee is $4.99 per legitimate new connection, regardless of project value. It is for the marketplace service of connecting the parties, not a percentage of the project payment.",
           "PPP does not process, hold in escrow, or payout homeowner-to-contractor project money. After the parties are connected through PPP, they communicate directly and arrange project payment themselves.",
           "Connection Fee checkout is Coming Soon and is not live in this product. Connection Fees are calculated and displayed, but no live charges occur.",
           "PPP does not currently verify licenses, insurance, or workmanship. Priority Verified is not live and is never a code inspection or a guarantee.",
@@ -83,8 +84,8 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
       {
         heading: "Anti-circumvention",
         paragraphs: [
-          "You may not intentionally hide contact information in photos, estimates, or project descriptions to bypass the connection workflow and the applicable Connection Fee.",
-          "You may not submit an artificially low estimate amount with the intent to quote higher after connection, or cancel and rebook to avoid the Connection Fee owed on the original connection.",
+          "You may not intentionally hide contact information in photos, estimates, or project descriptions to bypass the connection workflow and the applicable $4.99 Connection Fee.",
+          "You may not cancel and rebook to avoid the Connection Fee owed on the original connection.",
           "Violations may result in account suspension or termination. PPP may investigate reports of circumvention but does not promise real-time monitoring or automatic detection. Reporting and moderation are the enforcement mechanisms.",
           "After you are connected through PPP, PPP does not control how the homeowner pays the contractor for project work. The Connection Fee is for the marketplace service of connecting the parties, not for processing the project payment.",
         ],
@@ -189,9 +190,10 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
       {
         heading: "Connection Fees",
         paragraphs: [
-          "PPP earns revenue from the $9.99 activation fee, contractor Connection Fees when homeowners select them, and future Priority Pro subscriptions.",
-          "Homeowners do not pay a PPP Connection Fee when they hire. Contractors on the Free plan owe the configured Connection Fee when connected, according to the published schedule. Repeat/hire-again jobs use the configured repeat rate.",
-          "Connection Fees are for the marketplace service of connecting the parties. They are not project payment processing fees. PPP does not process the homeowner-to-contractor project payment.",
+          "PPP earns revenue from the $9.99 activation fee, a flat $4.99 Connection Fee when homeowners select contractors, and future Priority Pro subscriptions.",
+          "Homeowners do not pay a PPP Connection Fee when they hire. Contractors owe a flat $4.99 Connection Fee per legitimate new connection, regardless of project value.",
+          "The Connection Fee is the same for all connections: first-time, repeat, and hire-again all use the flat $4.99 rate. Priority Pro (Coming Soon) also uses $4.99.",
+          "Connection Fees are for the marketplace service of connecting the parties. They are not project payment processing fees and are not based on the project value. PPP does not process the homeowner-to-contractor project payment.",
           "Connection Fee checkout is Coming Soon and is not live in this product. Fees are calculated and displayed; no live charges occur.",
         ],
       },

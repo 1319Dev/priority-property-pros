@@ -37,7 +37,7 @@ describe("pre-hire anti-circumvention", () => {
 
   it("does not change marketplace fee math or enable live charges", () => {
     const fee = computeMarketplaceFee({ amount_cents: 100_000, kind: "ORIGINAL" });
-    expect(fee.fee_cents).toBe(7_500);
+    expect(fee.fee_cents).toBe(499); // Flat $4.99 Connection Fee
     expect(fee.payments_live).toBe(false);
     expect(fee.charges_live).toBe(false);
   });

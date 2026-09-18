@@ -157,32 +157,33 @@ describe("Phase 4A pre-merge security checks", () => {
     expect(sql).toMatch(/AND b\.status = 'COMPLETED'/);
   });
 
-  it("8. approved positive change orders contribute to the same booking fee calc/cap", () => {
+  it("8. approved positive change orders are tracked (flat $4.99 fee model)", () => {
     const base = computeMarketplaceFee({ amount_cents: 250_000, kind: "ORIGINAL" });
     const withCo = computeMarketplaceFee({
       amount_cents: feeBasisCents(250_000, [100_000]),
       kind: "ORIGINAL",
     });
-    expect(base.fee_cents).toBe(18_000);
-    expect(withCo.fee_cents).toBe(23_000);
+    // Flat fee model: always $4.99 regardless of change orders or project value
+    expect(base.fee_cents).toBe(499);
+    expect(withCo.fee_cents).toBe(499);
     expect(sql).toMatch(/AND co\.amount_delta_cents > 0/);
     expect(sql).toMatch(/FUNCTION public\.booking_fee_basis_cents/);
     expect(contractorCanUnilaterallyIncrease()).toBe(false);
   });
 
-  it("9. change orders cannot create a fresh $999 / $500 cap", () => {
-    const originalCap = computeMarketplaceFee({
+  it("9. flat $4.99 fee applies regardless of project size or change orders", () => {
+    const originalLarge = computeMarketplaceFee({
       amount_cents: feeBasisCents(5_000_000, [1_000_000, 1_000_000]),
       kind: "ORIGINAL",
     });
-    expect(originalCap.fee_cents).toBe(99_900);
-    expect(originalCap.max_fee_cents).toBe(99_900);
-    const repeatCap = computeMarketplaceFee({
+    expect(originalLarge.fee_cents).toBe(499);
+    expect(originalLarge.max_fee_cents).toBe(499);
+    const repeatLarge = computeMarketplaceFee({
       amount_cents: feeBasisCents(2_500_000, [1_000_000]),
       kind: "REPEAT",
     });
-    expect(repeatCap.fee_cents).toBe(50_000);
-    expect(repeatCap.max_fee_cents).toBe(50_000);
+    expect(repeatLarge.fee_cents).toBe(499);
+    expect(repeatLarge.max_fee_cents).toBe(499);
     expect(sql).toMatch(/max_fee_cents_snapshot/);
     expect(sql).toMatch(/compute_fee_from_snapshot/);
   });
@@ -192,16 +193,25 @@ describe("Phase 4A pre-merge security checks", () => {
       amount_cents: 100_000,
       kind: "ORIGINAL",
       brackets: ORIGINAL_FEE_BRACKETS,
+      min_fee_cents: 1_500,
+      max_fee_cents: 99_900,
       version: 1,
     });
     const later = computeMarketplaceFee({
       amount_cents: 100_000,
       kind: "ORIGINAL",
       brackets: [{ min_amount_cents: 0, max_amount_cents: null, rate_bps: 1000 }],
+      min_fee_cents: 1_500,
+      max_fee_cents: 150_000,
       version: 2,
     });
+    // Historical snapshot (v1) with brackets: $75
     expect(snapshot.fee_cents).toBe(7_500);
+    // Later schedule (v2) with different brackets: $100
     expect(later.fee_cents).toBe(10_000);
+    // Current model (no brackets): flat $4.99
+    const current = computeMarketplaceFee({ amount_cents: 100_000, kind: "ORIGINAL" });
+    expect(current.fee_cents).toBe(499);
     expect(sql).toMatch(/fee_brackets_snapshot/);
     expect(sql).toMatch(/fee_locked = true/);
     expect(sql).toMatch(/IF b\.fee_locked AND b\.fee_brackets_snapshot IS NOT NULL THEN/);

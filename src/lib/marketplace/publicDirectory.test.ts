@@ -145,8 +145,8 @@ describe("public marketplace directory privacy", () => {
   });
 
   it("leaves marketplace fee math unchanged and payments paused", () => {
-    expect(computeMarketplaceFee({ amount_cents: 250_000, kind: "ORIGINAL" }).fee_cents).toBe(18_000);
-    expect(computeMarketplaceFee({ amount_cents: 100_000, kind: "REPEAT" }).fee_cents).toBe(2_000);
+    expect(computeMarketplaceFee({ amount_cents: 250_000, kind: "ORIGINAL" }).fee_cents).toBe(499); // Flat $4.99
+    expect(computeMarketplaceFee({ amount_cents: 100_000, kind: "REPEAT" }).fee_cents).toBe(499); // Flat $4.99
     expect(computeMarketplaceFee({ amount_cents: 100_000, kind: "ORIGINAL" }).payments_live).toBe(false);
     expect(computeMarketplaceFee({ amount_cents: 100_000, kind: "ORIGINAL" }).charges_live).toBe(false);
   });

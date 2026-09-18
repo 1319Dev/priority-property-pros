@@ -61,13 +61,14 @@ describe("legal and trust copy", () => {
 });
 
 describe("pricing schedule source of truth", () => {
-  it("reads public brackets from the configured fee engine instead of inventing them", () => {
+  it("flat $4.99 Connection Fee model", () => {
+    // Historical brackets still exist for reference but are deprecated
     expect(ORIGINAL_FEE_BRACKETS_PUBLIC).toEqual(
       publicFeeBracketsFromConfig(ORIGINAL_FEE_BRACKETS).map((row) => ({ range: row.range, rate: row.rate })),
     );
     expect(ORIGINAL_FEE_BRACKETS_PUBLIC[0]).toEqual({ range: "$0–$499.99", rate: "8%" });
     expect(PRIORITY_PRO_STATUS).toBe("Coming Soon");
-    expect(CONTRACTOR_VALUE_HEADLINE).toMatch(/no lead fees.*no bid fees.*pay when you connect/i);
+    expect(CONTRACTOR_VALUE_HEADLINE).toMatch(/no lead fees.*no bid fees.*pay.*4\.99.*when you connect/i);
     expect(NO_PAY_TO_WIN).toMatch(/no pay-to-win/i);
   });
 
@@ -80,7 +81,7 @@ describe("pricing schedule source of truth", () => {
     expect(screen.getByText(/free vs priority pro/i)).toBeInTheDocument();
     expect(screen.getAllByText(/coming soon/i).length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: /buy priority pro/i })).not.toBeInTheDocument();
-    expect(screen.getAllByText(/no lead fees.*no bid fees.*pay when you connect/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\$4\.99/i).length).toBeGreaterThan(0);
   });
 });
 

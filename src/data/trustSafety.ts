@@ -10,7 +10,7 @@ export const TRUST_PAGE_LEDE =
 export const TRUST_WHAT_EXISTS = [
   {
     title: "A marketplace, not a crew",
-    body: "PPP connects property owners with independent local contractors. PPP is not the contractor and does not employ the people who do the work. PPP does not process, hold in escrow, or payout homeowner-to-contractor project money. After connection, parties pay each other directly.",
+    body: "PPP connects property owners with independent local contractors. PPP is not the contractor and does not employ the people who do the work. PPP does not process, hold in escrow, or payout homeowner-to-contractor project money. After connection, parties pay each other directly. PPP earns a flat $4.99 Connection Fee for the connection service, not a percentage of the project payment.",
   },
   {
     title: "Public browse stays anonymized",
@@ -34,7 +34,7 @@ export const TRUST_WHAT_EXISTS = [
   },
   {
     title: "Account deletion",
-    body: "You can request deletion from Account settings. That removes you from the public directory and from new work. Job, Connection Fee, dispute, and audit history are kept. Deletion does not erase evidence of fees owed, reviews, or disputes.",
+    body: "You can request deletion from Account settings. That removes you from the public directory and from new work. Job, Connection Fee ($4.99 per connection), dispute, and audit history are kept. Deletion does not erase evidence of fees owed, reviews, or disputes.",
   },
   {
     title: "Admin approval to join as a pro",
@@ -47,7 +47,8 @@ export const TRUST_WHAT_DOES_NOT_EXIST = [
   "Priority Verified is not live and is never a code inspection or a guarantee.",
   "PPP does not hold project funds in escrow and does not process live Connection Fee charges or homeowner-to-contractor project payments in this product.",
   "PPP does not guarantee that a contractor will show up, finish, or meet local code.",
-  "There is no pay-to-win ranking. Paying does not buy a higher public listing.",
+  "There is no pay-to-win ranking. Paying $4.99 does not buy a higher public listing.",
+  "The Connection Fee is always $4.99 regardless of project size — it's not based on estimates, final invoices, or project completion.",
   "Messaging is not built yet.",
 ] as const;
 
