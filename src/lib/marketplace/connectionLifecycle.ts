@@ -19,6 +19,14 @@ export const CONNECTION_COMPLETED_STATUSES: ProjectConnectionStatus[] = ["PAID",
 
 export const CONNECT_BUTTON_LABEL = "Connect — $4.99";
 
+export const CONNECTED_LABEL = "Connected";
+
+export const CONNECTED_BODY =
+  "Your $4.99 connection is active for this project. Contact is unlocked for this project only.";
+
+export const CHECKOUT_PENDING_COPY =
+  "Checkout is in progress. Contact stays locked until the server verifies the $4.99 payment.";
+
 export const CONNECT_CONFIRM_TITLE = "Connect with this customer for $4.99?";
 
 export const CONNECT_CONFIRM_BODY =
@@ -66,6 +74,32 @@ export function remainingConnectionSpots(
   max = MAX_COMPLETED_CONNECTIONS,
 ): number {
   return Math.max(0, max - countOccupiedConnectionSlots(statuses, max));
+}
+
+export type ContractorConnectionUiState = "connect" | "checkout_pending" | "connected" | "requested" | "full" | "closed";
+
+export function contractorConnectionUiState(input: {
+  cancelled?: boolean;
+  accepting?: boolean;
+  remaining?: number;
+  myConnectionStatus?: ProjectConnectionStatus | null;
+  reservedUntil?: string | Date | null;
+  now?: Date;
+}): ContractorConnectionUiState {
+  if (input.myConnectionStatus === "PAID" || input.myConnectionStatus === "COMPLETED") return "connected";
+  if (input.myConnectionStatus === "PAYMENT_DISABLED") return "requested";
+  if (input.cancelled || input.accepting === false) return "closed";
+  if (input.myConnectionStatus === "RESERVED") {
+    const until = input.reservedUntil;
+    const now = input.now ?? new Date();
+    if (!until || new Date(until).getTime() > now.getTime()) return "checkout_pending";
+  }
+  if ((input.remaining ?? 1) <= 0) return "full";
+  return "connect";
+}
+
+export function showConnectButton(state: ContractorConnectionUiState): boolean {
+  return state === "connect" || state === "checkout_pending";
 }
 
 export function connectionAvailabilityCopy(

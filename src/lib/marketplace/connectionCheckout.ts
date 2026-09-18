@@ -310,6 +310,7 @@ export function ineligibleContractorRejected(input: {
 
 export const FUNCTIONS_HTTP_ERROR_MESSAGE = "Edge Function returned a non-2xx status code";
 export const CONNECTION_CHECKOUT_CUSTOMER_ERROR = "We couldn't start checkout. Please try again.";
+export const CONNECTION_RECONCILE_CUSTOMER_ERROR = "We couldn't verify that payment. Please try again.";
 
 function usableCheckoutErrorMessage(value: string): boolean {
   const trimmed = value.trim();
@@ -361,12 +362,13 @@ async function readFunctionsErrorContext(context: unknown): Promise<unknown> {
 export async function customerFacingConnectionCheckoutError(
   data: unknown,
   error?: { message?: string; context?: unknown } | null,
+  fallback = CONNECTION_CHECKOUT_CUSTOMER_ERROR,
 ): Promise<string> {
   const fromData = parseConnectionCheckoutErrorPayload(data);
   if (fromData) return fromData;
   const fromContext = parseConnectionCheckoutErrorPayload(await readFunctionsErrorContext(error?.context));
   if (fromContext) return fromContext;
-  return CONNECTION_CHECKOUT_CUSTOMER_ERROR;
+  return fallback;
 }
 
 export function allowedReturnOrigin(origin: string, siteUrl?: string | null): boolean {

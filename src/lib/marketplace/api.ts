@@ -5,7 +5,7 @@ import { looksLikeFilename } from "./publicDirectory";
 import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
 import { reusableEmptyDraft } from "./flows";
 import { detectContactLeak } from "./contactLeak";
-import { customerFacingConnectionCheckoutError } from "./connectionCheckout";
+import { customerFacingConnectionCheckoutError, CONNECTION_RECONCILE_CUSTOMER_ERROR } from "./connectionCheckout";
 import type {
   BookingContactAccess,
   ConnectionAvailability,
@@ -981,7 +981,12 @@ export async function reconcileConnectionCheckout(sessionId: string): Promise<Rp
   const { data, error } = await client().functions.invoke("reconcile-connection-checkout", {
     body: { session_id: sessionId },
   });
-  if (error) throw new Error(asError(error, "Could not verify the checkout session."));
+  if (error) {
+    console.error("reconcile-connection-checkout failed", error, data);
+    throw new Error(
+      await customerFacingConnectionCheckoutError(data, error, CONNECTION_RECONCILE_CUSTOMER_ERROR),
+    );
+  }
   return (data ?? {}) as RpcJson;
 }
 

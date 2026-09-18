@@ -28,6 +28,7 @@ import {
   fetchPortfolio,
   fetchProjectConnectionAvailability,
   fetchConnectionFeeCheckoutFlags,
+  fetchMyProjectConnections,
   startConnectionCheckout,
   fetchProjectNotices,
   fetchProjectAnswers,
@@ -54,14 +55,15 @@ import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type EstimateItemKind, 
 import { OPPORTUNITY_STATUS_LABELS, opportunityNextActions } from "../../../lib/marketplace/statusLabels";
 import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import {
-  CONNECT_BUTTON_LABEL,
   CONNECT_PAYMENTS_OFF_COPY,
   CONNECT_REDIRECTING_COPY,
   connectionAvailabilityCopy,
+  contractorConnectionUiState,
 } from "../../../lib/marketplace/connectionLifecycle";
+import { ConnectConfirmDialog } from "../../../components/marketplace/ConnectConfirm";
+import { ContractorConnectionCta } from "../../../components/marketplace/ContractorConnectionCta";
 import { canWithdrawFrom, WITHDRAW_ESTIMATE_BODY, WITHDRAW_ESTIMATE_CONFIRM, WITHDRAW_ESTIMATE_TITLE } from "../../../lib/marketplace/estimateLifecycle";
 import { PHOTO_OCR_RISK_NOTE, PHOTO_REPORT_LABEL } from "../../../lib/marketplace/photoSafety";
-import { ConnectConfirmDialog } from "../../../components/marketplace/ConnectConfirm";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../hooks/useToast";
 import { PRO_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
@@ -451,6 +453,9 @@ export function OpportunityDetailPage() {
   const [availability, setAvailability] = useState<Awaited<ReturnType<typeof fetchProjectConnectionAvailability>> | null>(
     null,
   );
+  const [myConnection, setMyConnection] = useState<Awaited<ReturnType<typeof fetchMyProjectConnections>>[number] | null>(
+    null,
+  );
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
   const [connectOpen, setConnectOpen] = useState(false);
@@ -458,12 +463,14 @@ export function OpportunityDetailPage() {
   async function reload() {
     const opp = await fetchOpportunity(opportunityId);
     setRow(opp);
-    const [photoRows, projectAnswers, spots] = await Promise.all([
+    const [photoRows, projectAnswers, spots, mine] = await Promise.all([
       fetchProjectPhotos(opp.project_id),
       fetchProjectAnswers(opp.project_id),
       fetchProjectConnectionAvailability(opp.project_id).catch(() => null),
+      fetchMyProjectConnections(opp.project_id).catch(() => []),
     ]);
     setAvailability(spots);
+    setMyConnection(mine[0] ?? null);
     setAnswers(projectAnswers);
     if (opp.projects?.category_id) setQuestions(await fetchServiceQuestions(opp.projects.category_id));
     setQa(await fetchEstimateQuestions(opp.project_id, opp.id));
@@ -492,6 +499,14 @@ export function OpportunityDetailPage() {
         max: availability.max,
       })
     : "3 connection spots available";
+  const connectionUiState = contractorConnectionUiState({
+    cancelled,
+    accepting: availability?.accepting_connections,
+    remaining: availability?.remaining ?? 3,
+    myConnectionStatus: myConnection?.status ?? null,
+    reservedUntil: myConnection?.reserved_until ?? null,
+  });
+  const showConnectionCta = !cancelled && (row.status === "AVAILABLE" || row.status === "ACCEPTED");
 
   return (
     <div className="space-y-6">
@@ -555,17 +570,11 @@ export function OpportunityDetailPage() {
           );
         })}
       </ul>
+      {showConnectionCta ? (
+        <ContractorConnectionCta state={connectionUiState} busy={busy} onConnect={() => setConnectOpen(true)} />
+      ) : null}
       {row.status === "AVAILABLE" && !cancelled ? (
-        <div className="flex flex-col gap-3">
-          <Button
-            type="button"
-            className="min-h-14 w-full"
-            disabled={busy || availability?.full}
-            onClick={() => setConnectOpen(true)}
-          >
-            {CONNECT_BUTTON_LABEL}
-          </Button>
-          <div className="flex gap-3">
+        <div className="flex gap-3">
           <Button
             type="button"
             variant="outline"
@@ -599,19 +608,10 @@ export function OpportunityDetailPage() {
           >
             Pass
           </Button>
-          </div>
         </div>
       ) : null}
       {row.status === "ACCEPTED" && !cancelled ? (
         <section className="space-y-3">
-          <Button
-            type="button"
-            className="min-h-14 w-full"
-            disabled={busy || availability?.full}
-            onClick={() => setConnectOpen(true)}
-          >
-            {CONNECT_BUTTON_LABEL}
-          </Button>
           <h2 className="font-display text-2xl">Ask the customer</h2>
           {qa.map((item) => (
             <div key={item.id} className="rounded-2xl bg-cream-100 px-3 py-2 text-sm">

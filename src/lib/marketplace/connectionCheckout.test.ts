@@ -25,6 +25,7 @@ import {
   fakeSessionUnlocksContact,
   fourthFinalizedConnectionAllowed,
   CONNECTION_CHECKOUT_CUSTOMER_ERROR,
+  CONNECTION_RECONCILE_CUSTOMER_ERROR,
   FUNCTIONS_HTTP_ERROR_MESSAGE,
   customerFacingConnectionCheckoutError,
   fulfillmentReferenceValue,
@@ -213,6 +214,8 @@ describe("Connection Fee TEST Checkout", () => {
     const api = readFileSync(path.join(repoRoot, "src/lib/marketplace/api.ts"), "utf8");
     expect(api).toMatch(/customerFacingConnectionCheckoutError/);
     expect(api).toMatch(/create-connection-checkout failed/);
+    expect(api).toMatch(/reconcile-connection-checkout failed/);
+    expect(api).toMatch(/CONNECTION_RECONCILE_CUSTOMER_ERROR/);
     expect(api).not.toMatch(/Could not start Connection Fee checkout/);
     expect(api).not.toMatch(/asError\(error, "Could not start Connection Fee checkout\."\)/);
     await expect(
@@ -237,6 +240,10 @@ describe("Connection Fee TEST Checkout", () => {
       CONNECTION_CHECKOUT_CUSTOMER_ERROR,
     );
     expect(CONNECTION_CHECKOUT_CUSTOMER_ERROR).toBe("We couldn't start checkout. Please try again.");
+    expect(CONNECTION_RECONCILE_CUSTOMER_ERROR).toBe("We couldn't verify that payment. Please try again.");
+    await expect(
+      customerFacingConnectionCheckoutError(null, { message: FUNCTIONS_HTTP_ERROR_MESSAGE }, CONNECTION_RECONCILE_CUSTOMER_ERROR),
+    ).resolves.toBe(CONNECTION_RECONCILE_CUSTOMER_ERROR);
   });
 
   it("rejects closed and full projects and duplicate contractor+project pairs", () => {

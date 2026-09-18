@@ -34,3 +34,18 @@
 -- 9. After 20260928000004, non-pi_ historical PI values are moved to fulfillment_reference.
 --    Replay of cs_test_a1b7iOf0SYA0cavV946FURjAkPP4pE17Zs4xddMm4XIx2uhTfFaCWXkKwu should
 --    then store the real pi_... without rewriting #14 entitlement.
+-- 10. Adversarial / lifecycle hardening (automated in
+--     src/lib/marketplace/connectionMarketplaceHardening.test.ts — do not burn new $4.99 charges):
+--     1) Abandoned checkout: RESERVED occupies a TTL slot; expire_stale releases it; no PAID/#14.
+--     2) Duplicate contractor+project: PAID/#14 cannot reserve again (no second session/slot/charge).
+--     3) Final-slot race: unique slot 1–3 + FOR UPDATE; at most one winner; Stripe after slot gone
+--        → paid_but_reservation_not_active needs_refund, no grant, never a 4th PAID.
+--     4) Stop New Connections: reserve rejects; fulfill does not check accepting_connections so
+--        in-flight RESERVED may finalize; existing UNLOCKED #14 kept.
+--     5) Tampering: client cannot set price/amount/contractor; fulfill requires 499 / USD / Price ID.
+--     6) Webhook + reconcile replay: processor_event_id UNIQUE; already-PAID is idempotent.
+--     7) Contact privacy: unpaid has no #14 row; helper is project_id+contractor_profile_id;
+--        admin_revoke_connection_contact_access sets LOCKED+revoked_at.
+--     8) UX: start/reconcile never surface FunctionsHttpError; Connect/Checkout/Connected CTA.
+-- 11. Do not refund cs_test_a1b7iOf0SYA0cavV946FURjAkPP4pE17Zs4xddMm4XIx2uhTfFaCWXkKwu.
+
