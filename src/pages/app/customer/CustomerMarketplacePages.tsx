@@ -524,7 +524,7 @@ export function CompareEstimatesPage() {
           const declinable = canCustomerDeclineFrom(status) && project?.status !== "CONTRACTOR_SELECTED";
           return (
             <article key={estimate.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 p-5">
-              <h2 className="font-display text-2xl text-forest-800">{contractor?.business_name || "Local pro"}</h2>
+              <h2 className="font-display text-2xl text-forest-800">{contractor?.display_label || "Local pro"}</h2>
               <p className="text-sm text-ink-500">
                 {outOfDate
                   ? "Needs a new estimate"
@@ -536,7 +536,7 @@ export function CompareEstimatesPage() {
                         ? "Viewed"
                         : "Sent"}
               </p>
-              <p className="text-sm text-ink-700">{contractor?.headline || contractor?.bio || "Independent contractor"}</p>
+              <p className="text-sm text-ink-700">{contractor?.short_description || "Independent contractor"}</p>
               {extras.badges.length > 0 ? (
                 <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">
                   {extras.badges.map((badge) => badge.label).join(" · ")}
@@ -544,7 +544,10 @@ export function CompareEstimatesPage() {
               ) : (
                 <p className="mt-1 text-xs text-ink-500">Verification badges appear only after PPP verifies credentials.</p>
               )}
-              <p className="mt-1 text-xs text-ink-500">Phone, email, and street stay hidden until a hire is entitled.</p>
+              <p className="mt-1 text-xs text-ink-500">
+                Phone, email, and street stay hidden until a hire is entitled. Full business identity is shared after
+                you hire through Priority Property Pros.
+              </p>
               {outOfDate ? (
                 <StatusBanner
                   tone="warning"
@@ -690,7 +693,7 @@ export function CustomerEstimateDetailPage() {
       <ButtonLink to={`/app/customer/projects/${projectId}/compare`} variant="ghost" size="sm">
         Back to comparison
       </ButtonLink>
-      <h1 className="font-display text-4xl font-semibold text-forest-800">{contractor?.business_name || "Estimate"}</h1>
+      <h1 className="font-display text-4xl font-semibold text-forest-800">{contractor?.display_label || "Estimate"}</h1>
       <p className="text-sm text-ink-500">Opening this page marks the estimate viewed. Phone, email, and street stay hidden.</p>
       <FormError message={error} />
       {badges.length > 0 ? (

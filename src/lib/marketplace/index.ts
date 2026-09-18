@@ -16,4 +16,5 @@ export {
 export { showManageProfile, profilePageMode, contractorMayEditField } from "./profileManage";
 export { contractorEstimateUiStatus, submitTargetStatus, shouldMarkEstimateViewed } from "./estimateLifecycle";
 export { detectContactLeak, CONTACT_AFTER_CONNECTION_COPY } from "./contactLeak";
+export { assertNoPreHireContact, PRE_HIRE_CONTACT_MESSAGE } from "./antiCircumvention";
 export * from "./types";

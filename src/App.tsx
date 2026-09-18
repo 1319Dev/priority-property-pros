@@ -2,7 +2,14 @@ import { Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
 import { RequireAdmin, RequireAuth, RequireRole } from "./lib/auth/guards";
 import { BecomeAProPage } from "./pages/BecomeAProPage";
-import { FindAProPage } from "./pages/FindAProPage";
+import {
+  DemoContractorPage,
+  DemoHomeownerPage,
+  DemoProjectPage,
+  DemoVerifierPage,
+  FindAProPage,
+  PublicContractorPage,
+} from "./pages/FindAProPage";
 import { HomePage } from "./pages/HomePage";
 import { HowItWorksPage } from "./pages/HowItWorksPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -57,6 +64,11 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/find-a-pro" element={<FindAProPage />} />
+        <Route path="/find-a-pro/example/:slug" element={<DemoContractorPage />} />
+        <Route path="/find-a-pro/:contractorId" element={<PublicContractorPage />} />
+        <Route path="/examples/homeowners/:slug" element={<DemoHomeownerPage />} />
+        <Route path="/examples/verifiers/:slug" element={<DemoVerifierPage />} />
+        <Route path="/examples/projects/:slug" element={<DemoProjectPage />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/become-a-pro" element={<BecomeAProPage />} />

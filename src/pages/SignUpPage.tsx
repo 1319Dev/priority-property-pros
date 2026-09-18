@@ -12,6 +12,7 @@ import {
   SIGNUP_FEE_SHORT,
   VERIFIER_SIGNUP_LEDE,
 } from "../data/pricing";
+import { preHireContactError, PRE_HIRE_CONTACT_HINT } from "../lib/marketplace/antiCircumvention";
 
 const copy: Record<PublicSignupType, { eyebrow: string; title: string; lede: string }> = {
   CUSTOMER: { eyebrow: "Customer", title: "Create a customer account.", lede: CUSTOMER_SIGNUP_LEDE },
@@ -56,6 +57,15 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
     setError(null);
     if (values.password.length < 8) {
       setError("Use at least 8 characters for your password.");
+      return;
+    }
+    const contactError =
+      preHireContactError(values.bio) ||
+      preHireContactError(values.businessName) ||
+      preHireContactError(values.primaryTrade) ||
+      preHireContactError(values.serviceArea);
+    if (contactError) {
+      setError(contactError);
       return;
     }
     setBusy(true);
@@ -180,6 +190,7 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
             <TextInput
               label="Short bio"
               name="bio"
+              hint={PRE_HIRE_CONTACT_HINT}
               value={values.bio}
               onChange={(e) => set("bio", e.target.value)}
             />

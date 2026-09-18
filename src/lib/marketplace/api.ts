@@ -1,5 +1,7 @@
 import { getSupabaseClient } from "../supabase/client";
 import type { Database, Json } from "../supabase/database.types";
+import { assertNoPreHireContact } from "./antiCircumvention";
+import { looksLikeFilename } from "./publicDirectory";
 import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
 import { reusableEmptyDraft } from "./flows";
 import { detectContactLeak } from "./contactLeak";
@@ -29,6 +31,7 @@ function asError(error: { message: string } | null, fallback: string): string {
 function rejectContactLeak(text: string | null | undefined) {
   const leak = detectContactLeak(text);
   if (leak.blocked) throw new Error(leak.message ?? "Contact info is shared after connection through Priority Property Pros.");
+  assertNoPreHireContact(text);
 }
 
 export function parseQuestionOptions(value: Json | string[] | null | undefined): string[] {
@@ -216,6 +219,8 @@ export async function postProject(projectId: string): Promise<RpcJson> {
 }
 
 export async function updateCustomerProject(projectId: string, patch: Record<string, unknown>): Promise<RpcJson> {
+  if (typeof patch.title === "string") rejectContactLeak(patch.title);
+  if (typeof patch.description === "string") rejectContactLeak(patch.description);
   const { data, error } = await client().rpc("update_customer_project", {
     p_project_id: projectId,
     p_patch: patch as Json,
@@ -688,7 +693,13 @@ export async function uploadContractorDoc(params: {
 }
 
 export async function addPortfolioItem(row: Database["public"]["Tables"]["contractor_portfolio"]["Insert"]) {
-  const { error } = await client().from("contractor_portfolio").insert(row);
+  rejectContactLeak(row.title);
+  rejectContactLeak(row.description);
+  const { error } = await client().from("contractor_portfolio").insert({
+    ...row,
+    title: looksLikeFilename(row.title ?? "") ? "Portfolio photo" : row.title,
+    privacy_state: row.privacy_state ?? "REVIEW_REQUIRED",
+  });
   if (error) throw new Error(asError(error, "Could not add portfolio photo."));
 }
 
@@ -705,7 +716,7 @@ export async function updateProfileAvatar(profileId: string, avatarUrl: string |
 export async function fetchPortfolio(contractorProfileId: string) {
   const { data, error } = await client()
     .from("contractor_portfolio")
-    .select("id, contractor_profile_id, title, description, storage_path, sort_order")
+    .select("id, contractor_profile_id, title, description, storage_path, sort_order, privacy_state")
     .eq("contractor_profile_id", contractorProfileId)
     .order("sort_order");
   if (error) throw new Error(asError(error, "Could not load portfolio."));
@@ -833,19 +844,68 @@ export async function fetchProjectEstimates(projectId: string) {
   return data ?? [];
 }
 
-export async function fetchPublicContractor(id: string) {
-  const { data, error } = await client().from("contractor_public_profiles").select("*").eq("id", id).maybeSingle();
+export type PublicDirectoryRpcRow = {
+  id: string;
+  display_label: string;
+  primary_trade: string | null;
+  categories: string[] | null;
+  service_area: string | null;
+  years_experience: number | null;
+  rating_average: number | null;
+  rating_count: number | null;
+  badges: Json;
+  short_description: string | null;
+  about?: string | null;
+};
+
+export type PublicDirectoryPortfolioRow = {
+  id: string;
+  caption: string;
+  sort_order: number;
+};
+
+export type PublicDirectoryReviewRow = {
+  id: string;
+  rating: number;
+  body: string;
+};
+
+function parseDirectoryBadges(value: Json | null | undefined): Array<{ kind: string; label: string }> {
+  if (!Array.isArray(value)) return [];
+  const badges: Array<{ kind: string; label: string }> = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+    const kind = "kind" in item && typeof item.kind === "string" ? item.kind : "";
+    const label = "label" in item && typeof item.label === "string" ? item.label : "";
+    if (kind || label) badges.push({ kind, label });
+  }
+  return badges;
+}
+
+export async function fetchPublicContractorDirectory(): Promise<PublicDirectoryRpcRow[]> {
+  const { data, error } = await client().rpc("list_public_directory_contractors");
+  if (error) throw new Error(asError(error, "Could not load the contractor directory."));
+  return (Array.isArray(data) ? data : []) as PublicDirectoryRpcRow[];
+}
+
+export async function fetchPublicContractor(id: string): Promise<PublicDirectoryRpcRow | null> {
+  const { data, error } = await client().rpc("get_public_directory_contractor", { p_id: id });
   if (error) throw new Error(asError(error, "Could not load the contractor."));
-  return data;
+  const row = Array.isArray(data) ? data[0] : data;
+  return (row as PublicDirectoryRpcRow | undefined) ?? null;
+}
+
+export function directoryRowBadges(row: PublicDirectoryRpcRow) {
+  return parseDirectoryBadges(row.badges);
 }
 
 export async function fetchPublicContractorExtras(id: string) {
   const supabase = client();
   const [services, areas, badges, portfolio] = await Promise.all([
-    supabase.from("contractor_public_services").select("*").eq("contractor_profile_id", id),
-    supabase.from("contractor_public_areas").select("*").eq("contractor_profile_id", id),
-    supabase.from("contractor_verified_credential_badges").select("*").eq("contractor_profile_id", id),
-    supabase.from("contractor_public_portfolio").select("*").eq("contractor_profile_id", id).order("sort_order"),
+    supabase.from("contractor_public_services").select("id, contractor_profile_id, category_id, category_slug, category_name").eq("contractor_profile_id", id),
+    supabase.from("contractor_public_areas").select("id, contractor_profile_id, label").eq("contractor_profile_id", id),
+    supabase.from("contractor_verified_credential_badges").select("id, contractor_profile_id, kind, label, status, expires_at").eq("contractor_profile_id", id),
+    supabase.from("contractor_public_portfolio").select("id, contractor_profile_id, sort_order, caption").eq("contractor_profile_id", id).order("sort_order"),
   ]);
   return {
     services: services.data ?? [],
@@ -853,6 +913,18 @@ export async function fetchPublicContractorExtras(id: string) {
     badges: badges.data ?? [],
     portfolio: portfolio.data ?? [],
   };
+}
+
+export async function fetchPublicContractorPortfolio(id: string): Promise<PublicDirectoryPortfolioRow[]> {
+  const { data, error } = await client().rpc("list_public_directory_portfolio", { p_id: id });
+  if (error) throw new Error(asError(error, "Could not load screened portfolio."));
+  return (Array.isArray(data) ? data : []) as PublicDirectoryPortfolioRow[];
+}
+
+export async function fetchPublicContractorReviews(id: string): Promise<PublicDirectoryReviewRow[]> {
+  const { data, error } = await client().rpc("list_public_directory_reviews", { p_id: id });
+  if (error) throw new Error(asError(error, "Could not load verified reviews."));
+  return (Array.isArray(data) ? data : []) as PublicDirectoryReviewRow[];
 }
 
 export async function signedContractorDocUrl(path: string): Promise<string | null> {

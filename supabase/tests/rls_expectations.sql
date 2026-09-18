@@ -45,3 +45,11 @@
 --   admin still sees all projects
 --   confirmed booking is not enough for exact street; contact entitlement required
 
+-- Public directory (after 20260925000001–02 on preview giiskdvitimksdewnelc — not production):
+--   anon SELECT contractor_public_profiles / services / areas / ratings / portfolio / reviews → rows, no PII
+--   anon EXECUTE anonymized_pro_label / general_service_area / generic_credential_badge_label / public_safe_* / text_contains_pre_hire_contact / text_contains_contact_info → allowed (pure helpers)
+--   anon EXECUTE list_public_directory_contractors / get_public_directory_contractor → allowed
+--   anon SELECT contractor_profiles / profiles / booking_reviews / contractor_portfolio / booking_contact_access → denied
+--   anon EXECUTE booking_job_contact / contractor_is_directory_listed → denied
+--   authenticated EXECUTE assert_no_pre_hire_contact → allowed (write path)
+

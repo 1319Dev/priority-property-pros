@@ -321,6 +321,7 @@ export type Database = {
           description: string | null;
           storage_path: string;
           sort_order: number;
+          privacy_state: "PUBLIC_SAFE" | "PRIVATE" | "REVIEW_REQUIRED";
         };
         Insert: {
           contractor_profile_id: string;
@@ -328,12 +329,14 @@ export type Database = {
           description?: string | null;
           storage_path: string;
           sort_order?: number;
+          privacy_state?: "PUBLIC_SAFE" | "PRIVATE" | "REVIEW_REQUIRED";
         };
         Update: {
           title?: string;
           description?: string | null;
           storage_path?: string;
           sort_order?: number;
+          privacy_state?: "PUBLIC_SAFE" | "PRIVATE" | "REVIEW_REQUIRED";
         };
         Relationships: [];
       };
@@ -737,14 +740,14 @@ export type Database = {
       contractor_public_profiles: {
         Row: {
           id: string;
-          business_name: string;
-          headline: string | null;
+          display_label: string;
           primary_trade: string | null;
           years_experience: number | null;
-          bio: string | null;
-          website_url: string | null;
+          short_description: string | null;
+          about: string | null;
           accepting_work: boolean;
           created_at: string;
+          service_area: string | null;
         };
         Insert: never;
         Update: never;
@@ -779,10 +782,6 @@ export type Database = {
         Row: {
           id: string;
           contractor_profile_id: string;
-          mode: ServiceAreaMode;
-          center_zip: string | null;
-          radius_miles: number | null;
-          zip_codes: string[] | null;
           label: string | null;
         };
         Insert: never;
@@ -793,10 +792,29 @@ export type Database = {
         Row: {
           id: string;
           contractor_profile_id: string;
-          title: string;
-          description: string | null;
-          storage_path: string;
           sort_order: number;
+          caption: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      contractor_public_reviews: {
+        Row: {
+          id: string;
+          contractor_profile_id: string;
+          rating: number;
+          body: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      contractor_public_ratings: {
+        Row: {
+          contractor_profile_id: string;
+          rating_average: number | null;
+          rating_count: number;
         };
         Insert: never;
         Update: never;
@@ -866,6 +884,47 @@ export type Database = {
         Args: { p_contractor_profile_id: string; p_message: string };
         Returns: Json;
       };
+      list_public_directory_contractors: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          display_label: string;
+          primary_trade: string | null;
+          categories: string[] | null;
+          service_area: string | null;
+          years_experience: number | null;
+          rating_average: number | null;
+          rating_count: number;
+          badges: Json;
+          short_description: string | null;
+        }[];
+      };
+      get_public_directory_contractor: {
+        Args: { p_id: string };
+        Returns: {
+          id: string;
+          display_label: string;
+          primary_trade: string | null;
+          categories: string[] | null;
+          service_area: string | null;
+          years_experience: number | null;
+          rating_average: number | null;
+          rating_count: number;
+          badges: Json;
+          short_description: string | null;
+          about: string | null;
+        }[];
+      };
+      list_public_directory_portfolio: {
+        Args: { p_id: string };
+        Returns: { id: string; caption: string; sort_order: number }[];
+      };
+      list_public_directory_reviews: {
+        Args: { p_id: string };
+        Returns: { id: string; rating: number; body: string }[];
+      };
+      text_contains_pre_hire_contact: { Args: { p_text?: string | null }; Returns: boolean };
+      assert_no_pre_hire_contact: { Args: { p_text?: string | null }; Returns: undefined };
     };
     Enums: {
       account_type: AccountType;

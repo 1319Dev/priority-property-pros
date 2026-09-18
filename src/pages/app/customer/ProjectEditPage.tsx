@@ -20,6 +20,7 @@ import {
   updateCustomerProject,
   uploadProjectPhoto,
 } from "../../../lib/marketplace/api";
+import { PRE_HIRE_CONTACT_HINT } from "../../../lib/marketplace/antiCircumvention";
 import { classifyProjectPatch, planMaterialEdit } from "../../../lib/marketplace/lifecycle";
 import { centsToDollarString, dollarsToCents } from "../../../lib/marketplace/fees";
 import { TIMING_PREFERENCES, type Project, type ServiceCategory, type ServiceQuestion } from "../../../lib/marketplace/types";
@@ -210,6 +211,7 @@ export function ProjectEditPage() {
       <label className="block">
         <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Description</span>
         <textarea className="min-h-32 w-full rounded-2xl border border-forest-800/15 px-4 py-3" value={description} onChange={(e) => setDescription(e.target.value)} />
+        <span className="mt-1.5 block text-sm text-ink-500">{PRE_HIRE_CONTACT_HINT}</span>
       </label>
       <label className="block">
         <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Category</span>
