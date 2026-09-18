@@ -4,6 +4,8 @@ export const SHORT_NAME = "PPP";
 
 export const CUSTOMER_TAGLINE = "YOUR PROJECT. LOCAL PROS. ONE SIMPLE PLACE.";
 export const CONTRACTOR_TAGLINE = "REAL PROJECTS. REAL CUSTOMERS. FAIR COMPETITION.";
+export const MARKETPLACE_NEED_LINE =
+  "Whatever your property needs, find the right local professional.";
 
 export const CUSTOMER_CTA = "POST A PROJECT";
 export const CONTRACTOR_CTA = "BECOME A PRIORITY PRO";

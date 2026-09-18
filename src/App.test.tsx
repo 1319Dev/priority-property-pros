@@ -53,10 +53,26 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
 
   it("lists the Phase 1 services including Handyman and Other", () => {
     renderApp("/");
-    expect(screen.getByRole("button", { name: /handyman/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /handyman/i }).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /other/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /tv mounting/i })).toBeInTheDocument();
     expect(SERVICES).toHaveLength(21);
+  });
+
+  it("shows professional marketing photos and the marketplace need line", () => {
+    renderApp("/");
+    expect(
+      screen.getAllByText(/whatever your property needs, find the right local professional/i).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByAltText(/contractor reviews a job with a property owner/i),
+    ).toBeInTheDocument();
+    expect(screen.getByAltText(/fencing contractor/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/lawn professional/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/handyman uses a drill/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/plumber works under a kitchen sink/i)).toBeInTheDocument();
+    expect(screen.getAllByAltText(/electrician/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByAltText(/finished suburban home/i).length).toBeGreaterThan(0);
   });
 
   it("renders header navigation targets", () => {
