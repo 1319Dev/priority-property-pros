@@ -16,7 +16,7 @@ Active product model: PPP is a **connection marketplace**. It does **not** proce
 | `stripe_test_mode` | 1 |
 | `connection_fee_checkout_enabled` | 0 by default. Staging-only Stripe TEST Checkout for $4.99 when the owner enables it. Independent of `payments_live`. |
 
-Clicking **Connect — $4.99** never unlocks contact by itself. When checkout is off, the row stays `PAYMENT_DISABLED` + `LOCKED`. When enabled on staging, the contractor goes to Stripe-hosted TEST Checkout; webhook/reconcile must verify Price ID + 499 USD before `connection_contact_access` is UNLOCKED. Success URLs cannot grant access.
+Clicking **Connect — $4.99** never unlocks contact by itself. When checkout is off, the row stays `PAYMENT_DISABLED` and **no** `booking_contact_access` row is created (missing = no access). When enabled on staging, the contractor goes to Stripe-hosted TEST Checkout; webhook/reconcile must verify Price ID + 499 USD, then grant `#14` `booking_contact_access` (`CONNECTION_FEE_PAYMENT` / UNLOCKED) and only then mark the connection `PAID`. Success URLs cannot grant access.
 
 See [`CONNECTION_FEE_CHECKOUT.md`](CONNECTION_FEE_CHECKOUT.md).
 
@@ -24,9 +24,17 @@ See [`CONNECTION_FEE_CHECKOUT.md`](CONNECTION_FEE_CHECKOUT.md).
 
 At most **3 occupying** connections per project (`connection_slots`, `SELECT … FOR UPDATE`, unique slot PK). Display: “3 connection spots available” / “N of 3 remaining” / “Connections Full”. Customer **Stop New Connections** closes new purchases; existing unlocked rows are not deleted.
 
-## #14 contact entitlement
+## #14 contact entitlement (single store)
 
-`booking_contact_access` remains the booking-path gate. Connections add `connection_contact_access`. `contractor_has_contact_access_on_project` is true only if **either** path is UNLOCKED / ADMIN_OVERRIDE. Missing entitlement = no access. Project/estimate/booking status never unlocks contact.
+`booking_contact_access` is the **only** authoritative private-contact entitlement table.
+
+- Booking-hire rows: `booking_id` set, `connection_id` null (original #14).
+- Paid $4.99 connections: `connection_id` set, `booking_id` null. No fake booking.
+- XOR check enforces exactly one subject. Unique indexes on each.
+- `contractor_has_contact_access_on_project` reads this table only. It does **not** OR a second entitlement table and does **not** treat `project_connections` / Stripe rows as authorization.
+- Missing entitlement = no access. Project/estimate/booking/connection status never unlocks contact.
+
+`connection_contact_access` is dropped and must not ship as an authorization table. Purchase tables (`project_connections`, `connection_slots`, `connection_checkout_sessions`) remain for billing, idempotency, refunds, auditing, and max-3.
 
 ## Estimates (kept)
 

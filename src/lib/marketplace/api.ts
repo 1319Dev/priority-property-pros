@@ -477,11 +477,17 @@ export async function fetchBookingJobContact(bookingId: string): Promise<RpcJson
   return (data ?? {}) as RpcJson;
 }
 
+export async function fetchProjectJobContact(projectId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("project_job_contact", { p_project_id: projectId });
+  if (error) throw new Error(asError(error, "Contact is still locked."));
+  return (data ?? {}) as RpcJson;
+}
+
 export async function fetchBookingContactAccess(bookingId: string): Promise<BookingContactAccess | null> {
   const { data, error } = await client()
     .from("booking_contact_access")
     .select(
-      "booking_id, status, granted_at, granted_by, grant_reason, grant_source, revoked_at, created_at, updated_at",
+      "id, booking_id, connection_id, project_id, contractor_profile_id, status, granted_at, granted_by, grant_reason, grant_source, revoked_at, created_at, updated_at",
     )
     .eq("booking_id", bookingId)
     .maybeSingle();

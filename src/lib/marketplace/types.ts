@@ -97,6 +97,7 @@ export const CONNECTION_CONTACT_GRANT_SOURCES = [
   "ADMIN_OVERRIDE",
   "SYSTEM",
 ] as const;
+/** @deprecated Connection-backed grants use ContactGrantSource on booking_contact_access. */
 export type ConnectionContactGrantSource = (typeof CONNECTION_CONTACT_GRANT_SOURCES)[number];
 
 export type ProjectConnection = {
@@ -123,13 +124,18 @@ export type ProjectConnection = {
   updated_at: string;
 };
 
+/** Projection of a connection-backed booking_contact_access row. Not a second store. */
 export type ConnectionContactAccess = {
+  id?: string;
+  booking_id: null;
   connection_id: string;
+  project_id: string;
+  contractor_profile_id: string;
   status: ContactAccessStatus;
   granted_at: string | null;
   granted_by: string | null;
   grant_reason: string | null;
-  grant_source: ConnectionContactGrantSource;
+  grant_source: ContactGrantSource;
   revoked_at: string | null;
   created_at: string;
   updated_at: string;
@@ -178,11 +184,20 @@ export type ChangeOrderStatus = (typeof CHANGE_ORDER_STATUSES)[number];
 export const CONTACT_ACCESS_STATUSES = ["LOCKED", "UNLOCKED", "ADMIN_OVERRIDE"] as const;
 export type ContactAccessStatus = (typeof CONTACT_ACCESS_STATUSES)[number];
 
-export const CONTACT_GRANT_SOURCES = ["JOB_FEE_PAYMENT", "ADMIN_OVERRIDE", "SYSTEM"] as const;
+export const CONTACT_GRANT_SOURCES = [
+  "JOB_FEE_PAYMENT",
+  "CONNECTION_FEE_PAYMENT",
+  "ADMIN_OVERRIDE",
+  "SYSTEM",
+] as const;
 export type ContactGrantSource = (typeof CONTACT_GRANT_SOURCES)[number];
 
 export type BookingContactAccess = {
-  booking_id: string;
+  id?: string;
+  booking_id: string | null;
+  connection_id?: string | null;
+  project_id?: string;
+  contractor_profile_id?: string;
   status: ContactAccessStatus;
   granted_at: string | null;
   granted_by: string | null;

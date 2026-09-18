@@ -22,13 +22,15 @@ Do **not** apply this to production. Do **not** put Stripe secrets in git, Vite,
 4. `connection-fee-webhook` (signature required) is the authoritative fulfillment path.
 5. `reconcile-connection-checkout` may retrieve the session from Stripe. The success URL **never** unlocks contact.
 
-State machine: **AVAILABLE → RESERVED (pending payment) → PAID + UNLOCKED**. Abandoned/expired Checkout **releases** the slot. Customer **Stop New Connections** rejects new reservations; in-flight RESERVED payments may still finalize; existing UNLOCKED rows stay.
+State machine: **AVAILABLE → RESERVED (pending payment) → PAID**. `#14` `booking_contact_access` is granted UNLOCKED (`CONNECTION_FEE_PAYMENT`) only after trusted Stripe verification, then the purchase is marked PAID. Abandoned/expired Checkout **releases** the slot. Customer **Stop New Connections** rejects new reservations; in-flight RESERVED payments may still finalize; existing UNLOCKED `#14` rows stay.
 
 Paid-but-not-reservable (expired / 4th slot) → `needs_refund` (no silent loss, no extra unlock).
 
-## #14
+## #14 (single entitlement store)
 
-`booking_contact_access` remains the booking-path gate. Connection Fee unlocks `connection_contact_access` after trusted payment. `contractor_has_contact_access_on_project` ORs both. Missing entitlement = no private contact.
+`booking_contact_access` is the only contact-access authority. A verified $4.99 Stripe TEST payment grants a connection-backed `#14` row (`nullable booking_id`, `connection_id` FK, `grant_source = CONNECTION_FEE_PAYMENT`) through `grant_booking_contact_access_from_connection_fee`, then `fulfill_connection_fee_checkout` marks the purchase PAID.
+
+`contractor_has_contact_access_on_project` does **not** OR a second table. `connection_contact_access` is dropped. Missing entitlement = no private contact. Success URLs, query params, frontend state, and project/estimate/booking status never unlock.
 
 ## PR #12 activation
 

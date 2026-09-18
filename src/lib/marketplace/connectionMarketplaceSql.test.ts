@@ -36,17 +36,20 @@ describe("Connection marketplace SQL", () => {
   it("creates connection tables with RLS and no client writes", () => {
     expect(latest).toMatch(/CREATE TABLE public\.project_connections/);
     expect(latest).toMatch(/CREATE TABLE public\.connection_slots/);
-    expect(latest).toMatch(/CREATE TABLE public\.connection_contact_access/);
     expect(latest).toMatch(/ALTER TABLE public\.project_connections ENABLE ROW LEVEL SECURITY/);
     expect(latest).toMatch(/project connections cannot be written from the client/);
     expect(latest).not.toMatch(/GRANT INSERT ON TABLE public\.project_connections/);
     expect(latest).not.toMatch(/GRANT UPDATE ON TABLE public\.project_connections/);
   });
 
-  it("keeps #14 booking entitlement and ORs paid connection entitlement", () => {
+  it("authorizes private contact from #14 booking_contact_access only", () => {
     expect(sql).toMatch(/CREATE TABLE public\.booking_contact_access/);
-    expect(helper).toMatch(/FROM public\.bookings b/);
-    expect(helper).toMatch(/FROM public\.project_connections c/);
+    expect(sql).toMatch(/DROP TABLE IF EXISTS public\.connection_contact_access/);
+    expect(sql).toMatch(/ADD VALUE IF NOT EXISTS 'CONNECTION_FEE_PAYMENT'/);
+    expect(sql).toMatch(/booking_contact_access_subject_xor/);
+    expect(helper).toMatch(/FROM public\.booking_contact_access a/);
+    expect(helper).not.toMatch(/connection_contact_access/);
+    expect(helper).not.toMatch(/FROM public\.project_connections/);
     expect(helper).toMatch(/a\.status IN \('UNLOCKED', 'ADMIN_OVERRIDE'\)/);
     expect(helper).not.toMatch(/b\.status IN \('CONFIRMED'/);
   });

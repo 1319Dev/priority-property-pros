@@ -245,8 +245,7 @@ describe("Flat $4.99 Connection Marketplace", () => {
       canReadExactAddress(otherPro, { customer_id: "cust-a", selected_contractor_profile_id: "pro-1" }, "CONFIRMED", "UNLOCKED"),
     ).toBe(false);
     expect(
-      canReadExactAddress(pro, { customer_id: "cust-a", selected_contractor_profile_id: null }, null, null, {
-        access: "UNLOCKED",
+      canReadExactAddress(pro, { customer_id: "cust-a", selected_contractor_profile_id: null }, null, "UNLOCKED", {
         contractorProfileId: "pro-1",
       }),
     ).toBe(true);

@@ -16,10 +16,13 @@
 
 -- 5. Stop new connections (customer owner)
 -- SELECT public.stop_new_project_connections('<project-id>');
--- Existing UNLOCKED connection_contact_access rows stay.
+-- Existing UNLOCKED booking_contact_access rows for paid connections stay.
 
 -- 6. Entitlement
--- booking_job_contact still requires #14. Connect click must not grant UNLOCKED.
+-- booking_contact_access is the ONLY contact-access store.
+-- booking_job_contact / project_job_contact require a #14 UNLOCKED or ADMIN_OVERRIDE row.
+-- Connect click must not insert or grant UNLOCKED.
+-- connection_contact_access must not exist.
 
 -- 7. Flags
 -- SELECT key, value_int FROM public.platform_settings

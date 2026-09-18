@@ -21,8 +21,7 @@ export function canReadExactAddress(
   },
   bookingStatus: BookingStatus | null = null,
   contactAccess: ContactAccessStatus | null = null,
-  connection?: {
-    access?: ContactAccessStatus | null;
+  entitled?: {
     contractorProfileId?: string | null;
   },
 ): boolean {
@@ -30,16 +29,12 @@ export function canReadExactAddress(
   if (actorIsAdmin(actor)) return true;
   if (actor.id === project.customer_id) return true;
   if (bookingStatus === "CANCELLED") return false;
-  if (
-    connection &&
-    contactAccessAllowsReveal(connection.access) &&
-    Boolean(actor.contractorProfileId) &&
-    actor.contractorProfileId === connection.contractorProfileId
-  ) {
+  if (!contactAccessAllowsReveal(contactAccess)) return false;
+  if (!actor.contractorProfileId) return false;
+  if (project.selected_contractor_profile_id && actor.contractorProfileId === project.selected_contractor_profile_id) {
     return true;
   }
-  if (!contactAccessAllowsReveal(contactAccess)) return false;
-  return Boolean(actor.contractorProfileId) && actor.contractorProfileId === project.selected_contractor_profile_id;
+  return Boolean(entitled?.contractorProfileId) && actor.contractorProfileId === entitled?.contractorProfileId;
 }
 
 export function canReadCustomerContact(
@@ -50,7 +45,6 @@ export function canReadCustomerContact(
     contractorProfileId?: string | null;
     selectedContractorProfileId?: string | null;
     contactAccess?: ContactAccessStatus | null;
-    connectionAccess?: ContactAccessStatus | null;
   },
 ): boolean {
   if (!actor.id) return false;
@@ -58,17 +52,12 @@ export function canReadCustomerContact(
   if (actor.id === customerId) return true;
   if (opts.bookingStatus === "CANCELLED") return false;
   if (actor.accountType !== "CONTRACTOR") return false;
-  if (
-    contactAccessAllowsReveal(opts.connectionAccess) &&
-    Boolean(actor.contractorProfileId) &&
-    Boolean(opts.contractorProfileId) &&
-    actor.contractorProfileId === opts.contractorProfileId
-  ) {
+  if (!contactAccessAllowsReveal(opts.contactAccess)) return false;
+  if (!actor.contractorProfileId) return false;
+  if (opts.selectedContractorProfileId && actor.contractorProfileId === opts.selectedContractorProfileId) {
     return true;
   }
-  if (!contactAccessAllowsReveal(opts.contactAccess)) return false;
-  if (!opts.selectedContractorProfileId) return false;
-  return Boolean(actor.contractorProfileId) && actor.contractorProfileId === opts.selectedContractorProfileId;
+  return Boolean(opts.contractorProfileId) && actor.contractorProfileId === opts.contractorProfileId;
 }
 
 export function opportunityVisibleToCustomer(status: OpportunityStatus): boolean {

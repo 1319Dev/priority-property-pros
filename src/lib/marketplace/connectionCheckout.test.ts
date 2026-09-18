@@ -52,6 +52,15 @@ function allSql(): string {
     .join("\n\n");
 }
 
+function functionBody(sql: string, name: string): string {
+  const marker = `CREATE OR REPLACE FUNCTION public.${name}`;
+  const start = sql.lastIndexOf(marker);
+  expect(start).toBeGreaterThan(-1);
+  const rest = sql.slice(start);
+  const end = rest.indexOf("CREATE OR REPLACE FUNCTION public.", marker.length);
+  return end === -1 ? rest : rest.slice(0, end);
+}
+
 function walk(dir: string, acc: string[] = []): string[] {
   for (const name of readdirSync(dir, { withFileTypes: true })) {
     const next = path.join(dir, name.name);
@@ -202,8 +211,9 @@ describe("Connection Fee TEST Checkout", () => {
     expect(contactAfterFulfillment(true)).toBe("UNLOCKED");
     expect(entitlementFromFulfillment(true)).toBe(true);
     expect(entitlementFromFulfillment(false)).toBe(false);
-    expect(latest).toMatch(/grant_source = 'CONNECTION_FEE_PAYMENT'/);
-    expect(latest).toMatch(/status = 'UNLOCKED'/);
+    expect(sql).toMatch(/grant_source = 'CONNECTION_FEE_PAYMENT'|grant_source, 'CONNECTION_FEE_PAYMENT'/);
+    expect(sql).toMatch(/grant_booking_contact_access_from_connection_fee/);
+    expect(sql).toMatch(/'UNLOCKED'/);
   });
 
   it("requires a webhook signature and treats duplicate/replay as harmless", () => {
@@ -263,12 +273,19 @@ describe("Connection Fee TEST Checkout", () => {
     ).toBe("wrong_price_id");
   });
 
-  it("keeps #14 LOCKED before fulfillment and UNLOCKED only after", () => {
+  it("keeps #14 LOCKED before fulfillment and UNLOCKED only after trusted grant", () => {
     expect(contactAfterFulfillment(false)).toBe("LOCKED");
     expect(sql).toMatch(/CREATE TABLE public\.booking_contact_access/);
-    expect(sql).toMatch(/CREATE TABLE public\.connection_contact_access/);
-    expect(latest).toMatch(/INSERT INTO public\.connection_contact_access/);
-    expect(latest).toMatch(/VALUES \(\s*conn\.id, 'LOCKED', 'SYSTEM'/);
+    expect(sql).toMatch(/DROP TABLE IF EXISTS public\.connection_contact_access/);
+    expect(sql).toMatch(/grant_booking_contact_access_from_connection_fee/);
+    const fulfill = functionBody(sql, "fulfill_connection_fee_checkout");
+    const reserve = functionBody(sql, "reserve_connection_checkout");
+    expect(fulfill).toMatch(/grant_booking_contact_access_from_connection_fee/);
+    expect(fulfill).toMatch(/status = 'PAID'/);
+    expect(fulfill).toMatch(/needs_refund/);
+    expect(fulfill).not.toMatch(/connection_contact_access/);
+    expect(reserve).not.toMatch(/INSERT INTO public\.booking_contact_access/);
+    expect(reserve).not.toMatch(/connection_contact_access/);
   });
 
   it("does not invoke old Connect or job-payment functions and keeps payment flags safe", () => {

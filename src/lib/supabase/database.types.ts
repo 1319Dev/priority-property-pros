@@ -850,6 +850,7 @@ export type Database = {
         Returns: Json;
       };
       booking_job_contact: { Args: { p_booking_id: string }; Returns: Json };
+      project_job_contact: { Args: { p_project_id: string }; Returns: Json };
       booking_has_contact_access: { Args: { p_booking_id: string }; Returns: boolean };
       contractor_has_contact_access_on_project: { Args: { p_project_id: string }; Returns: boolean };
       admin_grant_booking_contact_access: { Args: { p_booking_id: string; p_reason: string }; Returns: Json };
@@ -973,7 +974,6 @@ export type Database = {
       relationship_status: import("../marketplace/types").RelationshipStatus;
       change_order_status: import("../marketplace/types").ChangeOrderStatus;
       project_connection_status: import("../marketplace/types").ProjectConnectionStatus;
-      connection_contact_grant_source: import("../marketplace/types").ConnectionContactGrantSource;
     };
   };
 };
