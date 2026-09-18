@@ -129,11 +129,11 @@ export function opportunityNextActions(input: {
     return [{ label: "View history", to: detail, variant: "outline" }];
   }
   if (input.status === "AVAILABLE") {
-    return [{ label: "View opportunity", to: detail }];
+    return [{ label: "Connect", to: detail }];
   }
   if (input.status === "ACCEPTED") {
     return [
-      { label: "View opportunity", to: detail },
+      { label: "View job", to: detail },
       { label: "Build estimate", to: `${detail}/estimate`, variant: "outline" },
     ];
   }

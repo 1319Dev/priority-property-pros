@@ -1,0 +1,18 @@
+-- Manual walkthrough for public.contractor_end_job (20260930000001).
+-- Soft-end only. Does not flip payments_live / charges_live / signup_fee_enabled
+-- / connection_fee_checkout_enabled. Does not grant #14.
+--
+-- 1. AVAILABLE opportunity, no project_connections
+--    select public.contractor_end_job('<opportunity_id>');
+--    Expect: opportunities.status = PASSED, contact_unlocked = false.
+-- 2. ACCEPTED + PAYMENT_DISABLED occupying a connection_slot
+--    Expect: connection CANCELLED, slot row deleted, occupancy decreases,
+--            opportunity PASSED, no booking_contact_access insert.
+-- 3. RESERVED checkout (TTL still valid)
+--    Expect: OPEN checkout session EXPIRED, connection CANCELLED, slot freed.
+-- 4. PAID connection, no active booking
+--    Expect: connection COMPLETED, opportunity CLOSED, slot remains occupied,
+--            existing #14 unchanged (not granted here).
+-- 5. Active booking without PAID connection
+--    Expect: exception 'this job is already in a booking — complete it from Bookings'.
+-- 6. PASSED opportunity cannot request_project_connection or reserve.

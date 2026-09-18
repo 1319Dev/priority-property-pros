@@ -46,6 +46,9 @@ describe("human project states", () => {
     expect(
       opportunityNextActions({ opportunityId: "o1", status: "AVAILABLE", projectStatus: "CANCELLED" })[0]?.label,
     ).toBe("View history");
+    expect(
+      opportunityNextActions({ opportunityId: "o1", status: "AVAILABLE", projectStatus: "POSTED" })[0]?.label,
+    ).toBe("Connect");
   });
 });
 

@@ -36,6 +36,21 @@ At most **3 occupying** connections per project (`connection_slots`, `SELECT …
 
 `connection_contact_access` is dropped and must not ship as an authorization table. Purchase tables (`project_connections`, `connection_slots`, `connection_checkout_sessions`) remain for billing, idempotency, refunds, auditing, and max-3.
 
+## Contractor job actions
+
+**Connect** is the only primary step. Participate/accept is optional server-side: matched `AVAILABLE` or `ACCEPTED` opportunities may reserve or request a connection. The UI no longer asks contractors to tap Participate before Connect. Connect still never unlocks contact by itself.
+
+**End this job** (`contractor_end_job`) is a soft-end:
+
+| Starting state | Opportunity | Connection | Slots |
+| --- | --- | --- | --- |
+| Open, no connection | `PASSED` | unchanged | none |
+| Unpaid occupying (`INITIATED` / `RESERVED` / `PAYMENT_DISABLED`) | `PASSED` | `CANCELLED` | connection slot freed |
+| Paid, not hired | `CLOSED` | `COMPLETED` | paid connection slot stays occupied |
+| Hired booking | refused unless already `PAID`, then `COMPLETED` only | hire kept | not freed |
+
+Hard delete is blocked by purchase-history triggers. `#14` is never granted by End or Connect.
+
 ## Estimates (kept)
 
 Submitting an estimate is never charged. Withdraw uses **Withdraw Estimate** with confirm copy; server sets `WITHDRAWN` and keeps history. See PR body for keep-vs-rearchitect owner decision.
