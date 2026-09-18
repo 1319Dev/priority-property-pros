@@ -1,18 +1,30 @@
 /**
- * Connection Fee TEST Checkout — server-authoritative rules.
- * Price ID and amount never come from the browser. Success URLs never unlock contact.
- * Do not import Stripe secrets here. Do not enable job payments / Connect / payouts.
+ * Connection Fee Checkout — server-authoritative rules for TEST and LIVE.
+ * stripe_test_mode (DB) is the environment control. Price ID and amount never come from the browser.
+ * Success URLs never unlock contact. Do not import Stripe secrets here.
+ * Do not enable job payments / Connect / payouts / $9.99 signup fee.
  */
 
 import { CONNECTION_FEE_CENTS } from "./types";
 import { connectionEntitlementAllowsReveal } from "./connectionLifecycle";
 import type { ContactAccessStatus, ProjectConnectionStatus } from "./types";
+import {
+  STRIPE_ACTIVATION_PRICE_ID as ACTIVATION_PRICE_ID,
+  STRIPE_TEST_CONNECTION_PRICE_ID,
+  checkoutSessionIdMatchesMode,
+  livemodeMismatchReason,
+  requireConnectionPriceId as requireEnvConnectionPriceId,
+  requireStripeSecretForMode,
+  requireTestStripeSecret as requireTestSecret,
+  requireWebhookSecret as requireWhsec,
+  serverConnectionPriceId as serverPriceFromEnv,
+} from "./stripeEnvironment";
 
-/** Server Price ID for the $4.99 Connection Fee. Not a secret. Never send from the client. */
-export const STRIPE_CONNECTION_PRICE_ID = "price_1UH1RsPYJQAIQDv721IhjKS0";
+/** Known TEST catalog Price ID. Not a LIVE fallback. Never send from the client. */
+export const STRIPE_CONNECTION_PRICE_ID = STRIPE_TEST_CONNECTION_PRICE_ID;
 
 /** Config compatibility only. Activation checkout stays in parked PR #12. Unused by this flow. */
-export const STRIPE_ACTIVATION_PRICE_ID = "price_1UH1SePYJQAIQDv7nrMo32Xp";
+export const STRIPE_ACTIVATION_PRICE_ID = ACTIVATION_PRICE_ID;
 
 export const CONNECTION_FEE_CURRENCY = "usd";
 export const CONNECTION_RESERVATION_TTL_SECONDS = 30 * 60;
@@ -60,9 +72,8 @@ export type FulfillDecision =
   | { ok: true; grant: false; reason: "already_fulfilled" }
   | { ok: false; grant: false; reason: string; needsRefund?: boolean };
 
-export function serverConnectionPriceId(clientPriceId?: string | null): string {
-  void clientPriceId;
-  return STRIPE_CONNECTION_PRICE_ID;
+export function serverConnectionPriceId(clientPriceId?: string | null, envPriceId?: string | null): string {
+  return serverPriceFromEnv(clientPriceId, envPriceId);
 }
 
 export function clientCannotSubstitutePriceId(attempted: string | null | undefined): boolean {
@@ -75,20 +86,20 @@ export function clientCannotSubstituteAmount(attempted: number | null | undefine
   return attempted === CONNECTION_FEE_CENTS;
 }
 
+export function requireStripeSecretForCheckout(secret: string, testMode: boolean): string {
+  return requireStripeSecretForMode(secret, testMode);
+}
+
 export function requireTestStripeSecret(secret: string): string {
-  const value = secret.trim();
-  if (!value.startsWith("sk_test_") || value.length < 16) {
-    throw new Error("Connection Fee checkout accepts only Stripe TEST secrets (sk_test_). Live keys are forbidden.");
-  }
-  return value;
+  return requireTestSecret(secret);
 }
 
 export function requireWebhookSecret(secret: string): string {
-  const value = secret.trim();
-  if (!value.startsWith("whsec_") || value.length < 16) {
-    throw new Error("STRIPE_WEBHOOK_SECRET is missing or not a webhook secret");
-  }
-  return value;
+  return requireWhsec(secret);
+}
+
+export function requireServerConnectionPriceId(envPriceId: string | null | undefined): string {
+  return requireEnvConnectionPriceId(envPriceId);
 }
 
 /** Real Stripe PaymentIntent ids only. Fulfillment markers like `reconcile:cs_test_...` are not PaymentIntents. */
@@ -196,19 +207,19 @@ export function evaluateStripeSessionForFulfillment(input: {
   hasSlot?: boolean;
   stripeTestMode?: boolean;
   connectionFeeCheckoutEnabled?: boolean;
+  expectedPriceId?: string | null;
 }): FulfillDecision {
   if (input.connectionFeeCheckoutEnabled === false) {
     return { ok: false, grant: false, reason: "connection_fee_checkout_disabled" };
   }
-  if (input.stripeTestMode === false) {
-    return { ok: false, grant: false, reason: "stripe_test_mode_required" };
-  }
+  const testMode = input.stripeTestMode !== false;
   const session = input.session;
-  if (!session.id || !String(session.id).startsWith("cs_test_")) {
-    return { ok: false, grant: false, reason: "fake_or_live_session" };
+  const livemodeReason = livemodeMismatchReason(session.livemode, testMode);
+  if (livemodeReason) {
+    return { ok: false, grant: false, reason: livemodeReason };
   }
-  if (session.livemode) {
-    return { ok: false, grant: false, reason: "live_mode_forbidden" };
+  if (!session.id || !checkoutSessionIdMatchesMode(String(session.id), testMode)) {
+    return { ok: false, grant: false, reason: "fake_or_mismatched_session" };
   }
   if (session.mode && session.mode !== "payment") {
     return { ok: false, grant: false, reason: "wrong_mode" };
@@ -229,8 +240,15 @@ export function evaluateStripeSessionForFulfillment(input: {
   if (session.client_reference_id && session.client_reference_id !== input.expectedConnectionId) {
     return { ok: false, grant: false, reason: "mismatched_metadata" };
   }
+  const expectedPriceId = (input.expectedPriceId ?? (testMode ? STRIPE_CONNECTION_PRICE_ID : "")).trim();
+  if (!expectedPriceId.startsWith("price_")) {
+    return { ok: false, grant: false, reason: "missing_price_id" };
+  }
   const priceId = lineItemPriceId(session);
-  if (priceId && priceId !== STRIPE_CONNECTION_PRICE_ID) {
+  if (!priceId) {
+    return { ok: false, grant: false, reason: "missing_price_id" };
+  }
+  if (priceId !== expectedPriceId) {
     return { ok: false, grant: false, reason: "wrong_price_id", needsRefund: true };
   }
   const currency = (session.currency ?? session.line_items?.data?.[0]?.price?.currency ?? "").toLowerCase();

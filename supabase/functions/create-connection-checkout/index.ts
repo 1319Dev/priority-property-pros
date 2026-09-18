@@ -1,6 +1,15 @@
 import { json, optionsResponse } from "../_shared/cors.ts";
 import { allowedOrigin, restRpc, userIdFromRequest } from "../_shared/supabase.ts";
-import { connectionFeeCents, connectionPriceId, requireTestSecret, stripeForm } from "../_shared/stripeTest.ts";
+import {
+  assertConnectionPriceOrThrow,
+  checkoutSessionIdMatchesMode,
+  connectionFeeCents,
+  requireConnectionPriceId,
+  requireSecretForMode,
+  stripeForm,
+  stripeGet,
+  stripeTestModeFromFlags,
+} from "../_shared/stripeEnv.ts";
 
 function uuidLike(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -52,10 +61,19 @@ Deno.serve(async (req) => {
       });
     }
     if (snapshot.fee_cents !== 499) return json({ error: "fee_cents must be 499", contact_unlocked: false }, 500);
-    if (snapshot.stripe_test_mode !== true) return json({ error: "stripe_test_mode must be 1", contact_unlocked: false }, 500);
     if (snapshot.payments_live || snapshot.charges_live) {
       return json({ error: "job-payment flags must stay off", contact_unlocked: false }, 500);
     }
+
+    const testMode = stripeTestModeFromFlags(snapshot);
+    const envPrice = requireConnectionPriceId(Deno.env.get("STRIPE_CONNECTION_PRICE_ID"));
+    const activationId = (Deno.env.get("STRIPE_ACTIVATION_PRICE_ID") ?? "").trim();
+    if (activationId && activationId === envPrice) {
+      return json({ error: "activation Price ID must not be used for Connection Fee", contact_unlocked: false }, 500);
+    }
+    const secret = requireSecretForMode(Deno.env.get("STRIPE_SECRET_KEY") ?? "", testMode);
+    const price = await stripeGet(secret, `prices/${envPrice}`);
+    assertConnectionPriceOrThrow(price, { expectedPriceId: envPrice, testMode });
 
     const reserved = await restRpc("reserve_connection_checkout", {
       p_project_id: projectId,
@@ -70,16 +88,6 @@ Deno.serve(async (req) => {
     const connectionId = String(reservation.connection_id ?? "");
     if (!connectionId) return json({ error: "reservation failed", contact_unlocked: false }, 500);
 
-    const envPrice = (Deno.env.get("STRIPE_CONNECTION_PRICE_ID") ?? connectionPriceId()).trim();
-    if (envPrice !== connectionPriceId()) {
-      return json({ error: "STRIPE_CONNECTION_PRICE_ID does not match the server Price ID", contact_unlocked: false }, 500);
-    }
-    const activationId = (Deno.env.get("STRIPE_ACTIVATION_PRICE_ID") ?? "").trim();
-    if (activationId && activationId === envPrice) {
-      return json({ error: "activation Price ID must not be used for Connection Fee", contact_unlocked: false }, 500);
-    }
-
-    const secret = requireTestSecret(Deno.env.get("STRIPE_SECRET_KEY") ?? "");
     const successPath = "/app/pro/connections/return";
     const cancelPath = opportunityId && uuidLike(opportunityId)
       ? `/app/pro/opportunities/${opportunityId}`
@@ -88,7 +96,7 @@ Deno.serve(async (req) => {
 
     const session = await stripeForm(secret, "checkout/sessions", {
       mode: "payment",
-      "line_items[0][price]": connectionPriceId(),
+      "line_items[0][price]": envPrice,
       "line_items[0][quantity]": "1",
       success_url: `${origin}${successPath}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}${cancelPath}`,
@@ -105,13 +113,20 @@ Deno.serve(async (req) => {
 
     const checkoutId = String(session.id ?? "");
     const checkoutUrl = String(session.url ?? "");
-    if (!checkoutId.startsWith("cs_test_") || !checkoutUrl) {
-      return json({ error: "Stripe TEST checkout session was not created", contact_unlocked: false }, 500);
+    if (!checkoutSessionIdMatchesMode(checkoutId, testMode) || !checkoutUrl) {
+      return json({
+        error: testMode
+          ? "Stripe TEST checkout session was not created"
+          : "Stripe LIVE checkout session was not created",
+        contact_unlocked: false,
+      }, 500);
     }
 
     const attached = await restRpc("attach_connection_checkout_session", {
       p_connection_id: connectionId,
       p_stripe_checkout_session_id: checkoutId,
+      p_price_id: envPrice,
+      p_livemode: !testMode,
     });
     if (attached.error) return json({ error: attached.error, contact_unlocked: false }, 400);
 
@@ -125,7 +140,7 @@ Deno.serve(async (req) => {
       paid: false,
       payments_live: false,
       charges_live: false,
-      stripe_test_mode: true,
+      stripe_test_mode: testMode,
       reserved_until: reservation.reserved_until ?? null,
       reservation_slot: reservation.reservation_slot ?? null,
     });

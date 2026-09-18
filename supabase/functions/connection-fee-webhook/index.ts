@@ -1,17 +1,22 @@
 // Connection Fee Stripe webhook (JWT verification off).
-// Expected env (TEST only; never live keys):
+// Environment is controlled by platform_settings.stripe_test_mode (1=TEST, 0=LIVE).
+// Secrets must match that flag. connection_fee_checkout_enabled is the customer kill switch.
 //   STRIPE_WEBHOOK_SECRET = whsec_...   required, signature verification
-//   STRIPE_SECRET_KEY     = sk_test_... required, retrieve Checkout Session
+//   STRIPE_SECRET_KEY     = sk_test_... when stripe_test_mode=1; sk_live_... when stripe_test_mode=0
+//   STRIPE_CONNECTION_PRICE_ID required; retrieved and validated (499 USD one_time, livemode matches)
 import { json } from "../_shared/cors.ts";
 import { restRpc } from "../_shared/supabase.ts";
 import {
-  connectionPriceId,
-  requireTestSecret,
+  assertPaidConnectionSession,
+  livemodeMatchesStripeTestMode,
+  livemodeMismatchMessage,
+  requireConnectionPriceId,
+  requireSecretForMode,
   requireWebhookSecret,
-  sessionLinePriceId,
   stripeGet,
   stripePaymentIntentId,
-} from "../_shared/stripeTest.ts";
+  stripeTestModeFromFlags,
+} from "../_shared/stripeEnv.ts";
 import { verifyStripeSignature } from "../_shared/webhook.ts";
 
 function stripeObject(event: { data?: { object?: Record<string, unknown> } }): Record<string, unknown> {
@@ -37,8 +42,13 @@ Deno.serve(async (req) => {
     livemode?: boolean;
     data?: { object?: Record<string, unknown> };
   };
-  if (event.livemode) {
-    return json({ error: "live Stripe events are forbidden", contact_unlocked: false }, 400);
+
+  const flags = await restRpc("connection_fee_checkout_flags", {});
+  if (flags.error) return json({ error: flags.error, contact_unlocked: false }, 500);
+  const snapshot = (flags.data ?? {}) as { stripe_test_mode?: boolean };
+  const testMode = stripeTestModeFromFlags(snapshot);
+  if (!livemodeMatchesStripeTestMode(event.livemode, testMode)) {
+    return json({ error: livemodeMismatchMessage(testMode), contact_unlocked: false }, 400);
   }
 
   const type = event.type ?? "";
@@ -54,7 +64,7 @@ Deno.serve(async (req) => {
     p_processor_event_id: event.id ?? `${type}:${checkoutId}`,
     p_event_type: type,
     p_stripe_checkout_session_id: checkoutId || null,
-    p_payload: { type, livemode: false },
+    p_payload: { type, livemode: Boolean(event.livemode) },
   });
   if (recorded.error) return json({ error: recorded.error, contact_unlocked: false }, 400);
   const duplicate = Boolean((recorded.data as { duplicate?: boolean } | null)?.duplicate);
@@ -110,25 +120,33 @@ Deno.serve(async (req) => {
     return json({ error: "mismatched metadata", needs_refund: true, result: flagged.data, contact_unlocked: false }, 400);
   }
 
-  const stripeSecret = requireTestSecret(Deno.env.get("STRIPE_SECRET_KEY") ?? "");
+  const envPrice = requireConnectionPriceId(Deno.env.get("STRIPE_CONNECTION_PRICE_ID"));
+  const stripeSecret = requireSecretForMode(Deno.env.get("STRIPE_SECRET_KEY") ?? "", testMode);
   const retrieved = await stripeGet(stripeSecret, `checkout/sessions/${checkoutId}?expand[]=line_items`);
-  const priceId = sessionLinePriceId(retrieved) ?? sessionLinePriceId(obj);
-  if (!priceId || priceId !== connectionPriceId()) {
+  let validated: { priceId: string; amountCents: number; currency: string };
+  try {
+    validated = assertPaidConnectionSession(retrieved, { expectedPriceId: envPrice, testMode });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "invalid Stripe session";
+    const reason = message.includes("Price ID") ? "wrong_price_id"
+      : message.includes("499") ? "wrong_amount"
+      : message.includes("usd") ? "wrong_currency"
+      : "invalid_session";
     const flagged = await restRpc("flag_connection_checkout_needs_refund", {
       p_stripe_checkout_session_id: checkoutId,
-      p_reason: "wrong_price_id",
+      p_reason: reason,
     });
-    return json({ error: "wrong Price ID", needs_refund: true, result: flagged.data, contact_unlocked: false }, 400);
+    return json({ error: message, needs_refund: true, result: flagged.data, contact_unlocked: false }, 400);
   }
   const paymentIntentId = stripePaymentIntentId(retrieved.payment_intent) ?? stripePaymentIntentId(obj.payment_intent);
   const fulfilled = await restRpc("fulfill_connection_fee_checkout", {
     p_stripe_checkout_session_id: checkoutId,
     p_processor_event_id: event.id ?? `webhook:${checkoutId}`,
-    p_amount_cents: Number(retrieved.amount_total ?? obj.amount_total ?? 0),
-    p_currency: String(retrieved.currency ?? obj.currency ?? ""),
-    p_price_id: priceId,
+    p_amount_cents: validated.amountCents,
+    p_currency: validated.currency,
+    p_price_id: validated.priceId,
     p_payment_status: String(obj.payment_status ?? ""),
-    p_livemode: Boolean(obj.livemode),
+    p_livemode: Boolean(retrieved.livemode ?? obj.livemode ?? event.livemode),
     p_connection_id: row.connection_id,
     p_project_id: row.project_id,
     p_contractor_profile_id: row.contractor_profile_id,

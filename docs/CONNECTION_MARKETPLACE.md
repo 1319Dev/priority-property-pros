@@ -13,10 +13,10 @@ Active product model: PPP is a **connection marketplace**. It does **not** proce
 | `payments_live` | 0 (unchanged) |
 | `charges_live` | 0 (unchanged) |
 | `signup_fee_enabled` | 0 (recorded; $9.99 checkout stays in parked PR #12) |
-| `stripe_test_mode` | 1 |
-| `connection_fee_checkout_enabled` | 0 by default. Staging-only Stripe TEST Checkout for $4.99 when the owner enables it. Independent of `payments_live`. |
+| `stripe_test_mode` | 1 = TEST (default), 0 = LIVE. Explicit server-side Stripe environment control. Do not infer safety from the installed key. |
+| `connection_fee_checkout_enabled` | 0 by default. Customer-facing kill switch for $4.99 Stripe Checkout. Independent of `payments_live`. May stay 0 with LIVE secrets installed later. |
 
-Clicking **Connect — $4.99** never unlocks contact by itself. When checkout is off, the row stays `PAYMENT_DISABLED` and **no** `booking_contact_access` row is created (missing = no access). When enabled on staging, the contractor goes to Stripe-hosted TEST Checkout; webhook/reconcile must verify Price ID + 499 USD, then grant `#14` `booking_contact_access` (`CONNECTION_FEE_PAYMENT` / UNLOCKED) and only then mark the connection `PAID`. Success URLs cannot grant access.
+Clicking **Connect — $4.99** never unlocks contact by itself. When checkout is off, the row stays `PAYMENT_DISABLED` and **no** `booking_contact_access` row is created (missing = no access). When enabled, the contractor goes to Stripe-hosted Checkout; webhook/reconcile must verify environment (`stripe_test_mode` vs key vs `event.livemode`), Price ID + 499 USD, then grant `#14` `booking_contact_access` (`CONNECTION_FEE_PAYMENT` / UNLOCKED) and only then mark the connection `PAID`. Success URLs cannot grant access. TEST events cannot fulfill LIVE transactions and vice versa.
 
 See [`CONNECTION_FEE_CHECKOUT.md`](CONNECTION_FEE_CHECKOUT.md).
 

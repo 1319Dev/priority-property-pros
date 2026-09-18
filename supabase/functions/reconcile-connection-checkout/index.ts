@@ -1,12 +1,14 @@
 import { json, optionsResponse } from "../_shared/cors.ts";
 import { restRpc, userIdFromRequest } from "../_shared/supabase.ts";
 import {
-  connectionPriceId,
-  requireTestSecret,
-  sessionLinePriceId,
+  assertPaidConnectionSession,
+  checkoutSessionIdMatchesMode,
+  requireConnectionPriceId,
+  requireSecretForMode,
   stripeGet,
   stripePaymentIntentId,
-} from "../_shared/stripeTest.ts";
+  stripeTestModeFromFlags,
+} from "../_shared/stripeEnv.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return optionsResponse();
@@ -14,19 +16,25 @@ Deno.serve(async (req) => {
 
   try {
     const userId = await userIdFromRequest(req);
+    const flags = await restRpc("connection_fee_checkout_flags", {});
+    if (flags.error) return json({ error: flags.error, paid: false, contact_unlocked: false }, 500);
+    const snapshot = (flags.data ?? {}) as { stripe_test_mode?: boolean };
+    const testMode = stripeTestModeFromFlags(snapshot);
+
     const body = (await req.json().catch(() => ({}))) as { session_id?: string };
     const sessionId = String(body.session_id ?? "").trim();
-    if (!sessionId.startsWith("cs_test_")) {
+    if (!checkoutSessionIdMatchesMode(sessionId, testMode)) {
       return json({
         paid: false,
         contact_unlocked: false,
-        reason: "success URL is not a trusted Stripe TEST session",
+        reason: "success URL is not a trusted Stripe session",
         payments_live: false,
         charges_live: false,
       });
     }
 
-    const stripeSecret = requireTestSecret(Deno.env.get("STRIPE_SECRET_KEY") ?? "");
+    const envPrice = requireConnectionPriceId(Deno.env.get("STRIPE_CONNECTION_PRICE_ID"));
+    const stripeSecret = requireSecretForMode(Deno.env.get("STRIPE_SECRET_KEY") ?? "", testMode);
     const session = await stripeGet(stripeSecret, `checkout/sessions/${sessionId}?expand[]=line_items`);
     const metadata = (session.metadata ?? {}) as Record<string, string>;
     if (metadata.ppp_kind !== "connection_fee") {
@@ -60,12 +68,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    const validated = assertPaidConnectionSession(session, { expectedPriceId: envPrice, testMode });
     const fulfilled = await restRpc("fulfill_connection_fee_checkout", {
       p_stripe_checkout_session_id: sessionId,
       p_processor_event_id: `reconcile:${sessionId}`,
-      p_amount_cents: Number(session.amount_total ?? 0),
-      p_currency: String(session.currency ?? ""),
-      p_price_id: sessionLinePriceId(session) ?? connectionPriceId(),
+      p_amount_cents: validated.amountCents,
+      p_currency: validated.currency,
+      p_price_id: validated.priceId,
       p_payment_status: String(session.payment_status ?? ""),
       p_livemode: Boolean(session.livemode),
       p_connection_id: row.connection_id,

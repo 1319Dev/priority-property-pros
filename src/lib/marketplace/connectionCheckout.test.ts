@@ -122,13 +122,16 @@ describe("Connection Fee TEST Checkout", () => {
 
   it("uses the server Connection Price ID and 499 USD", () => {
     expect(STRIPE_CONNECTION_PRICE_ID).toBe("price_1UH1RsPYJQAIQDv721IhjKS0");
-    expect(serverConnectionPriceId("price_other")).toBe(STRIPE_CONNECTION_PRICE_ID);
+    expect(() => serverConnectionPriceId("price_other")).toThrow(/STRIPE_CONNECTION_PRICE_ID is required/);
+    expect(serverConnectionPriceId("price_other", STRIPE_CONNECTION_PRICE_ID)).toBe(STRIPE_CONNECTION_PRICE_ID);
     expect(CONNECTION_FEE_CENTS).toBe(499);
     expect(CONNECTION_FEE_CURRENCY).toBe("usd");
     expect(latest).toMatch(/SELECT 'price_1UH1RsPYJQAIQDv721IhjKS0'/);
     expect(latest).toMatch(/amount_cents integer NOT NULL DEFAULT 499/);
-    expect(fn).toMatch(/price_1UH1RsPYJQAIQDv721IhjKS0/);
+    expect(fn).toMatch(/STRIPE_CONNECTION_PRICE_ID/);
     expect(fn).toMatch(/line_items\[0\]\[price\]/);
+    expect(fn).not.toMatch(/price_1UH1RsPYJQAIQDv721IhjKS0/);
+    expect(fn).not.toMatch(/requireTestSecret\(/);
   });
 
   it("rejects client substitution of price, amount, contractor, or foreign project", () => {
@@ -455,6 +458,8 @@ describe("Connection Fee TEST Checkout", () => {
     expect(SIGNUP_FEE_FUNCTIONS_OWNED_BY_PR_12.every((name) => !fn.includes(name))).toBe(true);
     expect(requireTestStripeSecret("sk_test_1234567890abcd")).toBe("sk_test_1234567890abcd");
     expect(() => requireTestStripeSecret("sk_live_1234567890abcd")).toThrow(/TEST/);
+    expect(fn).toMatch(/requireSecretForMode/);
+    expect(fn).toMatch(/stripe_test_mode/);
   });
 
   it("builds mobile checkout URLs without putting private contact in Stripe metadata", () => {

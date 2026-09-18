@@ -194,6 +194,8 @@ export function tryFulfill(input: {
   session: CheckoutSessionLike;
   stripePaid: boolean;
   now?: Date;
+  stripeTestMode?: boolean;
+  expectedPriceId?: string;
 }): FulfillResult {
   const now = input.now ?? new Date();
   const duplicateEvent = recordProcessorEvent(input.ledger, input.processorEventId).duplicate;
@@ -221,7 +223,8 @@ export function tryFulfill(input: {
       input.ledger.connections.filter((row) => row.projectId === conn.projectId),
       now,
     ),
-    stripeTestMode: true,
+    stripeTestMode: input.stripeTestMode ?? true,
+    expectedPriceId: input.expectedPriceId,
     connectionFeeCheckoutEnabled: true,
   });
 

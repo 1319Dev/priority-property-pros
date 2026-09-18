@@ -2,8 +2,10 @@
 -- Do NOT run against production bersftkjpbzpgtahbqwd.
 -- Staging only after secrets: giiskdvitimksdewnelc
 --
--- payments_live=0 charges_live=0 signup_fee_enabled=0 stripe_test_mode=1
--- connection_fee_checkout_enabled=0 until owner enables staging.
+-- payments_live=0 charges_live=0 signup_fee_enabled=0
+-- stripe_test_mode=1 (TEST) by default; 0 = LIVE. Explicit environment control.
+-- connection_fee_checkout_enabled=0 until owner enables. Kill switch may stay 0
+-- even if LIVE secrets are installed later. Do not put LIVE secrets in staging.
 --
 -- Eligibility for public.reserve_connection_checkout (20260928000003+):
 --   Matched contractor + opportunity AVAILABLE → may reserve (Participate is optional).
@@ -12,7 +14,7 @@
 --   Opportunity PASSED / EXPIRED / CLOSED → ineligible contractor.
 --   Project CANCELLED → project is cancelled.
 -- Unchanged: APPROVED + ACTIVE contractor, accepting_connections, max-3 occupancy,
--- require_service_role, stripe_test_mode=1, no #14 grant on reserve.
+-- require_service_role, stripe_test_mode matches key/livemode, no #14 grant on reserve.
 --
 -- Manual SQL-editor checks (staging only, never production):
 -- 1. Confirm the live function source includes AVAILABLE or ACCEPTED:
