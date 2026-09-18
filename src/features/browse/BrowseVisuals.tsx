@@ -1,26 +1,8 @@
 import { Link } from "react-router-dom";
+import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { Container } from "../../components/ui/Container";
 
 type IllustrationKind = "hero" | "fence" | "interior" | "yard";
-
-function HeroArt() {
-  return (
-    <svg viewBox="0 0 320 180" className="h-full w-full" role="img" aria-label="Abstract local street with independent homes">
-      <rect width="320" height="180" fill="#F4EFE4" />
-      <path d="M0 128h320v52H0z" fill="#E4D8C4" />
-      <path d="M0 118h320" stroke="#C9B89A" strokeWidth="8" />
-      <rect x="28" y="72" width="70" height="52" rx="6" fill="#1F3D32" />
-      <path d="M22 78 63 48l41 30" fill="#C9A227" />
-      <rect x="128" y="80" width="62" height="44" rx="6" fill="#2B5345" />
-      <path d="M122 84 159 58l37 26" fill="#1F3D32" />
-      <rect x="214" y="68" width="78" height="56" rx="6" fill="#1F3D32" />
-      <path d="M208 74 253 42l45 32" fill="#C9A227" />
-      <circle cx="52" cy="102" r="6" fill="#F4EFE4" />
-      <circle cx="248" cy="98" r="6" fill="#F4EFE4" />
-      <rect x="148" y="98" width="14" height="26" fill="#F4EFE4" />
-    </svg>
-  );
-}
 
 function FenceArt() {
   return (
@@ -60,8 +42,10 @@ function YardArt() {
 
 export function BrowseIllustration({ kind, className = "" }: { kind: IllustrationKind; className?: string }) {
   return (
-    <div className={`overflow-hidden rounded-3xl ${className}`}>
-      {kind === "hero" ? <HeroArt /> : null}
+    <div className={`overflow-hidden rounded-3xl bg-forest-800/10 ${className}`}>
+      {kind === "hero" ? (
+        <MarketingPhoto photo="house" className="aspect-[16/10] min-h-32" sizes="(max-width: 1024px) 100vw, 520px" />
+      ) : null}
       {kind === "fence" ? <FenceArt /> : null}
       {kind === "interior" ? <InteriorArt /> : null}
       {kind === "yard" ? <YardArt /> : null}

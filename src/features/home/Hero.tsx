@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CUSTOMER_CTA, CUSTOMER_TAGLINE, CONTRACTOR_CTA } from "../../data/brand";
+import { CUSTOMER_CTA, CUSTOMER_TAGLINE, CONTRACTOR_CTA, MARKETPLACE_NEED_LINE } from "../../data/brand";
 import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING, SIGNUP_FEE_SHORT } from "../../data/pricing";
 import { PROJECT_PLACEHOLDERS } from "../../data/services";
+import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { ButtonLink } from "../../components/ui/Button";
 import { Container } from "../../components/ui/Container";
-import { HERO_ART_VIEWBOX, HERO_TAGLINE } from "../../lib/marketplace/heroLayout";
+import { HERO_TAGLINE } from "../../lib/marketplace/heroLayout";
 
 export function Hero() {
   const navigate = useNavigate();
@@ -21,7 +22,29 @@ export function Hero() {
 
   return (
     <section className="relative overflow-x-hidden border-b border-forest-800/10">
-      <Container className="grid items-center gap-10 py-10 sm:py-14 lg:grid-cols-[1.15fr_0.85fr] lg:py-20">
+      <div className="relative max-h-[13.75rem] overflow-hidden sm:max-h-[17.5rem] lg:max-h-[22.5rem]">
+        <div className="aspect-[16/9] w-full">
+          <MarketingPhoto
+            photo="house"
+            eager
+            sizes="100vw"
+            className="h-full w-full"
+          />
+        </div>
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/80 via-forest-950/25 to-forest-950/15"
+          aria-hidden="true"
+        />
+        <div className="absolute inset-x-0 bottom-0 px-4 pb-4 sm:px-6 sm:pb-5">
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-gold-300 sm:text-[0.72rem] sm:tracking-[0.22em]">
+            {HERO_TAGLINE}
+          </p>
+          <p className="mt-1 max-w-2xl font-display text-lg font-semibold leading-snug text-cream-50 sm:text-2xl">
+            {MARKETPLACE_NEED_LINE}
+          </p>
+        </div>
+      </div>
+      <Container className="grid items-center gap-10 py-8 sm:py-12 lg:grid-cols-[1.15fr_0.85fr] lg:py-16">
         <div className="min-w-0">
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">
             Local home services marketplace
@@ -80,29 +103,21 @@ export function Hero() {
             </div>
           </form>
         </div>
-        <HeroArt />
+        <figure className="relative mx-auto hidden w-full min-w-0 max-w-md lg:block">
+          <div className="overflow-hidden rounded-[1.75rem] bg-forest-800 p-3">
+            <div className="overflow-hidden rounded-[1.15rem]">
+              <MarketingPhoto
+                photo="house"
+                sizes="(min-width: 1024px) 380px, 0px"
+                className="aspect-[4/3]"
+              />
+            </div>
+            <figcaption className="mt-3 px-1 pb-1 text-center text-[0.68rem] font-semibold uppercase leading-snug tracking-[0.14em] text-cream-100 sm:text-[0.75rem] sm:tracking-[0.18em]">
+              {HERO_TAGLINE}
+            </figcaption>
+          </div>
+        </figure>
       </Container>
     </section>
-  );
-}
-
-function HeroArt() {
-  return (
-    <figure className="relative mx-auto w-full min-w-0 max-w-md">
-      <div className="flex h-auto flex-col rounded-[1.75rem] bg-forest-800 p-4 sm:p-5">
-        <div className="overflow-hidden rounded-[1.15rem] bg-cream-50 px-3 pt-5 pb-3 sm:px-4">
-          <svg viewBox={HERO_ART_VIEWBOX} className="h-auto w-full" role="img" aria-label="House illustration">
-            <title>House illustration</title>
-            <path d="M40 108 L140 38 L240 108" fill="none" stroke="#C9A227" strokeWidth="10" strokeLinejoin="round" />
-            <path d="M64 104 V168 H216 V104" fill="none" stroke="#1A3C2E" strokeWidth="8" strokeLinejoin="round" />
-            <path d="M104 168 V122 M140 168 V112 M176 168 V122" stroke="#A6851F" strokeWidth="8" strokeLinecap="round" />
-            <circle cx="236" cy="36" r="16" fill="#E0C078" />
-          </svg>
-        </div>
-        <figcaption className="mt-4 px-1 text-center text-[0.68rem] font-semibold uppercase leading-snug tracking-[0.14em] text-cream-100 sm:text-[0.75rem] sm:tracking-[0.18em]">
-          {HERO_TAGLINE}
-        </figcaption>
-      </div>
-    </figure>
   );
 }

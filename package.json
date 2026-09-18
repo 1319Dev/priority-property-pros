@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "images:marketing": "node scripts/optimize-marketing-images.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.2.8",
