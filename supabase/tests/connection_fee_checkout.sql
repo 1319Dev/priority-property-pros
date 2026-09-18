@@ -4,3 +4,25 @@
 --
 -- payments_live=0 charges_live=0 signup_fee_enabled=0 stripe_test_mode=1
 -- connection_fee_checkout_enabled=0 until owner enables staging.
+--
+-- Eligibility for public.reserve_connection_checkout (20260928000003+):
+--   Matched contractor + opportunity AVAILABLE → may reserve (Participate is optional).
+--   Matched contractor + opportunity ACCEPTED → may still reserve.
+--   Unmatched contractor (no opportunity row for that project) → ineligible contractor.
+--   Opportunity PASSED / EXPIRED / CLOSED → ineligible contractor.
+--   Project CANCELLED → project is cancelled.
+-- Unchanged: APPROVED + ACTIVE contractor, accepting_connections, max-3 occupancy,
+-- require_service_role, stripe_test_mode=1, no #14 grant on reserve.
+--
+-- Manual SQL-editor checks (staging only, never production):
+-- 1. Confirm the live function source includes AVAILABLE or ACCEPTED:
+--    select pg_get_functiondef('public.reserve_connection_checkout(uuid,uuid,text)'::regprocedure);
+--    Expect: o.status IN ('AVAILABLE', 'ACCEPTED')
+-- 2. AVAILABLE walkthrough contractor on a project with empty project_connections
+--    should no longer fail at reserve before Stripe is reached.
+-- 3. A second contractor with no opportunity on that project still raises
+--    'ineligible contractor'.
+-- 4. PASSED opportunity for the same contractor cannot reserve.
+-- 5. ACCEPTED opportunity can still reserve.
+-- 6. Edge Function create-connection-checkout still returns JSON { error: ... }
+--    on 400; the client must not show "Edge Function returned a non-2xx status code".

@@ -5,6 +5,7 @@ import { looksLikeFilename } from "./publicDirectory";
 import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
 import { reusableEmptyDraft } from "./flows";
 import { detectContactLeak } from "./contactLeak";
+import { customerFacingConnectionCheckoutError } from "./connectionCheckout";
 import type {
   BookingContactAccess,
   ConnectionAvailability,
@@ -969,7 +970,10 @@ export async function startConnectionCheckout(input: {
       origin: input.origin ?? (typeof window !== "undefined" ? window.location.origin : ""),
     },
   });
-  if (error) throw new Error(asError(error, "Could not start Connection Fee checkout."));
+  if (error) {
+    console.error("create-connection-checkout failed", error, data);
+    throw new Error(await customerFacingConnectionCheckoutError(data, error));
+  }
   return (data ?? {}) as RpcJson;
 }
 

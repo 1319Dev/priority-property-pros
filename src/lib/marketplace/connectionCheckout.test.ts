@@ -24,7 +24,11 @@ import {
   expiredReservationReleasesSpot,
   fakeSessionUnlocksContact,
   fourthFinalizedConnectionAllowed,
+  CONNECTION_CHECKOUT_CUSTOMER_ERROR,
+  FUNCTIONS_HTTP_ERROR_MESSAGE,
+  customerFacingConnectionCheckoutError,
   ineligibleContractorRejected,
+  opportunityAllowsConnectionReserve,
   queryParamPaidStateUnlocksContact,
   requireTestStripeSecret,
   reservationOccupiesSlot,
@@ -130,11 +134,103 @@ describe("Connection Fee TEST Checkout", () => {
 
   it("rejects unauthenticated and ineligible contractors", () => {
     expect(unauthenticatedCheckoutRejected(null)).toBe(true);
-    expect(ineligibleContractorRejected({ isContractor: true, accountStatus: "ACTIVE", approvalStatus: "PENDING", hasAcceptedOpportunity: true })).toBe(true);
-    expect(ineligibleContractorRejected({ isContractor: true, accountStatus: "ACTIVE", approvalStatus: "APPROVED", hasAcceptedOpportunity: false })).toBe(true);
+    expect(ineligibleContractorRejected({ isContractor: true, accountStatus: "ACTIVE", approvalStatus: "PENDING", opportunityStatus: "AVAILABLE" })).toBe(true);
+    expect(ineligibleContractorRejected({ isContractor: true, accountStatus: "ACTIVE", approvalStatus: "APPROVED", hasMatchedOpportunity: false })).toBe(true);
     expect(latest).toMatch(/RAISE EXCEPTION 'auth required'/);
     expect(latest).toMatch(/RAISE EXCEPTION 'ineligible contractor'/);
     expect(fn).toMatch(/not signed in/);
+  });
+
+  it("lets a matched contractor reserve with AVAILABLE or ACCEPTED, and rejects unmatched/passed/cancelled", () => {
+    const reserve = functionBody(sql, "reserve_connection_checkout");
+    expect(opportunityAllowsConnectionReserve("AVAILABLE")).toBe(true);
+    expect(opportunityAllowsConnectionReserve("ACCEPTED")).toBe(true);
+    expect(opportunityAllowsConnectionReserve("PASSED")).toBe(false);
+    expect(opportunityAllowsConnectionReserve("EXPIRED")).toBe(false);
+    expect(opportunityAllowsConnectionReserve("CLOSED")).toBe(false);
+    expect(opportunityAllowsConnectionReserve(null)).toBe(false);
+    expect(
+      ineligibleContractorRejected({
+        isContractor: true,
+        accountStatus: "ACTIVE",
+        approvalStatus: "APPROVED",
+        hasMatchedOpportunity: true,
+        opportunityStatus: "AVAILABLE",
+      }),
+    ).toBe(false);
+    expect(
+      ineligibleContractorRejected({
+        isContractor: true,
+        accountStatus: "ACTIVE",
+        approvalStatus: "APPROVED",
+        hasMatchedOpportunity: true,
+        opportunityStatus: "ACCEPTED",
+      }),
+    ).toBe(false);
+    expect(
+      ineligibleContractorRejected({
+        isContractor: true,
+        accountStatus: "ACTIVE",
+        approvalStatus: "APPROVED",
+        hasMatchedOpportunity: false,
+        opportunityStatus: "AVAILABLE",
+      }),
+    ).toBe(true);
+    expect(
+      ineligibleContractorRejected({
+        isContractor: true,
+        accountStatus: "ACTIVE",
+        approvalStatus: "APPROVED",
+        hasMatchedOpportunity: true,
+        opportunityStatus: "PASSED",
+      }),
+    ).toBe(true);
+    expect(
+      ineligibleContractorRejected({
+        isContractor: true,
+        accountStatus: "ACTIVE",
+        approvalStatus: "APPROVED",
+        hasMatchedOpportunity: true,
+        opportunityStatus: "AVAILABLE",
+        projectCancelled: true,
+      }),
+    ).toBe(true);
+    expect(reserve).toMatch(/FLAT-499: matched opportunity may be AVAILABLE or ACCEPTED/);
+    expect(reserve).toMatch(/AND o\.contractor_profile_id = contractor_id\s+AND o\.status IN \('AVAILABLE', 'ACCEPTED'\)/);
+    expect(reserve).toMatch(/RAISE EXCEPTION 'project is cancelled'/);
+    expect(reserve).toMatch(/require_service_role/);
+    expect(reserve).toMatch(/IF occupied >= 3 THEN/);
+    expect(reserve).not.toMatch(/INSERT INTO public\.booking_contact_access/);
+  });
+
+  it("does not surface the raw FunctionsHttpError text to contractors", async () => {
+    const api = readFileSync(path.join(repoRoot, "src/lib/marketplace/api.ts"), "utf8");
+    expect(api).toMatch(/customerFacingConnectionCheckoutError/);
+    expect(api).toMatch(/create-connection-checkout failed/);
+    expect(api).not.toMatch(/Could not start Connection Fee checkout/);
+    expect(api).not.toMatch(/asError\(error, "Could not start Connection Fee checkout\."\)/);
+    await expect(
+      customerFacingConnectionCheckoutError(
+        { error: "ineligible contractor", contact_unlocked: false },
+        { message: FUNCTIONS_HTTP_ERROR_MESSAGE },
+      ),
+    ).resolves.toBe("ineligible contractor");
+    await expect(
+      customerFacingConnectionCheckoutError(null, {
+        message: FUNCTIONS_HTTP_ERROR_MESSAGE,
+        context: new Response(JSON.stringify({ error: "connections full" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }),
+      }),
+    ).resolves.toBe("connections full");
+    await expect(
+      customerFacingConnectionCheckoutError(null, { message: FUNCTIONS_HTTP_ERROR_MESSAGE }),
+    ).resolves.toBe(CONNECTION_CHECKOUT_CUSTOMER_ERROR);
+    await expect(customerFacingConnectionCheckoutError({ error: FUNCTIONS_HTTP_ERROR_MESSAGE })).resolves.toBe(
+      CONNECTION_CHECKOUT_CUSTOMER_ERROR,
+    );
+    expect(CONNECTION_CHECKOUT_CUSTOMER_ERROR).toBe("We couldn't start checkout. Please try again.");
   });
 
   it("rejects closed and full projects and duplicate contractor+project pairs", () => {

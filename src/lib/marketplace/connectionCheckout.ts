@@ -250,17 +250,87 @@ export function unauthenticatedCheckoutRejected(userId: string | null | undefine
   return !userId;
 }
 
+/** Participate/accept is optional. Matched AVAILABLE or ACCEPTED opportunities may reserve. */
+export function opportunityAllowsConnectionReserve(status: string | null | undefined): boolean {
+  return status === "AVAILABLE" || status === "ACCEPTED";
+}
+
 export function ineligibleContractorRejected(input: {
   accountStatus?: string | null;
   approvalStatus?: string | null;
-  hasAcceptedOpportunity?: boolean;
+  hasMatchedOpportunity?: boolean;
+  opportunityStatus?: string | null;
+  projectCancelled?: boolean;
   isContractor?: boolean;
 }): boolean {
   if (!input.isContractor) return true;
   if (input.accountStatus !== "ACTIVE") return true;
   if (input.approvalStatus !== "APPROVED") return true;
-  if (!input.hasAcceptedOpportunity) return true;
+  if (input.projectCancelled) return true;
+  if (input.hasMatchedOpportunity === false) return true;
+  if (!opportunityAllowsConnectionReserve(input.opportunityStatus)) return true;
   return false;
+}
+
+export const FUNCTIONS_HTTP_ERROR_MESSAGE = "Edge Function returned a non-2xx status code";
+export const CONNECTION_CHECKOUT_CUSTOMER_ERROR = "We couldn't start checkout. Please try again.";
+
+function usableCheckoutErrorMessage(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (trimmed === FUNCTIONS_HTTP_ERROR_MESSAGE) return false;
+  if (/edge function returned a non-2xx status code/i.test(trimmed)) return false;
+  if (/failed to send a request to the edge function/i.test(trimmed)) return false;
+  if (/relay error/i.test(trimmed)) return false;
+  if (trimmed.length > 200) return false;
+  return true;
+}
+
+/** Prefer `{ error: ... }` from the Edge Function JSON. Never return the raw FunctionsHttpError text. */
+export function parseConnectionCheckoutErrorPayload(payload: unknown): string | null {
+  if (typeof payload === "string") {
+    const trimmed = payload.trim();
+    if (!trimmed) return null;
+    try {
+      return parseConnectionCheckoutErrorPayload(JSON.parse(trimmed));
+    } catch {
+      return usableCheckoutErrorMessage(trimmed) ? trimmed : null;
+    }
+  }
+  if (!payload || typeof payload !== "object") return null;
+  const error = (payload as { error?: unknown }).error;
+  if (typeof error === "string" && usableCheckoutErrorMessage(error)) return error.trim();
+  return null;
+}
+
+async function readFunctionsErrorContext(context: unknown): Promise<unknown> {
+  if (!context || typeof context !== "object") return context ?? null;
+  const responseLike = context as {
+    clone?: () => { json: () => Promise<unknown> };
+    json?: () => Promise<unknown>;
+  };
+  try {
+    if (typeof responseLike.clone === "function") {
+      return await responseLike.clone().json();
+    }
+    if (typeof responseLike.json === "function") {
+      return await responseLike.json();
+    }
+  } catch {
+    return null;
+  }
+  return context;
+}
+
+export async function customerFacingConnectionCheckoutError(
+  data: unknown,
+  error?: { message?: string; context?: unknown } | null,
+): Promise<string> {
+  const fromData = parseConnectionCheckoutErrorPayload(data);
+  if (fromData) return fromData;
+  const fromContext = parseConnectionCheckoutErrorPayload(await readFunctionsErrorContext(error?.context));
+  if (fromContext) return fromContext;
+  return CONNECTION_CHECKOUT_CUSTOMER_ERROR;
 }
 
 export function allowedReturnOrigin(origin: string, siteUrl?: string | null): boolean {
