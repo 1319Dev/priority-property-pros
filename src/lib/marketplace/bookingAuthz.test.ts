@@ -44,7 +44,7 @@ describe("Phase 4A authorization mirrors", () => {
     expect(
       canReadCustomerContact(stranger, "cust", {
         bookingStatus: "CONFIRMED",
-        contractorProfileId: "pro-9",
+        contractorProfileId: "pro-1",
         selectedContractorProfileId: "pro-1",
         contactAccess: "UNLOCKED",
       }),
