@@ -83,9 +83,9 @@ CREATE TRIGGER trg_reject_pre_hire_contact_project_answers
   EXECUTE FUNCTION public.reject_pre_hire_contact_project_answers();
 
 REVOKE ALL ON FUNCTION public.text_contains_pre_hire_contact(text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.assert_no_pre_hire_contact(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.text_contains_pre_hire_contact(text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION public.assert_no_pre_hire_contact(text) TO PUBLIC;
+REVOKE ALL ON FUNCTION public.assert_no_pre_hire_contact(text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.text_contains_pre_hire_contact(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.assert_no_pre_hire_contact(text) TO authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Anonymized public labels. Never return a real business_name to anon.
@@ -220,12 +220,19 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.anonymized_pro_label(text, text[]) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.general_service_area(text) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.public_safe_blurb(text, text) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.public_safe_about(text, text) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.generic_credential_badge_label(text) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.public_safe_portfolio_caption(text, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.anonymized_pro_label(text, text[]) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.general_service_area(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.public_safe_blurb(text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.public_safe_about(text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.generic_credential_badge_label(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.public_safe_portfolio_caption(text, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.anonymized_pro_label(text, text[]) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.general_service_area(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.public_safe_blurb(text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.public_safe_about(text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.generic_credential_badge_label(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.public_safe_portfolio_caption(text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.text_contains_contact_info(text) TO anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Portfolio privacy: conservative default REVIEW_REQUIRED. No AI detection.

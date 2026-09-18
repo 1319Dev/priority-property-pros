@@ -366,7 +366,13 @@ describe("Public contractor directory SQL", () => {
     expect(sql).toMatch(/list_public_directory_portfolio/);
     expect(sql).toMatch(/list_public_directory_reviews/);
     expect(readdirSync(migrationsDir)).toContain("20260925000001_public_anonymized_directory.sql");
+    expect(readdirSync(migrationsDir)).toContain("20260925000002_public_directory_helper_grants.sql");
     expect(readdirSync(migrationsDir)).not.toContain("20260923000001_public_anonymized_directory.sql");
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.anonymized_pro_label\(text, text\[\]\) TO anon, authenticated/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.general_service_area\(text\) TO anon, authenticated/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.generic_credential_badge_label\(text\) TO anon, authenticated/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.text_contains_contact_info\(text\) TO anon, authenticated/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.assert_no_pre_hire_contact\(text\) TO authenticated/);
     expect(sql).toMatch(/contact information is shared after you''re connected through Priority Property Pros/);
     expect(sql).not.toMatch(/DROP TABLE public\.booking_contact_access/i);
     expect(sql).not.toMatch(/DROP FUNCTION public\.text_contains_contact_info/i);
