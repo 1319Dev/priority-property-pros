@@ -27,7 +27,7 @@ export type LegalDocument = {
 };
 
 const marketplaceNature = [
-  "Priority Property Pros (“PPP”) is a local marketplace operated by PRIORITY PROPERTY PROS LLC. PPP connects property owners with independent local contractors. PPP is not the contractor, not an employer of the people who do the work, not a franchise, and not affiliated with Angi or Thumbtack.",
+  "Priority Property Pros (\"PPP\") is a local marketplace operated by PRIORITY PROPERTY PROS LLC. PPP connects property owners with independent local contractors. PPP is not the contractor, not an employer of the people who do the work, not a franchise, and not affiliated with Angi or Thumbtack.",
   "Contractors who appear on PPP remain independent businesses. A listing, estimate, hire, review, or account badge is not employment, partnership, or a joint venture with PPP.",
 ];
 
@@ -59,14 +59,16 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
         paragraphs: [
           "Homeowners may post projects, compare estimates, and hire through PPP. Contractors may review nearby opportunities, submit estimates, and track jobs after they are approved to participate.",
           "At most three contractors can participate on a posted project. Contact details and exact street addresses stay private until the parties are connected through PPP after a hire.",
-          "There is no pay-to-win ranking. Paying the activation fee or a marketplace fee does not buy a better public listing position.",
+          "There is no pay-to-win ranking. Paying the activation fee or a Connection Fee does not buy a better public listing position.",
         ],
       },
       {
-        heading: "What PPP does not promise",
+        heading: "What PPP does and does not do",
         paragraphs: [
+          "PPP earns revenue from the $9.99 activation fee, contractor Connection Fees when homeowners select them, and future Priority Pro subscriptions.",
+          "PPP does not process, hold in escrow, or payout homeowner-to-contractor project money. After the parties are connected through PPP, they communicate directly and arrange project payment themselves.",
+          "Connection Fee checkout is Coming Soon and is not live in this product. Connection Fees are calculated and displayed, but no live charges occur.",
           "PPP does not currently verify licenses, insurance, or workmanship. Priority Verified is not live and is never a code inspection or a guarantee.",
-          "PPP does not hold customer job funds in escrow, does not process live job payments in this product, and does not guarantee that work will be completed, permitted, or free of defects.",
           "You remain responsible for checking licenses, insurance, scope, and local requirements before work starts.",
         ],
       },
@@ -74,8 +76,17 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
         heading: "Reviews, disputes, and account action",
         paragraphs: [
           "Reviews may be left only after a completed PPP job by the homeowner and the hired contractor on that job. Public ratings use those eligible reviews only.",
-          "If an account’s eligible average is below 4.00 after the configured minimum number of completed-job reviews (default 3), PPP may suspend new marketplace participation. History is kept. You may appeal from Account → Disputes.",
+          "If an account's eligible average is below 4.00 after at least 5 completed-job reviews, PPP may suspend new marketplace participation. History is kept. You may appeal from Account → Disputes.",
           "PPP may deactivate, suspend, or close accounts that violate these terms, the Community & Review Guidelines, or applicable law. See Account Suspension & Termination.",
+        ],
+      },
+      {
+        heading: "Anti-circumvention",
+        paragraphs: [
+          "You may not intentionally hide contact information in photos, estimates, or project descriptions to bypass the connection workflow and the applicable Connection Fee.",
+          "You may not submit an artificially low estimate amount with the intent to quote higher after connection, or cancel and rebook to avoid the Connection Fee owed on the original connection.",
+          "Violations may result in account suspension or termination. PPP may investigate reports of circumvention but does not promise real-time monitoring or automatic detection. Reporting and moderation are the enforcement mechanisms.",
+          "After you are connected through PPP, PPP does not control how the homeowner pays the contractor for project work. The Connection Fee is for the marketplace service of connecting the parties, not for processing the project payment.",
         ],
       },
       {
@@ -111,7 +122,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
         heading: "Projects, estimates, and jobs",
         paragraphs: [
           "Project posts store title, description, service category, answers, city, state, ZIP, timing, budget range, and optional photos. Exact street and map coordinates are stored separately and are not shown to browsing contractors until the parties are connected through PPP after a hire.",
-          "Estimates store line items, totals, and a marketplace-fee preview. Bookings store job amounts, fee snapshots, status history, and change orders.",
+          "Estimates store line items, totals, and a Connection Fee preview. Bookings store job amounts, fee snapshots, status history, and change orders.",
           "After a completed job, each side may store a 1–5 star rating and an optional written review.",
         ],
       },
@@ -133,7 +144,8 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
       {
         heading: "What we do not do in this product",
         paragraphs: [
-          "This product does not run live card charges, job payouts, or Stripe Connect. Payment flags remain off. We do not sell the same homeowner lead to multiple buyers.",
+          "This product does not run live Connection Fee charges or process homeowner-to-contractor project payments. Payment flags remain off. PPP does not hold project funds in escrow.",
+          "We do not sell the same homeowner lead to multiple buyers.",
           "Messaging is not built yet. We do not currently operate a separate advertising pixel pack on the marketing pages.",
           "We do not claim to sell or rent your contact list. Contact details stay locked until a hire connection.",
         ],
@@ -141,7 +153,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
       {
         heading: "Account deletion",
         paragraphs: [
-          "You may request deletion from Account settings. We remove the account from the public directory and from new marketplace participation, replace public name and contact fields with a generic deleted-account label, and keep legal, financial, dispute, audit, and completed-job history needed to preserve marketplace integrity.",
+          "You may request deletion from Account settings. We remove the account from the public directory and from new marketplace participation, replace public name and contact fields with a generic deleted-account label, and keep legal, financial, dispute, audit, and completed-job history needed to preserve marketplace integrity. Deletion does not erase evidence of Connection Fees owed, reviews given or received, or dispute history.",
         ],
       },
       {
@@ -170,13 +182,17 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
         paragraphs: [
           "PPP does not currently verify licenses, insurance, or workmanship. An admin approval to join the marketplace is not a license check, insurance audit, background check, or quality guarantee.",
           "Priority Verified is not live. PPP does not inspect work to code and does not bond jobs.",
-          "Online job payments and escrow are not live. Selecting a pro creates a booking record. It does not charge a card and does not mean PPP is holding funds.",
+          "PPP does not process, hold in escrow, or payout homeowner-to-contractor project money. Selecting a pro creates a booking record and a Connection Fee obligation. It does not charge a card and does not mean PPP is holding project funds.",
+          "After the parties are connected through PPP, they communicate directly and arrange project payment themselves.",
         ],
       },
       {
-        heading: "Fees",
+        heading: "Connection Fees",
         paragraphs: [
-          "Homeowners do not pay a PPP marketplace percentage when they hire. Contractors on the Free plan owe the configured marketplace fee when hired, according to the published schedule. Repeat/hire-again jobs use the configured repeat rate. Those fees are calculated in the product; they are not charged while payments are off.",
+          "PPP earns revenue from the $9.99 activation fee, contractor Connection Fees when homeowners select them, and future Priority Pro subscriptions.",
+          "Homeowners do not pay a PPP Connection Fee when they hire. Contractors on the Free plan owe the configured Connection Fee when connected, according to the published schedule. Repeat/hire-again jobs use the configured repeat rate.",
+          "Connection Fees are for the marketplace service of connecting the parties. They are not project payment processing fees. PPP does not process the homeowner-to-contractor project payment.",
+          "Connection Fee checkout is Coming Soon and is not live in this product. Fees are calculated and displayed; no live charges occur.",
         ],
       },
     ],
@@ -206,7 +222,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
         heading: "How ratings are used",
         paragraphs: [
           "Public contractor ratings come only from eligible completed PPP jobs. Client-side star math is not trusted. Removing a review from the rating calculation is an admin action after a dispute.",
-          "If an eligible average is below 4.00 after at least the configured number of reviews (default 3), new marketplace participation may be suspended. Exactly 4.00 does not suspend.",
+          "If an eligible average is below 4.00 after at least 5 completed-job reviews, new marketplace participation may be suspended. Exactly 4.00 does not suspend.",
         ],
       },
     ],
@@ -249,7 +265,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
       {
         heading: "Rating suspension",
         paragraphs: [
-          "If your eligible completed-job average is below 4.00 and you have at least the configured minimum number of eligible reviews (default 3), PPP may suspend the account for ratings. Exactly 4.00 does not suspend. The unrounded average is used.",
+          "If your eligible completed-job average is below 4.00 and you have at least 5 eligible reviews, PPP may suspend the account for ratings. Exactly 4.00 does not suspend. The unrounded average is used.",
           "A rating suspension is not a deletion. You keep history. You cannot start new marketplace work: contractors cannot take new jobs or send new estimates; homeowners cannot post new projects or hire. You will see a notice and may appeal.",
         ],
       },
@@ -257,7 +273,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
         heading: "Other account states",
         paragraphs: [
           "PPP may also deactivate, disable, or close an account for policy or legal reasons. A user may request deletion from Account settings.",
-          "Deletion removes the account from the public directory and from new participation. Legal, financial, dispute, audit, and marketplace history are retained. Public contact fields are replaced with a generic deleted-account label.",
+          "Deletion removes the account from the public directory and from new participation. Legal, financial, dispute, audit, and marketplace history are retained. Public contact fields are replaced with a generic deleted-account label. Deletion does not erase evidence of Connection Fees owed, reviews given or received, or dispute history.",
         ],
       },
       {

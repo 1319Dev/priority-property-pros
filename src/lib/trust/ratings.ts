@@ -2,7 +2,7 @@
 
 import { isEligiblePublicReview, type ReviewSide } from "./reviews";
 
-export const DEFAULT_RATING_SUSPENSION_MIN_REVIEWS = 3;
+export const DEFAULT_RATING_SUSPENSION_MIN_REVIEWS = 5;
 export const RATING_SUSPENSION_THRESHOLD = 4;
 export const RATING_SUSPENSION_REASON = "RATING_SUSPENSION" as const;
 
@@ -76,7 +76,7 @@ export function ratingSuspensionCleared(
 }
 
 export function exactlyFourDoesNotSuspend(): boolean {
-  return shouldAutoSuspendForRating({ eligibleCount: 3, ratingSum: 12, ratingAverage: 4 }) === false;
+  return shouldAutoSuspendForRating({ eligibleCount: 5, ratingSum: 20, ratingAverage: 4 }) === false;
 }
 
 export function publicAverageNeverFromClient(serverAverage: number | null, clientGuess: number | null): number | null {

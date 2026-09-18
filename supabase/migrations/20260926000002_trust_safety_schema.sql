@@ -4,8 +4,8 @@
 INSERT INTO public.platform_settings (key, value_int, description)
 VALUES (
   'rating_suspension_min_reviews',
-  3,
-  'Minimum eligible completed-job reviews before an unrounded average below 4.00 can auto-suspend. Default 3.'
+  5,
+  'Minimum eligible completed-job reviews before an unrounded average below 4.00 can auto-suspend. Default 5.'
 )
 ON CONFLICT (key) DO NOTHING;
 

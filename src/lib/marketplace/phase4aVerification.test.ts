@@ -170,13 +170,13 @@ describe("Phase 4A pre-merge security checks", () => {
     expect(contractorCanUnilaterallyIncrease()).toBe(false);
   });
 
-  it("9. change orders cannot create a fresh $1,500 / $500 cap", () => {
+  it("9. change orders cannot create a fresh $999 / $500 cap", () => {
     const originalCap = computeMarketplaceFee({
       amount_cents: feeBasisCents(5_000_000, [1_000_000, 1_000_000]),
       kind: "ORIGINAL",
     });
-    expect(originalCap.fee_cents).toBe(150_000);
-    expect(originalCap.max_fee_cents).toBe(150_000);
+    expect(originalCap.fee_cents).toBe(99_900);
+    expect(originalCap.max_fee_cents).toBe(99_900);
     const repeatCap = computeMarketplaceFee({
       amount_cents: feeBasisCents(2_500_000, [1_000_000]),
       kind: "REPEAT",

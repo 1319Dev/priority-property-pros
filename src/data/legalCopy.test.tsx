@@ -44,7 +44,7 @@ describe("legal and trust copy", () => {
     );
     expect(screen.getByRole("heading", { name: /privacy policy/i })).toBeInTheDocument();
     expect(screen.getByText(/exact street/i)).toBeInTheDocument();
-    expect(screen.getByText(/live card charges/i)).toBeInTheDocument();
+    expect(screen.getByText(/Connection Fee charges/i)).toBeInTheDocument();
   });
 
   it("keeps the trust page honest about unimplemented features", () => {
@@ -67,7 +67,7 @@ describe("pricing schedule source of truth", () => {
     );
     expect(ORIGINAL_FEE_BRACKETS_PUBLIC[0]).toEqual({ range: "$0–$499.99", rate: "8%" });
     expect(PRIORITY_PRO_STATUS).toBe("Coming Soon");
-    expect(CONTRACTOR_VALUE_HEADLINE).toMatch(/don.t pay for leads/i);
+    expect(CONTRACTOR_VALUE_HEADLINE).toMatch(/no lead fees.*no bid fees.*pay when you connect/i);
     expect(NO_PAY_TO_WIN).toMatch(/no pay-to-win/i);
   });
 
@@ -80,7 +80,7 @@ describe("pricing schedule source of truth", () => {
     expect(screen.getByText(/free vs priority pro/i)).toBeInTheDocument();
     expect(screen.getAllByText(/coming soon/i).length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: /buy priority pro/i })).not.toBeInTheDocument();
-    expect(screen.getAllByText(/don.t pay for leads/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/no lead fees.*no bid fees.*pay when you connect/i).length).toBeGreaterThan(0);
   });
 });
 

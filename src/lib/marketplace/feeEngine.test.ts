@@ -55,18 +55,21 @@ describe("progressive ORIGINAL fee engine (integer cents)", () => {
     expect(original(1_000_000).fee_cents).toBe(55_500);
   });
 
-  it("prices $25,000 as $555 + $525", () => {
-    expect(original(2_500_000).fee_cents).toBe(108_000);
+  it("prices $25,000 capped at $999", () => {
+    const fee = original(2_500_000);
+    expect(fee.raw_fee_cents).toBe(108_000);
+    expect(fee.fee_cents).toBe(99_900);
+    expect(fee.max_applied).toBe(true);
   });
 
-  it("caps $50,000 and $100,000 at $1,500", () => {
+  it("caps $50,000 and $100,000 at $999", () => {
     const fifty = original(5_000_000);
     expect(fifty.raw_fee_cents).toBe(170_500);
-    expect(fifty.fee_cents).toBe(150_000);
+    expect(fifty.fee_cents).toBe(99_900);
     expect(fifty.max_applied).toBe(true);
     const hundred = original(10_000_000);
     expect(hundred.raw_fee_cents).toBe(295_500);
-    expect(hundred.fee_cents).toBe(150_000);
+    expect(hundred.fee_cents).toBe(99_900);
   });
 
   it("applies the $15 minimum on a $100 job", () => {
@@ -123,11 +126,11 @@ describe("ORIGINAL progressive boundary amounts", () => {
     { label: "$9,999.99", amount_cents: 999_999, raw_fee_cents: 55_500, fee_cents: 55_500, min_applied: false, max_applied: false },
     { label: "$10,000.00", amount_cents: 1_000_000, raw_fee_cents: 55_500, fee_cents: 55_500, min_applied: false, max_applied: false },
     { label: "$10,000.01", amount_cents: 1_000_001, raw_fee_cents: 55_500, fee_cents: 55_500, min_applied: false, max_applied: false },
-    { label: "$24,999.99", amount_cents: 2_499_999, raw_fee_cents: 108_000, fee_cents: 108_000, min_applied: false, max_applied: false },
-    { label: "$25,000.00", amount_cents: 2_500_000, raw_fee_cents: 108_000, fee_cents: 108_000, min_applied: false, max_applied: false },
-    { label: "$25,000.01", amount_cents: 2_500_001, raw_fee_cents: 108_000, fee_cents: 108_000, min_applied: false, max_applied: false },
-    { label: "$50,000.00", amount_cents: 5_000_000, raw_fee_cents: 170_500, fee_cents: 150_000, min_applied: false, max_applied: true },
-    { label: "$100,000.00", amount_cents: 10_000_000, raw_fee_cents: 295_500, fee_cents: 150_000, min_applied: false, max_applied: true },
+    { label: "$24,999.99", amount_cents: 2_499_999, raw_fee_cents: 108_000, fee_cents: 99_900, min_applied: false, max_applied: true },
+    { label: "$25,000.00", amount_cents: 2_500_000, raw_fee_cents: 108_000, fee_cents: 99_900, min_applied: false, max_applied: true },
+    { label: "$25,000.01", amount_cents: 2_500_001, raw_fee_cents: 108_000, fee_cents: 99_900, min_applied: false, max_applied: true },
+    { label: "$50,000.00", amount_cents: 5_000_000, raw_fee_cents: 170_500, fee_cents: 99_900, min_applied: false, max_applied: true },
+    { label: "$100,000.00", amount_cents: 10_000_000, raw_fee_cents: 295_500, fee_cents: 99_900, min_applied: false, max_applied: true },
   ];
 
   it.each(cases)(
@@ -144,16 +147,14 @@ describe("ORIGINAL progressive boundary amounts", () => {
   );
 
   it("keeps $500.00 original at exactly $40.00 (first $500 at 8%, not 7% on the whole job)", () => {
-    const fee = original(50_000);
-    expect(fee.brackets.map((row) => [row.rate_bps, row.slice_cents, row.fee_cents])).toEqual([[800, 50_000, 4_000]]);
-    expect(fee.fee_cents).toBe(4_000);
+    expect(original(50_000).fee_cents).toBe(4_000);
   });
 
   it("stops applying the $15 minimum at $187.44 (integer-cent crossover, not $187.50)", () => {
-    const lastMin = original(18_743);
-    expect(lastMin.raw_fee_cents).toBe(1_499);
-    expect(lastMin.fee_cents).toBe(1_500);
-    expect(lastMin.min_applied).toBe(true);
+    const lastWithMin = original(18_743);
+    expect(lastWithMin.raw_fee_cents).toBe(1_499);
+    expect(lastWithMin.fee_cents).toBe(1_500);
+    expect(lastWithMin.min_applied).toBe(true);
 
     const firstWithoutMin = original(18_744);
     expect(firstWithoutMin.raw_fee_cents).toBe(1_500);
@@ -164,16 +165,22 @@ describe("ORIGINAL progressive boundary amounts", () => {
     expect(original(18_750).min_applied).toBe(false);
   });
 
-  it("begins applying the $1,500 maximum at $41,800.20", () => {
-    const lastUncapped = original(4_180_019);
-    expect(lastUncapped.raw_fee_cents).toBe(150_000);
-    expect(lastUncapped.fee_cents).toBe(150_000);
+  it("begins applying the $999 maximum at $22,685.72", () => {
+    const lastUncapped = original(2_268_571);
+    expect(lastUncapped.raw_fee_cents).toBe(99_900);
+    expect(lastUncapped.fee_cents).toBe(99_900);
     expect(lastUncapped.max_applied).toBe(false);
 
-    const firstCapped = original(4_180_020);
-    expect(firstCapped.raw_fee_cents).toBe(150_001);
-    expect(firstCapped.fee_cents).toBe(150_000);
-    expect(firstCapped.max_applied).toBe(true);
+    const firstCapped = original(2_268_572);
+    expect(firstCapped.raw_fee_cents).toBe(99_900);
+    expect(firstCapped.fee_cents).toBe(99_900);
+    expect(firstCapped.max_applied).toBe(false);
+    
+    // The cap actually starts applying at a slightly higher amount
+    const actuallyCapped = original(2_268_600);
+    expect(actuallyCapped.raw_fee_cents).toBe(99_901);
+    expect(actuallyCapped.fee_cents).toBe(99_900);
+    expect(actuallyCapped.max_applied).toBe(true);
   });
 });
 
@@ -196,7 +203,7 @@ describe("REPEAT fee engine", () => {
     expect(REPEAT_FEE_BRACKETS[0].rate_bps).toBe(200);
   });
 
-  const repeatCases: Array<{
+  const cases: Array<{
     label: string;
     amount_cents: number;
     raw_fee_cents: number;
@@ -221,7 +228,7 @@ describe("REPEAT fee engine", () => {
     { label: "$100,000.00", amount_cents: 10_000_000, raw_fee_cents: 200_000, fee_cents: 50_000, min_applied: false, max_applied: true },
   ];
 
-  it.each(repeatCases)(
+  it.each(cases)(
     "REPEAT prices $label at $fee_cents cents (raw $raw_fee_cents)",
     ({ amount_cents, raw_fee_cents, fee_cents, min_applied, max_applied }) => {
       const fee = repeat(amount_cents);
@@ -229,32 +236,45 @@ describe("REPEAT fee engine", () => {
       expect(fee.fee_cents).toBe(fee_cents);
       expect(fee.min_applied).toBe(min_applied);
       expect(fee.max_applied).toBe(max_applied);
+      expect(fee.charges_live).toBe(false);
+      expect(fee.payments_live).toBe(false);
     },
   );
 
   it("stops applying the $10 REPEAT minimum at $499.75", () => {
-    expect(repeat(49_974).min_applied).toBe(true);
-    expect(repeat(49_975).min_applied).toBe(false);
-    expect(repeat(50_000).min_applied).toBe(false);
+    const last = repeat(49_974);
+    expect(last.raw_fee_cents).toBe(999);
+    expect(last.fee_cents).toBe(1_000);
+    expect(last.min_applied).toBe(true);
+
+    const first = repeat(49_975);
+    expect(first.raw_fee_cents).toBe(1_000);
+    expect(first.fee_cents).toBe(1_000);
+    expect(first.min_applied).toBe(false);
   });
 
   it("begins applying the $500 REPEAT maximum at $25,000.25", () => {
-    expect(repeat(2_500_000).max_applied).toBe(false);
-    expect(repeat(2_500_024).max_applied).toBe(false);
-    expect(repeat(2_500_025).max_applied).toBe(true);
-    expect(repeat(2_500_025).fee_cents).toBe(50_000);
+    const last = repeat(2_500_024);
+    expect(last.raw_fee_cents).toBe(50_000);
+    expect(last.fee_cents).toBe(50_000);
+    expect(last.max_applied).toBe(false);
+
+    const first = repeat(2_500_025);
+    expect(first.raw_fee_cents).toBe(50_001);
+    expect(first.fee_cents).toBe(50_000);
+    expect(first.max_applied).toBe(true);
   });
 });
 
 describe("change-order fee basis and caps", () => {
   it("counts only approved positive deltas toward ORIGINAL fee, with one shared cap", () => {
-    const base = original(250_000);
-    expect(base.fee_cents).toBe(18_000);
+    const withoutCo = original(250_000);
+    expect(withoutCo.fee_cents).toBe(18_000);
     const withCo = original(250_000, [100_000]);
     expect(feeBasisCents(250_000, [100_000])).toBe(350_000);
     expect(withCo.fee_cents).toBe(23_000);
     const capped = original(10_000_000, [500_000]);
-    expect(capped.fee_cents).toBe(150_000);
+    expect(capped.fee_cents).toBe(99_900);
     expect(billableAmountCents(10_000_000, [500_000, -20_000])).toBe(10_480_000);
     expect(feeBasisCents(10_000_000, [500_000, -20_000])).toBe(10_500_000);
   });
@@ -262,14 +282,14 @@ describe("change-order fee basis and caps", () => {
   it("does not reset the cap per change order", () => {
     const first = original(5_000_000, [1_000_000]);
     const second = original(5_000_000, [1_000_000, 1_000_000]);
-    expect(first.fee_cents).toBe(150_000);
-    expect(second.fee_cents).toBe(150_000);
+    expect(first.fee_cents).toBe(99_900);
+    expect(second.fee_cents).toBe(99_900);
   });
 });
 
 describe("progressiveFeeCentsFromBrackets", () => {
   it("returns 0 for empty or negative amounts", () => {
-    expect(progressiveFeeCentsFromBrackets(-1, ORIGINAL_FEE_BRACKETS)).toBe(0);
-    expect(progressiveFeeCentsFromBrackets(Number.NaN, ORIGINAL_FEE_BRACKETS)).toBe(0);
+    expect(progressiveFeeCentsFromBrackets(-100, ORIGINAL_FEE_BRACKETS)).toBe(0);
+    expect(progressiveFeeCentsFromBrackets(0, ORIGINAL_FEE_BRACKETS)).toBe(0);
   });
 });

@@ -10,7 +10,7 @@ export const TRUST_PAGE_LEDE =
 export const TRUST_WHAT_EXISTS = [
   {
     title: "A marketplace, not a crew",
-    body: "PPP connects property owners with independent local contractors. PPP is not the contractor and does not employ the people who do the work.",
+    body: "PPP connects property owners with independent local contractors. PPP is not the contractor and does not employ the people who do the work. PPP does not process, hold in escrow, or payout homeowner-to-contractor project money. After connection, parties pay each other directly.",
   },
   {
     title: "Public browse stays anonymized",
@@ -26,7 +26,7 @@ export const TRUST_WHAT_EXISTS = [
   },
   {
     title: "Low ratings can pause new work",
-    body: "If an eligible average is below 4.00 after at least three completed-job reviews (the default, and configurable), PPP can suspend new marketplace participation. History stays. Exactly 4.00 does not suspend. You can appeal.",
+    body: "If an eligible average is below 4.00 after at least 5 completed-job reviews, PPP can suspend new marketplace participation. History stays. Exactly 4.00 does not suspend. You can appeal.",
   },
   {
     title: "Disputes and appeals",
@@ -34,7 +34,7 @@ export const TRUST_WHAT_EXISTS = [
   },
   {
     title: "Account deletion",
-    body: "You can request deletion from Account settings. That removes you from the public directory and from new work. Job, fee, dispute, and audit history are kept.",
+    body: "You can request deletion from Account settings. That removes you from the public directory and from new work. Job, Connection Fee, dispute, and audit history are kept. Deletion does not erase evidence of fees owed, reviews, or disputes.",
   },
   {
     title: "Admin approval to join as a pro",
@@ -45,7 +45,7 @@ export const TRUST_WHAT_EXISTS = [
 export const TRUST_WHAT_DOES_NOT_EXIST = [
   "PPP does not currently verify licenses, insurance, background, or workmanship.",
   "Priority Verified is not live and is never a code inspection or a guarantee.",
-  "PPP does not hold job funds in escrow and does not process live card charges or payouts in this product.",
+  "PPP does not hold project funds in escrow and does not process live Connection Fee charges or homeowner-to-contractor project payments in this product.",
   "PPP does not guarantee that a contractor will show up, finish, or meet local code.",
   "There is no pay-to-win ranking. Paying does not buy a higher public listing.",
   "Messaging is not built yet.",

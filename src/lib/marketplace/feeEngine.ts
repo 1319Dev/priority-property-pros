@@ -14,7 +14,7 @@ export const REPEAT_FEE_BRACKETS: FeeBracket[] = [
 ];
 
 export const ORIGINAL_MIN_FEE_CENTS = 1_500;
-export const ORIGINAL_MAX_FEE_CENTS = 150_000;
+export const ORIGINAL_MAX_FEE_CENTS = 99_900;
 export const REPEAT_MIN_FEE_CENTS = 1_000;
 export const REPEAT_MAX_FEE_CENTS = 50_000;
 export const DEFAULT_RELATIONSHIP_PROTECTION_MONTHS = 12;

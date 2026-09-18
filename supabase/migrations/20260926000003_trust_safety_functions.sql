@@ -10,7 +10,7 @@ SET search_path = public
 AS $$
   SELECT greatest(
     1,
-    coalesce((SELECT value_int FROM public.platform_settings WHERE key = 'rating_suspension_min_reviews'), 3)
+    coalesce((SELECT value_int FROM public.platform_settings WHERE key = 'rating_suspension_min_reviews'), 5)
   );
 $$;
 

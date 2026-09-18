@@ -79,7 +79,7 @@ INSERT INTO public.fee_schedules (
     'PPP original progressive v1',
     true,
     1500,
-    150000
+    99900
   ),
   (
     '00000000-0000-4000-8000-000000000002',
@@ -380,9 +380,9 @@ BEGIN
   r := public.compute_fee(2500000, sid);
   IF (r->>'fee_cents')::int <> 108000 THEN RAISE EXCEPTION 'fee $25000 expected 108000 got %', r->>'fee_cents'; END IF;
   r := public.compute_fee(5000000, sid);
-  IF (r->>'fee_cents')::int <> 150000 THEN RAISE EXCEPTION 'fee $50000 expected cap 150000 got %', r->>'fee_cents'; END IF;
+  IF (r->>'fee_cents')::int <> 99900 THEN RAISE EXCEPTION 'fee $50000 expected cap 99900 got %', r->>'fee_cents'; END IF;
   r := public.compute_fee(10000000, sid);
-  IF (r->>'fee_cents')::int <> 150000 THEN RAISE EXCEPTION 'fee $100000 expected cap 150000 got %', r->>'fee_cents'; END IF;
+  IF (r->>'fee_cents')::int <> 99900 THEN RAISE EXCEPTION 'fee $100000 expected cap 99900 got %', r->>'fee_cents'; END IF;
   r := public.compute_fee(10000, sid);
   IF (r->>'fee_cents')::int <> 1500 THEN RAISE EXCEPTION 'fee $100 expected min 1500 got %', r->>'fee_cents'; END IF;
 
