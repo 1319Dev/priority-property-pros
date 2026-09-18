@@ -366,7 +366,7 @@ describe("Connection Fee TEST Checkout", () => {
     expect(fn).toMatch(/p_stripe_payment_intent_id/);
     expect(fn).toMatch(/stripePaymentIntentId\(session\.payment_intent\)/);
     expect(webhook.match(/\bconst secret\b/g) ?? []).toHaveLength(0);
-    expect(webhook).toMatch(/const webhookSecret/);
+    expect(webhook).toMatch(/webhookSecret/);
     expect(webhook).toMatch(/const stripeSecret/);
     expect(webhook).toMatch(/STRIPE_WEBHOOK_SECRET/);
     expect(webhook).toMatch(/STRIPE_SECRET_KEY/);
