@@ -24,11 +24,16 @@ export const CONNECT_CONFIRM_TITLE = "Connect with this customer for $4.99?";
 export const CONNECT_CONFIRM_BODY =
   "This purchases connection access to this customer. It does not guarantee a hire. Project payment is made directly between the homeowner or business and the contractor. PPP takes no percentage of the job.";
 
+export const CONNECT_CHECKOUT_CONFIRM_EXTRA =
+  "If checkout is available you will continue to a $4.99 payment page. Contact stays locked until the server verifies that payment. Returning from checkout does not unlock contact by itself.";
+
 export const CONNECT_PAYMENTS_OFF_COPY =
   "Connection requested. Online payment setup is coming soon. Contact stays locked until a trusted $4.99 payment is verified. Clicking Connect does not unlock contact.";
 
+export const CONNECT_REDIRECTING_COPY = "Continuing to $4.99 checkout. Contact stays locked until payment is verified.";
+
 export const CONNECT_DOES_NOT_UNLOCK_COPY =
-  "Clicking Connect does not unlock name, phone, email, or exact street. Payments are off.";
+  "Clicking Connect does not unlock name, phone, email, or exact street. The success page cannot grant access.";
 
 export const CONNECTION_FEE_NO_GUARANTEE =
   "The $4.99 Connection Fee buys connection access. It does not guarantee a hire or the work.";

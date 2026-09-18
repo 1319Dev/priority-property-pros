@@ -936,6 +936,45 @@ export async function signedContractorDocUrl(path: string): Promise<string | nul
   return data.signedUrl;
 }
 
+export async function fetchConnectionFeeCheckoutFlags(): Promise<{
+  enabled: boolean;
+  fee_cents: number;
+  stripe_test_mode: boolean;
+}> {
+  const { data, error } = await client().rpc("connection_fee_checkout_flags");
+  if (error) throw new Error(asError(error, "Could not load connection checkout flags."));
+  const row = (data ?? {}) as Record<string, unknown>;
+  return {
+    enabled: row.enabled === true,
+    fee_cents: Number(row.fee_cents ?? 499),
+    stripe_test_mode: row.stripe_test_mode !== false,
+  };
+}
+
+export async function startConnectionCheckout(input: {
+  projectId: string;
+  opportunityId?: string;
+  origin?: string;
+}): Promise<RpcJson> {
+  const { data, error } = await client().functions.invoke("create-connection-checkout", {
+    body: {
+      project_id: input.projectId,
+      opportunity_id: input.opportunityId ?? null,
+      origin: input.origin ?? (typeof window !== "undefined" ? window.location.origin : ""),
+    },
+  });
+  if (error) throw new Error(asError(error, "Could not start Connection Fee checkout."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function reconcileConnectionCheckout(sessionId: string): Promise<RpcJson> {
+  const { data, error } = await client().functions.invoke("reconcile-connection-checkout", {
+    body: { session_id: sessionId },
+  });
+  if (error) throw new Error(asError(error, "Could not verify the checkout session."));
+  return (data ?? {}) as RpcJson;
+}
+
 export async function requestProjectConnection(projectId: string, idempotencyKey?: string): Promise<RpcJson> {
   const { data, error } = await client().rpc("request_project_connection", {
     p_project_id: projectId,
@@ -960,6 +999,7 @@ export async function fetchProjectConnectionAvailability(projectId: string): Pro
     accepting_connections: row.accepting_connections !== false,
     full: Boolean(row.full),
     fee_cents: Number(row.fee_cents ?? 499),
+    checkout_enabled: Boolean(row.checkout_enabled),
     payments_live: false,
     charges_live: false,
   };

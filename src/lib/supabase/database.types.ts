@@ -935,6 +935,8 @@ export type Database = {
         Args: { p_project_id: string; p_idempotency_key?: string | null };
         Returns: Json;
       };
+      connection_fee_checkout_flags: { Args: Record<string, never>; Returns: Json };
+      connection_fee_checkout_enabled: { Args: Record<string, never>; Returns: boolean };
       stop_new_project_connections: { Args: { p_project_id: string }; Returns: Json };
       list_my_project_connections: { Args: { p_project_id?: string | null }; Returns: Json };
       submit_content_report: {

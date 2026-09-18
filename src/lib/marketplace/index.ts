@@ -19,6 +19,11 @@ export { detectContactLeak, CONTACT_AFTER_CONNECTION_COPY } from "./contactLeak"
 export { assertNoPreHireContact, PRE_HIRE_CONTACT_MESSAGE } from "./antiCircumvention";
 export { connectionFeeCents, serverConnectionFee, clientCannotChangeConnectionPrice } from "./connectionFee";
 export {
+  STRIPE_CONNECTION_PRICE_ID,
+  successUrlUnlocksContact,
+  CONNECTION_FEE_CHECKOUT_ENABLED,
+} from "./connectionCheckout";
+export {
   connectClickUnlocksContact,
   connectionAvailabilityCopy,
   canRequestConnection,

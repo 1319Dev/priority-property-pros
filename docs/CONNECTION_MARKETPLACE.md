@@ -12,12 +12,13 @@ Active product model: PPP is a **connection marketplace**. It does **not** proce
 | --- | --- |
 | `payments_live` | 0 (unchanged) |
 | `charges_live` | 0 (unchanged) |
-| `signup_fee_enabled` | 0 (recorded; checkout is not implemented here — PR #12 is parked) |
-| `stripe_test_mode` | 1 (recorded only; **no Stripe code**) |
+| `signup_fee_enabled` | 0 (recorded; $9.99 checkout stays in parked PR #12) |
+| `stripe_test_mode` | 1 |
+| `connection_fee_checkout_enabled` | 0 by default. Staging-only Stripe TEST Checkout for $4.99 when the owner enables it. Independent of `payments_live`. |
 
-Clicking **Connect — $4.99** creates a `PAYMENT_DISABLED` connection, reserves a slot, and leaves `connection_contact_access` **LOCKED**. It does **not** unlock contact.
+Clicking **Connect — $4.99** never unlocks contact by itself. When checkout is off, the row stays `PAYMENT_DISABLED` + `LOCKED`. When enabled on staging, the contractor goes to Stripe-hosted TEST Checkout; webhook/reconcile must verify Price ID + 499 USD before `connection_contact_access` is UNLOCKED. Success URLs cannot grant access.
 
-Future: trusted server-side verification of $4.99 may call `grant_connection_contact_access_from_fee` (stubbed, not granted to clients).
+See [`CONNECTION_FEE_CHECKOUT.md`](CONNECTION_FEE_CHECKOUT.md).
 
 ## Max 3
 

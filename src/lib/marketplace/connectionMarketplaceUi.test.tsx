@@ -29,5 +29,6 @@ describe("Connection marketplace mobile UI", () => {
     render(<ConnectConfirmDialog open busy={false} onConfirm={() => undefined} onClose={() => undefined} />);
     expect(screen.getByText(/Connect with this customer for \$4\.99/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Connect — \$4\.99/i })).toBeInTheDocument();
+    expect(screen.getByText(/contact stays locked until the server verifies/i)).toBeInTheDocument();
   });
 });

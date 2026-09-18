@@ -22,7 +22,7 @@ describe("Supabase public config", () => {
     expect(example).toMatch(/your-anon-public-key/);
     expect(example).not.toMatch(/^[^#]*SERVICE_ROLE.*=\s*eyJ/m);
     expect(example).not.toMatch(/sk_live/);
-    expect(example).not.toMatch(/STRIPE_SECRET/);
+    expect(example).not.toMatch(/^[^#]*STRIPE_SECRET.*=\s*\S+/m);
   });
 
   it("does not declare privileged keys on the Vite client type surface", () => {

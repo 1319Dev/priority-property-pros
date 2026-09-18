@@ -27,6 +27,8 @@ import {
   fetchMyOpportunities,
   fetchPortfolio,
   fetchProjectConnectionAvailability,
+  fetchConnectionFeeCheckoutFlags,
+  startConnectionCheckout,
   fetchProjectNotices,
   fetchProjectAnswers,
   fetchProjectPhotos,
@@ -54,6 +56,7 @@ import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import {
   CONNECT_BUTTON_LABEL,
   CONNECT_PAYMENTS_OFF_COPY,
+  CONNECT_REDIRECTING_COPY,
   connectionAvailabilityCopy,
 } from "../../../lib/marketplace/connectionLifecycle";
 import { canWithdrawFrom, WITHDRAW_ESTIMATE_BODY, WITHDRAW_ESTIMATE_CONFIRM, WITHDRAW_ESTIMATE_TITLE } from "../../../lib/marketplace/estimateLifecycle";
@@ -650,11 +653,27 @@ export function OpportunityDetailPage() {
         onClose={() => setConnectOpen(false)}
         onConfirm={() => {
           setBusy(true);
-          void requestProjectConnection(row.project_id)
-            .then(() => {
-              toast.push(CONNECT_PAYMENTS_OFF_COPY);
-              setConnectOpen(false);
-              return reload();
+          void fetchConnectionFeeCheckoutFlags()
+            .then((flags) => {
+              if (flags.enabled) {
+                return startConnectionCheckout({
+                  projectId: row.project_id,
+                  opportunityId: row.id,
+                }).then((result) => {
+                  const url = typeof result.checkout_url === "string" ? result.checkout_url : "";
+                  if (url) {
+                    toast.push(CONNECT_REDIRECTING_COPY);
+                    window.location.assign(url);
+                    return;
+                  }
+                  throw new Error(String(result.error ?? result.message ?? "Checkout is not available."));
+                });
+              }
+              return requestProjectConnection(row.project_id).then(() => {
+                toast.push(CONNECT_PAYMENTS_OFF_COPY);
+                setConnectOpen(false);
+                return reload();
+              });
             })
             .catch((err: Error) => setError(err.message))
             .finally(() => setBusy(false));

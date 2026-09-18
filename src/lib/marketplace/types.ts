@@ -75,8 +75,9 @@ export const CONNECTION_FEE_CENTS = 499;
 export const CONNECTION_FEE_USD = "$4.99";
 export const MAX_COMPLETED_CONNECTIONS = 3;
 export const SIGNUP_FEE_ENABLED = false;
-/** Intended Stripe mode if payments are ever enabled. Does not enable Stripe. */
+/** Intended Stripe mode if payments are ever enabled. Does not enable Stripe.js or live keys. */
 export const STRIPE_TEST_MODE = true;
+/** No Stripe.js / Connect / PaymentIntent in the browser. Checkout is an Edge Function redirect. */
 export const STRIPE_ENABLED = false;
 
 export const PROJECT_CONNECTION_STATUSES = [
@@ -111,6 +112,10 @@ export type ProjectConnection = {
   payments_live: false;
   charges_live: false;
   reserved_at: string | null;
+  reserved_until?: string | null;
+  needs_refund?: boolean;
+  refund_reason?: string | null;
+  stripe_checkout_session_id?: string | null;
   paid_at: string | null;
   completed_at: string | null;
   cancelled_at: string | null;
@@ -139,6 +144,7 @@ export type ConnectionAvailability = {
   accepting_connections: boolean;
   full: boolean;
   fee_cents: number;
+  checkout_enabled?: boolean;
   payments_live: false;
   charges_live: false;
 };

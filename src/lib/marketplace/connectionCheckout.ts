@@ -1,0 +1,300 @@
+/**
+ * Connection Fee TEST Checkout — server-authoritative rules.
+ * Price ID and amount never come from the browser. Success URLs never unlock contact.
+ * Do not import Stripe secrets here. Do not enable job payments / Connect / payouts.
+ */
+
+import { CONNECTION_FEE_CENTS } from "./types";
+import { connectionEntitlementAllowsReveal } from "./connectionLifecycle";
+import type { ContactAccessStatus, ProjectConnectionStatus } from "./types";
+
+/** Server Price ID for the $4.99 Connection Fee. Not a secret. Never send from the client. */
+export const STRIPE_CONNECTION_PRICE_ID = "price_1UH1RsPYJQAIQDv721IhjKS0";
+
+/** Config compatibility only. Activation checkout stays in parked PR #12. Unused by this flow. */
+export const STRIPE_ACTIVATION_PRICE_ID = "price_1UH1SePYJQAIQDv7nrMo32Xp";
+
+export const CONNECTION_FEE_CURRENCY = "usd";
+export const CONNECTION_RESERVATION_TTL_SECONDS = 30 * 60;
+export const CONNECTION_CHECKOUT_KIND = "connection_fee";
+
+/** Client/build constant. Live behavior is platform_settings.connection_fee_checkout_enabled. */
+export const CONNECTION_FEE_CHECKOUT_ENABLED = false;
+
+export const LEGACY_JOB_PAYMENT_FUNCTIONS = [
+  "stripe-webhook",
+  "create-payment-intent",
+  "create-connect-account-link",
+  "create-transfer",
+  "create-refund",
+] as const;
+
+export const SIGNUP_FEE_FUNCTIONS_OWNED_BY_PR_12 = [
+  "create-signup-fee-checkout",
+  "confirm-signup-fee-session",
+  "signup-fee-webhook",
+] as const;
+
+export type CheckoutSessionLike = {
+  id?: string;
+  object?: string;
+  livemode?: boolean;
+  mode?: string;
+  payment_status?: string;
+  status?: string;
+  currency?: string | null;
+  amount_total?: number | null;
+  client_reference_id?: string | null;
+  metadata?: Record<string, string | undefined> | null;
+  line_items?: {
+    data?: Array<{
+      price?: { id?: string; unit_amount?: number | null; currency?: string | null } | null;
+      amount_total?: number | null;
+    }>;
+  } | null;
+};
+
+export type FulfillDecision =
+  | { ok: true; grant: true; reason: "paid_valid_session" }
+  | { ok: true; grant: false; reason: "already_fulfilled" }
+  | { ok: false; grant: false; reason: string; needsRefund?: boolean };
+
+export function serverConnectionPriceId(clientPriceId?: string | null): string {
+  void clientPriceId;
+  return STRIPE_CONNECTION_PRICE_ID;
+}
+
+export function clientCannotSubstitutePriceId(attempted: string | null | undefined): boolean {
+  if (attempted == null || attempted === "") return true;
+  return attempted === STRIPE_CONNECTION_PRICE_ID;
+}
+
+export function clientCannotSubstituteAmount(attempted: number | null | undefined): boolean {
+  if (attempted == null) return true;
+  return attempted === CONNECTION_FEE_CENTS;
+}
+
+export function requireTestStripeSecret(secret: string): string {
+  const value = secret.trim();
+  if (!value.startsWith("sk_test_") || value.length < 16) {
+    throw new Error("Connection Fee checkout accepts only Stripe TEST secrets (sk_test_). Live keys are forbidden.");
+  }
+  return value;
+}
+
+export function requireWebhookSecret(secret: string): string {
+  const value = secret.trim();
+  if (!value.startsWith("whsec_") || value.length < 16) {
+    throw new Error("STRIPE_WEBHOOK_SECRET is missing or not a webhook secret");
+  }
+  return value;
+}
+
+export function successUrlUnlocksContact(_search: string | URLSearchParams | null | undefined): false {
+  void _search;
+  return false;
+}
+
+export function fakeSessionUnlocksContact(): false {
+  return false;
+}
+
+export function unpaidSessionUnlocksContact(): false {
+  return false;
+}
+
+export function queryParamPaidStateUnlocksContact(paidQuery: string | null | undefined): false {
+  void paidQuery;
+  return false;
+}
+
+export function reservationOccupiesSlot(
+  status: ProjectConnectionStatus,
+  reservedUntil: string | Date | null | undefined,
+  now = new Date(),
+): boolean {
+  if (status === "PAID" || status === "COMPLETED" || status === "PAYMENT_DISABLED") return true;
+  if (status !== "RESERVED") return false;
+  if (!reservedUntil) return true;
+  return new Date(reservedUntil).getTime() > now.getTime();
+}
+
+export function expiredReservationReleasesSpot(
+  status: ProjectConnectionStatus,
+  reservedUntil: string | Date,
+  now = new Date(),
+): boolean {
+  return status === "RESERVED" && new Date(reservedUntil).getTime() <= now.getTime();
+}
+
+export function stopNewConnectionsRejectsCheckout(accepting: boolean, hasInFlightReservation: boolean): {
+  rejectNew: boolean;
+  allowInFlightFinalize: boolean;
+} {
+  if (accepting) return { rejectNew: false, allowInFlightFinalize: true };
+  return { rejectNew: true, allowInFlightFinalize: hasInFlightReservation };
+}
+
+export function fourthFinalizedConnectionAllowed(finalizedCount: number, max = 3): boolean {
+  return finalizedCount < max;
+}
+
+export function concurrentFinalSlotWinner(firstReserved: boolean, secondReserved: boolean): number {
+  return Number(firstReserved) + Number(secondReserved);
+}
+
+export function lineItemPriceId(session: CheckoutSessionLike): string | null {
+  const price = session.line_items?.data?.[0]?.price;
+  return price?.id ?? null;
+}
+
+export function evaluateStripeSessionForFulfillment(input: {
+  session: CheckoutSessionLike;
+  expectedConnectionId: string;
+  expectedProjectId: string;
+  expectedContractorProfileId: string;
+  alreadyConsumed?: boolean;
+  alreadyUnlocked?: boolean;
+  reservationActive?: boolean;
+  occupiedAfterExpire?: number;
+  hasSlot?: boolean;
+  stripeTestMode?: boolean;
+  connectionFeeCheckoutEnabled?: boolean;
+}): FulfillDecision {
+  if (input.connectionFeeCheckoutEnabled === false) {
+    return { ok: false, grant: false, reason: "connection_fee_checkout_disabled" };
+  }
+  if (input.stripeTestMode === false) {
+    return { ok: false, grant: false, reason: "stripe_test_mode_required" };
+  }
+  const session = input.session;
+  if (!session.id || !String(session.id).startsWith("cs_test_")) {
+    return { ok: false, grant: false, reason: "fake_or_live_session" };
+  }
+  if (session.livemode) {
+    return { ok: false, grant: false, reason: "live_mode_forbidden" };
+  }
+  if (session.mode && session.mode !== "payment") {
+    return { ok: false, grant: false, reason: "wrong_mode" };
+  }
+  const metadata = session.metadata ?? {};
+  if (metadata.ppp_kind !== CONNECTION_CHECKOUT_KIND) {
+    return { ok: false, grant: false, reason: "mismatched_metadata" };
+  }
+  if (metadata.connection_id !== input.expectedConnectionId) {
+    return { ok: false, grant: false, reason: "mismatched_metadata" };
+  }
+  if (metadata.project_id !== input.expectedProjectId) {
+    return { ok: false, grant: false, reason: "mismatched_metadata" };
+  }
+  if (metadata.contractor_profile_id !== input.expectedContractorProfileId) {
+    return { ok: false, grant: false, reason: "mismatched_metadata" };
+  }
+  if (session.client_reference_id && session.client_reference_id !== input.expectedConnectionId) {
+    return { ok: false, grant: false, reason: "mismatched_metadata" };
+  }
+  const priceId = lineItemPriceId(session);
+  if (priceId && priceId !== STRIPE_CONNECTION_PRICE_ID) {
+    return { ok: false, grant: false, reason: "wrong_price_id", needsRefund: true };
+  }
+  const currency = (session.currency ?? session.line_items?.data?.[0]?.price?.currency ?? "").toLowerCase();
+  if (currency && currency !== CONNECTION_FEE_CURRENCY) {
+    return { ok: false, grant: false, reason: "wrong_currency", needsRefund: true };
+  }
+  const amount = session.amount_total ?? session.line_items?.data?.[0]?.amount_total ?? null;
+  if (amount != null && amount !== CONNECTION_FEE_CENTS) {
+    return { ok: false, grant: false, reason: "wrong_amount", needsRefund: true };
+  }
+  if (session.payment_status !== "paid") {
+    return { ok: false, grant: false, reason: "unpaid" };
+  }
+  if (input.alreadyUnlocked && input.alreadyConsumed) {
+    return { ok: true, grant: false, reason: "already_fulfilled" };
+  }
+  if (!input.reservationActive) {
+    return { ok: false, grant: false, reason: "reservation_not_active", needsRefund: true };
+  }
+  if (input.hasSlot === false) {
+    const reason = (input.occupiedAfterExpire ?? 0) >= 3 ? "connections_full" : "reservation_not_active";
+    return { ok: false, grant: false, reason, needsRefund: true };
+  }
+  return { ok: true, grant: true, reason: "paid_valid_session" };
+}
+
+export function contactAfterFulfillment(granted: boolean): ContactAccessStatus {
+  return granted ? "UNLOCKED" : "LOCKED";
+}
+
+export function entitlementFromFulfillment(granted: boolean): boolean {
+  return connectionEntitlementAllowsReveal({
+    status: contactAfterFulfillment(granted),
+    revoked_at: null,
+  });
+}
+
+export function webhookEventShouldFulfill(type: string, paymentStatus?: string): boolean {
+  if (type === "checkout.session.async_payment_failed" || type === "checkout.session.expired") return false;
+  if (type !== "checkout.session.completed" && type !== "checkout.session.async_payment_succeeded") return false;
+  return paymentStatus === "paid";
+}
+
+export function webhookEventShouldExpire(type: string): boolean {
+  return type === "checkout.session.expired" || type === "checkout.session.async_payment_failed";
+}
+
+export function duplicateWebhookIsHarmless(alreadyProcessedEventId: boolean, alreadyUnlocked: boolean): boolean {
+  return alreadyProcessedEventId || alreadyUnlocked;
+}
+
+export function unauthenticatedCheckoutRejected(userId: string | null | undefined): boolean {
+  return !userId;
+}
+
+export function ineligibleContractorRejected(input: {
+  accountStatus?: string | null;
+  approvalStatus?: string | null;
+  hasAcceptedOpportunity?: boolean;
+  isContractor?: boolean;
+}): boolean {
+  if (!input.isContractor) return true;
+  if (input.accountStatus !== "ACTIVE") return true;
+  if (input.approvalStatus !== "APPROVED") return true;
+  if (!input.hasAcceptedOpportunity) return true;
+  return false;
+}
+
+export function allowedReturnOrigin(origin: string, siteUrl?: string | null): boolean {
+  const value = origin.trim().replace(/\/$/, "");
+  if (!value) return false;
+  if (siteUrl && value === siteUrl.replace(/\/$/, "")) return true;
+  try {
+    const url = new URL(value);
+    if (url.protocol === "http:" && (url.hostname === "localhost" || url.hostname === "127.0.0.1")) return true;
+    if (url.protocol !== "https:") return false;
+    if (url.username || url.password || url.search || url.hash) return false;
+    return Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+export function connectionCheckoutSuccessPath(): string {
+  return "/app/pro/connections/return";
+}
+
+export function buildCheckoutUrls(origin: string, opportunityId: string): { successUrl: string; cancelUrl: string } {
+  const base = origin.replace(/\/$/, "");
+  return {
+    successUrl: `${base}${connectionCheckoutSuccessPath()}?session_id={CHECKOUT_SESSION_ID}`,
+    cancelUrl: `${base}/app/pro/opportunities/${encodeURIComponent(opportunityId)}`,
+  };
+}
+
+export function stripeMetadataIsSafe(metadata: Record<string, string>): boolean {
+  const forbidden = ["phone", "email", "street", "name", "first_name", "last_name", "lat", "lng"];
+  return !forbidden.some((key) => key in metadata && metadata[key] != null && metadata[key] !== "");
+}
+
+export function trustedFulfillmentPathOnly(source: "success_url" | "webhook" | "reconcile"): boolean {
+  return source === "webhook" || source === "reconcile";
+}

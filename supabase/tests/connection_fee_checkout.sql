@@ -1,0 +1,6 @@
+-- Connection Fee TEST Checkout expectations.
+-- Do NOT run against production bersftkjpbzpgtahbqwd.
+-- Staging only after secrets: giiskdvitimksdewnelc
+--
+-- payments_live=0 charges_live=0 signup_fee_enabled=0 stripe_test_mode=1
+-- connection_fee_checkout_enabled=0 until owner enables staging.
