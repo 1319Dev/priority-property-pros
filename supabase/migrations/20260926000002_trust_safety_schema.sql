@@ -1,5 +1,6 @@
 -- Trust, reviews, disputes, deletion, and rating-suspension tables.
 -- Additive. Does not enable Stripe or change payment flags.
+-- Preview/staging only: giiskdvitimksdewnelc. Do NOT apply to production bersftkjpbzpgtahbqwd.
 
 INSERT INTO public.platform_settings (key, value_int, description)
 VALUES (
@@ -115,6 +116,7 @@ CREATE TABLE IF NOT EXISTS public.trust_disputes (
 CREATE INDEX IF NOT EXISTS trust_disputes_filer_idx ON public.trust_disputes (filer_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS trust_disputes_status_idx ON public.trust_disputes (status, created_at DESC);
 
+DROP TRIGGER IF EXISTS trust_disputes_set_updated_at ON public.trust_disputes;
 CREATE TRIGGER trust_disputes_set_updated_at
   BEFORE UPDATE ON public.trust_disputes
   FOR EACH ROW

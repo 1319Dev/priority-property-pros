@@ -32,6 +32,7 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
   it("renders the app shell without crashing", () => {
     renderApp("/");
     expect(screen.getAllByLabelText(/priority property pros home/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/staging \/ preview/i)).not.toBeInTheDocument();
   });
 
   it("shows the homepage customer tagline", () => {

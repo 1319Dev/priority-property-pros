@@ -52,6 +52,8 @@ jobs:
           # Never add SUPABASE_SERVICE_ROLE_KEY here.
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          # PR preview artifact only. Main/Pages builds stay unset unless the repo variable is set.
+          VITE_PUBLIC_ENVIRONMENT: ${{ github.event_name == 'pull_request' && 'staging' || vars.VITE_PUBLIC_ENVIRONMENT }}
 
       - name: Upload PR preview build (does not deploy production Pages)
         if: github.event_name == 'pull_request'

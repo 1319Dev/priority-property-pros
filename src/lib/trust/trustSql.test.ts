@@ -88,4 +88,17 @@ describe("trust and safety SQL", () => {
     expect(latest).not.toMatch(/GRANT EXECUTE ON FUNCTION public\.create_trust_dispute[^\n]+TO anon/);
     expect(latest).toMatch(/GRANT EXECUTE ON FUNCTION public\.list_public_fee_schedule\(\) TO anon, authenticated/);
   });
+
+  it("uses helper function names for ppp.rpc tokens and rating-suspension RPCs", () => {
+    expect(latest).toMatch(/PERFORM public\.ppp_set_rpc\('apply_rating_suspension_if_needed'\)/);
+    expect(latest).toMatch(/PERFORM public\.ppp_set_rpc\('maybe_clear_rating_suspension'\)/);
+    expect(latest).toMatch(/CREATE OR REPLACE FUNCTION public\.apply_rating_suspension_if_needed/);
+    expect(latest).toMatch(/CREATE OR REPLACE FUNCTION public\.maybe_clear_rating_suspension/);
+    expect(latest).toMatch(/DROP FUNCTION IF EXISTS public\.maybe_lift_rating_suspension/);
+    expect(latest).toMatch(/'apply_rating_suspension_if_needed'/);
+    expect(latest).toMatch(/'maybe_clear_rating_suspension'/);
+    expect(latest).not.toMatch(/ppp_set_rpc\('apply_rating_suspension'\)/);
+    expect(latest).toMatch(/default 5/);
+    expect(latest).not.toMatch(/minimum reviews \(default 3\)/);
+  });
 });

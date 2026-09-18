@@ -1,5 +1,10 @@
 -- Trust & safety RPCs: two-sided reviews, rating suspension, disputes, deletion.
 -- Does not enable Stripe. Does not change payments_live / charges_live / signup_fee_enabled / stripe_test_mode.
+-- Preview/staging only: giiskdvitimksdewnelc. Do NOT apply to production bersftkjpbzpgtahbqwd.
+-- Function names match TypeScript helpers and ppp.rpc tokens:
+--   apply_rating_suspension_if_needed / maybe_clear_rating_suspension
+--   create_trust_dispute / admin_resolve_trust_dispute / request_account_deletion
+-- Staging previously created maybe_lift_rating_suspension; that name is dropped below.
 
 CREATE OR REPLACE FUNCTION public.rating_suspension_min_reviews()
 RETURNS integer
@@ -116,7 +121,7 @@ CREATE OR REPLACE FUNCTION public.write_account_lifecycle(
   p_profile_id uuid,
   p_from public.account_status,
   p_to public.account_status,
-  p_reason public.account_restriction_reason,
+  p_reason public.account_restriction_reason DEFAULT NULL,
   p_payload jsonb DEFAULT '{}'::jsonb
 )
 RETURNS uuid
@@ -192,7 +197,7 @@ DECLARE
   p public.profiles;
   v_min integer;
 BEGIN
-  PERFORM public.ppp_set_rpc('apply_rating_suspension');
+  PERFORM public.ppp_set_rpc('apply_rating_suspension_if_needed');
   snap := public.recompute_profile_rating(p_profile_id);
   v_count := (snap->>'eligible_count')::integer;
   v_avg := (snap->>'rating_average')::numeric;
@@ -255,7 +260,7 @@ DECLARE
   p public.profiles;
   v_min integer;
 BEGIN
-  PERFORM public.ppp_set_rpc('apply_rating_suspension');
+  PERFORM public.ppp_set_rpc('maybe_clear_rating_suspension');
   snap := public.recompute_profile_rating(p_profile_id);
   v_count := (snap->>'eligible_count')::integer;
   v_avg := (snap->>'rating_average')::numeric;
@@ -291,6 +296,8 @@ BEGIN
   RETURN snap || jsonb_build_object('reinstated', false);
 END;
 $$;
+
+DROP FUNCTION IF EXISTS public.maybe_lift_rating_suspension(uuid);
 
 CREATE OR REPLACE FUNCTION public.submit_booking_review(
   p_booking_id uuid,

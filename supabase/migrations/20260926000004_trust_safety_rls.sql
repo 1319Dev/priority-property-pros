@@ -1,5 +1,7 @@
 -- RLS, grants, directory rating filters, and profile-protect exceptions for trust RPCs.
 -- Does not open private contact or public contractor identity.
+-- Preview/staging only: giiskdvitimksdewnelc. Do NOT apply to production bersftkjpbzpgtahbqwd.
+-- ppp.rpc tokens must match the helper function names in 20260926000003.
 
 CREATE OR REPLACE FUNCTION public.protect_profile_columns()
 RETURNS trigger
@@ -33,7 +35,8 @@ BEGIN
      AND auth.uid() IS NOT NULL
      AND NOT public.is_admin()
      AND rpc NOT IN (
-       'apply_rating_suspension',
+       'apply_rating_suspension_if_needed',
+       'maybe_clear_rating_suspension',
        'request_account_deletion',
        'admin_resolve_trust_dispute'
      ) THEN
@@ -269,8 +272,14 @@ GRANT EXECUTE ON FUNCTION public.list_public_fee_schedule() TO anon, authenticat
 REVOKE ALL ON FUNCTION public.rating_suspension_min_reviews() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.rating_suspension_min_reviews() TO authenticated;
 
-REVOKE ALL ON FUNCTION public.apply_rating_suspension_if_needed(uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.maybe_clear_rating_suspension(uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.recompute_profile_rating(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.apply_rating_suspension_if_needed(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.maybe_clear_rating_suspension(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.recompute_profile_rating(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.write_account_lifecycle(uuid, public.account_status, public.account_status, public.account_restriction_reason, jsonb) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.account_may_start_new_marketplace_work(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.enforce_new_marketplace_participation() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.protect_trust_dispute_row() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.forbid_trust_dispute_event_mutation() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.protect_lifecycle_and_rating_rows() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.assert_caller_can_start_marketplace_work() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.assert_caller_can_start_marketplace_work() TO authenticated;

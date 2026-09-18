@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
+import { StagingPreviewBanner } from "./components/layout/StagingPreviewBanner";
 import { RequireAdmin, RequireAuth, RequireRole } from "./lib/auth/guards";
 import { BecomeAProPage } from "./pages/BecomeAProPage";
 import {
@@ -63,7 +64,9 @@ import {
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <StagingPreviewBanner />
+      <Routes>
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/find-a-pro" element={<FindAProPage />} />
@@ -162,5 +165,6 @@ export default function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
+    </>
   );
 }
