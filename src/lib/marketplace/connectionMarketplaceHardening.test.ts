@@ -55,15 +55,6 @@ function functionBody(sql: string, name: string): string {
   return end === -1 ? rest : rest.slice(0, end);
 }
 
-function walk(dir: string, acc: string[] = []): string[] {
-  for (const name of readdirSync(dir, { withFileTypes: true })) {
-    const next = path.join(dir, name.name);
-    if (name.isDirectory()) walk(next, acc);
-    else acc.push(next);
-  }
-  return acc;
-}
-
 function srcFile(rel: string): string {
   return readFileSync(path.join(repoRoot, rel), "utf8");
 }
