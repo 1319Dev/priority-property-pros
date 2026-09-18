@@ -9,7 +9,7 @@ import {
 export function BecomeAProPage() {
   return (
     <ComingSoonLayout
-      photo="electrical"
+      photo="house"
       eyebrow="Become a Pro"
       title="Real projects. Real customers. Fair competition."
       body={`${CONTRACTOR_SIGNUP_HEADLINE} ${CONTRACTOR_SIGNUP_SUPPORTING} Create a contractor account, finish onboarding, and wait for admin approval. You remain an independent business. PPP will not sell the same job to five contractors.`}

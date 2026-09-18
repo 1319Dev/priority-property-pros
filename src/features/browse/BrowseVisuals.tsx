@@ -1,26 +1,54 @@
 import { Link } from "react-router-dom";
 import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { Container } from "../../components/ui/Container";
-import type { MarketingPhotoId } from "../../data/marketingPhotos";
 
 type IllustrationKind = "hero" | "fence" | "interior" | "yard";
 
-const KIND_TO_PHOTO: Record<IllustrationKind, MarketingPhotoId> = {
-  hero: "finished",
-  fence: "fence",
-  interior: "handyman",
-  yard: "landscaping",
-};
+function FenceArt() {
+  return (
+    <svg viewBox="0 0 240 160" className="h-full w-full" role="img" aria-label="Abstract screened fence work illustration">
+      <rect width="240" height="160" fill="#EFE6D4" />
+      <rect x="18" y="108" width="204" height="10" fill="#1F3D32" />
+      {Array.from({ length: 8 }, (_, i) => (
+        <rect key={i} x={24 + i * 26} y="48" width="16" height="70" rx="3" fill="#2B5345" />
+      ))}
+      <rect x="18" y="70" width="204" height="8" fill="#C9A227" />
+    </svg>
+  );
+}
+
+function InteriorArt() {
+  return (
+    <svg viewBox="0 0 240 160" className="h-full w-full" role="img" aria-label="Abstract screened interior repair illustration">
+      <rect width="240" height="160" fill="#F4EFE4" />
+      <rect x="20" y="28" width="200" height="110" rx="8" fill="#1F3D32" />
+      <rect x="40" y="48" width="88" height="54" rx="4" fill="#C9A227" />
+      <rect x="142" y="86" width="58" height="36" rx="4" fill="#EFE6D4" />
+    </svg>
+  );
+}
+
+function YardArt() {
+  return (
+    <svg viewBox="0 0 240 160" className="h-full w-full" role="img" aria-label="Abstract screened yard work illustration">
+      <rect width="240" height="160" fill="#EFE6D4" />
+      <ellipse cx="120" cy="118" rx="92" ry="22" fill="#2B5345" />
+      <circle cx="78" cy="70" r="22" fill="#1F3D32" />
+      <circle cx="150" cy="62" r="28" fill="#1F3D32" />
+      <rect x="146" y="84" width="8" height="28" fill="#C9A227" />
+    </svg>
+  );
+}
 
 export function BrowseIllustration({ kind, className = "" }: { kind: IllustrationKind; className?: string }) {
-  const photo = KIND_TO_PHOTO[kind];
   return (
     <div className={`overflow-hidden rounded-3xl bg-forest-800/10 ${className}`}>
-      <MarketingPhoto
-        photo={photo}
-        className="aspect-[16/10] min-h-32"
-        sizes={kind === "hero" ? "(max-width: 1024px) 100vw, 520px" : "(max-width: 640px) 100vw, 420px"}
-      />
+      {kind === "hero" ? (
+        <MarketingPhoto photo="house" className="aspect-[16/10] min-h-32" sizes="(max-width: 1024px) 100vw, 520px" />
+      ) : null}
+      {kind === "fence" ? <FenceArt /> : null}
+      {kind === "interior" ? <InteriorArt /> : null}
+      {kind === "yard" ? <YardArt /> : null}
     </div>
   );
 }

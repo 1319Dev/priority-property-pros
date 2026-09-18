@@ -59,20 +59,18 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     expect(SERVICES).toHaveLength(21);
   });
 
-  it("shows professional marketing photos and the marketplace need line", () => {
+  it("shows the finished house photo and the marketplace need line without trade photos", () => {
     renderApp("/");
     expect(
       screen.getAllByText(/whatever your property needs, find the right local professional/i).length,
     ).toBeGreaterThan(0);
-    expect(
-      screen.getByAltText(/property owner and a local professional/i),
-    ).toBeInTheDocument();
-    expect(screen.getByAltText(/fencing contractor/i)).toBeInTheDocument();
-    expect(screen.getByAltText(/lawn professional rakes hardwood mulch/i)).toBeInTheDocument();
-    expect(screen.getByAltText(/finish nailer into primed baseboard/i)).toBeInTheDocument();
-    expect(screen.getByAltText(/p-trap slip nut/i)).toBeInTheDocument();
-    expect(screen.getAllByAltText(/electrician in safety glasses/i).length).toBeGreaterThan(0);
     expect(screen.getAllByAltText(/finished suburban home/i).length).toBeGreaterThan(0);
+    expect(screen.queryByAltText(/property owner and a local professional/i)).not.toBeInTheDocument();
+    expect(screen.queryByAltText(/fencing contractor/i)).not.toBeInTheDocument();
+    expect(screen.queryByAltText(/lawn professional/i)).not.toBeInTheDocument();
+    expect(screen.queryByAltText(/finish nailer/i)).not.toBeInTheDocument();
+    expect(screen.queryByAltText(/p-trap slip nut/i)).not.toBeInTheDocument();
+    expect(screen.queryByAltText(/electrician in safety glasses/i)).not.toBeInTheDocument();
   });
 
   it("renders header navigation targets", () => {

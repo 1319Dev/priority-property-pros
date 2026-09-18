@@ -25,7 +25,7 @@ export function Hero() {
       <div className="relative max-h-[13.75rem] overflow-hidden sm:max-h-[17.5rem] lg:max-h-[22.5rem]">
         <div className="aspect-[16/9] w-full">
           <MarketingPhoto
-            photo="hero"
+            photo="house"
             eager
             sizes="100vw"
             className="h-full w-full"
@@ -107,7 +107,7 @@ export function Hero() {
           <div className="overflow-hidden rounded-[1.75rem] bg-forest-800 p-3">
             <div className="overflow-hidden rounded-[1.15rem]">
               <MarketingPhoto
-                photo="finished"
+                photo="house"
                 sizes="(min-width: 1024px) 380px, 0px"
                 className="aspect-[4/3]"
               />

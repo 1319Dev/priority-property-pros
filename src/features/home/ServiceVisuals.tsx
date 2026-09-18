@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { MARKETPLACE_NEED_LINE } from "../../data/brand";
 import { FEATURED_SERVICE_VISUALS } from "../../data/marketingPhotos";
-import { MarketingPhotoFrame } from "../../components/media/MarketingPhoto";
 import { Container } from "../../components/ui/Container";
 
 export function ServiceVisuals() {
@@ -31,17 +30,13 @@ export function ServiceVisuals() {
                 onClick={() => {
                   navigate(`/post-project?service=${encodeURIComponent(item.serviceName)}`);
                 }}
-                className="group flex w-full flex-col overflow-hidden rounded-3xl border border-forest-800/10 bg-cream-50 text-left shadow-[0_1px_0_rgba(255,255,255,0.7)] transition-colors hover:border-gold-500"
+                className="group flex min-h-44 w-full flex-col overflow-hidden rounded-3xl border border-forest-800/10 bg-cream-50 text-left shadow-[0_1px_0_rgba(255,255,255,0.7)] transition-colors hover:border-gold-500"
               >
-                <MarketingPhotoFrame
-                  photo={item.photoId}
-                  frameClassName="rounded-none"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
-                />
-                <span className="px-4 py-4">
+                <span className={`block h-2 w-full ${item.accent}`} aria-hidden="true" />
+                <span className="flex flex-1 flex-col px-4 py-4">
                   <span className="font-display text-xl font-semibold text-forest-800">{item.title}</span>
                   <span className="mt-1 block text-sm leading-relaxed text-ink-700">{item.blurb}</span>
-                  <span className="mt-3 inline-flex text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-gold-700">
+                  <span className="mt-auto pt-4 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-gold-700">
                     Post this project
                   </span>
                 </span>
