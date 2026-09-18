@@ -16,9 +16,6 @@ import {
 } from "./connectionCheckout";
 import {
   CONNECTED_BODY,
-  CONNECTED_LABEL,
-  CHECKOUT_PENDING_COPY,
-  CONNECT_BUTTON_LABEL,
   contractorConnectionUiState,
   connectionAvailabilityCopy,
   remainingConnectionSpots,
@@ -494,9 +491,9 @@ describe("Connection Marketplace staging hardening", () => {
     expect(detailPage).toMatch(/contractorConnectionUiState/);
     expect(detailPage).toMatch(/ContractorConnectionCta/);
     const cta = srcFile("src/components/marketplace/ContractorConnectionCta.tsx");
-    expect(cta).toContain(CONNECTED_LABEL);
-    expect(cta).toContain(CONNECT_BUTTON_LABEL);
-    expect(cta).toContain(CHECKOUT_PENDING_COPY);
+    expect(cta).toContain("CONNECTED_LABEL");
+    expect(cta).toContain("CONNECT_BUTTON_LABEL");
+    expect(cta).toContain("CHECKOUT_PENDING_COPY");
     expect(CONNECTED_BODY).toMatch(/this project only/i);
 
     expect(PAYMENTS_LIVE).toBe(false);
