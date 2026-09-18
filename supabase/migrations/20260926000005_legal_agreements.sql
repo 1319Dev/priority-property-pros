@@ -11,7 +11,7 @@ VALUES
     'terms-of-use',
     'Terms of Use',
     2,
-    'DRAFT — attorney review required before launch. Priority Property Pros is a local marketplace. PRIORITY PROPERTY PROS LLC is not the contractor. Independent contractors perform the work. Everyone pays a one-time $9.99 account activation; checkout is not live in this product. Homeowners have no monthly fee. Contractors on the Free plan pay a marketplace fee when hired per the published schedule. Priority Pro is Coming Soon and cannot be purchased. Reviews require a completed PPP job. Rating suspensions and disputes are described in the public legal pages. PPP does not verify licenses or workmanship and does not process live job payments.',
+    'DRAFT — attorney review required before launch. Priority Property Pros is a local marketplace. PRIORITY PROPERTY PROS LLC is not the contractor. Independent contractors perform the work. Homeowners join for $0 signup. Contractors pay a one-time $9.99 activation fee; checkout is not live in this product. Homeowners have no monthly fee. Contractors on the Free plan pay a marketplace fee when hired per the published schedule. Priority Pro is Coming Soon and cannot be purchased. Reviews require a completed PPP job. Rating suspensions and disputes are described in the public legal pages. PPP does not verify licenses or workmanship and does not process live job payments.',
     true
   ),
   (

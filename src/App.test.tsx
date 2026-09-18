@@ -136,7 +136,7 @@ describe("Phase 3 marketplace surfaces", () => {
     expect(screen.getByRole("link", { name: /example: cedar fence repair/i })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /post a project/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /get estimates/i }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/join priority property pros for a one-time \$9\.99 signup fee/i).length).toBeGreaterThan(
+    expect(screen.getAllByText(/homeowners.*\$0.*contractors.*\$9\.99.*activation/i).length).toBeGreaterThan(
       0,
     );
     expect(screen.queryByText(/free signup/i)).not.toBeInTheDocument();
@@ -175,10 +175,11 @@ describe("Public marketplace pricing", () => {
     expect(container.textContent).not.toMatch(/free to join|free signup|accounts are free/i);
   });
 
-  it("mentions the one-time signup fee on signup and for-pros surfaces", () => {
+  it("mentions homeowner $0 signup and contractor $9.99 activation on signup page", () => {
     renderApp("/sign-up");
-    expect(screen.getByText(/one-time \$9\.99 signup fee/i)).toBeInTheDocument();
-    expect(screen.getByText(/not \$9\.99 a month/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/homeowners.*\$0/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/contractors.*\$9\.99.*activation/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/not.*monthly subscription/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/free to join/i)).not.toBeInTheDocument();
   });
 });

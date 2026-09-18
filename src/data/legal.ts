@@ -49,7 +49,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
       {
         heading: "Accounts",
         paragraphs: [
-          "Everyone pays a one-time $9.99 account activation. That fee is described on the Pricing page. Online checkout is not live in this product yet, so creating an account does not charge a card today.",
+          "Homeowners join for $0 signup. Contractors pay a one-time $9.99 activation fee. That fee is described on the Pricing page. Online checkout is not live in this product yet, so creating an account does not charge a card today.",
           "Homeowners have no monthly subscription. Contractors may stay on the Free plan at $0/month. Priority Pro is described as Coming Soon and cannot be purchased in this product.",
           "You may not create an Admin account from the website. Role and status are assigned by PPP, not by a client toggle.",
         ],
@@ -65,7 +65,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
       {
         heading: "What PPP does and does not do",
         paragraphs: [
-          "PPP earns revenue from the $9.99 activation fee, a flat $4.99 Connection Fee when homeowners select contractors, and future Priority Pro subscriptions.",
+          "PPP earns revenue from the $9.99 contractor activation fee, a flat $4.99 Connection Fee when homeowners select contractors, and future Priority Pro subscriptions.",
           "The Connection Fee is $4.99 per legitimate new connection, regardless of project value. It is for the marketplace service of connecting the parties, not a percentage of the project payment.",
           "PPP does not process, hold in escrow, or payout homeowner-to-contractor project money. After the parties are connected through PPP, they communicate directly and arrange project payment themselves.",
           "Connection Fee checkout is Coming Soon and is not live in this product. Connection Fees are calculated and displayed, but no live charges occur.",
@@ -190,7 +190,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
       {
         heading: "Connection Fees",
         paragraphs: [
-          "PPP earns revenue from the $9.99 activation fee, a flat $4.99 Connection Fee when homeowners select contractors, and future Priority Pro subscriptions.",
+          "PPP earns revenue from the $9.99 contractor activation fee, a flat $4.99 Connection Fee when homeowners select contractors, and future Priority Pro subscriptions.",
           "Homeowners do not pay a PPP Connection Fee when they hire. Contractors owe a flat $4.99 Connection Fee per legitimate new connection, regardless of project value.",
           "The Connection Fee is the same for all connections: first-time, repeat, and hire-again all use the flat $4.99 rate. Priority Pro (Coming Soon) also uses $4.99.",
           "Connection Fees are for the marketplace service of connecting the parties. They are not project payment processing fees and are not based on the project value. PPP does not process the homeowner-to-contractor project payment.",

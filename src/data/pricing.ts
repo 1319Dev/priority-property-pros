@@ -34,7 +34,7 @@ export const CONTRACTOR_VALUE_POINTS = [
 ] as const;
 
 export const HOMEPAGE_SIGNUP_HEADLINE =
-  "Join Priority Property Pros for a one-time $9.99 signup fee.";
+  "Homeowners join for $0. Contractors pay a one-time $9.99 activation fee.";
 
 export const HOMEPAGE_SIGNUP_SUPPORTING =
   "No monthly homeowner subscription. Post projects, compare estimates, and choose the pro that's right for your project.";
@@ -49,13 +49,13 @@ export const CONTRACTOR_SIGNUP_SUPPORTING =
 export const PRICING_PAGE_TITLE = "Simple, honest pricing.";
 
 export const PRICING_PAGE_INTRO =
-  "Everyone pays a one-time $9.99 signup fee to create an account — not $9.99 a month. Homeowners have no monthly subscription and no PPP Connection Fee when hiring. Pros stay on a $0/month Free plan and pay $4.99 when connected to a homeowner.";
+  "Homeowners join for $0 signup. Contractors pay a one-time $9.99 activation fee — not $9.99 a month. Homeowners have no monthly subscription and no PPP Connection Fee when hiring. Pros stay on a $0/month Free plan and pay $4.99 when connected to a homeowner.";
 
 export const HOMEOWNER_PRICING_SUMMARY =
-  "A one-time $9.99 account signup. No monthly homeowner subscription. No PPP Connection Fee when you hire. After you're connected through PPP, you pay the pro directly for the work.";
+  "$0 signup for homeowners. No monthly homeowner subscription. No PPP Connection Fee when you hire. After you're connected through PPP, you pay the pro directly for the work.";
 
 export const PRO_PRICING_SUMMARY =
-  "A one-time $9.99 account signup. Stay on the $0/month Free plan and pay $4.99 when a homeowner selects you. Priority Pro is Coming Soon at $49/month or $499/year and also uses a $4.99 Connection Fee.";
+  "A one-time $9.99 contractor activation fee. Stay on the $0/month Free plan and pay $4.99 when a homeowner selects you. Priority Pro is Coming Soon at $49/month or $499/year and also uses a $4.99 Connection Fee.";
 
 export const FREE_PLAN_NAME = "Free plan";
 export const FREE_PLAN_PRICE = "$0/month";
@@ -74,7 +74,7 @@ export const NO_PAY_TO_WIN =
   "There is no pay-to-win ranking. Paying the activation fee or a Connection Fee does not buy a higher public listing.";
 
 export const CUSTOMER_SIGNUP_LEDE =
-  "Join Priority Property Pros for a one-time $9.99 signup fee. Not $9.99/month. No monthly homeowner subscription, and no PPP Connection Fee when you hire.";
+  "Homeowners join for $0 signup. Not a monthly subscription, and no PPP Connection Fee when you hire.";
 
 export const CONTRACTOR_SIGNUP_LEDE =
   "Get started for a one-time $9.99 signup fee — not $9.99/month. Choose our $0/month Free plan and pay $4.99 when you connect. Priority Pro is Coming Soon and is not available to purchase yet.";
@@ -83,9 +83,9 @@ export const VERIFIER_SIGNUP_LEDE =
   "Get started for a one-time $9.99 signup fee. This is not a monthly subscription.";
 
 export const SIGNUP_ROLE_LEDE =
-  "Get started for a one-time $9.99 signup fee. Not $9.99 a month. No monthly subscription to keep your account.";
+  "Homeowners join for $0. Contractors pay a one-time $9.99 activation fee. Not a monthly subscription.";
 
-export const SIGN_IN_CREATE_ACCOUNT_NOTE = "$9.99 one-time signup fee — not a monthly subscription.";
+export const SIGN_IN_CREATE_ACCOUNT_NOTE = "$0 for homeowners. Contractors: $9.99 one-time activation — not a monthly subscription.";
 
 export const CUSTOMER_DASHBOARD_PRICING_NOTE =
   "No monthly homeowner subscription. There is no PPP Connection Fee when you hire.";
@@ -160,12 +160,12 @@ export const PRICING_FAQ = [
   {
     question: "Is the $9.99 signup fee monthly?",
     answer:
-      "No. The $9.99 signup fee is one-time, not $9.99/month. There is no monthly charge to keep a homeowner or contractor account.",
+      "No. The $9.99 contractor activation fee is one-time, not $9.99/month. There is no monthly charge to keep a contractor account. Homeowners join for $0 signup.",
   },
   {
     question: "Do homeowners pay a PPP Connection Fee?",
     answer:
-      "No. Homeowners pay the one-time $9.99 account signup and then pay the pro directly for the job after you're connected through PPP. There is no PPP Connection Fee when hiring and no monthly homeowner subscription.",
+      "No. Homeowners join for $0 signup and then pay the pro directly for the job after you're connected through PPP. There is no PPP Connection Fee when hiring and no monthly homeowner subscription.",
   },
   {
     question: "What is the contractor Free plan?",

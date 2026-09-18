@@ -7,18 +7,18 @@ const options = [
     to: "/sign-up/customer",
     label: "I need work done",
     detail:
-      "Homeowners and property owners. Post projects, compare estimates, and hire. One-time $9.99 signup — not a monthly subscription.",
+      "Homeowners and property owners. Post projects, compare estimates, and hire. $0 signup — not a monthly subscription.",
   },
   {
     to: "/sign-up/contractor",
     label: "I want to get hired",
     detail:
-      "Independent contractors. One-time $9.99 signup, then a $0/month Free plan plus marketplace fees when hired.",
+      "Independent contractors. One-time $9.99 activation, then a $0/month Free plan plus marketplace fees when hired.",
   },
   {
     to: "/sign-up/verifier",
     label: "I want to verify completed jobs",
-    detail: "Independent completion verifiers. One-time $9.99 signup. Priority Verified is not live yet.",
+    detail: "Independent completion verifiers. One-time $9.99 activation. Priority Verified is not live yet.",
   },
 ];
 

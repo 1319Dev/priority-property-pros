@@ -74,10 +74,11 @@ function publicFacingFiles(): string[] {
 }
 
 describe("public pricing copy", () => {
-  it("states a one-time $9.99 signup fee, not a monthly signup charge", () => {
-    expect(HOMEPAGE_SIGNUP_HEADLINE).toMatch(/one-time \$9\.99 signup fee/i);
+  it("states homeowners $0 signup, contractors one-time $9.99 activation", () => {
+    expect(HOMEPAGE_SIGNUP_HEADLINE).toMatch(/homeowners.*\$0/i);
+    expect(HOMEPAGE_SIGNUP_HEADLINE).toMatch(/contractors.*\$9\.99.*activation/i);
     expect(HOMEPAGE_SIGNUP_SUPPORTING).toMatch(/no monthly homeowner subscription/i);
-    expect(CONTRACTOR_SIGNUP_HEADLINE).toMatch(/one-time \$9\.99 signup fee/i);
+    expect(CONTRACTOR_SIGNUP_HEADLINE).toMatch(/one-time \$9\.99.*fee/i);
     expect(CONTRACTOR_SIGNUP_SUPPORTING).toMatch(/\$0\/month Free plan/i);
     expect(SIGNUP_FEE_SHORT).toBe("$9.99 one-time signup fee");
     expect(SIGNUP_FEE_NOT_MONTHLY).toMatch(/not \$9\.99\/month/i);
