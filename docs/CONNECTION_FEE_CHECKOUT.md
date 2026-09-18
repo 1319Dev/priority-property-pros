@@ -1,6 +1,7 @@
-# Connection Fee TEST Checkout ($4.99)
+# Connection Fee Checkout ($4.99) — TEST and LIVE capable
 
-Do **not** apply this to production. Do **not** put Stripe secrets in git, Vite, or the PR body.
+Do **not** apply this to production from this PR. Do **not** put Stripe secrets in git, Vite, or the PR body.
+Do **not** put LIVE Stripe secrets in staging.
 
 ## Flags (must stay)
 
@@ -9,38 +10,52 @@ Do **not** apply this to production. Do **not** put Stripe secrets in git, Vite,
 | `payments_live` | 0 |
 | `charges_live` | 0 |
 | `signup_fee_enabled` | 0 |
-| `stripe_test_mode` | 1 |
-| `connection_fee_checkout_enabled` | 0 until owner enables on **staging only** |
+| `stripe_test_mode` | **1 = TEST, 0 = LIVE.** Default remains **1**. This is the server-side Stripe environment control. Do not infer safety from whichever key is installed. |
+| `connection_fee_checkout_enabled` | 0 until owner enables. Customer-facing kill switch. May stay 0 even when LIVE secrets are installed later. |
 
-`connection_fee_checkout_enabled` is independent of `payments_live`. Do not flip job-payment flags to test connections.
+`connection_fee_checkout_enabled` is independent of `payments_live`. Do not flip job-payment flags to test connections. Do not enable the $9.99 signup fee.
+
+## Environment control
+
+Read `platform_settings.stripe_test_mode`. Any mismatch fails closed.
+
+| `stripe_test_mode` | Secret | Price | Webhook `event.livemode` | Checkout session |
+| --- | --- | --- | --- | --- |
+| 1 (TEST) | `sk_test_...` required; `sk_live_` rejected | TEST Connection Price ID from `STRIPE_CONNECTION_PRICE_ID` | `true` rejected | `cs_test_...` |
+| 0 (LIVE) | `sk_live_...` required; `sk_test_` rejected | LIVE Connection Price ID from `STRIPE_CONNECTION_PRICE_ID` | `false` rejected | `cs_live_...` |
+
+Never allow a live key while the DB says test mode. Never allow a test key while the DB says live mode. Never allow a TEST webhook event to fulfill a LIVE transaction or vice versa.
+
+`STRIPE_CONNECTION_PRICE_ID` is required (no hardcoded TEST fallback on server paths). Edge Functions retrieve the Price from Stripe and require: livemode matches mode, `currency=usd`, `unit_amount=499`, `type=one_time`. Clients cannot supply or override Price ID, amount, or currency.
 
 ## Architecture
 
 1. Contractor confirms **Connect — $4.99**.
-2. Edge Function `create-connection-checkout` (JWT) reserves a slot (`RESERVED`, 30-minute TTL) and creates a Stripe TEST Checkout Session with **server** Price ID `price_1UH1RsPYJQAIQDv721IhjKS0` (499 USD cents).
+2. Edge Function `create-connection-checkout` (JWT) reads `stripe_test_mode`, requires a matching secret + env Price ID, reserves a slot (`RESERVED`, 30-minute TTL), and creates a Stripe Checkout Session with the **server** Price ID (499 USD cents).
 3. Browser redirects to Stripe-hosted Checkout. PPP does not collect cards.
-4. `connection-fee-webhook` (signature required) is the authoritative fulfillment path.
-5. `reconcile-connection-checkout` may retrieve the session from Stripe. The success URL **never** unlocks contact.
+4. `connection-fee-webhook` (JWT verify **off**, `STRIPE_WEBHOOK_SECRET` / `whsec_` signature required) is the authoritative fulfillment path. `event.livemode` must match `stripe_test_mode`.
+5. `reconcile-connection-checkout` may retrieve the session from Stripe using the same environment checks. The success URL **never** unlocks contact.
 
-State machine: **AVAILABLE → RESERVED (pending payment) → PAID**. `#14` `booking_contact_access` is granted UNLOCKED (`CONNECTION_FEE_PAYMENT`) only after trusted Stripe verification, then the purchase is marked PAID. Abandoned/expired Checkout **releases** the slot. Customer **Stop New Connections** rejects new reservations; in-flight RESERVED payments may still finalize; existing UNLOCKED `#14` rows stay.
+State machine: **AVAILABLE → RESERVED (pending payment) → PAID**. `#14` `booking_contact_access` is granted UNLOCKED (`CONNECTION_FEE_PAYMENT`) only after trusted Stripe verification, then `fulfill_connection_fee_checkout` marks the purchase PAID. Abandoned/expired Checkout **releases** the slot. Customer **Stop New Connections** rejects new reservations; in-flight RESERVED payments may still finalize; existing UNLOCKED `#14` rows stay.
 
 Paid-but-not-reservable (expired / 4th slot) → `needs_refund` (no silent loss, no extra unlock).
 
 ## #14 (single entitlement store)
 
-`booking_contact_access` is the only contact-access authority. A verified $4.99 Stripe TEST payment grants a connection-backed `#14` row (`nullable booking_id`, `connection_id` FK, `grant_source = CONNECTION_FEE_PAYMENT`) through `grant_booking_contact_access_from_connection_fee`, then `fulfill_connection_fee_checkout` marks the purchase PAID.
+`booking_contact_access` is the only contact-access authority. A verified $4.99 Stripe payment grants a connection-backed `#14` row (`nullable booking_id`, `connection_id` FK, `grant_source = CONNECTION_FEE_PAYMENT`) through `grant_booking_contact_access_from_connection_fee`, then `fulfill_connection_fee_checkout` marks the purchase PAID.
 
 `contractor_has_contact_access_on_project` does **not** OR a second table. `connection_contact_access` is dropped. Missing entitlement = no private contact. Success URLs, query params, frontend state, and project/estimate/booking status never unlock.
 
 ## PR #12 activation
 
-`STRIPE_ACTIVATION_PRICE_ID` / `price_1UH1SePYJQAIQDv7nrMo32Xp` is config-only here. Do **not** duplicate `create-signup-fee-checkout`. Shared `STRIPE_SECRET_KEY` (TEST) is OK on staging; webhook secrets and endpoints stay separate.
+`STRIPE_ACTIVATION_PRICE_ID` / `price_1UH1SePYJQAIQDv7nrMo32Xp` is config-only here. Do **not** duplicate `create-signup-fee-checkout`. Do **not** activate the $9.99 signup fee. Webhook secrets and endpoints stay separate.
 
-## Secrets (names only)
+## Secrets (names only — set later, not in this PR)
 
-- `STRIPE_SECRET_KEY` (`sk_test_` only)
-- `STRIPE_CONNECTION_PRICE_ID`
+- `STRIPE_SECRET_KEY` (`sk_test_` while `stripe_test_mode=1`; `sk_live_` only later when the DB is LIVE)
+- `STRIPE_CONNECTION_PRICE_ID` (TEST Price now; LIVE Connection Price later)
 - `STRIPE_ACTIVATION_PRICE_ID` (unused by these functions)
-- `STRIPE_WEBHOOK_SECRET` (`whsec_` for `connection-fee-webhook`)
+- `STRIPE_WEBHOOK_SECRET` (`whsec_` for `connection-fee-webhook`; TEST vs LIVE endpoint)
 
-Set them on staging project **giiskdvitimksdewnelc** only. Never on production **bersftkjpbzpgtahbqwd**.
+Staging project **giiskdvitimksdewnelc**: TEST secrets only. Never LIVE secrets on staging.
+Never set these on production **bersftkjpbzpgtahbqwd** from this PR.

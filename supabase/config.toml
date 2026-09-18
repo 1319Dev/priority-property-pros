@@ -1,12 +1,15 @@
-# Connection Fee TEST Checkout Edge Functions.
-# DO NOT deploy to production bersftkjpbzpgtahbqwd.
-# Staging only: giiskdvitimksdewnelc — after the owner sets secrets.
+# Connection Fee Checkout Edge Functions (TEST and LIVE capable).
+# DO NOT deploy to production bersftkjpbzpgtahbqwd from this PR.
+# Staging only: giiskdvitimksdewnelc — after the owner sets TEST secrets.
+# Environment control is platform_settings.stripe_test_mode (1=TEST, 0=LIVE).
+# Do NOT put LIVE Stripe secrets in staging. Do NOT enable payment flags here.
 # Secrets (Dashboard → Edge Functions → Secrets), never Vite / never git:
-#   STRIPE_SECRET_KEY              (sk_test_ only)
-#   STRIPE_CONNECTION_PRICE_ID     (price_1UH1RsPYJQAIQDv721IhjKS0)
-#   STRIPE_ACTIVATION_PRICE_ID     (config only; unused by these functions)
-#   STRIPE_WEBHOOK_SECRET          (whsec_ for connection-fee-webhook)
-# Do not set payments_live or charges_live to enable this.
+#   STRIPE_SECRET_KEY              (sk_test_ when stripe_test_mode=1; sk_live_ later in production only)
+#   STRIPE_CONNECTION_PRICE_ID     (required; TEST or LIVE Connection Price matching the mode)
+#   STRIPE_ACTIVATION_PRICE_ID     (config only; unused by these functions; must not be the Connection Price)
+#   STRIPE_WEBHOOK_SECRET          (whsec_ for connection-fee-webhook; TEST vs LIVE endpoint)
+# connection_fee_checkout_enabled is the customer-facing kill switch (keep 0 until owner enables).
+# Do not set payments_live, charges_live, or signup_fee_enabled to enable this.
 
 [functions.create-connection-checkout]
 verify_jwt = true
