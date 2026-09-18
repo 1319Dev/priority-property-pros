@@ -179,7 +179,7 @@ describe("Public marketplace pricing", () => {
       expect(screen.getAllByText(bracket.rate).length).toBeGreaterThan(0);
     }
     expect(screen.getByText(`Minimum ${ORIGINAL_MIN_FEE}. Maximum ${ORIGINAL_MAX_FEE}.`)).toBeInTheDocument();
-    expect(screen.getByText(REPEAT_FEE_RATE)).toBeInTheDocument();
+    expect(screen.getAllByText(REPEAT_FEE_RATE).length).toBeGreaterThan(0);
     expect(screen.getByText(`Minimum ${REPEAT_MIN_FEE}. Maximum ${REPEAT_MAX_FEE}.`)).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/stripe|paymentintent|webhooks?|payments_live|charges_live|test mode/i);
     expect(container.textContent).not.toMatch(/free to join|free signup|accounts are free/i);

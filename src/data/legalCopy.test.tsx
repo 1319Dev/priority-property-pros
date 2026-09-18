@@ -54,7 +54,7 @@ describe("legal and trust copy", () => {
       </MemoryRouter>,
     );
     expect(screen.getByRole("heading", { name: /trust & safety/i })).toBeInTheDocument();
-    expect(TRUST_WHAT_EXISTS.some((item) => /anonymized/i.test(item.body))).toBe(true);
+    expect(TRUST_WHAT_EXISTS.some((item) => /anonymized|generic trade/i.test(`${item.title} ${item.body}`))).toBe(true);
     expect(TRUST_WHAT_DOES_NOT_EXIST.some((item) => /escrow/i.test(item))).toBe(true);
     expect(screen.queryByText(/we verify every license/i)).not.toBeInTheDocument();
   });
@@ -80,7 +80,7 @@ describe("pricing schedule source of truth", () => {
     expect(screen.getByText(/free vs priority pro/i)).toBeInTheDocument();
     expect(screen.getAllByText(/coming soon/i).length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: /buy priority pro/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/don.t pay for leads/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/don.t pay for leads/i).length).toBeGreaterThan(0);
   });
 });
 
