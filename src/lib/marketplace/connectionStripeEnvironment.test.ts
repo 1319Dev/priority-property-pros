@@ -13,7 +13,6 @@ import {
 } from "./connectionCheckout";
 import {
   concurrentFinalSlotAttempts,
-  contactVisibleFor,
   createHardeningLedger,
   paidSessionFor,
   tryFulfill,
