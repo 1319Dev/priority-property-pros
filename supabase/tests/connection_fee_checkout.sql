@@ -24,5 +24,13 @@
 --    'ineligible contractor'.
 -- 4. PASSED opportunity for the same contractor cannot reserve.
 -- 5. ACCEPTED opportunity can still reserve.
--- 6. Edge Function create-connection-checkout still returns JSON { error: ... }
---    on 400; the client must not show "Edge Function returned a non-2xx status code".
+-- 7. connection-fee-webhook must boot: webhookSecret (STRIPE_WEBHOOK_SECRET / whsec_)
+--    is distinct from stripeSecret (STRIPE_SECRET_KEY / sk_test_). Duplicate `const secret`
+--    caused worker boot SyntaxError and HTTP 503.
+-- 8. stripe_payment_intent_id stores only pi_... . Fulfillment source is
+--    connection_checkout_events.processor_event_id and
+--    connection_checkout_sessions.fulfillment_reference (evt_... or reconcile:cs_test_...).
+--    There is no stripe_events table in this repo; webhook inserts connection_checkout_events.
+-- 9. After 20260928000004, non-pi_ historical PI values are moved to fulfillment_reference.
+--    Replay of cs_test_a1b7iOf0SYA0cavV946FURjAkPP4pE17Zs4xddMm4XIx2uhTfFaCWXkKwu should
+--    then store the real pi_... without rewriting #14 entitlement.

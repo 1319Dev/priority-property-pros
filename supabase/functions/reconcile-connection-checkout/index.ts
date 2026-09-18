@@ -1,6 +1,12 @@
 import { json, optionsResponse } from "../_shared/cors.ts";
 import { restRpc, userIdFromRequest } from "../_shared/supabase.ts";
-import { connectionPriceId, requireTestSecret, sessionLinePriceId, stripeGet } from "../_shared/stripeTest.ts";
+import {
+  connectionPriceId,
+  requireTestSecret,
+  sessionLinePriceId,
+  stripeGet,
+  stripePaymentIntentId,
+} from "../_shared/stripeTest.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return optionsResponse();
@@ -20,8 +26,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const secret = requireTestSecret(Deno.env.get("STRIPE_SECRET_KEY") ?? "");
-    const session = await stripeGet(secret, `checkout/sessions/${sessionId}?expand[]=line_items`);
+    const stripeSecret = requireTestSecret(Deno.env.get("STRIPE_SECRET_KEY") ?? "");
+    const session = await stripeGet(stripeSecret, `checkout/sessions/${sessionId}?expand[]=line_items`);
     const metadata = (session.metadata ?? {}) as Record<string, string>;
     if (metadata.ppp_kind !== "connection_fee") {
       return json({ error: "session is not a Connection Fee checkout", paid: false, contact_unlocked: false }, 403);
@@ -65,6 +71,7 @@ Deno.serve(async (req) => {
       p_connection_id: row.connection_id,
       p_project_id: row.project_id,
       p_contractor_profile_id: row.contractor_profile_id,
+      p_stripe_payment_intent_id: stripePaymentIntentId(session.payment_intent),
     });
     if (fulfilled.error) return json({ error: fulfilled.error, paid: false, contact_unlocked: false }, 400);
     const result = (fulfilled.data ?? {}) as Record<string, unknown>;

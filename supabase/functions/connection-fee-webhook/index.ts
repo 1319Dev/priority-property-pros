@@ -1,6 +1,17 @@
+// Connection Fee Stripe webhook (JWT verification off).
+// Expected env (TEST only; never live keys):
+//   STRIPE_WEBHOOK_SECRET = whsec_...   required, signature verification
+//   STRIPE_SECRET_KEY     = sk_test_... required, retrieve Checkout Session
 import { json } from "../_shared/cors.ts";
 import { restRpc } from "../_shared/supabase.ts";
-import { connectionPriceId, requireTestSecret, sessionLinePriceId, stripeGet } from "../_shared/stripeTest.ts";
+import {
+  connectionPriceId,
+  requireTestSecret,
+  requireWebhookSecret,
+  sessionLinePriceId,
+  stripeGet,
+  stripePaymentIntentId,
+} from "../_shared/stripeTest.ts";
 import { verifyStripeSignature } from "../_shared/webhook.ts";
 
 function stripeObject(event: { data?: { object?: Record<string, unknown> } }): Record<string, unknown> {
@@ -11,9 +22,13 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
   const rawBody = await req.text();
   const header = req.headers.get("Stripe-Signature") ?? "";
-  const secret = Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "";
-  if (!secret.startsWith("whsec_")) return json({ error: "webhook secret missing" }, 500);
-  const ok = await verifyStripeSignature(rawBody, header, secret);
+  let webhookSecret: string;
+  try {
+    webhookSecret = requireWebhookSecret(Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "");
+  } catch {
+    return json({ error: "webhook secret missing" }, 500);
+  }
+  const ok = await verifyStripeSignature(rawBody, header, webhookSecret);
   if (!ok) return json({ error: "invalid signature", contact_unlocked: false }, 400);
 
   const event = JSON.parse(rawBody) as {
@@ -95,8 +110,8 @@ Deno.serve(async (req) => {
     return json({ error: "mismatched metadata", needs_refund: true, result: flagged.data, contact_unlocked: false }, 400);
   }
 
-  const secret = requireTestSecret(Deno.env.get("STRIPE_SECRET_KEY") ?? "");
-  const retrieved = await stripeGet(secret, `checkout/sessions/${checkoutId}?expand[]=line_items`);
+  const stripeSecret = requireTestSecret(Deno.env.get("STRIPE_SECRET_KEY") ?? "");
+  const retrieved = await stripeGet(stripeSecret, `checkout/sessions/${checkoutId}?expand[]=line_items`);
   const priceId = sessionLinePriceId(retrieved) ?? sessionLinePriceId(obj);
   if (!priceId || priceId !== connectionPriceId()) {
     const flagged = await restRpc("flag_connection_checkout_needs_refund", {
@@ -105,6 +120,7 @@ Deno.serve(async (req) => {
     });
     return json({ error: "wrong Price ID", needs_refund: true, result: flagged.data, contact_unlocked: false }, 400);
   }
+  const paymentIntentId = stripePaymentIntentId(retrieved.payment_intent) ?? stripePaymentIntentId(obj.payment_intent);
   const fulfilled = await restRpc("fulfill_connection_fee_checkout", {
     p_stripe_checkout_session_id: checkoutId,
     p_processor_event_id: event.id ?? `webhook:${checkoutId}`,
@@ -116,6 +132,7 @@ Deno.serve(async (req) => {
     p_connection_id: row.connection_id,
     p_project_id: row.project_id,
     p_contractor_profile_id: row.contractor_profile_id,
+    p_stripe_payment_intent_id: paymentIntentId,
   });
   if (fulfilled.error) return json({ error: fulfilled.error, contact_unlocked: false, duplicate }, 400);
   return json({

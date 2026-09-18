@@ -61,3 +61,16 @@ export function sessionLinePriceId(session: Record<string, unknown>): string | n
   const lineItems = session.line_items as { data?: Array<{ price?: { id?: string } }> } | undefined;
   return lineItems?.data?.[0]?.price?.id ?? null;
 }
+
+/** Store only real Stripe PaymentIntent ids. Never `reconcile:cs_test_...` or other fulfillment markers. */
+export function stripePaymentIntentId(value: unknown): string | null {
+  if (typeof value === "string") {
+    const id = value.trim();
+    if (id.startsWith("pi_") && id.length > 5 && !id.includes(":")) return id;
+    return null;
+  }
+  if (value && typeof value === "object" && "id" in value) {
+    return stripePaymentIntentId((value as { id?: unknown }).id);
+  }
+  return null;
+}

@@ -27,8 +27,13 @@ import {
   CONNECTION_CHECKOUT_CUSTOMER_ERROR,
   FUNCTIONS_HTTP_ERROR_MESSAGE,
   customerFacingConnectionCheckoutError,
+  fulfillmentReferenceValue,
   ineligibleContractorRejected,
+  isStripePaymentIntentId,
   opportunityAllowsConnectionReserve,
+  paymentIntentColumnValue,
+  stripePaymentIntentId,
+  stripePaymentIntentIdFromSession,
   queryParamPaidStateUnlocksContact,
   requireTestStripeSecret,
   reservationOccupiesSlot,
@@ -42,7 +47,7 @@ import {
   webhookEventShouldExpire,
   webhookEventShouldFulfill,
 } from "./connectionCheckout";
-import { verifyStripeSignature } from "./stripeWebhook";
+import { computeStripeSignatureHex, verifyStripeSignature } from "./stripeWebhook";
 import { CONNECT_REDIRECTING_COPY, connectClickUnlocksContact } from "./connectionLifecycle";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -104,6 +109,7 @@ const paidSession = {
     project_id: "proj-1",
     contractor_profile_id: "pro-1",
   },
+  payment_intent: "pi_test_paid_123",
   line_items: { data: [{ price: { id: STRIPE_CONNECTION_PRICE_ID, unit_amount: 499, currency: "usd" }, amount_total: 499 }] },
 };
 
@@ -316,11 +322,54 @@ describe("Connection Fee TEST Checkout", () => {
     expect(latest).toMatch(/processor_event_id text NOT NULL UNIQUE/);
     expect(fn).toMatch(/invalid signature/);
     expect(fn).toMatch(/STRIPE_WEBHOOK_SECRET/);
+    expect(fn).toMatch(/webhookSecret/);
+    expect(fn).toMatch(/stripeSecret/);
     expect(duplicateWebhookIsHarmless(true, false)).toBe(true);
     expect(duplicateWebhookIsHarmless(false, true)).toBe(true);
+    expect(duplicateWebhookIsHarmless(true, true)).toBe(true);
     expect(webhookEventShouldFulfill("checkout.session.completed", "paid")).toBe(true);
     expect(webhookEventShouldFulfill("checkout.session.completed", "unpaid")).toBe(false);
     expect(webhookEventShouldExpire("checkout.session.expired")).toBe(true);
+    const record = functionBody(sql, "record_connection_checkout_event");
+    expect(record).toMatch(/'duplicate', true/);
+    expect(record).toMatch(/processor_event_id = p_processor_event_id/);
+  });
+
+  it("stores Stripe PaymentIntent ids separately from fulfillment references", () => {
+    const fulfill = functionBody(sql, "fulfill_connection_fee_checkout");
+    const webhook = readFileSync(path.join(repoRoot, "supabase/functions/connection-fee-webhook/index.ts"), "utf8");
+    expect(isStripePaymentIntentId("pi_3ABC123xyz")).toBe(true);
+    expect(isStripePaymentIntentId("reconcile:cs_test_a1b7iOf0SYA0cavV946FURjAkPP4pE17Zs4xddMm4XIx2uhTfFaCWXkKwu")).toBe(false);
+    expect(isStripePaymentIntentId("webhook:cs_test_abc")).toBe(false);
+    expect(stripePaymentIntentIdFromSession({ payment_intent: "pi_3ABC123xyz" })).toBe("pi_3ABC123xyz");
+    expect(stripePaymentIntentIdFromSession({ payment_intent: { id: "pi_3ABC123xyz" } })).toBe("pi_3ABC123xyz");
+    expect(
+      paymentIntentColumnValue({
+        paymentIntent: "pi_3ABC123xyz",
+        processorEventId: "reconcile:cs_test_abc",
+      }),
+    ).toBe("pi_3ABC123xyz");
+    expect(
+      paymentIntentColumnValue({
+        paymentIntent: null,
+        processorEventId: "reconcile:cs_test_abc",
+      }),
+    ).toBeNull();
+    expect(fulfillmentReferenceValue("reconcile:cs_test_abc")).toBe("reconcile:cs_test_abc");
+    expect(stripePaymentIntentId("reconcile:cs_test_abc")).toBeNull();
+    expect(fulfill).toMatch(/p_stripe_payment_intent_id text DEFAULT NULL/);
+    expect(fulfill).toMatch(/normalized_stripe_payment_intent_id/);
+    expect(fulfill).toMatch(/fulfillment_reference/);
+    expect(fulfill).not.toMatch(/stripe_payment_intent_id = coalesce\(stripe_payment_intent_id, p_processor_event_id\)/);
+    expect(sql).toMatch(/ADD COLUMN IF NOT EXISTS fulfillment_reference text/);
+    expect(sql).toMatch(/connection_checkout_pi_prefix/);
+    expect(fn).toMatch(/p_stripe_payment_intent_id/);
+    expect(fn).toMatch(/stripePaymentIntentId\(session\.payment_intent\)/);
+    expect(webhook.match(/\bconst secret\b/g) ?? []).toHaveLength(0);
+    expect(webhook).toMatch(/const webhookSecret/);
+    expect(webhook).toMatch(/const stripeSecret/);
+    expect(webhook).toMatch(/STRIPE_WEBHOOK_SECRET/);
+    expect(webhook).toMatch(/STRIPE_SECRET_KEY/);
   });
 
   it("rejects mismatched metadata and wrong Price ID / amount / currency", () => {
@@ -417,5 +466,15 @@ describe("Stripe webhook signatures", () => {
   it("rejects missing or invalid signatures", async () => {
     expect(await verifyStripeSignature("{}", "", "whsec_testsecret_1234")).toBe(false);
     expect(await verifyStripeSignature("{}", "t=1,v1=deadbeef", "not-a-webhook-secret")).toBe(false);
+    expect(await verifyStripeSignature("{}", "t=1,v1=deadbeef", "whsec_testsecret_1234")).toBe(false);
+  });
+
+  it("accepts a valid signed payload within the time window", async () => {
+    const body = '{"id":"evt_test","type":"checkout.session.completed"}';
+    const secret = "whsec_testsecret_1234";
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const hex = await computeStripeSignatureHex(secret, timestamp, body);
+    expect(await verifyStripeSignature(body, `t=${timestamp},v1=${hex}`, secret)).toBe(true);
+    expect(await verifyStripeSignature(body + "tampered", `t=${timestamp},v1=${hex}`, secret)).toBe(false);
   });
 });

@@ -45,6 +45,7 @@ export type CheckoutSessionLike = {
   currency?: string | null;
   amount_total?: number | null;
   client_reference_id?: string | null;
+  payment_intent?: string | { id?: string } | null;
   metadata?: Record<string, string | undefined> | null;
   line_items?: {
     data?: Array<{
@@ -88,6 +89,41 @@ export function requireWebhookSecret(secret: string): string {
     throw new Error("STRIPE_WEBHOOK_SECRET is missing or not a webhook secret");
   }
   return value;
+}
+
+/** Real Stripe PaymentIntent ids only. Fulfillment markers like `reconcile:cs_test_...` are not PaymentIntents. */
+export function isStripePaymentIntentId(value: string | null | undefined): boolean {
+  if (!value) return false;
+  const id = value.trim();
+  return id.startsWith("pi_") && id.length > 5 && !id.includes(":");
+}
+
+export function stripePaymentIntentId(value: unknown): string | null {
+  if (typeof value === "string") return isStripePaymentIntentId(value) ? value.trim() : null;
+  if (value && typeof value === "object" && "id" in value) {
+    return stripePaymentIntentId((value as { id?: unknown }).id);
+  }
+  return null;
+}
+
+export function stripePaymentIntentIdFromSession(
+  session: { payment_intent?: unknown } | null | undefined,
+): string | null {
+  return stripePaymentIntentId(session?.payment_intent);
+}
+
+/** PaymentIntent column: `pi_...` when Stripe provided one. Never a fulfillment-source marker. */
+export function paymentIntentColumnValue(input: {
+  paymentIntent?: unknown;
+  processorEventId?: string | null;
+}): string | null {
+  void input.processorEventId;
+  return stripePaymentIntentId(input.paymentIntent);
+}
+
+export function fulfillmentReferenceValue(processorEventId: string | null | undefined): string | null {
+  const value = (processorEventId ?? "").trim();
+  return value ? value : null;
 }
 
 export function successUrlUnlocksContact(_search: string | URLSearchParams | null | undefined): false {
