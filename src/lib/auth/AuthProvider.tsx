@@ -12,7 +12,7 @@ async function fetchProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, email, first_name, last_name, phone, avatar_url, account_type, account_status, created_at, updated_at",
+      "id, email, first_name, last_name, phone, avatar_url, account_type, account_status, restriction_reason, restriction_at, deletion_requested_at, anonymized_at, created_at, updated_at",
     )
     .eq("id", userId)
     .maybeSingle();
@@ -75,14 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (email: string, password: string) => {
     const supabase = getSupabaseClient();
-    if (!supabase) return { error: "Supabase is not configured yet." };
+    if (!supabase) return { error: "Live login is not connected yet." };
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error?.message ?? null };
   }, []);
 
   const signUp = useCallback(async (input: SignUpInput) => {
     const supabase = getSupabaseClient();
-    if (!supabase) return { error: "Supabase is not configured yet.", needsEmailConfirm: false };
+    if (!supabase) return { error: "Live login is not connected yet.", needsEmailConfirm: false };
     if (!input.acceptedTerms) {
       return { error: "You must accept the Terms of Use and Privacy Policy.", needsEmailConfirm: false };
     }
@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const requestPasswordReset = useCallback(async (email: string) => {
     const supabase = getSupabaseClient();
-    if (!supabase) return { error: "Supabase is not configured yet." };
+    if (!supabase) return { error: "Live login is not connected yet." };
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: authRedirectUrl(AUTH_RESET_PATH),
     });
@@ -118,14 +118,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updatePassword = useCallback(async (password: string) => {
     const supabase = getSupabaseClient();
-    if (!supabase) return { error: "Supabase is not configured yet." };
+    if (!supabase) return { error: "Live login is not connected yet." };
     const { error } = await supabase.auth.updateUser({ password });
     return { error: error?.message ?? null };
   }, []);
 
   const resendVerification = useCallback(async (email: string) => {
     const supabase = getSupabaseClient();
-    if (!supabase) return { error: "Supabase is not configured yet." };
+    if (!supabase) return { error: "Live login is not connected yet." };
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: email.trim(),

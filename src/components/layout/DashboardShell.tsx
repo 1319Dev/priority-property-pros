@@ -39,6 +39,16 @@ export function DashboardShell({
           This account is pending review or email confirmation. You can look around; matching waits on an active, approved contractor.
         </div>
       ) : null}
+      {account_status === "SUSPENDED" ? (
+        <div className="bg-gold-500/20 px-4 py-2 text-center text-sm text-forest-950">
+          Your account is suspended. You can view history and file an appeal from Account → Disputes. You cannot start new marketplace work.
+        </div>
+      ) : null}
+      {account_status === "DEACTIVATED" || account_status === "DELETION_REQUESTED" ? (
+        <div className="bg-gold-500/20 px-4 py-2 text-center text-sm text-forest-950">
+          This account cannot start new marketplace work. History is kept.
+        </div>
+      ) : null}
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-32 sm:px-6 lg:pb-10">
         <Outlet />
       </main>

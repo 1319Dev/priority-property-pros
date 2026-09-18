@@ -11,7 +11,7 @@ import {
   disputeBooking,
   expireStalePendingBookings,
   fetchBooking,
-  fetchBookingReview,
+  fetchBookingReviews,
   fetchChangeOrders,
   fetchHireAgainContractors,
   fetchMyBookings,
@@ -78,7 +78,7 @@ export function CustomerBookingDetailPage() {
   const [title, setTitle] = useState("");
   const [contractor, setContractor] = useState<string>("");
   const [orders, setOrders] = useState<ChangeOrder[]>([]);
-  const [review, setReview] = useState<Awaited<ReturnType<typeof fetchBookingReview>>>(null);
+  const [reviews, setReviews] = useState<Awaited<ReturnType<typeof fetchBookingReviews>>>([]);
   const [error, setError] = useState<string | null>(null);
   const [delta, setDelta] = useState("");
   const [note, setNote] = useState("");
@@ -94,7 +94,7 @@ export function CustomerBookingDetailPage() {
     const pro = await fetchPublicContractor(row.contractor_profile_id).catch(() => null);
     setContractor(pro?.display_label ?? "Local pro");
     setOrders((await fetchChangeOrders(bookingId)) as ChangeOrder[]);
-    setReview(await fetchBookingReview(bookingId));
+    setReviews(await fetchBookingReviews(bookingId));
   }
 
   useEffect(() => {
@@ -223,9 +223,12 @@ export function CustomerBookingDetailPage() {
         </section>
       )}
 
-      {booking.status === "COMPLETED" && !review ? (
+      {booking.status === "COMPLETED" && !reviews.some((row) => row.reviewer_role === "CUSTOMER") ? (
         <section className="space-y-3">
-          <h2 className="font-display text-2xl text-forest-800">Leave a verified review</h2>
+          <h2 className="font-display text-2xl text-forest-800">Leave a review</h2>
+          <p className="text-sm text-ink-700">
+            1–5 stars after a completed job. Written comments are optional. You can only review this hired pro once.
+          </p>
           <TextInput label="Rating (1–5)" inputMode="numeric" value={rating} onChange={(e) => setRating(e.target.value)} />
           <textarea className="w-full rounded-2xl border px-4 py-3" value={body} onChange={(e) => setBody(e.target.value)} />
           <Button
@@ -241,8 +244,15 @@ export function CustomerBookingDetailPage() {
           </Button>
         </section>
       ) : null}
-      {review ? (
-        <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm">Verified review saved · {review.rating} / 5</p>
+      {reviews.length > 0 ? (
+        <ul className="space-y-2">
+          {reviews.map((row) => (
+            <li key={row.id} className="rounded-3xl bg-cream-100 px-5 py-4 text-sm">
+              {row.reviewer_role === "CUSTOMER" ? "Your review" : "Pro review"} · {row.rating} / 5
+              {row.body ? <p className="mt-2">{row.body}</p> : null}
+            </li>
+          ))}
+        </ul>
       ) : null}
       <ButtonLink to={`/app/customer/projects/${booking.project_id}`} variant="ghost">
         Back to project

@@ -298,14 +298,23 @@ export type ChangeOrder = {
   updated_at: string;
 };
 
+export type ReviewSide = "CUSTOMER" | "CONTRACTOR";
+
 export type BookingReview = {
   id: string;
   booking_id: string;
   customer_id: string;
   contractor_profile_id: string;
+  reviewer_id: string;
+  reviewer_role: ReviewSide;
+  reviewee_profile_id: string;
   rating: number;
   body: string | null;
   is_verified: boolean;
+  included_in_rating: boolean;
+  excluded_at: string | null;
+  excluded_by: string | null;
+  excluded_reason: string | null;
   created_at: string;
 };
 

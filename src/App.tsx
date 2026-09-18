@@ -24,6 +24,9 @@ import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import { AccountStatusPage } from "./pages/AccountStatusPage";
 import { TrustPage } from "./pages/TrustPage";
+import { LegalIndexPage, LegalPage } from "./pages/LegalPage";
+import { DisputeDetailPage, DisputeNewPage, DisputesListPage } from "./pages/app/DisputesPages";
+import { AdminDisputeDetailPage, AdminDisputesPage } from "./pages/app/admin/AdminDisputesPages";
 import { CustomerShell } from "./pages/app/CustomerShell";
 import { ProShell } from "./pages/app/ProShell";
 import { VerifierShell } from "./pages/app/VerifierShell";
@@ -82,6 +85,8 @@ export default function App() {
         <Route path="/account/status" element={<AccountStatusPage />} />
         <Route path="/post-project" element={<PostProjectPage />} />
         <Route path="/trust" element={<TrustPage />} />
+        <Route path="/legal" element={<LegalIndexPage />} />
+        <Route path="/legal/:slug" element={<LegalPage />} />
       </Route>
 
       <Route element={<RequireAuth />}>
@@ -100,6 +105,9 @@ export default function App() {
             <Route path="hire-again" element={<HireAgainPage />} />
             <Route path="messages" element={<CustomerMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="account/disputes" element={<DisputesListPage />} />
+            <Route path="account/disputes/new" element={<DisputeNewPage />} />
+            <Route path="account/disputes/:disputeId" element={<DisputeDetailPage />} />
           </Route>
         </Route>
         <Route element={<RequireRole role="CONTRACTOR" />}>
@@ -116,6 +124,9 @@ export default function App() {
             <Route path="profile" element={<ProProfilePage />} />
             <Route path="messages" element={<ProMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="account/disputes" element={<DisputesListPage />} />
+            <Route path="account/disputes/new" element={<DisputeNewPage />} />
+            <Route path="account/disputes/:disputeId" element={<DisputeDetailPage />} />
           </Route>
         </Route>
         <Route element={<RequireRole role="VERIFIER" />}>
@@ -124,6 +135,9 @@ export default function App() {
             <Route path="visits" element={<VerifierVisitsPage />} />
             <Route path="messages" element={<VerifierMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="account/disputes" element={<DisputesListPage />} />
+            <Route path="account/disputes/new" element={<DisputeNewPage />} />
+            <Route path="account/disputes/:disputeId" element={<DisputeDetailPage />} />
           </Route>
         </Route>
         <Route element={<RequireAdmin />}>
@@ -134,7 +148,12 @@ export default function App() {
             <Route path="approvals/:contractorProfileId" element={<AdminApprovalDetailPage />} />
             <Route path="audit" element={<AdminAuditPage />} />
             <Route path="bookings" element={<AdminBookingsPage />} />
+            <Route path="disputes" element={<AdminDisputesPage />} />
+            <Route path="disputes/:disputeId" element={<AdminDisputeDetailPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="account/disputes" element={<DisputesListPage />} />
+            <Route path="account/disputes/new" element={<DisputeNewPage />} />
+            <Route path="account/disputes/:disputeId" element={<DisputeDetailPage />} />
           </Route>
         </Route>
       </Route>

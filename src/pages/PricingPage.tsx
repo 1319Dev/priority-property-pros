@@ -22,8 +22,12 @@ import {
   PRIORITY_PRO_NAME,
   PRIORITY_PRO_PRICE_MONTH,
   PRIORITY_PRO_PRICE_YEAR,
+  NO_PAY_TO_WIN,
+  PLAN_COMPARISON,
   PRIORITY_PRO_STATUS,
   PRO_PRICING_SUMMARY,
+  CONTRACTOR_VALUE_HEADLINE,
+  CONTRACTOR_VALUE_POINTS,
   REPEAT_FEE_INTRO,
   REPEAT_FEE_RATE,
   REPEAT_MAX_FEE,
@@ -42,6 +46,12 @@ export function PricingPage() {
           {PRICING_PAGE_TITLE}
         </h1>
         <p className="mt-4 text-lg leading-relaxed text-ink-700">{PRICING_PAGE_INTRO}</p>
+        <p className="mt-3 font-semibold text-forest-800">{CONTRACTOR_VALUE_HEADLINE}</p>
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink-700">
+          {CONTRACTOR_VALUE_POINTS.map((point) => (
+            <li key={point}>{point}</li>
+          ))}
+        </ul>
 
         <div className="mt-8 rounded-3xl bg-forest-800 px-5 py-6 text-cream-50 sm:px-7">
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-300">
@@ -86,6 +96,31 @@ export function PricingPage() {
             </p>
             <p className="mt-2 text-sm leading-relaxed text-ink-700">{PRIORITY_PRO_DETAIL}</p>
           </article>
+        </div>
+
+        <div className="mt-4 overflow-x-auto rounded-3xl border border-forest-800/10 bg-cream-50">
+          <table className="min-w-full text-left text-sm">
+            <caption className="px-5 pt-5 text-left font-display text-2xl text-forest-800">
+              Free vs Priority Pro
+            </caption>
+            <thead>
+              <tr className="border-b border-forest-800/10">
+                <th className="px-5 py-3 font-semibold">Compare</th>
+                <th className="px-5 py-3 font-semibold">Free</th>
+                <th className="px-5 py-3 font-semibold">Priority Pro</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PLAN_COMPARISON.map((row) => (
+                <tr key={row.feature} className="border-b border-forest-800/5 last:border-0">
+                  <th className="px-5 py-3 align-top font-medium text-ink-700">{row.feature}</th>
+                  <td className="px-5 py-3 align-top text-ink-700">{row.free}</td>
+                  <td className="px-5 py-3 align-top text-ink-700">{row.priorityPro}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="px-5 py-4 text-sm text-ink-700">{NO_PAY_TO_WIN}</p>
         </div>
 
         <div className="mt-10 rounded-3xl border border-forest-800/10 bg-cream-50 p-5 sm:p-7">

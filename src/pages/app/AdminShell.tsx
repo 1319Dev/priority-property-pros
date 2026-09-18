@@ -16,7 +16,7 @@ export function AdminShell() {
   const items = [
     { to: "/app/admin", label: "Overview", end: true },
     { to: "/app/admin/bookings", label: "Bookings" },
-    { to: "/app/admin/people", label: "People" },
+    { to: "/app/admin/disputes", label: "Disputes" },
     { to: "/app/admin/approvals", label: "Approvals", badge: pendingCount },
     { to: "/app/admin/account", label: "Account" },
   ];

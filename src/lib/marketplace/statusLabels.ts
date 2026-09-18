@@ -167,6 +167,12 @@ export function accountStatusLabel(value: AccountStatus | null | undefined): str
       return "Disabled";
     case "DELETED":
       return "Deleted";
+    case "DEACTIVATED":
+      return "Deactivated";
+    case "DELETION_REQUESTED":
+      return "Deletion requested";
+    case "DELETED_ANONYMIZED":
+      return "Deleted";
     default:
       return "Unknown";
   }

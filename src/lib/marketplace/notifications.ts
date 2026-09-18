@@ -9,6 +9,9 @@ export const NOTIFICATION_KINDS = [
   "estimate.received",
   "estimate.updated",
   "estimate.withdrawn",
+  "account.rating_suspended",
+  "account.rating_reinstated",
+  "dispute.resolved",
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
@@ -72,6 +75,27 @@ export const NOTIFICATION_CATALOG: Record<NotificationKind, NotificationEvent> =
     title: "Estimate withdrawn",
     body: "A contractor withdrew an estimate on your project.",
     oncePerEntity: true,
+  },
+  "account.rating_suspended": {
+    kind: "account.rating_suspended",
+    audience: "customer",
+    title: "Your account is suspended because of ratings.",
+    body: "Your eligible completed-job rating is below 4.00 after enough reviews. You can view history and file an appeal from Disputes.",
+    oncePerEntity: false,
+  },
+  "account.rating_reinstated": {
+    kind: "account.rating_reinstated",
+    audience: "customer",
+    title: "Your rating suspension was lifted.",
+    body: "Your eligible rating no longer meets the automatic suspension rule.",
+    oncePerEntity: false,
+  },
+  "dispute.resolved": {
+    kind: "dispute.resolved",
+    audience: "customer",
+    title: "Your dispute was reviewed.",
+    body: "An admin updated your dispute. Open Disputes to see the outcome.",
+    oncePerEntity: false,
   },
 };
 

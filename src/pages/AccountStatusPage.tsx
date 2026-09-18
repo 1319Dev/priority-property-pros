@@ -4,9 +4,12 @@ import { AuthCard } from "../lib/auth/AuthCard";
 import { useAuth } from "../lib/auth/useAuth";
 
 const messages: Record<string, string> = {
-  SUSPENDED: "This account is suspended. Contact support if you believe that is a mistake.",
+  SUSPENDED: "This account is suspended. You can sign in to view history and file an appeal from Account → Disputes.",
   DISABLED: "This account is disabled.",
   DELETED: "This account is closed.",
+  DELETED_ANONYMIZED: "This account is closed and removed from the public directory.",
+  DEACTIVATED: "This account is deactivated and cannot start new marketplace work.",
+  DELETION_REQUESTED: "This account has a deletion request in progress.",
   PENDING: "This account is pending. Confirm your email, or wait for an admin review if you applied as a pro or verifier.",
 };
 

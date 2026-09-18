@@ -1,4 +1,5 @@
 import { HomeBrowsePreview } from "../features/browse/BrowseVisuals";
+import { MarketingGallery } from "../features/home/MarketingGallery";
 import { ForContractors } from "../features/home/ForContractors";
 import { Hero } from "../features/home/Hero";
 import { HowItWorks } from "../features/home/HowItWorks";
@@ -15,6 +16,7 @@ export function HomePage() {
       <HomeBrowsePreview />
       <PopularServices />
       <HowItWorks />
+      <MarketingGallery />
       <SimplePricing />
       <WhyHomeowners />
       <ForContractors />

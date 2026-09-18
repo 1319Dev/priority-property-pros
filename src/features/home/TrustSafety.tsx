@@ -35,9 +35,12 @@ export function TrustSafety() {
           When you hire, ask for proof of insurance and any required local licenses yourself. Agree on scope and
           price before work starts. If something feels wrong, pause.
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap gap-3">
           <ButtonLink to="/trust" variant="ghost">
             Full trust notes
+          </ButtonLink>
+          <ButtonLink to="/legal" variant="ghost">
+            Legal pages
           </ButtonLink>
         </div>
       </Container>

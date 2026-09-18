@@ -99,3 +99,37 @@ export function billableAmountCents(originalAmountCents: number, approvedDeltas:
 export function formatFeeScheduleLabel(kind: FeeScheduleKind): string {
   return kind === "REPEAT" ? "Repeat (Hire Again)" : "Original";
 }
+
+/** Public dollar range from a half-open [min, max) cent bracket. */
+export function formatPublicFeeRange(minCents: number, maxCents: number | null): string {
+  const format = (cents: number) => {
+    const dollars = cents / 100;
+    if (Number.isInteger(dollars)) return `$${dollars.toLocaleString("en-US")}`;
+    return `$${dollars.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+  if (maxCents == null) return `${format(minCents)}+`;
+  return `${format(minCents)}–${format(maxCents - 1)}`;
+}
+
+export function formatPublicFeeRate(rateBps: number): string {
+  const pct = rateBps / 100;
+  return `${pct}%`;
+}
+
+export function publicFeeBracketsFromConfig(
+  brackets: FeeBracket[] = ORIGINAL_FEE_BRACKETS,
+): { range: string; rate: string; min_amount_cents: number; max_amount_cents: number | null; rate_bps: number }[] {
+  return brackets.map((bracket) => ({
+    range: formatPublicFeeRange(bracket.min_amount_cents, bracket.max_amount_cents),
+    rate: formatPublicFeeRate(bracket.rate_bps),
+    min_amount_cents: bracket.min_amount_cents,
+    max_amount_cents: bracket.max_amount_cents,
+    rate_bps: bracket.rate_bps,
+  }));
+}
+
+export function formatUsdFromFeeCents(cents: number): string {
+  const dollars = cents / 100;
+  if (Number.isInteger(dollars)) return `$${dollars.toLocaleString("en-US")}`;
+  return `$${dollars.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}

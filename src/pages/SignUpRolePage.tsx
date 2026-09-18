@@ -34,7 +34,15 @@ export function SignUpRolePage() {
           <Link to="/sign-in" className="font-semibold text-forest-800 underline">
             Sign in
           </Link>
-          . There is no public Admin signup.
+          . There is no public Admin signup. See{" "}
+          <Link to="/legal/terms" className="font-semibold text-forest-800 underline">
+            Terms
+          </Link>
+          {" and "}
+          <Link to="/legal/privacy" className="font-semibold text-forest-800 underline">
+            Privacy
+          </Link>
+          .
         </>
       }
     >

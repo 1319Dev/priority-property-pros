@@ -31,6 +31,10 @@ export type Database = {
           avatar_url: string | null;
           account_type: AccountType;
           account_status: AccountStatus;
+          restriction_reason: "RATING_SUSPENSION" | "ADMIN_SUSPENSION" | "USER_DEACTIVATION" | "DELETION_REQUEST" | null;
+          restriction_at: string | null;
+          deletion_requested_at: string | null;
+          anonymized_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -698,6 +702,52 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      trust_disputes: {
+        Row: {
+          id: string;
+          filer_id: string;
+          category: "FRAUDULENT_REVIEW" | "INACCURATE_REVIEW" | "RATING_SUSPENSION";
+          explanation: string;
+          disputed_review_id: string | null;
+          evidence_path: string | null;
+          status: "OPEN" | "UNDER_REVIEW" | "RESOLVED_UPHELD" | "RESOLVED_REMOVED" | "RESOLVED_ADJUSTED" | "CLOSED";
+          target_profile_id: string | null;
+          booking_id: string | null;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          resolution_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      trust_dispute_events: {
+        Row: {
+          id: string;
+          dispute_id: string;
+          actor_id: string | null;
+          event_type: string;
+          payload: Json;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      profile_rating_stats: {
+        Row: {
+          profile_id: string;
+          eligible_count: number;
+          rating_sum: number;
+          rating_average: number | null;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       booking_contact_access: {
         Row: import("../marketplace/types").BookingContactAccess;
         Insert: never;
@@ -846,6 +896,26 @@ export type Database = {
         Args: { p_booking_id: string; p_rating: number; p_body?: string | null };
         Returns: Json;
       };
+      create_trust_dispute: {
+        Args: {
+          p_category: string;
+          p_explanation: string;
+          p_disputed_review_id?: string | null;
+          p_evidence_path?: string | null;
+        };
+        Returns: Json;
+      };
+      list_my_trust_disputes: { Args: Record<string, never>; Returns: Json };
+      get_my_trust_dispute: { Args: { p_dispute_id: string }; Returns: Json };
+      list_admin_trust_disputes: { Args: { p_status?: string | null }; Returns: Json };
+      get_admin_trust_dispute: { Args: { p_dispute_id: string }; Returns: Json };
+      admin_resolve_trust_dispute: {
+        Args: { p_dispute_id: string; p_resolution: string; p_note?: string | null };
+        Returns: Json;
+      };
+      request_account_deletion: { Args: { p_confirm_phrase: string }; Returns: Json };
+      my_rating_stats: { Args: Record<string, never>; Returns: Json };
+      list_public_fee_schedule: { Args: Record<string, never>; Returns: Json };
       booking_job_contact: { Args: { p_booking_id: string }; Returns: Json };
       booking_has_contact_access: { Args: { p_booking_id: string }; Returns: boolean };
       contractor_has_contact_access_on_project: { Args: { p_project_id: string }; Returns: boolean };

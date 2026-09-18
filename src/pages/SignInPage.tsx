@@ -47,7 +47,14 @@ export function SignInPage() {
           <Link to="/sign-up" className="font-semibold text-forest-800 underline">
             Create an account
           </Link>
-          . {SIGN_IN_CREATE_ACCOUNT_NOTE}
+          . {SIGN_IN_CREATE_ACCOUNT_NOTE}{" "}
+          <Link to="/legal/terms" className="font-semibold text-forest-800 underline">
+            Terms
+          </Link>
+          {" · "}
+          <Link to="/legal/privacy" className="font-semibold text-forest-800 underline">
+            Privacy
+          </Link>
         </>
       }
     >

@@ -8,7 +8,7 @@ export const ROLE_HOME: Record<AccountType, string> = {
   ADMIN: "/app/admin",
 };
 
-export const BLOCKED_STATUSES: AccountStatus[] = ["SUSPENDED", "DISABLED", "DELETED"];
+export const BLOCKED_STATUSES: AccountStatus[] = ["DISABLED", "DELETED", "DELETED_ANONYMIZED"];
 
 export function isPublicSignupType(value: string): value is PublicSignupType {
   return (PUBLIC_SIGNUP_TYPES as readonly string[]).includes(value);
