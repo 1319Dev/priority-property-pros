@@ -98,7 +98,8 @@ describe("trust and safety SQL", () => {
     expect(latest).toMatch(/'apply_rating_suspension_if_needed'/);
     expect(latest).toMatch(/'maybe_clear_rating_suspension'/);
     expect(latest).not.toMatch(/ppp_set_rpc\('apply_rating_suspension'\)/);
-    expect(latest).toMatch(/default 5/);
+    expect(latest).toMatch(/unrounded eligible average is below 4\.00 AND the eligible review count is at least 5/);
     expect(latest).not.toMatch(/minimum reviews \(default 3\)/);
+    expect(latest).not.toMatch(/per the published schedule/);
   });
 });

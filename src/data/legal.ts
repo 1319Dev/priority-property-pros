@@ -66,7 +66,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
         heading: "What PPP does and does not do",
         paragraphs: [
           "PPP earns revenue from the $9.99 contractor activation fee, a flat $4.99 Connection Fee when homeowners select contractors, and future Priority Pro subscriptions.",
-          "The Connection Fee is $4.99 per legitimate new connection, regardless of project value. It is for the marketplace service of connecting the parties, not a percentage of the project payment.",
+          "The Connection Fee is a flat $4.99 per legitimate new connection, regardless of project value. It is for the marketplace service of connecting the parties, not a progressive percentage schedule and not a percentage of the project payment.",
           "PPP does not process, hold in escrow, or payout homeowner-to-contractor project money. After the parties are connected through PPP, they communicate directly and arrange project payment themselves.",
           "Connection Fee checkout is Coming Soon and is not live in this product. Connection Fees are calculated and displayed, but no live charges occur.",
           "PPP does not currently verify licenses, insurance, or workmanship. Priority Verified is not live and is never a code inspection or a guarantee.",
@@ -77,7 +77,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
         heading: "Reviews, disputes, and account action",
         paragraphs: [
           "Reviews may be left only after a completed PPP job by the homeowner and the hired contractor on that job. Public ratings use those eligible reviews only.",
-          "If an account's eligible average is below 4.00 after at least 5 completed-job reviews, PPP may suspend new marketplace participation. History is kept. You may appeal from Account → Disputes.",
+          "PPP may auto-suspend new marketplace participation only when the unrounded eligible average is below 4.00 AND the eligible review count is at least 5. Exactly 4.00 does not suspend. History is kept. You may appeal from Account → Disputes.",
           "PPP may deactivate, suspend, or close accounts that violate these terms, the Community & Review Guidelines, or applicable law. See Account Suspension & Termination.",
         ],
       },
@@ -224,7 +224,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
         heading: "How ratings are used",
         paragraphs: [
           "Public contractor ratings come only from eligible completed PPP jobs. Client-side star math is not trusted. Removing a review from the rating calculation is an admin action after a dispute.",
-          "If an eligible average is below 4.00 after at least 5 completed-job reviews, new marketplace participation may be suspended. Exactly 4.00 does not suspend.",
+          "PPP may auto-suspend new marketplace participation only when the unrounded eligible average is below 4.00 AND the eligible review count is at least 5. Exactly 4.00 does not suspend.",
         ],
       },
     ],
@@ -267,7 +267,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
       {
         heading: "Rating suspension",
         paragraphs: [
-          "If your eligible completed-job average is below 4.00 and you have at least 5 eligible reviews, PPP may suspend the account for ratings. Exactly 4.00 does not suspend. The unrounded average is used.",
+          "PPP may auto-suspend an account for ratings only when the unrounded eligible average is below 4.00 AND the eligible review count is at least 5. Exactly 4.00 does not suspend.",
           "A rating suspension is not a deletion. You keep history. You cannot start new marketplace work: contractors cannot take new jobs or send new estimates; homeowners cannot post new projects or hire. You will see a notice and may appeal.",
         ],
       },

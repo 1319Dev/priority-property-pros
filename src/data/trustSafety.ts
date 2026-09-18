@@ -26,7 +26,7 @@ export const TRUST_WHAT_EXISTS = [
   },
   {
     title: "Low ratings can pause new work",
-    body: "If an eligible average is below 4.00 after at least 5 completed-job reviews, PPP can suspend new marketplace participation. History stays. Exactly 4.00 does not suspend. You can appeal.",
+    body: "PPP may auto-suspend new marketplace participation only when the unrounded eligible average is below 4.00 AND the eligible review count is at least 5. History stays. Exactly 4.00 does not suspend. You can appeal.",
   },
   {
     title: "Disputes and appeals",

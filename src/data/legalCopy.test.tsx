@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -31,8 +34,30 @@ describe("legal and trust copy", () => {
     expect(blob).toMatch(/arrange project payment themselves/i);
     expect(blob).toMatch(/Online checkout is not live/i);
     expect(blob).toMatch(/\$9\.99.*activation/i);
-    expect(blob).toMatch(/\$4\.99 Connection Fee/i);
+    expect(blob).toMatch(/flat \$4\.99 Connection Fee/i);
     expect(blob).toMatch(/Homeowners join for \$0/i);
+    expect(blob).toMatch(/unrounded eligible average is below 4\.00 AND the eligible review count is at least 5/);
+    expect(blob).toMatch(/Coming Soon/);
+    expect(blob).not.toMatch(/per the published schedule/);
+  });
+
+  it("keeps the legal seed SQL on the final pricing and rating model", () => {
+    const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+    const sql = readFileSync(
+      path.join(repoRoot, "supabase/migrations/20260926000005_legal_agreements.sql"),
+      "utf8",
+    );
+    expect(sql).toMatch(/flat \$4\.99 Connection Fee/);
+    expect(sql).toMatch(/Homeowners join for \$0 signup/);
+    expect(sql).toMatch(/one-time \$9\.99 activation fee/);
+    expect(sql).toMatch(/unrounded eligible average is below 4\.00 AND the eligible review count is at least 5/);
+    expect(sql).toMatch(/Coming Soon/);
+    expect(sql).toMatch(/checkout is not live/i);
+    expect(sql).toMatch(/does not process, hold in escrow, or payout homeowner-to-contractor project money/);
+    expect(sql).toMatch(/homeowner pays the contractor directly/);
+    expect(sql).not.toMatch(/minimum reviews \(default 3\)/);
+    expect(sql).not.toMatch(/per the published schedule/);
+    expect(sql).not.toMatch(/progressive percentage-based/);
   });
 
 
