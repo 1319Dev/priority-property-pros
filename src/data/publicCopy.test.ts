@@ -3,12 +3,18 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  CONNECTION_FEE,
+  CONNECTION_FEE_DESCRIPTION,
   CONTRACTOR_SIGNUP_HEADLINE,
   CONTRACTOR_SIGNUP_SUPPORTING,
   FREE_PLAN_NAME,
   FREE_PLAN_PRICE,
   HOMEPAGE_SIGNUP_HEADLINE,
   HOMEPAGE_SIGNUP_SUPPORTING,
+  HOMEOWNER_PRICING_SUMMARY,
+  PRIORITY_PRO_STATUS,
+  PRIORITY_PRO_DETAIL,
+  PRICING_FAQ,
   SIGNUP_FEE_NOT_MONTHLY,
   SIGNUP_FEE_SHORT,
 } from "./pricing";
@@ -97,6 +103,28 @@ describe("public pricing copy", () => {
       }
     }
     expect(hits).toEqual([]);
+  });
+
+
+  it("keeps $4.99 flat Connection Fee independent of project value", () => {
+    expect(CONNECTION_FEE).toBe("$4.99");
+    expect(CONNECTION_FEE_DESCRIPTION).toMatch(/\$4\.99 flat Connection Fee/i);
+    const faq = PRICING_FAQ.find((item) => /flat \$4\.99 per legitimate new connection/i.test(item.answer));
+    expect(faq).toBeDefined();
+    expect(faq!.answer).toMatch(/regardless of whether the project is \$100 or \$100,000/i);
+    expect(faq!.answer).toMatch(/not a percentage of the project payment/i);
+  });
+
+  it("states homeowners pay the pro directly after connection", () => {
+    expect(HOMEOWNER_PRICING_SUMMARY).toMatch(/pay the pro directly/i);
+    const faq = PRICING_FAQ.find((item) => /homeowners pay a PPP Connection Fee/i.test(item.question));
+    expect(faq).toBeDefined();
+    expect(faq!.answer).toMatch(/pay the pro directly/i);
+  });
+
+  it("keeps Priority Pro Coming Soon and not purchasable", () => {
+    expect(PRIORITY_PRO_STATUS).toBe("Coming Soon");
+    expect(PRIORITY_PRO_DETAIL).toMatch(/cannot be purchased/i);
   });
 
   it("still allows contractor Free plan / $0/month wording in shared pricing copy", () => {

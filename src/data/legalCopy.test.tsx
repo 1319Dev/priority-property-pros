@@ -24,6 +24,18 @@ describe("legal and trust copy", () => {
     expect(ATTORNEY_REVIEW_REQUIRED).toMatch(/attorney review required/i);
   });
 
+  it("states PPP does not process project payments and checkout is not live", () => {
+    const terms = LEGAL_DOCUMENTS.terms;
+    const blob = terms.sections.map((s) => s.paragraphs.join("\n")).join("\n");
+    expect(blob).toMatch(/does not process, hold in escrow, or payout homeowner-to-contractor project money/i);
+    expect(blob).toMatch(/arrange project payment themselves/i);
+    expect(blob).toMatch(/Online checkout is not live/i);
+    expect(blob).toMatch(/\$9\.99.*activation/i);
+    expect(blob).toMatch(/\$4\.99 Connection Fee/i);
+    expect(blob).toMatch(/Homeowners join for \$0/i);
+  });
+
+
   it("renders terms, privacy, and the legal index", () => {
     render(
       <MemoryRouter>
