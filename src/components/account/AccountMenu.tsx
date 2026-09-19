@@ -2,16 +2,11 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth/useAuth";
 import { accountInitials, accountSettingsPath, displayName } from "../../lib/auth/roles";
-import { deleteOwnAccount } from "../../lib/auth/deleteAccount";
-import { DeleteAccountDialog } from "./DeleteAccountDialog";
 
 export function AccountMenu() {
   const { user, profile, account_type, account_status, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
 
@@ -37,26 +32,11 @@ export function AccountMenu() {
     ? displayName(profile.first_name, profile.last_name, profile.email)
     : (user.email ?? "Account");
   const initials = accountInitials(profile?.first_name, profile?.last_name, user.email ?? profile?.email);
-  const accountTo = accountSettingsPath(account_type, account_status);
+  const settingsTo = accountSettingsPath(account_type, account_status);
 
   async function handleSignOut() {
     setOpen(false);
     await signOut();
-    navigate("/", { replace: true });
-  }
-
-  async function handleDelete() {
-    setBusy(true);
-    setError(null);
-    const result = await deleteOwnAccount();
-    if (result.error) {
-      setError(result.error);
-      setBusy(false);
-      return;
-    }
-    await signOut();
-    setBusy(false);
-    setDeleteOpen(false);
     navigate("/", { replace: true });
   }
 
@@ -93,11 +73,11 @@ export function AccountMenu() {
           <p className="truncate px-3 py-2 text-sm text-ink-700">{name}</p>
           <Link
             role="menuitem"
-            to={accountTo}
+            to={settingsTo}
             className="flex min-h-12 items-center rounded-2xl px-3 text-sm font-semibold text-forest-800 hover:bg-cream-100"
             onClick={() => setOpen(false)}
           >
-            Your account
+            Settings
           </Link>
           <button
             type="button"
@@ -109,33 +89,8 @@ export function AccountMenu() {
           >
             Sign out
           </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="flex min-h-12 w-full items-center rounded-2xl px-3 text-left text-sm font-semibold text-danger-600 hover:bg-cream-100"
-            onClick={() => {
-              setOpen(false);
-              setError(null);
-              setDeleteOpen(true);
-            }}
-          >
-            Delete account
-          </button>
         </div>
       ) : null}
-      <DeleteAccountDialog
-        open={deleteOpen}
-        busy={busy}
-        error={error}
-        onClose={() => {
-          if (busy) return;
-          setDeleteOpen(false);
-          setError(null);
-        }}
-        onConfirm={() => {
-          void handleDelete();
-        }}
-      />
     </div>
   );
 }
