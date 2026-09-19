@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useId, type ReactNode } from "react";
 import { cn } from "../../utils/cn";
 
 export function BottomSheet({
@@ -12,6 +12,7 @@ export function BottomSheet({
   onClose: () => void;
   children: ReactNode;
 }) {
+  const titleId = useId();
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (event: KeyboardEvent) => {
@@ -41,14 +42,14 @@ export function BottomSheet({
       <div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="sheet-title"
+        aria-labelledby={titleId}
         className={cn(
           "absolute inset-x-0 bottom-0 rounded-t-[1.75rem] border border-cream-200 bg-cream-50 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl transition-transform duration-200",
           open ? "translate-y-0" : "translate-y-full",
         )}
       >
         <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-ink-300/60" />
-        <h2 id="sheet-title" className="font-display text-2xl text-forest-800">
+        <h2 id={titleId} className="font-display text-2xl text-forest-800">
           {title}
         </h2>
         <div className="mt-3">{children}</div>

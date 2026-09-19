@@ -4,7 +4,7 @@ import { ButtonLink } from "../ui/Button";
 import { Container } from "../ui/Container";
 import { CUSTOMER_CTA } from "../../data/brand";
 import { useAuth } from "../../lib/auth/useAuth";
-import { postLoginPath } from "../../lib/auth/roles";
+import { AccountMenu } from "../account/AccountMenu";
 import { Skeleton } from "../ui/Skeleton";
 
 const links = [
@@ -15,9 +15,7 @@ const links = [
 ];
 
 export function Header() {
-  const { loading, user, account_type, account_status } = useAuth();
-  const accountTo = user ? postLoginPath(account_type, account_status) : "/sign-in";
-  const accountLabel = user ? "Account" : "Sign In";
+  const { loading, user } = useAuth();
 
   return (
     <header className="sticky top-0 z-40 border-b border-forest-800/10 bg-cream-50/90 pt-safe backdrop-blur-md">
@@ -31,41 +29,38 @@ export function Header() {
         <NavLink to="/" aria-label="Priority Property Pros home" className="shrink-0">
           <Logo />
         </NavLink>
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
-          {links.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              className={({ isActive }) =>
-                `rounded-full px-3 py-2 text-sm font-medium ${
-                  isActive ? "text-forest-800" : "text-ink-700 hover:text-forest-800"
-                }`
-              }
-            >
-              {link.label}
-            </NavLink>
-          ))}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
+            {links.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                className={({ isActive }) =>
+                  `rounded-full px-3 py-2 text-sm font-medium ${
+                    isActive ? "text-forest-800" : "text-ink-700 hover:text-forest-800"
+                  }`
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
+            <ButtonLink to="/post-project" size="sm" className="ml-2">
+              {CUSTOMER_CTA}
+            </ButtonLink>
+          </nav>
           {loading ? (
-            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-11 w-11 rounded-full" />
+          ) : user ? (
+            <AccountMenu />
           ) : (
-            <NavLink to={accountTo} className="rounded-full px-3 py-2 text-sm font-semibold text-forest-800">
-              {accountLabel}
+            <NavLink
+              to="/sign-in"
+              className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-forest-800"
+            >
+              Sign In
             </NavLink>
           )}
-          <ButtonLink to="/post-project" size="sm" className="ml-2">
-            {CUSTOMER_CTA}
-          </ButtonLink>
-        </nav>
-        {loading ? (
-          <Skeleton className="h-9 w-16 lg:hidden" />
-        ) : (
-          <NavLink
-            to={accountTo}
-            className="min-h-11 rounded-full px-3 text-sm font-semibold text-forest-800 lg:hidden"
-          >
-            {accountLabel}
-          </NavLink>
-        )}
+        </div>
       </Container>
     </header>
   );

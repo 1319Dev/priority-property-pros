@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { postLoginPath, sanitizeSignupAccountType } from "./roles";
+import { accountInitials, accountSettingsPath, postLoginPath, sanitizeSignupAccountType } from "./roles";
 import { buildSignupMetadata } from "./signupMetadata";
 
 describe("signup metadata", () => {
@@ -35,5 +35,28 @@ describe("post-login routing", () => {
   it("sends suspended accounts to the status page", () => {
     expect(postLoginPath("CUSTOMER", "SUSPENDED")).toBe("/account/status");
     expect(postLoginPath("ADMIN", "DISABLED")).toBe("/account/status");
+  });
+});
+
+describe("account settings path", () => {
+  it("sends each role to its account page", () => {
+    expect(accountSettingsPath("CUSTOMER", "ACTIVE")).toBe("/app/customer/account");
+    expect(accountSettingsPath("CONTRACTOR", "PENDING")).toBe("/app/pro/account");
+    expect(accountSettingsPath("VERIFIER", "PENDING")).toBe("/app/verifier/account");
+    expect(accountSettingsPath("ADMIN", "ACTIVE")).toBe("/app/admin/account");
+  });
+
+  it("keeps blocked accounts on the status page", () => {
+    expect(accountSettingsPath("CUSTOMER", "SUSPENDED")).toBe("/account/status");
+  });
+});
+
+describe("account initials", () => {
+  it("uses first and last name when present", () => {
+    expect(accountInitials("Pat", "Lee", "pat@example.com")).toBe("PL");
+  });
+
+  it("falls back to the email", () => {
+    expect(accountInitials("", "", "pat@example.com")).toBe("P");
   });
 });

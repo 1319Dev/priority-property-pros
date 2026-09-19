@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Logo } from "../brand/Logo";
+import { AccountMenu } from "../account/AccountMenu";
 import { useAuth } from "../../lib/auth/useAuth";
 import { displayName } from "../../lib/auth/roles";
 
@@ -28,10 +29,13 @@ export function DashboardShell({
           <NavLink to="/" aria-label="Priority Property Pros home">
             <Logo />
           </NavLink>
-          <p className="hidden text-sm text-ink-700 sm:block">
-            {eyebrow}
-            {name ? ` · ${name}` : ""}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="hidden text-sm text-ink-700 sm:block">
+              {eyebrow}
+              {name ? ` · ${name}` : ""}
+            </p>
+            <AccountMenu />
+          </div>
         </div>
       </header>
       {account_status === "PENDING" ? (

@@ -158,7 +158,17 @@ If it fails with “No auth user”, you signed up with a different email. Check
 
 ---
 
-## H. If something fails
+## H. Delete account (after the website update)
+
+Signed-in people can close their own account from the **Account menu** (top-right initials) or **Your account**. The website cannot delete a user by itself. After this change is live:
+
+1. In Supabase, open **SQL Editor**, paste `supabase/migrations/20261001000001_purge_account_owned_rows.sql`, and click **Run**.
+2. Deploy the Edge Function `delete-account` (Dashboard → Edge Functions, or `supabase functions deploy delete-account`). It uses the existing **service role** secret already on the project. Do not put that key in GitHub or the website.
+3. Sign out still works even before those two steps. Delete account will show an error until both are done.
+
+---
+
+## I. If something fails
 
 | Symptom | Likely cause |
 | --- | --- |
@@ -166,5 +176,6 @@ If it fails with “No auth user”, you signed up with a different email. Check
 | Redirect lands on GitHub 404 | Redirect URL missing from Supabase allow-list, or still using the old `/priority-property-pros/` project path |
 | Sign up works, no row in `profiles` | Migration `20260916000006_signup_trigger.sql` not run |
 | “Invalid API key” | Anon key truncated, or you pasted the service role key |
+| Delete account says it failed | Run `20261001000001_purge_account_owned_rows.sql` and deploy Edge Function `delete-account` |
 
 Full security notes: [SECURITY.md](SECURITY.md). Table list: [DATABASE.md](DATABASE.md).
