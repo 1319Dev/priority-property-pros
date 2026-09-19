@@ -60,6 +60,7 @@ describe("AccountMenu sign-out visibility", () => {
     const signOut = vi.fn().mockResolvedValue(undefined);
     renderWithAuth(<AccountMenu />, auth({ signOut }));
 
+    expect(screen.getByRole("button", { name: /account menu/i })).toHaveTextContent(/account/i);
     expect(screen.queryByRole("menuitem", { name: /sign out/i })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /account menu/i }));
     expect(screen.getByRole("menuitem", { name: /^sign out$/i })).toBeInTheDocument();

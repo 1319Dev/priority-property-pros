@@ -64,7 +64,7 @@ export function AccountMenu() {
     <div className="relative" ref={rootRef}>
       <button
         type="button"
-        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-forest-800 text-sm font-semibold text-cream-50"
+        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-forest-800 px-2.5 pr-3 text-sm font-semibold text-cream-50"
         aria-label="Account menu"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -72,10 +72,16 @@ export function AccountMenu() {
         onClick={() => setOpen((current) => !current)}
       >
         {profile?.avatar_url ? (
-          <img src={profile.avatar_url} alt="" className="h-11 w-11 rounded-full object-cover" />
+          <img src={profile.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
         ) : (
-          <span aria-hidden="true">{initials}</span>
+          <span
+            className="grid h-7 w-7 place-items-center rounded-full bg-gold-500 text-xs font-bold text-forest-950"
+            aria-hidden="true"
+          >
+            {initials}
+          </span>
         )}
+        Account
       </button>
       {open ? (
         <div
