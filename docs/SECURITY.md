@@ -117,6 +117,14 @@ Estimate-lifecycle scanners block obvious phone / email / URL / handle patterns 
 
 Supabase database advisors will still flag SECURITY DEFINER views and authenticated RPC grants. That is expected. Do not drop the views or revoke signed-in access to `post_project` / `accept_opportunity` / `select_estimate`.
 
+## Self-service account delete
+
+- The website only calls Edge Function `delete-account` for the **current** session. Clients cannot pass another user’s id.
+- `purge_account_owned_rows` is `SECURITY DEFINER` and `require_service_role()` — revoked from `anon` and `authenticated`.
+- The Edge Function then deletes `auth.users` with the service role. Profile / contractor rows cascade from that. Related bookings and connections are cleaned first so foreign keys do not block the close.
+- The last **active** admin cannot delete themselves.
+- Deleting a user does not revoke an already-issued JWT by itself. The website signs out immediately after a successful delete.
+
 ## Auth redirects
 
 Local and the live custom domain both need allow-listed URLs (see [SUPABASE_SETUP.md](SUPABASE_SETUP.md)):

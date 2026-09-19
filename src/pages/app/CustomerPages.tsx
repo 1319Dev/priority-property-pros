@@ -1,5 +1,9 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { EmptyState } from "../../components/layout/DashboardShell";
+import { DeleteAccountDialog } from "../../components/account/DeleteAccountDialog";
 import { useAuth } from "../../lib/auth/useAuth";
+import { deleteOwnAccount } from "../../lib/auth/deleteAccount";
 import { CUSTOMER_DASHBOARD_PRICING_NOTE, PRO_DASHBOARD_PRICING_NOTE } from "../../data/pricing";
 import { Button } from "../../components/ui/Button";
 import { accountStatusLabel, accountTypeLabel } from "../../lib/marketplace/statusLabels";
@@ -17,6 +21,11 @@ export function CustomerMessagesPage() {
 
 export function AccountPage() {
   const { profile, user, signOut, account_type, account_status } = useAuth();
+  const navigate = useNavigate();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   return (
     <div className="max-w-lg space-y-6">
       <header>
@@ -34,9 +43,53 @@ export function AccountPage() {
         {account_type === "CUSTOMER" ? ` ${CUSTOMER_DASHBOARD_PRICING_NOTE}` : ""}
         {account_type === "CONTRACTOR" ? ` ${PRO_DASHBOARD_PRICING_NOTE}` : ""}
       </p>
-      <Button type="button" variant="outline" onClick={() => void signOut()}>
-        Sign out
-      </Button>
+      <div className="flex flex-col gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            void signOut().then(() => navigate("/", { replace: true }));
+          }}
+        >
+          Sign out
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          className="text-danger-600"
+          onClick={() => {
+            setError(null);
+            setDeleteOpen(true);
+          }}
+        >
+          Delete account
+        </Button>
+      </div>
+      <DeleteAccountDialog
+        open={deleteOpen}
+        busy={busy}
+        error={error}
+        onClose={() => {
+          if (busy) return;
+          setDeleteOpen(false);
+          setError(null);
+        }}
+        onConfirm={() => {
+          setBusy(true);
+          setError(null);
+          void deleteOwnAccount()
+            .then(async (result) => {
+              if (result.error) {
+                setError(result.error);
+                return;
+              }
+              await signOut();
+              setDeleteOpen(false);
+              navigate("/", { replace: true });
+            })
+            .finally(() => setBusy(false));
+        }}
+      />
     </div>
   );
 }
