@@ -29,8 +29,8 @@ export function AccountPage() {
   return (
     <div className="max-w-lg space-y-6">
       <header>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Account</p>
-        <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Your profile</h1>
+        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Settings</p>
+        <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Account settings</h1>
       </header>
       <dl className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm">
         <Row label="Name" value={`${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim() || "—"} />
@@ -43,28 +43,31 @@ export function AccountPage() {
         {account_type === "CUSTOMER" ? ` ${CUSTOMER_DASHBOARD_PRICING_NOTE}` : ""}
         {account_type === "CONTRACTOR" ? ` ${PRO_DASHBOARD_PRICING_NOTE}` : ""}
       </p>
-      <div className="flex flex-col gap-3">
-        <Button
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          void signOut().then(() => navigate("/", { replace: true }));
+        }}
+      >
+        Sign out
+      </Button>
+      <section className="border-t border-forest-800/10 pt-8">
+        <h2 className="text-sm font-semibold text-ink-500">Delete account</h2>
+        <p className="mt-2 text-sm leading-relaxed text-ink-500">
+          Permanently close this account and remove your profile. This cannot be undone.
+        </p>
+        <button
           type="button"
-          variant="outline"
-          onClick={() => {
-            void signOut().then(() => navigate("/", { replace: true }));
-          }}
-        >
-          Sign out
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          className="text-danger-600"
+          className="mt-4 min-h-11 text-left text-sm text-danger-600/70 underline-offset-4 hover:text-danger-600 hover:underline"
           onClick={() => {
             setError(null);
             setDeleteOpen(true);
           }}
         >
           Delete account
-        </Button>
-      </div>
+        </button>
+      </section>
       <DeleteAccountDialog
         open={deleteOpen}
         busy={busy}

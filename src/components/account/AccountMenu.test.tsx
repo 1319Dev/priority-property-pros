@@ -64,8 +64,12 @@ describe("AccountMenu sign-out visibility", () => {
     expect(screen.queryByRole("menuitem", { name: /sign out/i })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /account menu/i }));
     expect(screen.getByRole("menuitem", { name: /^sign out$/i })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: /your account/i })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: /delete account/i })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /^settings$/i })).toHaveAttribute(
+      "href",
+      "/app/customer/account",
+    );
+    expect(screen.queryByRole("menuitem", { name: /delete account/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /delete account/i })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("menuitem", { name: /^sign out$/i }));
     expect(signOut).toHaveBeenCalledTimes(1);
@@ -109,9 +113,17 @@ describe("Delete account confirmation gating", () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
-  it("shows Delete account on the account page", () => {
+  it("shows Delete account only on account settings, below Sign out", async () => {
+    const user = userEvent.setup();
     renderWithAuth(<AccountPage />);
-    expect(screen.getByRole("button", { name: /^sign out$/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /delete account/i })).toBeInTheDocument();
+
+    expect(screen.getByRole("heading", { name: /account settings/i })).toBeInTheDocument();
+    const signOut = screen.getByRole("button", { name: /^sign out$/i });
+    const deleteAccount = screen.getByRole("button", { name: /^delete account$/i });
+    expect(signOut.compareDocumentPosition(deleteAccount) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    await user.click(deleteAccount);
+    expect(screen.getByRole("heading", { name: /delete this account/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /delete my account/i })).toBeDisabled();
   });
 });

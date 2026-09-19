@@ -160,7 +160,7 @@ If it fails with “No auth user”, you signed up with a different email. Check
 
 ## H. Delete account (after the website update)
 
-Signed-in people can close their own account from the **Account menu** (top-right initials) or **Your account**. The website cannot delete a user by itself. After this change is live:
+Signed-in people can close their own account from **Account settings** (Account menu → Settings). Delete account is not in the top-right Account menu next to Sign out. The website cannot delete a user by itself. After this change is live:
 
 1. In Supabase, open **SQL Editor**, paste `supabase/migrations/20261001000001_purge_account_owned_rows.sql`, and click **Run**.
 2. Deploy the Edge Function `delete-account` (Dashboard → Edge Functions, or `supabase functions deploy delete-account`). It uses the existing **service role** secret already on the project. Do not put that key in GitHub or the website.
