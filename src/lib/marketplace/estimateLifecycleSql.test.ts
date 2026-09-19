@@ -130,6 +130,28 @@ describe("contractor profile + estimate lifecycle SQL", () => {
     expect(sql).toMatch(/Contact stays on the #14 entitlement path/);
   });
 
+  it("lets the owning contractor hard-delete DRAFT estimates and blocks sent/accepted and other actors", () => {
+    expect(sql).toMatch(/FUNCTION public\.delete_estimate\(p_estimate_id uuid\)/);
+    expect(sql).toMatch(/only draft estimates can be deleted/);
+    expect(sql).toMatch(/accepted estimates cannot be deleted/);
+    expect(sql).toMatch(/not your estimate/);
+    expect(sql).toMatch(/auth required/);
+    expect(sql).toMatch(/'estimate\.deleted'/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.delete_estimate\(uuid\) FROM PUBLIC, anon/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.delete_estimate\(uuid\) TO authenticated/);
+    expect(sql).not.toMatch(/GRANT DELETE ON TABLE public\.estimates TO (anon|authenticated)/);
+    expect(sql).toMatch(/FUNCTION public\.withdraw_estimate/);
+    expect(sql).toMatch(/It is not deleted|kept in history|withdraw_estimate/);
+    const deleteFn = sql.split("CREATE OR REPLACE FUNCTION public.delete_estimate(p_estimate_id uuid)")[1]?.split("CREATE OR REPLACE FUNCTION")[0] ?? "";
+    expect(deleteFn).toMatch(/DELETE FROM public\.estimates WHERE id = est\.id/);
+    expect(deleteFn).toMatch(/est\.status IS DISTINCT FROM 'DRAFT'/);
+    expect(deleteFn).toMatch(/est\.status = 'ACCEPTED'/);
+    expect(deleteFn).toMatch(/contractor_profile_id IS DISTINCT FROM public\.current_contractor_profile_id\(\)/);
+    expect(deleteFn).not.toMatch(/enqueue_notification/);
+    expect(deleteFn).toMatch(/write_audit_log/);
+    expect(deleteFn).toMatch(/Sent estimates must be withdrawn, not deleted/);
+  });
+
   it("future matching uses live category/area/accepting_work without duplicate opportunities", () => {
     expect(sql).toMatch(/ON CONFLICT \(project_id, contractor_profile_id\) DO NOTHING/);
     expect(sql).toMatch(/cp\.accepting_work = true/);

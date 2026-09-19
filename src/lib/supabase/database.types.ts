@@ -864,6 +864,7 @@ export type Database = {
       contractor_end_job: { Args: { p_opportunity_id: string }; Returns: Json };
       submit_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       withdraw_estimate: { Args: { p_estimate_id: string }; Returns: Json };
+      delete_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       select_estimate: { Args: { p_project_id: string; p_estimate_id: string }; Returns: Json };
       mark_estimate_viewed: { Args: { p_estimate_id: string; p_project_id?: string | null }; Returns: Json };
       decline_estimate: { Args: { p_estimate_id: string }; Returns: Json };

@@ -42,6 +42,10 @@
 --   customer A cancel_customer_project(B) → not the project owner
 --   customer A cannot select project_photos / project_answers / project_private_locations for B
 --   contractor still sees authorized opportunity rows only
+--   contractor A delete_estimate(B's draft) → not your estimate
+--   customer delete_estimate → not your estimate
+--   delete_estimate on SENT/ACCEPTED → only draft / accepted estimates cannot be deleted
+--   authenticated DELETE FROM estimates → denied (RPC only; no GRANT DELETE)
 --   admin still sees all projects
 --   confirmed booking is not enough for exact street; contact entitlement required
 

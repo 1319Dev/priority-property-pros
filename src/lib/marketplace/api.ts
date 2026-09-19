@@ -282,6 +282,12 @@ export async function withdrawEstimate(estimateId: string): Promise<RpcJson> {
   return (data ?? {}) as RpcJson;
 }
 
+export async function deleteEstimate(estimateId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("delete_estimate", { p_estimate_id: estimateId });
+  if (error) throw new Error(asError(error, "Could not delete the draft estimate."));
+  return (data ?? {}) as RpcJson;
+}
+
 export async function selectEstimate(projectId: string, estimateId: string): Promise<RpcJson> {
   const { data, error } = await client().rpc("select_estimate", {
     p_project_id: projectId,

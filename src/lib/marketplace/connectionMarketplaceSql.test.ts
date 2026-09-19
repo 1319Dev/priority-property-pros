@@ -71,6 +71,7 @@ describe("Connection marketplace SQL", () => {
   it("preserves estimate submit/withdraw and opportunity matching", () => {
     expect(sql).toMatch(/FUNCTION public\.submit_estimate/);
     expect(sql).toMatch(/FUNCTION public\.withdraw_estimate/);
+    expect(sql).toMatch(/FUNCTION public\.delete_estimate/);
     expect(sql).toMatch(/FUNCTION public\.accept_opportunity/);
     expect(sql).toMatch(/CONSTRAINT opportunity_slots_range CHECK \(slot_number BETWEEN 1 AND 3\)/);
   });

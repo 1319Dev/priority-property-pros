@@ -48,6 +48,7 @@ import {
   uploadContractorDoc,
   upsertContractorArea,
   withdrawEstimate,
+  deleteEstimate,
   type OpportunityRow,
 } from "../../../lib/marketplace/api";
 import { centsToDollarString, dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
@@ -70,7 +71,18 @@ import {
   opportunityAllowsConnectCta,
   runContractorConnect,
 } from "../../../lib/marketplace/contractorJobActions";
-import { canWithdrawFrom, WITHDRAW_ESTIMATE_BODY, WITHDRAW_ESTIMATE_CONFIRM, WITHDRAW_ESTIMATE_TITLE } from "../../../lib/marketplace/estimateLifecycle";
+import {
+  contractorEstimateDestructiveAction,
+  DELETE_ESTIMATE_BODY,
+  DELETE_ESTIMATE_CONFIRM,
+  DELETE_ESTIMATE_LABEL,
+  DELETE_ESTIMATE_SUCCESS,
+  DELETE_ESTIMATE_TITLE,
+  WITHDRAW_ESTIMATE_BODY,
+  WITHDRAW_ESTIMATE_CONFIRM,
+  WITHDRAW_ESTIMATE_LABEL,
+  WITHDRAW_ESTIMATE_TITLE,
+} from "../../../lib/marketplace/estimateLifecycle";
 import { PHOTO_OCR_RISK_NOTE, PHOTO_REPORT_LABEL } from "../../../lib/marketplace/photoSafety";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../hooks/useToast";
@@ -697,12 +709,15 @@ export function OpportunityDetailPage() {
 
 export function EstimateBuilderPage() {
   const { opportunityId = "" } = useParams();
+  const navigate = useNavigate();
   const toast = useToast();
   const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [estimateId, setEstimateId] = useState<string | null>(null);
   const [status, setStatus] = useState<EstimateStatus>("DRAFT");
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [notes, setNotes] = useState("");
   const [duration, setDuration] = useState("");
   const [availableFrom, setAvailableFrom] = useState("");
@@ -881,14 +896,24 @@ export function EstimateBuilderPage() {
         >
           Submit estimate
         </Button>
-        {canWithdrawFrom(status) ? (
+        {contractorEstimateDestructiveAction(status) === "withdraw" ? (
           <Button
             type="button"
             variant="outline"
             className="min-h-14 flex-1"
             onClick={() => setWithdrawOpen(true)}
           >
-            Withdraw Estimate
+            {WITHDRAW_ESTIMATE_LABEL}
+          </Button>
+        ) : null}
+        {contractorEstimateDestructiveAction(status) === "delete" ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-14 flex-1 text-danger-600"
+            onClick={() => setDeleteOpen(true)}
+          >
+            {DELETE_ESTIMATE_LABEL}
           </Button>
         ) : null}
       </div>
@@ -908,6 +933,29 @@ export function EstimateBuilderPage() {
               return load();
             })
             .catch((err: Error) => setError(err.message));
+        }}
+      />
+      <ConfirmDialog
+        open={deleteOpen}
+        title={DELETE_ESTIMATE_TITLE}
+        body={DELETE_ESTIMATE_BODY}
+        confirmLabel={DELETE_ESTIMATE_CONFIRM}
+        cancelLabel="Keep draft"
+        busy={deleting}
+        onClose={() => {
+          if (!deleting) setDeleteOpen(false);
+        }}
+        onConfirm={() => {
+          if (!estimateId) return;
+          setDeleting(true);
+          void deleteEstimate(estimateId)
+            .then(() => {
+              toast.push(DELETE_ESTIMATE_SUCCESS);
+              setDeleteOpen(false);
+              return navigate("/app/pro/estimates");
+            })
+            .catch((err: Error) => setError(err.message))
+            .finally(() => setDeleting(false));
         }}
       />
     </div>

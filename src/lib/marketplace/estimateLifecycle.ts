@@ -141,11 +141,51 @@ export function canWithdrawFrom(status: EstimateStatus): boolean {
   return canSubmitFrom(status);
 }
 
+/** Hard-delete is only for contractor-owned drafts. Sent estimates use withdraw. */
+export function canDeleteFrom(status: EstimateStatus): boolean {
+  return status === "DRAFT";
+}
+
+export type DeleteEstimateActor = {
+  authUserId: string | null;
+  accountType: "CUSTOMER" | "CONTRACTOR" | "ADMIN" | "VERIFIER" | null;
+  isAdmin?: boolean;
+  estimateContractorProfileId: string;
+  actorContractorProfileId?: string | null;
+  status: EstimateStatus;
+};
+
+export function canDeleteEstimate(actor: DeleteEstimateActor): { ok: boolean; reason?: string } {
+  if (!actor.authUserId) return { ok: false, reason: "auth required" };
+  if (actor.status === "ACCEPTED") return { ok: false, reason: "accepted estimates cannot be deleted" };
+  if (!canDeleteFrom(actor.status)) return { ok: false, reason: "only draft estimates can be deleted" };
+  if (actor.isAdmin || actor.accountType === "ADMIN") return { ok: true };
+  if (actor.accountType !== "CONTRACTOR") return { ok: false, reason: "only the contractor" };
+  if (!actor.actorContractorProfileId || actor.actorContractorProfileId !== actor.estimateContractorProfileId) {
+    return { ok: false, reason: "not your estimate" };
+  }
+  return { ok: true };
+}
+
+/** UI exclusive: delete a draft, or withdraw a sent estimate. Never both. */
+export function contractorEstimateDestructiveAction(status: EstimateStatus): "delete" | "withdraw" | null {
+  if (canDeleteFrom(status)) return "delete";
+  if (canWithdrawFrom(status)) return "withdraw";
+  return null;
+}
+
 export const WITHDRAW_ESTIMATE_LABEL = "Withdraw Estimate";
 export const WITHDRAW_ESTIMATE_TITLE = "Withdraw this estimate?";
 export const WITHDRAW_ESTIMATE_BODY =
   "The customer will be notified. Your estimate is marked Withdrawn and kept in history. It is not deleted. Submitting or withdrawing an estimate is never charged.";
 export const WITHDRAW_ESTIMATE_CONFIRM = "Withdraw Estimate";
+
+export const DELETE_ESTIMATE_LABEL = "Delete draft";
+export const DELETE_ESTIMATE_TITLE = "Delete this draft estimate?";
+export const DELETE_ESTIMATE_BODY =
+  "This draft will be permanently removed. The customer was never sent this estimate. This cannot be undone. Sent estimates cannot be deleted — withdraw those instead to keep history.";
+export const DELETE_ESTIMATE_CONFIRM = "Delete draft";
+export const DELETE_ESTIMATE_SUCCESS = "Draft estimate deleted.";
 
 export function customerEstimateStatusLabel(status: EstimateStatus): string {
   if (status === "WITHDRAWN") return "Withdrawn";
@@ -170,6 +210,7 @@ export function canTransitionEstimate(from: EstimateStatus, to: EstimateStatus, 
   if (from === to) return true;
   if (via === "submit_estimate") return canSubmitFrom(from) && to === submitTargetStatus(from);
   if (via === "withdraw_estimate") return canWithdrawFrom(from) && to === "WITHDRAWN";
+  if (via === "delete_estimate") return false;
   if (via === "mark_estimate_viewed") {
     if (to !== "VIEWED") return false;
     if (from === "VIEWED") return true;

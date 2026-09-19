@@ -5,15 +5,20 @@ import {
   applyViewTracking,
   canCustomerDeclineFrom,
   canCustomerSelectFrom,
+  canDeleteEstimate,
+  canDeleteFrom,
   canMarkEstimateViewed,
   canSubmitFrom,
   canTransitionEstimate,
+  canWithdrawFrom,
   cannotForgeAccepted,
   contractorCanReadEstimate,
+  contractorEstimateDestructiveAction,
   contractorEstimateStatusDetail,
   contractorEstimateStatusLabel,
   contractorEstimateUiStatus,
   contractorNotSelectedDetail,
+  DELETE_ESTIMATE_BODY,
   estimateStatusUnlocksContact,
   firstViewedPreserved,
   individualDecline,
@@ -23,6 +28,7 @@ import {
   rivalIdentityLeaked,
   shouldMarkEstimateViewed,
   submitTargetStatus,
+  WITHDRAW_ESTIMATE_BODY,
   type ViewTracking,
 } from "./estimateLifecycle";
 import { estimateVisibleToCustomer } from "./privacy";
@@ -208,6 +214,56 @@ describe("customer visibility and individual decline", () => {
     expect(canCustomerDeclineFrom("VIEWED")).toBe(true);
     expect(canCustomerDeclineFrom("DRAFT")).toBe(false);
     expect(canCustomerDeclineFrom("ACCEPTED")).toBe(false);
+  });
+});
+
+describe("delete draft vs withdraw sent", () => {
+  const ownerDelete = {
+    authUserId: "pro-user",
+    accountType: "CONTRACTOR" as const,
+    estimateContractorProfileId: "pro-1",
+    actorContractorProfileId: "pro-1",
+    status: "DRAFT" as const,
+  };
+
+  it("lets the owning contractor delete a DRAFT and blocks everyone else", () => {
+    expect(canDeleteFrom("DRAFT")).toBe(true);
+    expect(canDeleteEstimate(ownerDelete).ok).toBe(true);
+    expect(canDeleteEstimate({ ...ownerDelete, authUserId: null }).ok).toBe(false);
+    expect(canDeleteEstimate({ ...ownerDelete, authUserId: null }).reason).toBe("auth required");
+    expect(canDeleteEstimate({ ...ownerDelete, accountType: "CUSTOMER" }).ok).toBe(false);
+    expect(canDeleteEstimate({ ...ownerDelete, accountType: "CUSTOMER" }).reason).toBe("only the contractor");
+    expect(canDeleteEstimate({ ...ownerDelete, actorContractorProfileId: "pro-2" }).ok).toBe(false);
+    expect(canDeleteEstimate({ ...ownerDelete, actorContractorProfileId: "pro-2" }).reason).toBe("not your estimate");
+    expect(canDeleteEstimate({ ...ownerDelete, actorContractorProfileId: null }).ok).toBe(false);
+    expect(canDeleteEstimate({ ...ownerDelete, isAdmin: true, accountType: "ADMIN", actorContractorProfileId: null }).ok).toBe(
+      true,
+    );
+  });
+
+  it("never deletes sent or accepted estimates; withdraw remains for sent", () => {
+    expect(canDeleteFrom("SENT")).toBe(false);
+    expect(canDeleteFrom("SUBMITTED")).toBe(false);
+    expect(canDeleteFrom("VIEWED")).toBe(false);
+    expect(canDeleteFrom("ACCEPTED")).toBe(false);
+    expect(canDeleteFrom("WITHDRAWN")).toBe(false);
+    expect(canDeleteEstimate({ ...ownerDelete, status: "SENT" }).ok).toBe(false);
+    expect(canDeleteEstimate({ ...ownerDelete, status: "SENT" }).reason).toBe("only draft estimates can be deleted");
+    expect(canDeleteEstimate({ ...ownerDelete, status: "ACCEPTED" }).ok).toBe(false);
+    expect(canDeleteEstimate({ ...ownerDelete, status: "ACCEPTED" }).reason).toBe("accepted estimates cannot be deleted");
+    expect(canWithdrawFrom("SENT")).toBe(true);
+    expect(canWithdrawFrom("VIEWED")).toBe(true);
+    expect(canTransitionEstimate("SENT", "WITHDRAWN", "withdraw_estimate")).toBe(true);
+    expect(canTransitionEstimate("DRAFT", "WITHDRAWN", "delete_estimate")).toBe(false);
+    expect(contractorEstimateDestructiveAction("DRAFT")).toBe("delete");
+    expect(contractorEstimateDestructiveAction("SENT")).toBe("withdraw");
+    expect(contractorEstimateDestructiveAction("VIEWED")).toBe("withdraw");
+    expect(contractorEstimateDestructiveAction("ACCEPTED")).toBeNull();
+    expect(contractorEstimateDestructiveAction("WITHDRAWN")).toBeNull();
+    expect(DELETE_ESTIMATE_BODY).toMatch(/permanently removed/i);
+    expect(DELETE_ESTIMATE_BODY).toMatch(/withdraw those instead/i);
+    expect(WITHDRAW_ESTIMATE_BODY).toMatch(/not deleted/i);
+    expect(LIFECYCLE_EVENTS).not.toContain("estimate.deleted");
   });
 });
 
