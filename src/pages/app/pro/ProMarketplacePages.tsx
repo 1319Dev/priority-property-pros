@@ -88,6 +88,7 @@ export function ProHomePage() {
         <p className="mt-3 max-w-xl text-ink-700">
           Respond to nearby jobs and track estimates. You cannot approve or verify yourself. Browse anonymized
           opportunities first. Pay $4.99 only when you choose to connect — that does not guarantee a hire.
+          The $4.99 Connection Fee is non-refundable.
           Exact address unlocks only after a paid connection entitlement or an admin unlock. Submitting an estimate
           is never charged.
           {` ${PRO_DASHBOARD_PRICING_NOTE}`}

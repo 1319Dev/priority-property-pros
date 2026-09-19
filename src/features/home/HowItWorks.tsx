@@ -10,7 +10,7 @@ const steps = [
   {
     n: "02",
     title: "Local pros can connect",
-    body: "Independent contractors browse anonymized opportunities. Up to three can connect for $4.99 each. Connecting does not guarantee a hire.",
+    body: "Independent contractors browse anonymized opportunities. Up to three can connect for $4.99 each. Connecting does not guarantee a hire. The $4.99 Connection Fee is non-refundable.",
   },
   {
     n: "03",

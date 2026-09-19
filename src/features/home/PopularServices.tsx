@@ -4,7 +4,7 @@ import { SERVICES, type Service } from "../../data/services";
 import { BottomSheet } from "../../components/ui/BottomSheet";
 import { Button, ButtonLink } from "../../components/ui/Button";
 import { Container, SectionHeading } from "../../components/ui/Container";
-import { SIGNUP_FEE_SHORT } from "../../data/pricing";
+import { SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
 
 export function PopularServices() {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export function PopularServices() {
         <SectionHeading
           eyebrow="Popular services"
           title="Local jobs. Plain language."
-          kicker={`Start with what you actually need done. These are the first service types on PPP — not a national call-center menu. Join for a ${SIGNUP_FEE_SHORT}, not a monthly subscription.`}
+          kicker={`Start with what you actually need done. These are the first service types on PPP — not a national call-center menu. ${SIGNUP_FEE_PUBLIC_NOTE}`}
         />
         <h2 id="services-heading" className="sr-only">
           Popular services

@@ -3,7 +3,7 @@ import { ButtonLink } from "../components/ui/Button";
 import {
   CONTRACTOR_SIGNUP_HEADLINE,
   CONTRACTOR_SIGNUP_SUPPORTING,
-  SIGNUP_FEE_SHORT,
+  SIGNUP_FEE_PUBLIC_NOTE,
 } from "../data/pricing";
 
 export function BecomeAProPage() {
@@ -19,7 +19,7 @@ export function BecomeAProPage() {
           <ButtonLink to="/sign-in" variant="outline">
             Sign in
           </ButtonLink>
-          <p className="w-full text-sm text-ink-500">{SIGNUP_FEE_SHORT}. Not a monthly subscription.</p>
+          <p className="w-full text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
         </div>
       }
     />

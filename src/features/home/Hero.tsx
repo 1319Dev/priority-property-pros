@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CUSTOMER_CTA, CUSTOMER_TAGLINE, CONTRACTOR_CTA, MARKETPLACE_NEED_LINE } from "../../data/brand";
-import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING, SIGNUP_FEE_SHORT } from "../../data/pricing";
+import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING, SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
 import { PROJECT_PLACEHOLDERS } from "../../data/services";
 import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { ButtonLink } from "../../components/ui/Button";
@@ -70,7 +70,7 @@ export function Hero() {
               {CONTRACTOR_CTA}
             </ButtonLink>
           </div>
-          <p className="mt-3 text-sm text-ink-500">{SIGNUP_FEE_SHORT}. Not a monthly subscription.</p>
+          <p className="mt-3 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
           <form
             className="mt-8 rounded-3xl border border-forest-800/10 bg-cream-50/80 p-3 shadow-[0_18px_50px_-28px_rgba(16,36,28,0.45)]"
             onSubmit={(event) => {

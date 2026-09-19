@@ -1,3 +1,4 @@
+import { CONNECTION_FEE_NO_HIRE_GUARANTEE, CONNECTION_FEE_NON_REFUNDABLE } from "../../data/pricing";
 import { claimSlotExclusive, nextOpportunitySlot } from "./slots";
 import {
   CONNECTION_FEE_CENTS,
@@ -22,10 +23,10 @@ export const CONNECT_BUTTON_LABEL = "Connect — $4.99";
 export const CONNECTED_LABEL = "Connected";
 
 export const CONNECTED_BODY =
-  "Your $4.99 connection is active for this project. Contact is unlocked for this project only.";
+  `Your $4.99 connection is active for this project. ${CONNECTION_FEE_NON_REFUNDABLE} Contact is unlocked for this project only.`;
 
 export const CHECKOUT_PENDING_COPY =
-  "Checkout is in progress. Contact stays locked until the server verifies the $4.99 payment.";
+  `Checkout is in progress. Contact stays locked until the server verifies the $4.99 payment. ${CONNECTION_FEE_NON_REFUNDABLE}`;
 
 export const CONNECT_CONFIRM_TITLE = "Connect with this customer for $4.99?";
 
@@ -43,11 +44,10 @@ export const CONNECT_REDIRECTING_COPY = "Continuing to $4.99 checkout. Contact s
 export const CONNECT_DOES_NOT_UNLOCK_COPY =
   "Clicking Connect does not unlock name, phone, email, or exact street. The success page cannot grant access.";
 
-export const CONNECTION_FEE_NO_GUARANTEE =
-  "The $4.99 Connection Fee buys connection access. It does not guarantee a hire or the work.";
+export const CONNECTION_FEE_NO_GUARANTEE = CONNECTION_FEE_NO_HIRE_GUARANTEE;
 
 export const REFUND_CONCEPT_COPY =
-  "The $4.99 Connection Fee buys connection access, not a guaranteed job. No automatic refund if you are not hired, the customer chooses someone else, the customer cancels, or you change your mind. If a charge is taken but entitlement is not granted, that technical failure is eligible for correction. Fraud is handled through dispute and admin review. Legal copy requires attorney review.";
+  `${CONNECTION_FEE_NO_HIRE_GUARANTEE} There is no refund if you are not hired, the customer chooses someone else, the customer cancels, or you change your mind. If a charge is taken but connection access is not granted, that is a technical failure for operator review — this app does not issue refunds. Legal copy requires attorney review.`;
 
 export function occupiesConnectionSlot(status: ProjectConnectionStatus): boolean {
   return CONNECTION_OCCUPYING_STATUSES.includes(status);

@@ -1,5 +1,5 @@
 import { CONTRACTOR_CTA, CONTRACTOR_TAGLINE } from "../../data/brand";
-import { CONTRACTOR_SIGNUP_HEADLINE, CONTRACTOR_SIGNUP_SUPPORTING, SIGNUP_FEE_SHORT } from "../../data/pricing";
+import { CONTRACTOR_SIGNUP_HEADLINE, CONTRACTOR_SIGNUP_SUPPORTING, SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
 import { ButtonLink } from "../../components/ui/Button";
 import { Container } from "../../components/ui/Container";
 
@@ -30,7 +30,7 @@ export function ForContractors() {
             <ButtonLink to="/become-a-pro" variant="gold" size="lg">
               {CONTRACTOR_CTA}
             </ButtonLink>
-            <p className="mt-3 text-sm text-cream-200">{SIGNUP_FEE_SHORT}. Not a monthly subscription.</p>
+            <p className="mt-3 text-sm text-cream-200">{SIGNUP_FEE_PUBLIC_NOTE}</p>
           </div>
         </div>
       </Container>

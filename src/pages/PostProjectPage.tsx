@@ -1,7 +1,7 @@
 import { Navigate, useSearchParams } from "react-router-dom";
 import { ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
-import { CUSTOMER_SIGNUP_LEDE, SIGNUP_FEE_SHORT } from "../data/pricing";
+import { CUSTOMER_SIGNUP_LEDE, SIGNUP_FEE_PUBLIC_NOTE } from "../data/pricing";
 import { useAuth } from "../lib/auth/useAuth";
 
 export function PostProjectPage() {
@@ -28,7 +28,7 @@ export function PostProjectPage() {
             Create a customer account
           </ButtonLink>
         </div>
-        <p className="mt-4 text-sm text-ink-500">{SIGNUP_FEE_SHORT}. Not a monthly subscription.</p>
+        <p className="mt-4 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
       </Container>
     </section>
   );
