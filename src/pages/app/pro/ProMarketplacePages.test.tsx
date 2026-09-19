@@ -48,3 +48,21 @@ describe("contractor job detail UX", () => {
     expect(screen.getByText(/unpaid connection spots are freed/i)).toBeInTheDocument();
   });
 });
+
+describe("estimate builder delete vs withdraw", () => {
+  const page = readFileSync(pageFile, "utf8");
+  const customerPage = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../customer/CustomerMarketplacePages.tsx");
+  const customer = readFileSync(customerPage, "utf8");
+
+  it("deletes drafts through confirm + RPC and keeps withdraw for sent estimates", () => {
+    expect(page).toMatch(/deleteEstimate/);
+    expect(page).toMatch(/DELETE_ESTIMATE_TITLE/);
+    expect(page).toMatch(/contractorEstimateDestructiveAction/);
+    expect(page).toMatch(/withdrawEstimate/);
+    expect(page).toMatch(/WITHDRAW_ESTIMATE_TITLE/);
+    expect(page).toMatch(/It is not deleted|WITHDRAW_ESTIMATE_BODY/);
+    expect(page).toMatch(/navigate\("\/app\/pro\/estimates"\)/);
+    expect(customer).not.toMatch(/deleteEstimate\(/);
+    expect(customer).not.toMatch(/DELETE_ESTIMATE/);
+  });
+});

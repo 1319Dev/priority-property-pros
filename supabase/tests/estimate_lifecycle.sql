@@ -33,3 +33,13 @@
 
 -- 10) payments_live / charges_live remain 0. signup_fee_enabled is not flipped here.
 --     ACCEPTED/CONFIRMED do not return phone/email/street from these RPCs.
+
+-- 11) Delete draft (owner contractor or admin). Does not replace withdraw.
+--    select delete_estimate('<draft-id>');  -- row gone; audit_logs action estimate.deleted
+--    select delete_estimate('<sent-id>');   -- only draft estimates can be deleted
+--    select delete_estimate('<accepted-id>'); -- accepted estimates cannot be deleted
+--    contractor B delete_estimate(A's draft) → not your estimate
+--    customer delete_estimate → not your estimate
+--    anon delete_estimate → auth required
+--    Data API DELETE from estimates → denied (no GRANT DELETE)
+--    withdraw_estimate still marks WITHDRAWN and keeps history.
