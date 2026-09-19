@@ -73,10 +73,6 @@ export const PRO_DASHBOARD_PRICING_NOTE =
 export const CONNECTION_FEE_NO_HIRE_GUARANTEE =
   "The $4.99 Connection Fee purchases connection access. It does not guarantee a hire or the work.";
 
-export const PRIORITY_PRO_NAME = "Priority Pro";
-export const PRIORITY_PRO_STATUS = "Coming Soon";
-export const PRIORITY_PRO_DETAIL = "Priority Pro — Coming Soon";
-
 export const PRICING_FAQ = [
   {
     question: "Is the $9.99 account activation monthly?",
@@ -97,9 +93,5 @@ export const PRICING_FAQ = [
     question: "Does the Connection Fee guarantee a hire?",
     answer:
       "No. $4.99 buys connection access, not a guaranteed job. Project payment is between the customer and the contractor. PPP does not take a percentage of that payment.",
-  },
-  {
-    question: "What is Priority Pro?",
-    answer: "Priority Pro — Coming Soon.",
   },
 ] as const;

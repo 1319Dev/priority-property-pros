@@ -14,9 +14,6 @@ import {
   PRICING_PAGE_TITLE,
   PRICING_PRIMARY,
   PRICING_SECONDARY,
-  PRIORITY_PRO_DETAIL,
-  PRIORITY_PRO_NAME,
-  PRIORITY_PRO_STATUS,
   PRO_PRICING_SUMMARY,
   SIGNUP_FEE,
   SIGNUP_FEE_NOT_MONTHLY,
@@ -79,14 +76,6 @@ export function PricingPage() {
             <p className="mt-3 text-sm font-semibold text-forest-800">{CONTRACTOR_SIGNUP_HEADLINE}</p>
           </article>
         </div>
-
-        <article className="mt-4 rounded-3xl border border-dashed border-gold-600/50 bg-cream-100 px-5 py-6">
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">
-            {PRIORITY_PRO_STATUS}
-          </p>
-          <h2 className="mt-2 font-display text-2xl text-forest-800">{PRIORITY_PRO_NAME}</h2>
-          <p className="mt-2 text-sm font-semibold text-forest-800">{PRIORITY_PRO_DETAIL}</p>
-        </article>
 
         <div className="mt-10">
           <h2 className="font-display text-2xl text-forest-800 sm:text-3xl">Pricing FAQ</h2>

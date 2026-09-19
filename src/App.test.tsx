@@ -79,6 +79,7 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     expect(screen.queryByText(/optional documentation service/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/completion verifier/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /read trust & safety/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/priority pro — coming soon/i)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /full trust notes/i })).toBeInTheDocument();
   });
 
@@ -190,8 +191,8 @@ describe("Public marketplace pricing", () => {
     expect(screen.getAllByText(SIGNUP_FEE_ONE_TIME_LABEL).length).toBeGreaterThan(0);
     expect(screen.getAllByText(CONNECTION_FEE_PER_LABEL).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/\$0\/month/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/priority pro/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/priority pro — coming soon/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/priority pro — coming soon/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /^priority pro$/i })).not.toBeInTheDocument();
     expect(container.textContent).not.toMatch(/8%|3\.5%|2\.5%/);
     expect(container.textContent).not.toMatch(/\$49\/month|\$499\/year/);
     expect(container.textContent).not.toMatch(/stripe|paymentintent|webhooks?|payments_live|charges_live|test mode/i);
