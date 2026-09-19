@@ -63,8 +63,8 @@ Motion: 180–280ms ease for sheets and toasts. No decorative parallax.
 
 Vite `base` reads `BASE_PATH`:
 
-- Local and custom domain at root: `BASE_PATH=/` (default)
-- This repo as a project site: `BASE_PATH=/priority-property-pros/`
+- Local and custom domain at root (`prioritypropertypros.com`): `BASE_PATH=/` (default, production)
+- Legacy GitHub project site: `BASE_PATH=/priority-property-pros/`
 
 The app uses `import.meta.env.BASE_URL` for the router basename and public asset URLs.
 

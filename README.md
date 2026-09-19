@@ -8,7 +8,7 @@ PPP connects homeowners and property owners with **independent local contractors
 
 This repository is **Phase 5A plus the $4.99 connection marketplace (payments OFF)**: the Phase 1 homepage, Phase 2 accounts, Phase 3 posting/matching/estimates, Phase 4A booking/fee engine (legacy, unused by active UI), plus **mobile polish, owner edit/cancel, customer project isolation**, anonymized public browse, contact-access entitlement, and a flat **$4.99 Connection Fee** lifecycle. There are still **no Stripe charges, no payouts, and no Priority Verified workflow**. Production UI does not fake paid bookings or paid connections.
 
-Live public site (Phase 1 behavior stays): **https://1319dev.github.io/priority-property-pros/**
+Live public site (Phase 1 behavior stays): **https://prioritypropertypros.com/**
 
 ---
 
@@ -35,14 +35,14 @@ npm run build
 npm run preview
 ```
 
-To build **exactly** as GitHub Pages will for this repo:
+To build **exactly** as GitHub Pages will for the custom domain at site root:
 
 ```bash
-BASE_PATH=/priority-property-pros/ npm run build
-npx vite preview --base /priority-property-pros/
+BASE_PATH=/ npm run build
+npx vite preview --base /
 ```
 
-Then open `http://localhost:4173/priority-property-pros/`.
+Then open `http://localhost:4173/`.
 
 ---
 
@@ -57,9 +57,9 @@ The owner of this code is **1319Dev**. The repository name is **priority-propert
 3. Under **Build and deployment → Source**, choose **GitHub Actions**.
 4. Push to **main** (or wait for an approved merge). Approve the first Pages deploy if GitHub asks.
 
-Project site:
+Custom domain (site root):
 
-**https://1319Dev.github.io/priority-property-pros/**
+**https://prioritypropertypros.com/**
 
 Full click-by-click: **[docs/GITHUB_PAGES_SETUP.md](docs/GITHUB_PAGES_SETUP.md)**.
 

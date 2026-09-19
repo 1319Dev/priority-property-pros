@@ -42,12 +42,12 @@ jobs:
       - name: Test
         run: npm run test
 
-      - name: Build for GitHub project Pages
+      - name: Build for custom domain at site root
         run: npm run build
         env:
-          # Project site: https://1319Dev.github.io/priority-property-pros/
-          # For a custom domain at the site root, change this to /
-          BASE_PATH: /priority-property-pros/
+          # Custom domain at site root: https://prioritypropertypros.com/
+          # public/CNAME publishes prioritypropertypros.com with GitHub Pages.
+          BASE_PATH: /
           # PUBLIC only. Set as repo Actions *variables* (not secrets).
           # Never add SUPABASE_SERVICE_ROLE_KEY here.
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}

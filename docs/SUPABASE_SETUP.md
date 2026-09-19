@@ -97,16 +97,16 @@ Do not commit `.env.local`.
 4. **Site URL** (pick the one you actually use first):
 
    - Local testing: `http://localhost:5173`
-   - Live GitHub Pages: `https://1319dev.github.io/priority-property-pros`
+   - Live custom domain: `https://prioritypropertypros.com`
 
 5. Under **Redirect URLs**, add **all** of these (Add URL → Save each):
 
    - `http://localhost:5173/auth/callback`
    - `http://localhost:5173/auth/reset-password`
    - `http://localhost:5173/auth/verify`
-   - `https://1319dev.github.io/priority-property-pros/auth/callback`
-   - `https://1319dev.github.io/priority-property-pros/auth/reset-password`
-   - `https://1319dev.github.io/priority-property-pros/auth/verify`
+   - `https://prioritypropertypros.com/auth/callback`
+   - `https://prioritypropertypros.com/auth/reset-password`
+   - `https://prioritypropertypros.com/auth/verify`
 
 6. **Authentication** → **Providers** → Email → enable **Confirm email** (recommended).
 
@@ -163,7 +163,7 @@ If it fails with “No auth user”, you signed up with a different email. Check
 | Symptom | Likely cause |
 | --- | --- |
 | Banner “Live login is not connected yet” | Missing or placeholder `VITE_SUPABASE_*` in `.env.local` or GitHub variables |
-| Redirect lands on GitHub 404 | Redirect URL missing the `/priority-property-pros/` prefix |
+| Redirect lands on GitHub 404 | Redirect URL missing from Supabase allow-list, or still using the old `/priority-property-pros/` project path |
 | Sign up works, no row in `profiles` | Migration `20260916000006_signup_trigger.sql` not run |
 | “Invalid API key” | Anon key truncated, or you pasted the service role key |
 

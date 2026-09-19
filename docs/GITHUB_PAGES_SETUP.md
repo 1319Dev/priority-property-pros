@@ -2,11 +2,11 @@
 
 This guide is for someone who is not a programmer. It publishes the Priority Property Pros Phase 1 website using **GitHub Pages** and **GitHub Actions**.
 
-The live project-site URL for this repository is:
+The live site URL for this repository is the custom domain at the **root** path `/`:
 
-**https://1319Dev.github.io/priority-property-pros/**
+**https://prioritypropertypros.com/**
 
-If you later attach a custom domain (for example `www.example.com`), the site can also run at the **root** path `/`. Both are documented below.
+`public/CNAME` publishes `prioritypropertypros.com`. The GitHub project-site path `/priority-property-pros/` is no longer used in production.
 
 Phase 1 does **not** need Supabase, Stripe, or any secret keys.
 
@@ -47,7 +47,7 @@ Do this once per repository.
 3. In the left sidebar, click **Pages**.
 4. Under **Build and deployment**:
    - **Source**: choose **GitHub Actions** (not “Deploy from a branch”).
-5. Leave **Custom domain** blank unless you already own a domain you want to attach.
+5. Under **Custom domain**, enter `prioritypropertypros.com` (apex). GitHub will also read `public/CNAME` after the next deploy. Follow GitHub’s DNS instructions for the apex record.
 6. You do **not** need to pick a folder. The workflow file `.github/workflows/ci-pages.yml` builds the site and deploys it.
 
 The first deploy happens automatically when `main` receives a push **after** Pages is set to GitHub Actions. If you enabled Pages after the last push:
@@ -78,7 +78,7 @@ Wait until the **Deploy GitHub Pages** job shows a green check.
 2. At the top, GitHub shows **Your site is live at** plus a URL.
 3. For this repo, it should be:
 
-   `https://1319Dev.github.io/priority-property-pros/`
+   `https://prioritypropertypros.com/`
 
 4. Open that URL on your phone and on a computer.
 
@@ -88,7 +88,7 @@ Wait until the **Deploy GitHub Pages** job shows a green check.
 - **POST A PROJECT** asks customers to sign in. **BECOME A PRO** points contractors to signup/onboarding.
 - Header links work: Find a Pro, How It Works, Become a Pro, Sign In.
 - Popular services include Handyman, TV Mounting, Lawn Care, and Other.
-- Refreshing a sub-page such as `/priority-property-pros/trust` still shows the app (not a GitHub 404 page). That proves the SPA `404.html` fallback.
+- Refreshing a sub-page such as `/trust` still shows the app (not a GitHub 404 page). That proves the SPA `404.html` fallback.
 - On a phone: Add to Home Screen works (Safari: Share → Add to Home Screen; Chrome: menu → Install app / Add to Home screen). The PPP house icon should appear.
 - Turn on airplane mode after visiting once, then reopen the app: you should still see the site or the cream **You’re offline** screen.
 
@@ -96,25 +96,31 @@ Wait until the **Deploy GitHub Pages** job shows a green check.
 
 ## E. Root custom domain vs `/priority-property-pros/`
 
-This project supports both.
+Production is the custom domain at the site root. The old project-site path remains documented only as a fallback.
 
 | How you host | Site URL | `BASE_PATH` in the workflow |
 | --- | --- | --- |
-| GitHub project site (current) | `https://1319Dev.github.io/priority-property-pros/` | `/priority-property-pros/` |
-| Custom domain at the root | `https://your-domain.com/` | `/` |
+| Custom domain at the root (current) | `https://prioritypropertypros.com/` | `/` |
+| GitHub project site (legacy) | `https://1319Dev.github.io/priority-property-pros/` | `/priority-property-pros/` |
 
 The workflow file `.github/workflows/ci-pages.yml` currently sets:
 
 ```yaml
-BASE_PATH: /priority-property-pros/
+BASE_PATH: /
 ```
 
-To switch to a **custom domain at the root**:
+`public/CNAME` must contain exactly:
 
-1. Buy and connect the domain in **Settings → Pages → Custom domain**. Follow GitHub’s DNS instructions.
-2. Edit `.github/workflows/ci-pages.yml`.
-3. Change `BASE_PATH: /priority-property-pros/` to `BASE_PATH: /`.
-4. Commit and push to `main`.
+```
+prioritypropertypros.com
+```
+
+To keep the site at the **custom domain root**:
+
+1. Connect `prioritypropertypros.com` in **Settings → Pages → Custom domain**. Follow GitHub’s DNS instructions.
+2. Keep `BASE_PATH: /` in `.github/workflows/ci-pages.yml`.
+3. Keep `public/CNAME` as `prioritypropertypros.com`.
+4. Commit and push to `main` if you changed either file.
 5. Wait for Actions to finish.
 
 Local preview always defaults to `/` (no env var needed):
@@ -124,11 +130,11 @@ npm install
 npm run dev
 ```
 
-Production-like preview of the **project** path:
+Production-like preview of the **custom domain** path:
 
 ```bash
-BASE_PATH=/priority-property-pros/ npm run build
-npx vite preview --base /priority-property-pros/
+BASE_PATH=/ npm run build
+npx vite preview --base /
 ```
 
 ---

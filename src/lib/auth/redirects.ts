@@ -1,6 +1,6 @@
 import { routerBasename } from "../../utils/cn";
 
-/** Absolute auth redirect that works on localhost and GitHub Pages project path. */
+/** Absolute auth redirect that works on localhost and the custom-domain site root. */
 export function authRedirectUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   const base = routerBasename();

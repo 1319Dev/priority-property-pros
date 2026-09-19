@@ -119,13 +119,13 @@ Supabase database advisors will still flag SECURITY DEFINER views and authentica
 
 ## Auth redirects
 
-Local and GitHub Pages both need allow-listed URLs (see [SUPABASE_SETUP.md](SUPABASE_SETUP.md)):
+Local and the live custom domain both need allow-listed URLs (see [SUPABASE_SETUP.md](SUPABASE_SETUP.md)):
 
 - `http://localhost:5173/auth/callback`
-- `https://1319dev.github.io/priority-property-pros/auth/callback`
+- `https://prioritypropertypros.com/auth/callback`
 - matching `/auth/reset-password` and `/auth/verify`
 
-The app builds redirects with `import.meta.env.BASE_URL` so the project path is included.
+The app builds redirects with `import.meta.env.BASE_URL` so a non-root base path is included when present. The production custom domain uses `/`.
 
 ## Frontend rules
 
