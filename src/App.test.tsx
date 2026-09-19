@@ -73,6 +73,15 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     expect(screen.queryByAltText(/electrician in safety glasses/i)).not.toBeInTheDocument();
   });
 
+  it("does not render the retired Priority Verified teaser card", () => {
+    renderApp("/");
+    expect(screen.queryByText(/not available yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/optional documentation service/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/completion verifier/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /read trust & safety/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /full trust notes/i })).toBeInTheDocument();
+  });
+
   it("renders header navigation targets", () => {
     renderApp("/");
     expect(screen.getAllByRole("link", { name: /find a pro/i }).length).toBeGreaterThan(0);

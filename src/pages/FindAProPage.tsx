@@ -455,7 +455,7 @@ function ProfileSections({
       <section>
         <h2 className="font-display text-2xl text-forest-800">Credentials</h2>
         <p className="mt-2">
-          {profile.badges.map((badge) => `✓ ${badge.label}`).join(" · ") || "Approved Pro"} (not Priority Verified)
+          {profile.badges.map((badge) => `✓ ${badge.label}`).join(" · ") || "Approved Pro"}
         </p>
       </section>
       <section>

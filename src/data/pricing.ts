@@ -57,7 +57,7 @@ export const CONTRACTOR_SIGNUP_LEDE =
   "Get started for a one-time $9.99 account activation — not $9.99/month. Then $0/month. Pay $4.99 only when you choose to connect.";
 
 export const VERIFIER_SIGNUP_LEDE =
-  "Get started for a one-time $9.99 account activation. This is not a monthly subscription. Priority Verified is not live.";
+  "Get started for a one-time $9.99 account activation. This is not a monthly subscription.";
 
 export const SIGNUP_ROLE_LEDE =
   "Get started for a one-time $9.99 account activation. Not $9.99 a month. No monthly subscription to keep your account.";
