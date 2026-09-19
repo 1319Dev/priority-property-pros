@@ -3,13 +3,21 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  CONNECTION_FEE_NO_HIRE_GUARANTEE,
+  CONNECTION_FEE_NON_REFUNDABLE,
   CONTRACTOR_SIGNUP_HEADLINE,
   CONTRACTOR_SIGNUP_SUPPORTING,
   HOMEPAGE_SIGNUP_HEADLINE,
   HOMEPAGE_SIGNUP_SUPPORTING,
   MONTHLY_PRICE,
+  PLATFORM_FEES_NON_REFUNDABLE,
+  PRICING_FAQ,
+  SIGNUP_FEE_CHECKOUT_NOTE,
+  SIGNUP_FEE_NON_REFUNDABLE,
   SIGNUP_FEE_NOT_MONTHLY,
+  SIGNUP_FEE_PUBLIC_NOTE,
   SIGNUP_FEE_SHORT,
+  SIGNUP_TERMS_ACCEPTANCE,
 } from "./pricing";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -87,7 +95,22 @@ describe("public pricing copy", () => {
     expect(CONTRACTOR_SIGNUP_SUPPORTING).toMatch(/\$4\.99 only when you choose to connect/i);
     expect(SIGNUP_FEE_SHORT).toBe("$9.99 one-time account activation");
     expect(SIGNUP_FEE_NOT_MONTHLY).toMatch(/not \$9\.99\/month/i);
+    expect(SIGNUP_FEE_NOT_MONTHLY).toMatch(/non-refundable/i);
     expect(MONTHLY_PRICE).toBe("$0/month");
+  });
+
+  it("states that signup and connection fees are non-refundable", () => {
+    expect(SIGNUP_FEE_NON_REFUNDABLE).toMatch(/\$9\.99 account activation fee is non-refundable/i);
+    expect(CONNECTION_FEE_NON_REFUNDABLE).toMatch(/\$4\.99 Connection Fee is non-refundable/i);
+    expect(PLATFORM_FEES_NON_REFUNDABLE).toMatch(/non-refundable/i);
+    expect(CONNECTION_FEE_NO_HIRE_GUARANTEE).toMatch(/non-refundable/i);
+    expect(SIGNUP_FEE_PUBLIC_NOTE).toMatch(/non-refundable/i);
+    expect(SIGNUP_FEE_CHECKOUT_NOTE).toMatch(/non-refundable/i);
+    expect(SIGNUP_TERMS_ACCEPTANCE).toMatch(/non-refundable/i);
+    const refundFaq = PRICING_FAQ.find((item) => /refundable/i.test(item.question));
+    expect(refundFaq).toBeDefined();
+    expect(refundFaq?.answer).toMatch(/both fees are non-refundable/i);
+    expect(refundFaq?.answer).toMatch(/does not guarantee a hire/i);
   });
 
   it("does not use outdated free-account language in public-facing application copy", () => {

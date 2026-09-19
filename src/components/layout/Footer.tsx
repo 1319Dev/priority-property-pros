@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { COMPANY_NAME, PRODUCT_NAME } from "../../data/brand";
-import { SIGNUP_FEE_SHORT } from "../../data/pricing";
+import { SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
 import { Logo } from "../brand/Logo";
 import { Container } from "../ui/Container";
 
@@ -26,7 +26,7 @@ export function Footer() {
             {` `}
             {COMPANY_NAME} is not the contractor, not a franchise, and not affiliated with Angi or Thumbtack.
             {` `}
-            Join for a {SIGNUP_FEE_SHORT} — not a monthly subscription.
+            {SIGNUP_FEE_PUBLIC_NOTE}
           </p>
         </div>
         <nav aria-label="Footer">

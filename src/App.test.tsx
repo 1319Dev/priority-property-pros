@@ -188,6 +188,7 @@ describe("Public marketplace pricing", () => {
     expect(screen.getByRole("heading", { name: PRICING_HOMEPAGE_LINE })).toBeInTheDocument();
     expect(screen.getAllByText(/\$0\/month/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/\$9\.99 one-time account activation/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/non-refundable/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/free to join/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/accounts are free/i)).not.toBeInTheDocument();
     const seePricing = screen.getByRole("link", { name: SEE_PRICING_LABEL });
@@ -209,6 +210,8 @@ describe("Public marketplace pricing", () => {
     expect(container.textContent).not.toMatch(/\$49\/month|\$499\/year/);
     expect(container.textContent).not.toMatch(/stripe|paymentintent|webhooks?|payments_live|charges_live|test mode/i);
     expect(container.textContent).not.toMatch(/free to join|free signup|accounts are free|pay when you win|no lead fees/i);
+    expect(container.textContent).toMatch(/non-refundable/i);
+    expect(screen.getByText(/are the \$9\.99 activation fee and \$4\.99 connection fee refundable/i)).toBeInTheDocument();
   });
 
   it("mentions the one-time account activation on signup and for-pros surfaces", () => {

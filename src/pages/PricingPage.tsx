@@ -15,10 +15,12 @@ import {
   PRICING_PRIMARY,
   PRICING_SECONDARY,
   PRO_PRICING_SUMMARY,
+  PLATFORM_FEES_NON_REFUNDABLE,
   SIGNUP_FEE,
+  SIGNUP_FEE_NON_REFUNDABLE,
   SIGNUP_FEE_NOT_MONTHLY,
   SIGNUP_FEE_ONE_TIME_LABEL,
-  SIGNUP_FEE_SHORT,
+  SIGNUP_FEE_PUBLIC_NOTE,
 } from "../data/pricing";
 
 export function PricingPage() {
@@ -43,6 +45,7 @@ export function PricingPage() {
               {SIGNUP_FEE_ONE_TIME_LABEL}
             </p>
             <p className="mt-3 text-sm leading-relaxed text-cream-200">{SIGNUP_FEE_NOT_MONTHLY}</p>
+            <p className="mt-2 text-sm font-semibold text-gold-300">{SIGNUP_FEE_NON_REFUNDABLE}</p>
           </article>
           <article className="rounded-3xl border border-forest-800/15 bg-cream-50 px-5 py-6">
             <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">
@@ -95,11 +98,11 @@ export function PricingPage() {
             {CONTRACTOR_CTA}
           </ButtonLink>
         </div>
-        <p className="mt-4 text-sm text-ink-500">{SIGNUP_FEE_SHORT}. Not a monthly subscription.</p>
+        <p className="mt-4 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
         <p className="mt-2 text-xs leading-relaxed text-ink-500">
           Legal note (attorney review required): PPP is a technology marketplace that facilitates connections. PPP
           does not employ contractors, perform the work, guarantee hiring or workmanship, process project payments, or
-          take a percentage of project payment under this model.
+          take a percentage of project payment under this model. {PLATFORM_FEES_NON_REFUNDABLE}
         </p>
       </Container>
     </section>

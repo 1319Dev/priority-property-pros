@@ -19,7 +19,7 @@ import {
   findDemoProject,
   findDemoVerifier,
 } from "../data/demoMarketplace";
-import { HOMEPAGE_SIGNUP_HEADLINE } from "../data/pricing";
+import { HOMEPAGE_SIGNUP_HEADLINE, SIGNUP_FEE_NON_REFUNDABLE } from "../data/pricing";
 import { GET_ESTIMATES_CTA, SIGN_UP_TO_CONNECT_CTA } from "../data/signup";
 import { BrowseIllustration } from "../features/browse/BrowseVisuals";
 import {
@@ -66,7 +66,9 @@ function BrowseCtas() {
       <ButtonLink to="/post-project?intent=estimates" variant="ghost">
         {GET_ESTIMATES_CTA}
       </ButtonLink>
-      <p className="text-sm leading-relaxed text-ink-700">{HOMEPAGE_SIGNUP_HEADLINE} Checkout is not live yet.</p>
+      <p className="text-sm leading-relaxed text-ink-700">
+        {HOMEPAGE_SIGNUP_HEADLINE} {SIGNUP_FEE_NON_REFUNDABLE} Checkout is not live yet.
+      </p>
     </div>
   );
 }

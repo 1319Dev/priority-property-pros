@@ -9,7 +9,8 @@ import { useAuth } from "../lib/auth/useAuth";
 import {
   CONTRACTOR_SIGNUP_LEDE,
   CUSTOMER_SIGNUP_LEDE,
-  SIGNUP_FEE_SHORT,
+  SIGNUP_FEE_CHECKOUT_NOTE,
+  SIGNUP_TERMS_ACCEPTANCE,
   VERIFIER_SIGNUP_LEDE,
 } from "../data/pricing";
 import { preHireContactError, PRE_HIRE_CONTACT_HINT } from "../lib/marketplace/antiCircumvention";
@@ -205,7 +206,7 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
             required
           />
           <span>
-            I agree to the Terms of Use and Privacy Policy. PPP is a marketplace, not the contractor.
+            {SIGNUP_TERMS_ACCEPTANCE}
           </span>
         </label>
         <FormError message={error} />
@@ -213,7 +214,7 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
           {busy ? "Creating account…" : "Create account"}
         </Button>
         <p id="signup-fee-note" className="text-sm text-ink-500">
-          {SIGNUP_FEE_SHORT}. Not a monthly subscription. Checkout is not live yet.
+          {SIGNUP_FEE_CHECKOUT_NOTE}
         </p>
       </form>
     </AuthCard>

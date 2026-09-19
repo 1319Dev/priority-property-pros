@@ -7,18 +7,19 @@ const options = [
     to: "/sign-up/customer",
     label: "I need work done",
     detail:
-      "Homeowners & Businesses. Post projects, review connections, and hire. One-time $9.99 account activation — not a monthly subscription. No PPP Connection Fee.",
+      "Homeowners & Businesses. Post projects, review connections, and hire. One-time $9.99 account activation — not a monthly subscription. No PPP Connection Fee. The $9.99 account activation fee is non-refundable.",
   },
   {
     to: "/sign-up/contractor",
     label: "I want to get hired",
     detail:
-      "Independent contractors. One-time $9.99 account activation, then $0/month. Browse first. Pay $4.99 only when you choose to connect.",
+      "Independent contractors. One-time $9.99 account activation, then $0/month. Browse first. Pay $4.99 only when you choose to connect. The $9.99 activation fee and the $4.99 Connection Fee are non-refundable.",
   },
   {
     to: "/sign-up/verifier",
     label: "I want to verify completed jobs",
-    detail: "Verifier accounts. One-time $9.99 account activation. This is not a workmanship inspection.",
+    detail:
+      "Verifier accounts. One-time $9.99 account activation. This is not a workmanship inspection. The $9.99 account activation fee is non-refundable.",
   },
 ];
 

@@ -63,9 +63,11 @@ Submitting an estimate is never charged. Withdraw uses **Withdraw Estimate** wit
 
 PPP does **not** run image OCR. Upload guidance, filename sanitization, and `submit_content_report` exist. Do not pretend photos are verified.
 
-## Refund concept (document only — attorney review)
+## Refund policy (document only — attorney review)
 
-$4.99 buys connection access, not a guaranteed job. No auto-refund for not winning, customer choosing another, customer canceling, or contractor regret. Charged-but-not-entitled technical failure is eligible for correction. Fraud via dispute/admin.
+The $9.99 account activation fee and the $4.99 Connection Fee are **non-refundable**. $4.99 buys connection access, not a guaranteed job. There is no refund if the contractor is not hired, the customer chooses someone else, the customer cancels, or the contractor changes their mind.
+
+The app does **not** issue Stripe refunds for these fees. `needs_refund` is an internal ops flag for charged-but-not-entitled technical failures (no extra unlock). Operator correction, if any, is outside the product — Stripe Dashboard refunds remain possible for Garrett. Fraud is handled through dispute and admin review.
 
 ## VERIFIER
 
