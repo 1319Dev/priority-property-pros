@@ -13,9 +13,9 @@ export const HERO_ART_VIEWBOX = "0 0 280 170";
  * Mobile heights stay compact; md+ opens the frame around the facade and yard.
  */
 export const HERO_PHOTO_FRAME_CLASS =
-  "relative aspect-[16/9] max-h-[13.75rem] w-full overflow-hidden sm:max-h-[17.5rem] md:aspect-[2/1] md:max-h-[24rem] lg:max-h-[28rem] xl:max-h-[32rem] 2xl:max-h-[36rem]";
+  "relative aspect-[16/9] max-h-[13.75rem] w-full overflow-hidden sm:max-h-[17.5rem] md:aspect-[2/1] md:max-h-[24rem] lg:max-h-[30rem] xl:max-h-[34rem] 2xl:max-h-[38rem]";
 
-export const HERO_PHOTO_OBJECT_POSITION = "center 40%";
+export const HERO_PHOTO_OBJECT_POSITION = "center 48%";
 
 export function heroTaglineFitsWidth(widthPx: number): boolean {
   return IPHONE_LAYOUT_WIDTHS.includes(widthPx as (typeof IPHONE_LAYOUT_WIDTHS)[number]) || widthPx >= 320;

@@ -41,7 +41,7 @@ export function createMarketingPhotos(
       alt: "A finished suburban home with new landscaping, a clean driveway, and a cedar privacy fence.",
       width: 1152,
       height: 864,
-      objectPosition: "center 40%",
+      objectPosition: "center 48%",
       src: marketingAssetUrl(`${HOUSE_FILE}-1152w.jpg`, baseUrl),
       sources: [
         { type: "image/webp", srcSet: variants("webp", baseUrl) },
