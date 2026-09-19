@@ -36,7 +36,7 @@ export function ComingSoonLayout({
         <p className="mt-4 text-lg leading-relaxed text-ink-700">{body}</p>
         <p className="mt-3 rounded-2xl bg-cream-100 px-4 py-3 text-sm text-ink-700">
           Customer posting, contractor onboarding, matching, estimates, and pending bookings are live for signed-in
-          accounts. {`Online payment setup is coming soon.`} Priority Verified is not available yet.
+          accounts. {`Online payment setup is coming soon.`}
         </p>
         {extra}
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">

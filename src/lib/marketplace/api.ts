@@ -264,6 +264,12 @@ export async function passOpportunity(opportunityId: string): Promise<RpcJson> {
   return (data ?? {}) as RpcJson;
 }
 
+export async function endContractorJob(opportunityId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("contractor_end_job", { p_opportunity_id: opportunityId });
+  if (error) throw new Error(asError(error, "Could not end this job."));
+  return (data ?? {}) as RpcJson;
+}
+
 export async function submitEstimate(estimateId: string): Promise<RpcJson> {
   const { data, error } = await client().rpc("submit_estimate", { p_estimate_id: estimateId });
   if (error) throw new Error(asError(error, "Could not submit the estimate."));

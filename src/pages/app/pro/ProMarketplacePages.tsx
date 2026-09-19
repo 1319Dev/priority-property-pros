@@ -35,7 +35,7 @@ import {
   fetchProjectPhotos,
   fetchServiceCategories,
   fetchServiceQuestions,
-  passOpportunity,
+  endContractorJob,
   requestProjectConnection,
   setContractorServices,
   signedProjectPhotoUrl,
@@ -62,6 +62,14 @@ import {
 } from "../../../lib/marketplace/connectionLifecycle";
 import { ConnectConfirmDialog } from "../../../components/marketplace/ConnectConfirm";
 import { ContractorConnectionCta } from "../../../components/marketplace/ContractorConnectionCta";
+import { EndJobDialog } from "../../../components/marketplace/EndJobDialog";
+import {
+  CONNECT_SINGLE_STEP_COPY,
+  END_JOB_BUTTON_LABEL,
+  canContractorEndJob,
+  opportunityAllowsConnectCta,
+  runContractorConnect,
+} from "../../../lib/marketplace/contractorJobActions";
 import { canWithdrawFrom, WITHDRAW_ESTIMATE_BODY, WITHDRAW_ESTIMATE_CONFIRM, WITHDRAW_ESTIMATE_TITLE } from "../../../lib/marketplace/estimateLifecycle";
 import { PHOTO_OCR_RISK_NOTE, PHOTO_REPORT_LABEL } from "../../../lib/marketplace/photoSafety";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
@@ -391,7 +399,7 @@ export function OpportunitiesPage() {
       <h1 className="font-display text-4xl font-semibold text-forest-800">Jobs</h1>
       <p className="text-sm text-ink-700">
         Approximate location only. Exact street stays hidden until a paid $4.99 connection entitlement (payments coming
-        soon) or an admin unlock. Browse first — connecting is voluntary.
+        soon) or an admin unlock. Tap Connect to take a job — one step. End a job you do not want or have finished.
       </p>
       <FormError message={error} />
       {live.length === 0 ? (
@@ -459,6 +467,7 @@ export function OpportunityDetailPage() {
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
   const [connectOpen, setConnectOpen] = useState(false);
+  const [endOpen, setEndOpen] = useState(false);
 
   async function reload() {
     const opp = await fetchOpportunity(opportunityId);
@@ -506,7 +515,12 @@ export function OpportunityDetailPage() {
     myConnectionStatus: myConnection?.status ?? null,
     reservedUntil: myConnection?.reserved_until ?? null,
   });
-  const showConnectionCta = !cancelled && (row.status === "AVAILABLE" || row.status === "ACCEPTED");
+  const showConnectionCta = !cancelled && opportunityAllowsConnectCta(row.status);
+  const showEndJob = canContractorEndJob({
+    opportunityStatus: row.status,
+    projectStatus: project?.status,
+    connectionStatus: myConnection?.status ?? null,
+  });
 
   return (
     <div className="space-y-6">
@@ -536,6 +550,7 @@ export function OpportunityDetailPage() {
           </p>
         ) : null}
         <p className="mt-3 font-semibold text-forest-800">{spotsLabel}</p>
+        {showConnectionCta ? <p className="mt-2 text-sm font-medium text-forest-800">{CONNECT_SINGLE_STEP_COPY}</p> : null}
       </section>
       <div className="grid grid-cols-2 gap-2">
         {photos.map((photo) => (
@@ -573,42 +588,16 @@ export function OpportunityDetailPage() {
       {showConnectionCta ? (
         <ContractorConnectionCta state={connectionUiState} busy={busy} onConnect={() => setConnectOpen(true)} />
       ) : null}
-      {row.status === "AVAILABLE" && !cancelled ? (
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="min-h-14 flex-1"
-            disabled={busy}
-            onClick={() => {
-              setBusy(true);
-              void acceptOpportunity(row.id)
-                .then(() => {
-                  toast.push("You are participating. Submitting an estimate is never charged.");
-                  return reload();
-                })
-                .catch((err: Error) => setError(err.message))
-                .finally(() => setBusy(false));
-            }}
-          >
-            Participate
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            className="min-h-14 flex-1"
-            disabled={busy}
-            onClick={() => {
-              setBusy(true);
-              void passOpportunity(row.id)
-                .then(() => navigate("/app/pro/opportunities"))
-                .catch((err: Error) => setError(err.message))
-                .finally(() => setBusy(false));
-            }}
-          >
-            Pass
-          </Button>
-        </div>
+      {showEndJob ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-14 w-full"
+          disabled={busy}
+          onClick={() => setEndOpen(true)}
+        >
+          {END_JOB_BUTTON_LABEL}
+        </Button>
       ) : null}
       {row.status === "ACCEPTED" && !cancelled ? (
         <section className="space-y-3">
@@ -654,26 +643,48 @@ export function OpportunityDetailPage() {
         onConfirm={() => {
           setBusy(true);
           void fetchConnectionFeeCheckoutFlags()
-            .then((flags) => {
-              if (flags.enabled) {
-                return startConnectionCheckout({
-                  projectId: row.project_id,
-                  opportunityId: row.id,
-                }).then((result) => {
-                  const url = typeof result.checkout_url === "string" ? result.checkout_url : "";
-                  if (url) {
-                    toast.push(CONNECT_REDIRECTING_COPY);
-                    window.location.assign(url);
-                    return;
-                  }
-                  throw new Error(String(result.error ?? result.message ?? "Checkout is not available."));
-                });
-              }
-              return requestProjectConnection(row.project_id).then(() => {
-                toast.push(CONNECT_PAYMENTS_OFF_COPY);
-                setConnectOpen(false);
-                return reload();
-              });
+            .then((flags) =>
+              runContractorConnect({
+                opportunityStatus: row.status,
+                accept: () => acceptOpportunity(row.id),
+                checkoutEnabled: flags.enabled,
+                startCheckout: () =>
+                  startConnectionCheckout({
+                    projectId: row.project_id,
+                    opportunityId: row.id,
+                  }).then((result) => {
+                    const url = typeof result.checkout_url === "string" ? result.checkout_url : "";
+                    if (url) {
+                      toast.push(CONNECT_REDIRECTING_COPY);
+                      window.location.assign(url);
+                      return;
+                    }
+                    throw new Error(String(result.error ?? result.message ?? "Checkout is not available."));
+                  }),
+                requestConnection: () =>
+                  requestProjectConnection(row.project_id).then(() => {
+                    toast.push(CONNECT_PAYMENTS_OFF_COPY);
+                    setConnectOpen(false);
+                    return reload();
+                  }),
+              }),
+            )
+            .catch((err: Error) => setError(err.message))
+            .finally(() => setBusy(false));
+        }}
+      />
+      <EndJobDialog
+        open={endOpen}
+        busy={busy}
+        connectionStatus={myConnection?.status ?? null}
+        onClose={() => setEndOpen(false)}
+        onConfirm={() => {
+          setBusy(true);
+          void endContractorJob(row.id)
+            .then(() => {
+              toast.push("Job ended. History was kept.");
+              setEndOpen(false);
+              return navigate("/app/pro/opportunities");
             })
             .catch((err: Error) => setError(err.message))
             .finally(() => setBusy(false));

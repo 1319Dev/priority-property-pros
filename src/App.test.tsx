@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import logoSvg from "./assets/logo.svg?url";
 import wordmarkSvg from "./assets/wordmark.svg?url";
 import App from "./App";
@@ -71,6 +72,27 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     expect(screen.queryByAltText(/finish nailer/i)).not.toBeInTheDocument();
     expect(screen.queryByAltText(/p-trap slip nut/i)).not.toBeInTheDocument();
     expect(screen.queryByAltText(/electrician in safety glasses/i)).not.toBeInTheDocument();
+  });
+
+  it("does not render the retired Priority Verified teaser card", () => {
+    renderApp("/");
+    expect(screen.queryByText(/not available yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/optional documentation service/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/completion verifier/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /read trust & safety/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/priority pro — coming soon/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /full trust notes/i })).toBeInTheDocument();
+  });
+
+  it("scrolls to the top when public nav changes the route", async () => {
+    const user = userEvent.setup();
+    const scrollTo = vi.fn();
+    window.scrollTo = scrollTo;
+    renderApp("/");
+    scrollTo.mockClear();
+    await user.click(screen.getAllByRole("link", { name: /find a pro/i })[0]);
+    expect(screen.getByRole("heading", { name: /browse local independents/i })).toBeInTheDocument();
+    expect(scrollTo).toHaveBeenCalled();
   });
 
   it("renders header navigation targets", () => {
@@ -181,8 +203,8 @@ describe("Public marketplace pricing", () => {
     expect(screen.getAllByText(SIGNUP_FEE_ONE_TIME_LABEL).length).toBeGreaterThan(0);
     expect(screen.getAllByText(CONNECTION_FEE_PER_LABEL).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/\$0\/month/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/priority pro/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/priority pro — coming soon/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/priority pro — coming soon/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /^priority pro$/i })).not.toBeInTheDocument();
     expect(container.textContent).not.toMatch(/8%|3\.5%|2\.5%/);
     expect(container.textContent).not.toMatch(/\$49\/month|\$499\/year/);
     expect(container.textContent).not.toMatch(/stripe|paymentintent|webhooks?|payments_live|charges_live|test mode/i);

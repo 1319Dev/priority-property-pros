@@ -18,7 +18,7 @@ const options = [
   {
     to: "/sign-up/verifier",
     label: "I want to verify completed jobs",
-    detail: "Independent completion verifiers. One-time $9.99 account activation. Priority Verified is not live yet. This is not a workmanship inspection.",
+    detail: "Verifier accounts. One-time $9.99 account activation. This is not a workmanship inspection.",
   },
 ];
 

@@ -57,7 +57,7 @@ export const CONTRACTOR_SIGNUP_LEDE =
   "Get started for a one-time $9.99 account activation — not $9.99/month. Then $0/month. Pay $4.99 only when you choose to connect.";
 
 export const VERIFIER_SIGNUP_LEDE =
-  "Get started for a one-time $9.99 account activation. This is not a monthly subscription. Priority Verified is not live.";
+  "Get started for a one-time $9.99 account activation. This is not a monthly subscription.";
 
 export const SIGNUP_ROLE_LEDE =
   "Get started for a one-time $9.99 account activation. Not $9.99 a month. No monthly subscription to keep your account.";
@@ -72,10 +72,6 @@ export const PRO_DASHBOARD_PRICING_NOTE =
 
 export const CONNECTION_FEE_NO_HIRE_GUARANTEE =
   "The $4.99 Connection Fee purchases connection access. It does not guarantee a hire or the work.";
-
-export const PRIORITY_PRO_NAME = "Priority Pro";
-export const PRIORITY_PRO_STATUS = "Coming Soon";
-export const PRIORITY_PRO_DETAIL = "Priority Pro — Coming Soon";
 
 export const PRICING_FAQ = [
   {
@@ -97,9 +93,5 @@ export const PRICING_FAQ = [
     question: "Does the Connection Fee guarantee a hire?",
     answer:
       "No. $4.99 buys connection access, not a guaranteed job. Project payment is between the customer and the contractor. PPP does not take a percentage of that payment.",
-  },
-  {
-    question: "What is Priority Pro?",
-    answer: "Priority Pro — Coming Soon.",
   },
 ] as const;

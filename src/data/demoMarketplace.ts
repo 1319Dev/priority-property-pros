@@ -188,14 +188,14 @@ export const DEMO_VERIFIERS: DemoVerifier[] = [
     displayName: "Example verifier Morgan Lee",
     photoInitials: "ML",
     coverageArea: "Central Texas (example)",
-    shortDescription: "Example independent completion verifier. Priority Verified is not live. Fictional person.",
+    shortDescription: "Example verifier profile. Fictional person.",
   },
   {
     slug: "demo-casey-nguyen",
     displayName: "Demo verifier Casey Nguyen",
     photoInitials: "CN",
     coverageArea: "Austin suburbs (example)",
-    shortDescription: "Demo verifier card so the browse can show the role. Not a real verifier and not Priority Verified.",
+    shortDescription: "Demo verifier card so the browse can show the role. Not a real verifier.",
   },
 ];
 

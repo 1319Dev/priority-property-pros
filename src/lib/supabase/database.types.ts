@@ -861,6 +861,7 @@ export type Database = {
       post_project: { Args: { p_project_id: string }; Returns: Json };
       accept_opportunity: { Args: { p_opportunity_id: string }; Returns: Json };
       pass_opportunity: { Args: { p_opportunity_id: string }; Returns: Json };
+      contractor_end_job: { Args: { p_opportunity_id: string }; Returns: Json };
       submit_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       withdraw_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       select_estimate: { Args: { p_project_id: string; p_estimate_id: string }; Returns: Json };

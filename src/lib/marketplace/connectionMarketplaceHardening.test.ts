@@ -481,6 +481,9 @@ describe("Connection Marketplace staging hardening", () => {
     expect(detailPage).toMatch(/fetchMyProjectConnections/);
     expect(detailPage).toMatch(/contractorConnectionUiState/);
     expect(detailPage).toMatch(/ContractorConnectionCta/);
+    expect(detailPage).toMatch(/runContractorConnect/);
+    expect(detailPage).toMatch(/endContractorJob/);
+    expect(detailPage).not.toMatch(/>\s*Participate\s*</);
     const cta = srcFile("src/components/marketplace/ContractorConnectionCta.tsx");
     expect(cta).toContain("CONNECTED_LABEL");
     expect(cta).toContain("CONNECT_BUTTON_LABEL");
