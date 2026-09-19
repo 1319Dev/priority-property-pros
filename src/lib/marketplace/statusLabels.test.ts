@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   accountStatusLabel,
@@ -7,7 +10,17 @@ import {
   opportunityNextActions,
   PROJECT_STATUS_LABELS,
 } from "./statusLabels";
-import { HERO_ART_VIEWBOX, HERO_TAGLINE, IPHONE_LAYOUT_WIDTHS, heroSvgContainsTagline, heroTaglineFitsWidth } from "./heroLayout";
+import {
+  HERO_ART_VIEWBOX,
+  HERO_PHOTO_FRAME_CLASS,
+  HERO_PHOTO_OBJECT_POSITION,
+  HERO_TAGLINE,
+  IPHONE_LAYOUT_WIDTHS,
+  heroSvgContainsTagline,
+  heroTaglineFitsWidth,
+} from "./heroLayout";
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
 describe("human project states", () => {
   it("never shows raw enums to customers", () => {
@@ -59,5 +72,23 @@ describe("homepage iPhone hero contract", () => {
     for (const width of IPHONE_LAYOUT_WIDTHS) {
       expect(heroTaglineFitsWidth(width)).toBe(true);
     }
+  });
+});
+
+describe("homepage house photo crop contract", () => {
+  it("keeps aspect-ratio and max-height on the same overflow box so desktop does not clip the house from the top", () => {
+    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/aspect-\[16\/9\]/);
+    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/overflow-hidden/);
+    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/max-h-\[13\.75rem\]/);
+    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/sm:max-h-\[17\.5rem\]/);
+    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/md:max-h-\[24rem\]/);
+    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/lg:max-h-\[28rem\]/);
+    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/xl:max-h-\[32rem\]/);
+    expect(HERO_PHOTO_OBJECT_POSITION).toBe("center 40%");
+
+    const heroSource = readFileSync(path.join(repoRoot, "src/features/home/Hero.tsx"), "utf8");
+    expect(heroSource).toContain("HERO_PHOTO_FRAME_CLASS");
+    expect(heroSource).toContain("HERO_PHOTO_OBJECT_POSITION");
+    expect(heroSource).not.toMatch(/max-h-\[13\.75rem\][\s\S]*aspect-\[16\/9\][\s\S]*MarketingPhoto/);
   });
 });
