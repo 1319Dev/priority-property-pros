@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-# Phase 1 static site. Update Sitemap when a custom domain is attached.
+# Custom domain at site root. Sitemap uses the published origin.
+Sitemap: https://prioritypropertypros.com/sitemap.xml
