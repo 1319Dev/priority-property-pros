@@ -15,7 +15,8 @@ export const PLATFORM_FEE_REFUND_BLOCKED = true;
 export const PLATFORM_FEE_REFUND_BLOCKED_REASON = `${PLATFORM_FEES_NON_REFUNDABLE} This app does not issue refunds for those fees.`;
 
 /** Always false. There is no in-app refund for these fees. */
-export function canRefundPlatformFee(_kind: NonRefundablePlatformFee): false {
+export function canRefundPlatformFee(kind: NonRefundablePlatformFee): false {
+  void kind;
   return false;
 }
 
@@ -23,6 +24,6 @@ export function canRefundPlatformFee(_kind: NonRefundablePlatformFee): false {
  * Dead path. Never issues a Stripe or database refund.
  * Callers must not catch-and-ignore this to pretend a refund succeeded.
  */
-export function refundPlatformFee(_kind: NonRefundablePlatformFee): never {
-  throw new Error(PLATFORM_FEE_REFUND_BLOCKED_REASON);
+export function refundPlatformFee(kind: NonRefundablePlatformFee): never {
+  throw new Error(`${PLATFORM_FEE_REFUND_BLOCKED_REASON} (${kind})`);
 }
