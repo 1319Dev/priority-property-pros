@@ -1,14 +1,21 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SERVICES, type Service } from "../../data/services";
+import { ProjectTypeTabBar, type ProjectTypeTabValue } from "../../components/marketplace/ProjectTypePicker";
 import { BottomSheet } from "../../components/ui/BottomSheet";
 import { Button, ButtonLink } from "../../components/ui/Button";
 import { Container, SectionHeading } from "../../components/ui/Container";
 import { SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
+import { projectTypeTabForSlug } from "../../lib/marketplace/serviceCategoryGroups";
 
 export function PopularServices() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<Service | null>(null);
+  const [tab, setTab] = useState<ProjectTypeTabValue>("all");
+  const visible = useMemo(
+    () => (tab === "all" ? SERVICES : SERVICES.filter((service) => projectTypeTabForSlug(service.id) === tab)),
+    [tab],
+  );
 
   return (
     <section className="py-14 sm:py-16" aria-labelledby="services-heading">
@@ -21,8 +28,11 @@ export function PopularServices() {
         <h2 id="services-heading" className="sr-only">
           Popular services
         </h2>
-        <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {SERVICES.map((service) => (
+        <div className="mt-8">
+          <ProjectTypeTabBar idPrefix="home-services" includeAll value={tab} onChange={setTab} />
+        </div>
+        <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" id="home-services-panel" role="tabpanel" aria-labelledby={`home-services-tab-${tab}`}>
+          {visible.map((service) => (
             <li key={service.id}>
               <button
                 type="button"

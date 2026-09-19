@@ -13,6 +13,7 @@ describe("customer wizard and lists", () => {
       "budget",
       "review",
     ]);
+    expect(WIZARD_STEPS[1]?.label).toBe("Type");
   });
 
   it("sorts customer projects into Drafts / Active / Completed / Cancelled", () => {

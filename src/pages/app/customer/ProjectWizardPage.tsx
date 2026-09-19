@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { CompletenessBadge } from "../../../components/marketplace/CompletenessBadge";
+import { ProjectTypePicker } from "../../../components/marketplace/ProjectTypePicker";
 import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/Input";
 import { FormError } from "../../../lib/auth/AuthCard";
@@ -297,34 +298,14 @@ export function ProjectWizardPage() {
       ) : null}
 
       {step === 2 ? (
-        <fieldset className="grid grid-cols-1 gap-2">
-          <legend className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
-            Category
-          </legend>
-          {categories.map((cat) => (
-            <label
-              key={cat.id}
-              className={`flex min-h-12 cursor-pointer items-center rounded-2xl border px-4 ${
-                project.category_id === cat.id ? "border-forest-800 bg-cream-100" : "border-forest-800/15"
-              }`}
-            >
-              <input
-                type="radio"
-                name="category"
-                className="mr-3"
-                checked={project.category_id === cat.id}
-                onChange={() => {
-                  setProject({ ...project, category_id: cat.id });
-                  void savePatch({ category_id: cat.id });
-                }}
-              />
-              <span>
-                <span className="font-semibold text-forest-800">{cat.name}</span>
-                <span className="block text-sm text-ink-500">{cat.blurb}</span>
-              </span>
-            </label>
-          ))}
-        </fieldset>
+        <ProjectTypePicker
+          categories={categories}
+          selectedId={project.category_id}
+          onSelect={(categoryId) => {
+            setProject({ ...project, category_id: categoryId });
+            void savePatch({ category_id: categoryId });
+          }}
+        />
       ) : null}
 
       {step === 3 ? (
@@ -526,7 +507,7 @@ export function ProjectWizardPage() {
             <strong>Need:</strong> {project.title || "—"}
           </p>
           <p>
-            <strong>Category:</strong> {category?.name ?? "—"}
+            <strong>Project type:</strong> {category?.name ?? "—"}
           </p>
           <p>
             <strong>Where (approximate):</strong> {[project.city, project.state, project.zip_code].filter(Boolean).join(", ") || "—"}

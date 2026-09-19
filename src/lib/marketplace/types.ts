@@ -239,7 +239,7 @@ export const CHARGES_LIVE = false;
 
 export const WIZARD_STEPS = [
   { id: 1, key: "need", label: "Need" },
-  { id: 2, key: "category", label: "Category" },
+  { id: 2, key: "category", label: "Type" },
   { id: 3, key: "photos", label: "Photos" },
   { id: 4, key: "questions", label: "Questions" },
   { id: 5, key: "location", label: "Location" },
