@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import logoSvg from "./assets/logo.svg?url";
 import wordmarkSvg from "./assets/wordmark.svg?url";
 import App from "./App";
@@ -81,6 +82,17 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     expect(screen.queryByRole("link", { name: /read trust & safety/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/priority pro — coming soon/i)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /full trust notes/i })).toBeInTheDocument();
+  });
+
+  it("scrolls to the top when public nav changes the route", async () => {
+    const user = userEvent.setup();
+    const scrollTo = vi.fn();
+    window.scrollTo = scrollTo;
+    renderApp("/");
+    scrollTo.mockClear();
+    await user.click(screen.getAllByRole("link", { name: /find a pro/i })[0]);
+    expect(screen.getByRole("heading", { name: /browse local independents/i })).toBeInTheDocument();
+    expect(scrollTo).toHaveBeenCalled();
   });
 
   it("renders header navigation targets", () => {
