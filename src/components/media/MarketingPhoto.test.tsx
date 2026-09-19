@@ -14,7 +14,7 @@ describe("MarketingPhoto", () => {
   });
 
   it("accepts a crop-position override for the homepage hero band", () => {
-    render(<MarketingPhoto photo="house" objectPosition="center 40%" />);
-    expect(screen.getByAltText(/finished suburban home/i)).toHaveStyle({ objectPosition: "center 40%" });
+    render(<MarketingPhoto photo="house" objectPosition="center 48%" />);
+    expect(screen.getByAltText(/finished suburban home/i)).toHaveStyle({ objectPosition: "center 48%" });
   });
 });
