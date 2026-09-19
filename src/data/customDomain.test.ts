@@ -20,8 +20,8 @@ describe("custom domain at site root", () => {
 
   it("uses BASE_URL for index assets and canonical tags", () => {
     const html = readFileSync(path.join(repoRoot, "index.html"), "utf8");
-    expect(html).toMatch(/rel="canonical" href="%BASE_URL%"/);
-    expect(html).toMatch(/property="og:url" content="%BASE_URL%"/);
+    expect(html).toMatch(/rel="canonical" href="https:\/\/prioritypropertypros\.com\/"/);
+    expect(html).toMatch(/property="og:url" content="https:\/\/prioritypropertypros\.com\/"/);
     expect(html).toMatch(/property="og:image" content="%BASE_URL%og-image.svg"/);
     expect(html).toMatch(/twitter:image" content="%BASE_URL%og-image.svg"/);
     expect(html).not.toMatch(/github\.io/);
