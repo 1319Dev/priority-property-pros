@@ -6,7 +6,7 @@ import { PROJECT_PLACEHOLDERS } from "../../data/services";
 import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { ButtonLink } from "../../components/ui/Button";
 import { Container } from "../../components/ui/Container";
-import { HERO_TAGLINE } from "../../lib/marketplace/heroLayout";
+import { HERO_PHOTO_FRAME_CLASS, HERO_PHOTO_OBJECT_POSITION, HERO_TAGLINE } from "../../lib/marketplace/heroLayout";
 
 export function Hero() {
   const navigate = useNavigate();
@@ -22,15 +22,14 @@ export function Hero() {
 
   return (
     <section className="relative overflow-x-hidden border-b border-forest-800/10">
-      <div className="relative max-h-[13.75rem] overflow-hidden sm:max-h-[17.5rem] lg:max-h-[22.5rem]">
-        <div className="aspect-[16/9] w-full">
-          <MarketingPhoto
-            photo="house"
-            eager
-            sizes="100vw"
-            className="h-full w-full"
-          />
-        </div>
+      <div className={HERO_PHOTO_FRAME_CLASS}>
+        <MarketingPhoto
+          photo="house"
+          eager
+          sizes="100vw"
+          objectPosition={HERO_PHOTO_OBJECT_POSITION}
+          className="h-full w-full"
+        />
         <div
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/80 via-forest-950/25 to-forest-950/15"
           aria-hidden="true"

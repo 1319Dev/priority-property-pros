@@ -7,18 +7,20 @@ export function MarketingPhoto({
   sizes,
   eager = false,
   decorative = false,
+  objectPosition,
 }: {
   photo: MarketingPhotoAsset | MarketingPhotoId;
   className?: string;
   sizes?: string;
   eager?: boolean;
   decorative?: boolean;
+  objectPosition?: string;
 }) {
   const asset = typeof photo === "string" ? MARKETING_PHOTOS[photo] : photo;
   const resolvedSizes = sizes ?? asset.defaultSizes;
 
   return (
-    <picture>
+    <picture className="block h-full w-full">
       {asset.sources.map((source) => (
         <source key={source.type} type={source.type} srcSet={source.srcSet} sizes={resolvedSizes} />
       ))}
@@ -33,7 +35,7 @@ export function MarketingPhoto({
         decoding="async"
         fetchPriority={eager ? "high" : "low"}
         className={cn("h-full w-full object-cover", className)}
-        style={{ objectPosition: asset.objectPosition }}
+        style={{ objectPosition: objectPosition ?? asset.objectPosition }}
       />
     </picture>
   );
