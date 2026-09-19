@@ -8,7 +8,13 @@ export function routerBasename(): string {
   return base.replace(/\/$/, "");
 }
 
+/** Join Vite `base` and a public asset path without introducing double slashes. */
+export function joinWithBase(baseUrl: string, assetPath: string): string {
+  const normalizedBase = !baseUrl || baseUrl === "/" ? "/" : baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+  const trimmed = assetPath.replace(/^\//, "");
+  return `${normalizedBase}${trimmed}`;
+}
+
 export function withBase(path: string): string {
-  const trimmed = path.replace(/^\//, "");
-  return `${import.meta.env.BASE_URL}${trimmed}`;
+  return joinWithBase(import.meta.env.BASE_URL, path);
 }

@@ -1,1 +1,1 @@
-export { cn, routerBasename, withBase } from "./cn";
+export { cn, joinWithBase, routerBasename, withBase } from "./cn";

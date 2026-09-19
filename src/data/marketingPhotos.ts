@@ -1,3 +1,5 @@
+import { joinWithBase } from "../utils/cn";
+
 export type MarketingPhotoId = "house";
 
 export type MarketingPhotoSource = {
@@ -16,29 +18,41 @@ export type MarketingPhotoAsset = {
   defaultSizes: string;
 };
 
-const MARKETING_DIR = "/images/marketing";
+const MARKETING_DIR = "images/marketing";
 const HOUSE_FILE = "service-finished-exterior";
 const HOUSE_WIDTHS = [480, 640, 768, 960, 1152] as const;
 
-function variants(ext: "webp" | "jpg"): string {
-  return HOUSE_WIDTHS.map((width) => `${MARKETING_DIR}/${HOUSE_FILE}-${width}w.${ext} ${width}w`).join(", ");
+export function marketingAssetUrl(filename: string, baseUrl: string = import.meta.env.BASE_URL): string {
+  return joinWithBase(baseUrl, `${MARKETING_DIR}/${filename}`);
 }
 
-export const MARKETING_PHOTOS: Record<MarketingPhotoId, MarketingPhotoAsset> = {
-  house: {
-    id: "house",
-    alt: "A finished suburban home with new landscaping, a clean driveway, and a cedar privacy fence.",
-    width: 1152,
-    height: 864,
-    objectPosition: "center 45%",
-    src: `${MARKETING_DIR}/${HOUSE_FILE}-1152w.jpg`,
-    sources: [
-      { type: "image/webp", srcSet: variants("webp") },
-      { type: "image/jpeg", srcSet: variants("jpg") },
-    ],
-    defaultSizes: "(max-width: 1024px) 100vw, 720px",
-  },
-};
+function variants(ext: "webp" | "jpg", baseUrl: string = import.meta.env.BASE_URL): string {
+  return HOUSE_WIDTHS.map((width) => `${marketingAssetUrl(`${HOUSE_FILE}-${width}w.${ext}`, baseUrl)} ${width}w`).join(
+    ", ",
+  );
+}
+
+export function createMarketingPhotos(
+  baseUrl: string = import.meta.env.BASE_URL,
+): Record<MarketingPhotoId, MarketingPhotoAsset> {
+  return {
+    house: {
+      id: "house",
+      alt: "A finished suburban home with new landscaping, a clean driveway, and a cedar privacy fence.",
+      width: 1152,
+      height: 864,
+      objectPosition: "center 45%",
+      src: marketingAssetUrl(`${HOUSE_FILE}-1152w.jpg`, baseUrl),
+      sources: [
+        { type: "image/webp", srcSet: variants("webp", baseUrl) },
+        { type: "image/jpeg", srcSet: variants("jpg", baseUrl) },
+      ],
+      defaultSizes: "(max-width: 1024px) 100vw, 720px",
+    },
+  };
+}
+
+export const MARKETING_PHOTOS: Record<MarketingPhotoId, MarketingPhotoAsset> = createMarketingPhotos();
 
 export const FEATURED_SERVICE_VISUALS = [
   {
