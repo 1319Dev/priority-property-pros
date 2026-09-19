@@ -10,12 +10,16 @@ export const HERO_ART_VIEWBOX = "0 0 280 170";
  * Aspect-ratio and max-height must live on the same box so object-cover /
  * object-position apply to the visible frame (a max-height parent wrapping a
  * taller 16:9 child clips from the top and cuts the house in half on desktop).
- * Mobile heights stay compact; md+ opens the frame around the facade and yard.
+ *
+ * The house asset is 4:3. A short max-height on a wide laptop (~1280px) makes
+ * the frame ~2.5:1, so cover-crop plus the bottom gradient only shows roof/sky.
+ * Keep a compact 16:9 band on phones. On md+ stay 16:9 (do not switch to 2:1)
+ * and raise the caps so a 1280px viewport can show roof, walls, and yard.
  */
 export const HERO_PHOTO_FRAME_CLASS =
-  "relative aspect-[16/9] max-h-[13.75rem] w-full overflow-hidden sm:max-h-[17.5rem] md:aspect-[2/1] md:max-h-[24rem] lg:max-h-[28rem] xl:max-h-[32rem] 2xl:max-h-[36rem]";
+  "relative aspect-[16/9] max-h-[13.75rem] w-full overflow-hidden sm:max-h-[17.5rem] md:max-h-[28rem] lg:max-h-[36rem] xl:max-h-[42rem] 2xl:max-h-[44rem]";
 
-export const HERO_PHOTO_OBJECT_POSITION = "center 40%";
+export const HERO_PHOTO_OBJECT_POSITION = "center 58%";
 
 export function heroTaglineFitsWidth(widthPx: number): boolean {
   return IPHONE_LAYOUT_WIDTHS.includes(widthPx as (typeof IPHONE_LAYOUT_WIDTHS)[number]) || widthPx >= 320;

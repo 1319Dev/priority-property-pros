@@ -78,13 +78,14 @@ describe("homepage iPhone hero contract", () => {
 describe("homepage house photo crop contract", () => {
   it("keeps aspect-ratio and max-height on the same overflow box so desktop does not clip the house from the top", () => {
     expect(HERO_PHOTO_FRAME_CLASS).toMatch(/aspect-\[16\/9\]/);
+    expect(HERO_PHOTO_FRAME_CLASS).not.toMatch(/aspect-\[2\/1\]/);
     expect(HERO_PHOTO_FRAME_CLASS).toMatch(/overflow-hidden/);
     expect(HERO_PHOTO_FRAME_CLASS).toMatch(/max-h-\[13\.75rem\]/);
     expect(HERO_PHOTO_FRAME_CLASS).toMatch(/sm:max-h-\[17\.5rem\]/);
-    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/md:max-h-\[24rem\]/);
-    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/lg:max-h-\[28rem\]/);
-    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/xl:max-h-\[32rem\]/);
-    expect(HERO_PHOTO_OBJECT_POSITION).toBe("center 40%");
+    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/md:max-h-\[28rem\]/);
+    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/lg:max-h-\[36rem\]/);
+    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/xl:max-h-\[42rem\]/);
+    expect(HERO_PHOTO_OBJECT_POSITION).toBe("center 58%");
 
     const heroSource = readFileSync(path.join(repoRoot, "src/features/home/Hero.tsx"), "utf8");
     expect(heroSource).toContain("HERO_PHOTO_FRAME_CLASS");
