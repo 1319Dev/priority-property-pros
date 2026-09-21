@@ -874,6 +874,8 @@ export type Database = {
         Args: { p_booking_id: string; p_rating: number; p_body?: string | null };
         Returns: Json;
       };
+      confirm_booking_hired: { Args: { p_booking_id: string }; Returns: Json };
+      booking_is_mutually_hired: { Args: { p_booking_id: string }; Returns: boolean };
       booking_job_contact: { Args: { p_booking_id: string }; Returns: Json };
       project_job_contact: { Args: { p_project_id: string }; Returns: Json };
       booking_has_contact_access: { Args: { p_booking_id: string }; Returns: boolean };

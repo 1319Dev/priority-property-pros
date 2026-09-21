@@ -1,0 +1,31 @@
+-- Owner-run checks after 20261005000001_mutual_hired.sql.
+-- CI does not connect to a live database.
+-- Do not apply this migration to production from this PR.
+
+-- Schema
+--   bookings.customer_hired_at / contractor_hired_at exist
+--   booking_reviews.reviewer_role in ('CUSTOMER','CONTRACTOR')
+--   unique (booking_id, reviewer_role)
+--   contractor_public_reviews / ratings filter reviewer_role = 'CUSTOMER'
+
+-- confirm_booking_hired
+--   1. Customer on a PENDING booking after select_estimate
+--      → customer_hired_at set, contractor_hired_at still null, status WAITING_FOR_PRO
+--      → submit_booking_review as customer → error 'reviews require mutual hired confirmation'
+--      → submit_booking_review as contractor → same error
+--   2. Same customer clicks Hired again → idempotent true, timestamp unchanged
+--   3. Unrelated user → 'not a booking participant'
+--   4. Contractor on the same booking
+--      → contractor_hired_at set, mutually_hired true, status HIRED
+--      → submit_booking_review as customer succeeds
+--      → submit_booking_review as contractor succeeds (separate row, reviewer_role CONTRACTOR)
+--      → second customer review → 'you already reviewed this booking'
+--   5. CANCELLED booking → 'cancelled bookings cannot be marked hired'
+--   6. Client UPDATE bookings.customer_hired_at → protect_booking_row / hired flags (no GRANT UPDATE)
+--   7. expire_stale_pending_bookings skips rows with either hired timestamp set
+--   8. cancel_pending_booking still works (existing cancel path). No un-hire RPC.
+--   9. payments_live / charges_live stay false; fee amounts unchanged.
+
+-- Public directory
+--   contractor_public_reviews does not include reviewer_role = 'CONTRACTOR' rows
+--   platform_reviews still insertable without mutual hire (marketplace reviews of PPP)

@@ -33,7 +33,15 @@
 --   client insert customer_contractor_relationships → error
 --   client insert fee_schedules → error
 --   contractor cannot mark a change order APPROVED alone
---   submit_booking_review on a PENDING booking → error
+--   submit_booking_review on a PENDING booking without mutual Hired → error
+-- Mutual Hired (after 20261005000001):
+--   confirm_booking_hired as customer → customer_hired_at set, reviews still blocked
+--   confirm_booking_hired again → idempotent
+--   confirm_booking_hired as unrelated user → not a booking participant
+--   confirm_booking_hired as contractor then submit_booking_review as each party → two rows
+--   client UPDATE bookings.customer_hired_at → denied (RPC only)
+--   expire_stale_pending_bookings skips hired-in-progress pending rows
+--   platform_reviews still insertable without mutual hire
 
 -- Phase 5A (after 20260920000001–03):
 --   customer A cannot select * from projects where customer_id <> auth.uid()

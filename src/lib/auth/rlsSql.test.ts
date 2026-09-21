@@ -382,6 +382,21 @@ describe("Public contractor directory SQL", () => {
   });
 });
 
+describe("Mutual hired SQL migrations", () => {
+  const sql = allSql();
+
+  it("adds hired timestamps, a confirm RPC, and gates profile reviews on mutual Hired", () => {
+    expect(sql).toMatch(/ADD COLUMN IF NOT EXISTS customer_hired_at timestamptz/);
+    expect(sql).toMatch(/ADD COLUMN IF NOT EXISTS contractor_hired_at timestamptz/);
+    expect(sql).toMatch(/FUNCTION public\.confirm_booking_hired/);
+    expect(sql).toMatch(/FUNCTION public\.booking_is_mutually_hired/);
+    expect(sql).toMatch(/reviews require mutual hired confirmation/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.confirm_booking_hired\(uuid\) TO authenticated/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.confirm_booking_hired\(uuid\) FROM PUBLIC, anon/);
+    expect(sql).not.toMatch(/GRANT UPDATE ON TABLE public\.bookings/);
+  });
+});
+
 describe("Platform reviews SQL migrations", () => {
   const sql = allSql();
 

@@ -78,6 +78,8 @@ export function customerNextActions(input: {
   projectStatus: ProjectStatus;
   bookingId?: string | null;
   bookingStatus?: BookingStatus | null;
+  customerHiredAt?: string | null;
+  contractorHiredAt?: string | null;
 }): NextAction[] {
   const state = customerLifecycleState(input.projectStatus, input.bookingStatus ?? null);
   const detail = `/app/customer/projects/${input.projectId}`;
@@ -85,6 +87,11 @@ export function customerNextActions(input: {
   const edit = `/app/customer/projects/${input.projectId}/edit`;
   const compare = `/app/customer/projects/${input.projectId}/compare`;
   const booking = input.bookingId ? `/app/customer/bookings/${input.bookingId}` : null;
+  const awaitingHire =
+    Boolean(booking) &&
+    input.bookingStatus &&
+    input.bookingStatus !== "CANCELLED" &&
+    !(input.customerHiredAt && input.contractorHiredAt);
 
   switch (state) {
     case "draft":
@@ -104,11 +111,15 @@ export function customerNextActions(input: {
     case "contractor_selected":
     case "booking":
       return [
-        ...(booking ? [{ label: "View booking", to: booking }] : []),
+        ...(awaitingHire && booking ? [{ label: "Confirm hired", to: booking }] : []),
+        ...(booking ? [{ label: "View booking", to: booking, variant: awaitingHire ? "outline" as const : undefined }] : []),
         { label: "View", to: detail, variant: "outline" },
       ];
     case "active":
-      return booking ? [{ label: "View booking", to: booking }] : [{ label: "View", to: detail }];
+      return [
+        ...(awaitingHire && booking ? [{ label: "Confirm hired", to: booking }] : []),
+        ...(booking ? [{ label: "View booking", to: booking, variant: awaitingHire ? "outline" as const : undefined }] : [{ label: "View", to: detail }]),
+      ];
     case "completed":
       return [
         { label: "Hire again", to: "/app/customer/hire-again" },
