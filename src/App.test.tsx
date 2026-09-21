@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -54,10 +54,23 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
 
   it("lists the Phase 1 services including Handyman and Other", () => {
     renderApp("/");
+    expect(screen.getByRole("tab", { name: "All types" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Interior" })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /handyman/i }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: /other/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /if it is a real local job/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /tv mounting/i })).toBeInTheDocument();
     expect(SERVICES).toHaveLength(21);
+  });
+
+  it("filters homepage services when a project-type tab is selected", async () => {
+    const user = userEvent.setup();
+    renderApp("/");
+    await user.click(screen.getByRole("tab", { name: "Exterior" }));
+    expect(screen.getByRole("tab", { name: "Exterior" })).toHaveAttribute("aria-selected", "true");
+    const services = within(screen.getByRole("tabpanel", { name: "Exterior" }));
+    expect(services.getByRole("button", { name: /fence repair/i })).toBeInTheDocument();
+    expect(services.queryByRole("button", { name: /handyman/i })).not.toBeInTheDocument();
+    expect(services.queryByRole("button", { name: /if it is a real local job/i })).not.toBeInTheDocument();
   });
 
   it("shows the finished house photo and the marketplace need line without trade photos", () => {
