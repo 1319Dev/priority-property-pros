@@ -21,9 +21,12 @@ export const HERO_PHOTO_OBJECT_POSITION = "center 40%";
  * letterboxing a graphic.
  */
 export const HERO_BANNER_FRAME_CLASS =
-  "relative h-56 w-full overflow-hidden bg-forest-800/10 sm:h-72 lg:h-80";
+  "relative h-56 w-full overflow-hidden bg-forest-800/10 sm:h-72 lg:h-96";
 
 export const HERO_BANNER_SIZES = "100vw";
+
+/** Keep the facade in a short full-bleed crop; the asset default sits too low here. */
+export const HERO_BANNER_OBJECT_POSITION = "center 28%";
 
 export function heroTaglineFitsWidth(widthPx: number): boolean {
   return IPHONE_LAYOUT_WIDTHS.includes(widthPx as (typeof IPHONE_LAYOUT_WIDTHS)[number]) || widthPx >= 320;

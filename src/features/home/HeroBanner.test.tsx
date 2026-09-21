@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { MARKETING_PHOTOS } from "../../data/marketingPhotos";
+import { HERO_BANNER_OBJECT_POSITION } from "../../lib/marketplace/heroLayout";
 import { HeroBanner } from "./HeroBanner";
 
 describe("HeroBanner", () => {
@@ -12,7 +13,8 @@ describe("HeroBanner", () => {
     expect(img).toHaveAttribute("width", String(MARKETING_PHOTOS.ranch.width));
     expect(img).toHaveAttribute("height", String(MARKETING_PHOTOS.ranch.height));
     expect(img).toHaveAttribute("sizes", "100vw");
-    expect(img).toHaveStyle({ objectPosition: MARKETING_PHOTOS.ranch.objectPosition });
+    expect(img).toHaveStyle({ objectPosition: HERO_BANNER_OBJECT_POSITION });
+    expect(HERO_BANNER_OBJECT_POSITION).not.toBe(MARKETING_PHOTOS.ranch.objectPosition);
     expect(screen.queryByAltText(/from need to done/i)).not.toBeInTheDocument();
     const figure = container.querySelector("figure");
     expect(figure).toHaveClass("h-56", "w-full", "overflow-hidden");

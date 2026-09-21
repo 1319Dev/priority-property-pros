@@ -13,6 +13,7 @@ import {
 import {
   HERO_ART_VIEWBOX,
   HERO_BANNER_FRAME_CLASS,
+  HERO_BANNER_OBJECT_POSITION,
   HERO_PHOTO_FRAME_CLASS,
   HERO_PHOTO_OBJECT_POSITION,
   HERO_TAGLINE,
@@ -108,7 +109,8 @@ describe("homepage hero banner contract", () => {
     expect(HERO_BANNER_FRAME_CLASS).toMatch(/overflow-hidden/);
     expect(HERO_BANNER_FRAME_CLASS).toMatch(/h-56/);
     expect(HERO_BANNER_FRAME_CLASS).toMatch(/sm:h-72/);
-    expect(HERO_BANNER_FRAME_CLASS).toMatch(/lg:h-80/);
+    expect(HERO_BANNER_FRAME_CLASS).toMatch(/lg:h-96/);
+    expect(HERO_BANNER_OBJECT_POSITION).toBe("center 28%");
 
     const heroSource = readFileSync(path.join(repoRoot, "src/features/home/Hero.tsx"), "utf8");
     expect(heroSource).toContain("HeroBanner");
@@ -117,6 +119,7 @@ describe("homepage hero banner contract", () => {
     expect(bannerSource).toContain("homepageHeroBanner");
     expect(bannerSource).toContain("HERO_BANNER_FRAME_CLASS");
     expect(bannerSource).toContain('className="h-full w-full"');
+    expect(bannerSource).toContain("HERO_BANNER_OBJECT_POSITION");
     expect(bannerSource).not.toMatch(/objectFit/);
     expect(bannerSource).not.toMatch(/object-contain/);
     expect(bannerSource).not.toMatch(/brandHero/);
