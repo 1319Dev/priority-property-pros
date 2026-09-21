@@ -61,12 +61,15 @@ describe("marketing photo catalog", () => {
     expect(FEATURED_SERVICE_VISUALS.every((item) => "accent" in item && !("photoId" in item))).toBe(true);
   });
 
-  it("assigns a different exterior to each major marketing section", () => {
+  it("assigns the homepage banner to the ranch exterior and does not reuse that crop", () => {
     const assigned = Object.values(MARKETING_SECTION_PHOTOS);
-    expect(assigned).toEqual(["brandHero", "house", "ranch", "landscaped", "twoStory", "porch", "dusk"]);
-    expect(new Set(assigned).size).toBe(assigned.length);
-    expect(MARKETING_SECTION_PHOTOS.homepageHeroBanner).toBe("brandHero");
+    expect(assigned).toEqual(["ranch", "house", "twoStory", "landscaped", "twoStory", "porch", "dusk"]);
+    expect(MARKETING_SECTION_PHOTOS.homepageHeroBanner).toBe("ranch");
+    expect(MARKETING_SECTION_PHOTOS.homepageHeroBanner).not.toBe("brandHero");
+    expect(assigned.filter((id) => id === MARKETING_SECTION_PHOTOS.homepageHeroBanner)).toHaveLength(1);
+    expect(assigned.filter((id) => id === "house")).toHaveLength(1);
     expect(MARKETING_SECTION_PHOTOS.homepageHero).toBe("house");
+    expect(MARKETING_SECTION_PHOTOS.homepageFindAProPreview).toBe("twoStory");
     expect(MARKETING_SECTION_PHOTOS.homepageHero).not.toBe(MARKETING_SECTION_PHOTOS.howItWorks);
     expect(MARKETING_SECTION_PHOTOS.homepageHero).not.toBe(MARKETING_SECTION_PHOTOS.becomeAPro);
     expect(MARKETING_SECTION_PHOTOS.homepageHero).not.toBe(MARKETING_SECTION_PHOTOS.findAProHeader);
