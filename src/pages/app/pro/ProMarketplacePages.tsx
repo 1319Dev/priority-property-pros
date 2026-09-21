@@ -51,6 +51,7 @@ import {
   deleteEstimate,
   type OpportunityRow,
 } from "../../../lib/marketplace/api";
+import { opportunityListTitle } from "../../../lib/marketplace/opportunityAttach";
 import { centsToDollarString, dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type EstimateItemKind, type EstimateStatus, type ServiceAreaMode, type ServiceCategory } from "../../../lib/marketplace/types";
 import { OPPORTUNITY_STATUS_LABELS, opportunityNextActions } from "../../../lib/marketplace/statusLabels";
@@ -400,7 +401,10 @@ export function OpportunitiesPage() {
         if (!profile) throw new Error("Contractor profile missing.");
         return fetchMyOpportunities(profile.id);
       })
-      .then(setRows);
+      .then((next) => {
+        setRows(next);
+        setError(null);
+      });
   }
 
   useEffect(() => {
@@ -442,7 +446,7 @@ export function OpportunitiesPage() {
             return (
               <li key={row.id} className="rounded-3xl border border-forest-800/10 px-5 py-4">
                 <HumanStatus label={OPPORTUNITY_STATUS_LABELS[row.status]} />
-                <p className="mt-2 font-semibold text-forest-800">{row.projects?.title ?? "Project"}</p>
+                <p className="mt-2 font-semibold text-forest-800">{opportunityListTitle(row)}</p>
                 <p className="text-sm text-ink-500">
                   {[row.projects?.city, row.projects?.state, row.projects?.zip_code].filter(Boolean).join(", ")}
                 </p>
@@ -476,7 +480,7 @@ export function OpportunitiesPage() {
               <li key={row.id}>
                 <Link to={`/app/pro/opportunities/${row.id}`} className="block rounded-3xl border border-forest-800/10 px-5 py-4">
                   <HumanStatus label={row.projects?.status === "CANCELLED" ? "Cancelled" : OPPORTUNITY_STATUS_LABELS[row.status]} />
-                  <p className="mt-2 font-semibold text-forest-800">{row.projects?.title ?? "Project"}</p>
+                  <p className="mt-2 font-semibold text-forest-800">{opportunityListTitle(row)}</p>
                   {row.status === "PASSED" ? (
                     <p className="mt-1 text-sm text-ink-500">You passed on this job. It is no longer actionable for you.</p>
                   ) : null}
@@ -589,7 +593,7 @@ export function OpportunityDetailPage() {
   return (
     <div className="space-y-6">
       <HumanStatus label={cancelled ? "Cancelled" : OPPORTUNITY_STATUS_LABELS[row.status]} />
-      <h1 className="font-display text-4xl font-semibold text-forest-800">{project?.title}</h1>
+      <h1 className="font-display text-4xl font-semibold text-forest-800">{opportunityListTitle(row)}</h1>
       <FormError message={error} />
       {cancelled ? (
         <StatusBanner tone="warning" title="This project was cancelled" body="It is no longer an active opportunity. Your estimate history is kept if you already participated." />

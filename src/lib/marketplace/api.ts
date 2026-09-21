@@ -6,6 +6,11 @@ import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./pr
 import { reusableEmptyDraft } from "./flows";
 import { detectContactLeak } from "./contactLeak";
 import { customerFacingConnectionCheckoutError, CONNECTION_RECONCILE_CUSTOMER_ERROR } from "./connectionCheckout";
+import {
+  attachOpportunityProjects,
+  OPPORTUNITY_COLUMNS,
+  OPPORTUNITY_WITH_PROJECTS_SELECT,
+} from "./opportunityAttach";
 import type {
   BookingContactAccess,
   ConnectionAvailability,
@@ -558,29 +563,52 @@ export type OpportunityRow = Database["public"]["Tables"]["opportunities"]["Row"
   > | null;
 };
 
-async function attachProject<T extends { project_id: string }>(row: T): Promise<T & { projects: OpportunityRow["projects"] }> {
-  const project = await fetchProject(row.project_id);
-  return { ...row, projects: project };
+async function loadOpportunityRows(
+  build: (select: string) => PromiseLike<{ data: unknown; error: { message: string } | null }>,
+): Promise<OpportunityRow[]> {
+  const embedded = await build(OPPORTUNITY_WITH_PROJECTS_SELECT);
+  if (!embedded.error) {
+    return attachOpportunityProjects((Array.isArray(embedded.data) ? embedded.data : []) as OpportunityRow[]);
+  }
+  const fallback = await build(OPPORTUNITY_COLUMNS);
+  if (fallback.error) throw new Error(asError(fallback.error, "Could not load opportunities."));
+  return attachOpportunityProjects(
+    (Array.isArray(fallback.data) ? fallback.data : []) as OpportunityRow[],
+    fetchProject,
+  );
 }
 
 export async function fetchMyOpportunities(contractorProfileId: string) {
-  const { data, error } = await client()
-    .from("opportunities")
-    .select("id, project_id, contractor_profile_id, match_id, status, available_at, responded_at, expires_at, created_at")
-    .eq("contractor_profile_id", contractorProfileId)
-    .order("created_at", { ascending: false });
-  if (error) throw new Error(asError(error, "Could not load opportunities."));
-  return Promise.all((data ?? []).map((row) => attachProject(row)));
+  return loadOpportunityRows((select) =>
+    client()
+      .from("opportunities")
+      .select(select)
+      .eq("contractor_profile_id", contractorProfileId)
+      .order("created_at", { ascending: false }),
+  );
 }
 
 export async function fetchOpportunity(id: string) {
+  const embedded = await client()
+    .from("opportunities")
+    .select(OPPORTUNITY_WITH_PROJECTS_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+  if (!embedded.error) {
+    if (!embedded.data) throw new Error("Opportunity not found.");
+    const [row] = await attachOpportunityProjects([embedded.data as unknown as OpportunityRow]);
+    if (!row) throw new Error("Opportunity not found.");
+    return row;
+  }
   const { data, error } = await client()
     .from("opportunities")
-    .select("id, project_id, contractor_profile_id, match_id, status, available_at, responded_at, expires_at, created_at")
+    .select(OPPORTUNITY_COLUMNS)
     .eq("id", id)
-    .single();
-  if (error || !data) throw new Error(asError(error, "Opportunity not found."));
-  return attachProject(data);
+    .maybeSingle();
+  if (error || !data) throw new Error(asError(error ?? embedded.error, "Opportunity not found."));
+  const [row] = await attachOpportunityProjects([data as unknown as OpportunityRow], fetchProject);
+  if (!row) throw new Error("Opportunity not found.");
+  return row;
 }
 
 export async function fetchContractorProfileByUser(profileId: string) {
