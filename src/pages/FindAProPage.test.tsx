@@ -24,13 +24,16 @@ describe("Find a Pro public browse", () => {
     const user = userEvent.setup();
     renderApp("/find-a-pro");
     expect(screen.getByRole("heading", { name: /browse local independents/i })).toBeInTheDocument();
-    expect(screen.getAllByText(/view profile/i).length).toBeGreaterThan(0);
     expect(screen.getByLabelText(/service/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/general area/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^rating$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/experience/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/sort/i)).toBeInTheDocument();
     expect(screen.getByText(/no paid placement/i)).toBeInTheDocument();
+    expect(screen.getByText(/show labeled example cards/i)).toBeInTheDocument();
+    expect(screen.queryByAltText(/finished suburban home/i)).not.toBeInTheDocument();
+    await user.click(screen.getByText(/show labeled example cards/i));
+    expect(screen.getAllByText(/view profile/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/new to priority property pros/i)).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText(/sort/i), "highest_rated");
     expect(screen.getByRole("link", { name: /example fence pro/i })).toBeInTheDocument();

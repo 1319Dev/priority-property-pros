@@ -54,6 +54,13 @@
 --   anon EXECUTE anonymized_pro_label / general_service_area / generic_credential_badge_label / public_safe_* / text_contains_pre_hire_contact / text_contains_contact_info → allowed (pure helpers)
 --   anon EXECUTE list_public_directory_contractors / get_public_directory_contractor → allowed
 --   anon SELECT contractor_profiles / profiles / booking_reviews / contractor_portfolio / booking_contact_access → denied
+
+-- Platform reviews (after 20261003000001):
+--   anon SELECT approved platform_reviews → rows
+--   anon INSERT platform_reviews → denied
+--   authenticated INSERT own review → auto-approved
+--   authenticated UPDATE another user's review → denied
+--   admin UPDATE status → allowed
 --   anon EXECUTE booking_job_contact / contractor_is_directory_listed → denied
 --   authenticated EXECUTE assert_no_pre_hire_contact → allowed (write path)
 

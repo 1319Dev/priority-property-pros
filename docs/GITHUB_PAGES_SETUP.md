@@ -86,9 +86,10 @@ Wait until the **Deploy GitHub Pages** job shows a green check.
 
 - The homepage headline includes **YOUR PROJECT. LOCAL PROS. ONE SIMPLE PLACE.** (or the same words in title case).
 - **POST A PROJECT** asks customers to sign in. **BECOME A PRO** points contractors to signup/onboarding.
-- Header links work: Find a Pro, How It Works, Become a Pro, Sign In.
-- Popular services include Handyman, TV Mounting, Lawn Care, and Other.
-- Refreshing a sub-page such as `/trust` still shows the app (not a GitHub 404 page). That proves the SPA `404.html` fallback.
+- Header links work: Find a Pro, How It Works, Become a Pro, FAQ, Sign In.
+- Footer includes Contact, Reviews, and Leave a review.
+- Refreshing a sub-page such as `/trust`, `/faq`, or `/contact` still shows the app (not a GitHub 404 page). That proves the SPA `404.html` fallback.
+- Old WordPress paths `/services` and `/about` (with or without a trailing slash) land on the homepage services section and How it works.
 - On a phone: Add to Home Screen works (Safari: Share → Add to Home Screen; Chrome: menu → Install app / Add to Home screen). The PPP house icon should appear.
 - Turn on airplane mode after visiting once, then reopen the app: you should still see the site or the cream **You’re offline** screen.
 

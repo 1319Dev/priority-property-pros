@@ -3,6 +3,8 @@ import { AppShell } from "./components/layout/AppShell";
 import { ScrollToTop } from "./components/layout/ScrollToTop";
 import { RequireAdmin, RequireAuth, RequireRole } from "./lib/auth/guards";
 import { BecomeAProPage } from "./pages/BecomeAProPage";
+import { ContactPage } from "./pages/ContactPage";
+import { FaqPage } from "./pages/FaqPage";
 import {
   DemoContractorPage,
   DemoHomeownerPage,
@@ -13,9 +15,11 @@ import {
 } from "./pages/FindAProPage";
 import { HomePage } from "./pages/HomePage";
 import { HowItWorksPage } from "./pages/HowItWorksPage";
+import { LegacyPathRedirect } from "./pages/LegacyPathRedirect";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { PricingPage } from "./pages/PricingPage";
 import { PostProjectPage } from "./pages/PostProjectPage";
+import { ReviewsPage } from "./pages/ReviewsPage";
 import { SignInPage } from "./pages/SignInPage";
 import { SignUpPage } from "./pages/SignUpPage";
 import { SignUpRolePage } from "./pages/SignUpRolePage";
@@ -58,6 +62,7 @@ import {
   AdminBookingsPage,
   AdminHomePage,
   AdminPeoplePage,
+  AdminReviewsPage,
 } from "./pages/app/AdminPages";
 
 export default function App() {
@@ -76,6 +81,11 @@ export default function App() {
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/become-a-pro" element={<BecomeAProPage />} />
+        <Route path="/faq" element={<FaqPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/reviews" element={<ReviewsPage />} />
+        <Route path="/services" element={<LegacyPathRedirect />} />
+        <Route path="/about" element={<LegacyPathRedirect />} />
         <Route path="/sign-in" element={<SignInPage />} />
         <Route path="/sign-up" element={<SignUpRolePage />} />
         <Route path="/sign-up/:role" element={<SignUpPage />} />
@@ -137,6 +147,7 @@ export default function App() {
             <Route path="people" element={<AdminPeoplePage />} />
             <Route path="approvals" element={<AdminApprovalsPage />} />
             <Route path="approvals/:contractorProfileId" element={<AdminApprovalDetailPage />} />
+            <Route path="reviews" element={<AdminReviewsPage />} />
             <Route path="audit" element={<AdminAuditPage />} />
             <Route path="bookings" element={<AdminBookingsPage />} />
             <Route path="account" element={<AccountPage />} />

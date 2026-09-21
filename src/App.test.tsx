@@ -172,26 +172,20 @@ describe("Phase 3 marketplace surfaces", () => {
     renderApp("/how-it-works");
     expect(screen.getByText(/up to three local independents/i)).toBeInTheDocument();
     expect(screen.queryByText(/live posting is not on yet/i)).not.toBeInTheDocument();
-    expect(screen.getAllByText(/online payment setup is coming soon/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/online payment setup is coming soon/i)).not.toBeInTheDocument();
   });
 
   it("shows labeled demo browse and $9.99 signup CTAs on Find a Pro", () => {
     renderApp("/find-a-pro");
     expect(screen.getByRole("heading", { name: /browse local independents/i })).toBeInTheDocument();
-    expect(screen.getAllByText(/example \/ demo/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/view profile/i).length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: /example fence pro/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /example handyman pro/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /example homeowner jordan/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /example verifier morgan/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /example: cedar fence repair/i })).toBeInTheDocument();
+    expect(screen.getByText(/show labeled example cards/i)).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /post a project/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /get estimates/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/join priority property pros for a one-time \$9\.99 account activation/i).length).toBeGreaterThan(
       0,
     );
     expect(screen.queryByText(/free signup/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/example cedar ridge fence/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/checkout is not live yet/i)).not.toBeInTheDocument();
   });
 });
 
@@ -232,5 +226,66 @@ describe("Public marketplace pricing", () => {
     expect(screen.getAllByText(/one-time \$9\.99 account activation/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/not \$9\.99 a month/i)).toBeInTheDocument();
     expect(screen.queryByText(/free to join/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("Marketing pages, reviews, and legacy redirects", () => {
+  it("puts Post a project and Become a Pro CTAs on the homepage with marketplace pricing", () => {
+    renderApp("/");
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(heading).toHaveTextContent(/your project/i);
+    expect(screen.getAllByRole("link", { name: /post a project/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /become a priority pro/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/a marketplace, not a crew/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/be the first to review/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/verified google review/i)).not.toBeInTheDocument();
+  });
+
+  it("does not put payment-setup or attorney-review banners in marketing chrome", () => {
+    const home = renderApp("/");
+    expect(home.container.textContent).not.toMatch(/online payment setup is coming soon/i);
+    expect(home.container.textContent).not.toMatch(/attorney review required/i);
+    home.unmount();
+    renderApp("/become-a-pro");
+    expect(screen.queryByText(/online payment setup is coming soon/i)).not.toBeInTheDocument();
+  });
+
+  it("adds FAQ, Contact, and Reviews routes plus footer links", () => {
+    const faq = renderApp("/faq");
+    expect(screen.getByRole("heading", { name: /questions about priority property pros/i })).toBeInTheDocument();
+    expect(screen.getByText(/is priority property pros the contractor/i)).toBeInTheDocument();
+    faq.unmount();
+    const contact = renderApp("/contact");
+    expect(screen.getByRole("heading", { name: /talk to priority property pros/i })).toBeInTheDocument();
+    contact.unmount();
+    const reviews = renderApp("/reviews");
+    expect(screen.getByRole("heading", { name: /reviews of priority property pros/i })).toBeInTheDocument();
+    expect(screen.getByText(/sign in to leave a review/i)).toBeInTheDocument();
+    reviews.unmount();
+    renderApp("/");
+    expect(screen.getAllByRole("link", { name: /^faq$/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /^contact$/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /leave a review/i }).length).toBeGreaterThan(0);
+  });
+
+  it("redirects old WordPress /services and /about paths", () => {
+    const services = renderApp("/services");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/your project/i);
+    services.unmount();
+    const servicesSlash = renderApp("/services/");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/your project/i);
+    servicesSlash.unmount();
+    const about = renderApp("/about");
+    expect(screen.getByRole("heading", { name: /the marketplace in four steps/i })).toBeInTheDocument();
+    about.unmount();
+    renderApp("/about/");
+    expect(screen.getByRole("heading", { name: /the marketplace in four steps/i })).toBeInTheDocument();
+  });
+
+  it("strengthens Become a Pro with connect-fee facts", () => {
+    renderApp("/become-a-pro");
+    expect(screen.getByRole("heading", { name: /real projects\. real customers\. fair competition/i })).toBeInTheDocument();
+    expect(screen.getByText(/\$4\.99 per connection/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /become a priority pro/i })).toHaveAttribute("href", "/sign-up/contractor");
   });
 });

@@ -10,4 +10,4 @@ if (!existsSync(indexPath)) {
 }
 
 copyFileSync(indexPath, notFoundPath);
-console.log("Copied dist/index.html → dist/404.html for GitHub Pages SPA fallback.");
+console.log("Copied dist/index.html → dist/404.html for GitHub Pages SPA fallback (old /services and /about paths included).");

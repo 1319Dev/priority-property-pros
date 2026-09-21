@@ -16,9 +16,10 @@ export function AdminShell() {
   const items = [
     { to: "/app/admin", label: "Overview", end: true },
     { to: "/app/admin/bookings", label: "Bookings" },
-    { to: "/app/admin/people", label: "People" },
     { to: "/app/admin/approvals", label: "Approvals", badge: pendingCount },
+    { to: "/app/admin/reviews", label: "Reviews" },
     { to: "/app/admin/account", label: "Account" },
+    { to: "/app/admin/people", label: "People" },
   ];
 
   return <DashboardShell items={items} eyebrow="Admin" />;

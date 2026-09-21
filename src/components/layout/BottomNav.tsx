@@ -26,6 +26,7 @@ export function BottomNav() {
             <NavLink
               to={item.to}
               end={item.end}
+              aria-label={item.label}
               className={({ isActive }) =>
                 `flex min-h-12 min-w-12 flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1 text-[0.65rem] font-semibold ${
                   item.prominent
@@ -102,10 +103,16 @@ function ProIcon({ active }: { active: boolean }) {
 }
 
 function SignIcon({ active }: { active: boolean }) {
+  const stroke = active ? "#1A3C2E" : "#6B645A";
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="8" stroke={active ? "#1A3C2E" : "#6B645A"} strokeWidth="1.7" />
-      <path d="M12 8 V12 L15 14" stroke={active ? "#1A3C2E" : "#6B645A"} strokeWidth="1.7" strokeLinecap="round" />
+      <circle cx="12" cy="8" r="3.2" stroke={stroke} strokeWidth="1.7" />
+      <path
+        d="M5.5 19 c1.6-3.2 3.8-4.7 6.5-4.7 s4.9 1.5 6.5 4.7"
+        stroke={stroke}
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

@@ -1,0 +1,15 @@
+-- Owner-run checks after 20261003000001_platform_reviews.sql.
+-- CI does not connect to a live database.
+
+-- Expected:
+--   anon SELECT platform_reviews WHERE status = 'APPROVED' → rows
+--   anon SELECT platform_reviews WHERE status = 'PENDING' → 0 rows
+--   anon INSERT platform_reviews → denied
+--   authenticated INSERT own row → auto-approved (unless contact leak)
+--   authenticated INSERT with another user_id → trigger overwrites to auth.uid()
+--   authenticated UPDATE another user's row → denied
+--   authenticated UPDATE own status → denied (admin only)
+--   is_admin() UPDATE status to REJECTED → allowed
+--   second INSERT by the same user → unique violation (one review per account)
+--   body under 20 characters → check constraint
+--   phone/email in body → protect_platform_review exception

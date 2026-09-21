@@ -823,6 +823,30 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      platform_reviews: {
+        Row: {
+          id: string;
+          user_id: string;
+          display_name: string;
+          city: string | null;
+          rating: number;
+          body: string;
+          status: import("../marketplace/platformReviews").PlatformReviewStatus;
+          created_at: string;
+        };
+        Insert: {
+          user_id?: string;
+          display_name: string;
+          city?: string | null;
+          rating: number;
+          body: string;
+          status?: import("../marketplace/platformReviews").PlatformReviewStatus;
+        };
+        Update: {
+          status?: import("../marketplace/platformReviews").PlatformReviewStatus;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       is_admin: { Args: Record<string, never>; Returns: boolean };
@@ -976,6 +1000,7 @@ export type Database = {
       relationship_status: import("../marketplace/types").RelationshipStatus;
       change_order_status: import("../marketplace/types").ChangeOrderStatus;
       project_connection_status: import("../marketplace/types").ProjectConnectionStatus;
+      platform_review_status: import("../marketplace/platformReviews").PlatformReviewStatus;
     };
   };
 };

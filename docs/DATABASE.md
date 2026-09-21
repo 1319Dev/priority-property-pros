@@ -150,6 +150,16 @@ Apply `20260920000001` through `20260920000003` after Phase 4A. Additive. Full r
 | `list_my_customer_projects` / `get_my_customer_project` | Customer isolation: `customer_id = auth.uid()` only. |
 | `booking_contact_access` / `booking_has_contact_access` | Server-authoritative private-contact gate. Default LOCKED. |
 
+## Platform reviews
+
+Apply `20261003000001_platform_reviews.sql` on production after the existing migrations. Additive. Does not change Stripe flags.
+
+| Object | Purpose |
+| --- | --- |
+| `platform_reviews` | Public reviews of the PPP marketplace (not `booking_reviews`, not Google). Columns: `id`, `user_id`, `display_name`, `city` (nullable), `rating` 1–5, `body`, `status` (`PENDING` \| `APPROVED` \| `REJECTED`), `created_at`. |
+| RLS | `anon`/`authenticated` SELECT approved rows. Authenticated INSERT own row only. Users cannot update others. Admins SELECT all and UPDATE `status`. |
+| Auto-approve | Signed-in valid inserts are auto-approved after length, rating, unique-user, and contact-leak checks. Guests must sign in. Admins can reject spam. One review per account. |
+
 ## How to inspect
 
 Supabase → **Table Editor**. As the dashboard role you see all rows; that is not what the website sees. Test as a signed-in user via the client or **Authentication → Users** impersonation if you enable it later.
