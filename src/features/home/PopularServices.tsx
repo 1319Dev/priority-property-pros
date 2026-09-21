@@ -18,7 +18,7 @@ export function PopularServices() {
   );
 
   return (
-    <section className="py-14 sm:py-16" aria-labelledby="services-heading">
+    <section id="services" className="py-14 sm:py-16" aria-labelledby="services-heading">
       <Container>
         <SectionHeading
           eyebrow="Popular services"

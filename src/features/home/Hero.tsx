@@ -21,33 +21,10 @@ export function Hero() {
   }, []);
 
   return (
-    <section className="relative overflow-x-hidden border-b border-forest-800/10">
-      <div className={HERO_PHOTO_FRAME_CLASS}>
-        <MarketingPhoto
-          photo="house"
-          eager
-          sizes="100vw"
-          objectPosition={HERO_PHOTO_OBJECT_POSITION}
-          className="h-full w-full"
-        />
-        <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/80 via-forest-950/25 to-forest-950/15"
-          aria-hidden="true"
-        />
-        <div className="absolute inset-x-0 bottom-0 px-4 pb-4 sm:px-6 sm:pb-5">
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-gold-300 sm:text-[0.72rem] sm:tracking-[0.22em]">
-            {HERO_TAGLINE}
-          </p>
-          <p className="mt-1 max-w-2xl font-display text-lg font-semibold leading-snug text-cream-50 sm:text-2xl">
-            {MARKETPLACE_NEED_LINE}
-          </p>
-        </div>
-      </div>
-      <Container className="grid items-center gap-10 py-8 sm:py-12 lg:grid-cols-[1.15fr_0.85fr] lg:py-16">
+    <section className="relative overflow-x-hidden border-b border-forest-800/10 bg-cream-50">
+      <Container className="grid items-start gap-8 py-8 sm:py-12 lg:grid-cols-[1.2fr_0.8fr] lg:items-center lg:py-14">
         <div className="min-w-0">
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">
-            Local home services marketplace
-          </p>
+          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">{HERO_TAGLINE}</p>
           <h1 className="mt-4 font-display text-[2.1rem] leading-[1.12] font-semibold tracking-tight text-forest-800 sm:text-5xl lg:text-6xl">
             {CUSTOMER_TAGLINE.split(". ").map((part, index, all) => (
               <span key={part} className="block">
@@ -56,8 +33,8 @@ export function Hero() {
             ))}
           </h1>
           <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-700">
-            Tell us what needs doing. Independent local contractors compete fairly for the work.
-            You hire. They perform. Priority Property Pros is the place — not the crew.
+            {MARKETPLACE_NEED_LINE} Independent local contractors compete fairly. You hire. They perform. Priority
+            Property Pros is the place — not the crew.
           </p>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-700">
             {HOMEPAGE_SIGNUP_HEADLINE} {HOMEPAGE_SIGNUP_SUPPORTING}
@@ -72,7 +49,7 @@ export function Hero() {
           </div>
           <p className="mt-3 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
           <form
-            className="mt-8 rounded-3xl border border-forest-800/10 bg-cream-50/80 p-3 shadow-[0_18px_50px_-28px_rgba(16,36,28,0.45)]"
+            className="mt-8 rounded-3xl border border-forest-800/10 bg-cream-100/80 p-3 shadow-[0_18px_50px_-28px_rgba(16,36,28,0.45)]"
             onSubmit={(event) => {
               event.preventDefault();
               const params = new URLSearchParams();
@@ -90,7 +67,7 @@ export function Hero() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={PROJECT_PLACEHOLDERS[placeholderIndex]}
-                className="min-h-14 min-w-0 flex-1 rounded-2xl border border-forest-800/10 bg-cream-100 px-4 text-base text-ink-900 placeholder:text-ink-500"
+                className="min-h-14 min-w-0 flex-1 rounded-2xl border border-forest-800/10 bg-cream-50 px-4 text-base text-ink-900 placeholder:text-ink-500"
                 autoComplete="off"
               />
               <button
@@ -102,16 +79,20 @@ export function Hero() {
             </div>
           </form>
         </div>
-        <figure className="relative mx-auto hidden w-full min-w-0 max-w-md lg:block">
-          <div className="overflow-hidden rounded-[1.75rem] bg-forest-800 p-3">
-            <div className="overflow-hidden rounded-[1.15rem]">
-              <MarketingPhoto
-                photo="house"
-                sizes="(min-width: 1024px) 380px, 0px"
-                className="aspect-[4/3]"
-              />
-            </div>
-            <figcaption className="mt-3 px-1 pb-1 text-center text-[0.68rem] font-semibold uppercase leading-snug tracking-[0.14em] text-cream-100 sm:text-[0.75rem] sm:tracking-[0.18em]">
+        <figure className="relative mx-auto w-full min-w-0 max-w-md lg:justify-self-end">
+          <div className={HERO_PHOTO_FRAME_CLASS}>
+            <MarketingPhoto
+              photo="house"
+              eager
+              sizes="(min-width: 1024px) 380px, 90vw"
+              objectPosition={HERO_PHOTO_OBJECT_POSITION}
+              className="h-full w-full"
+            />
+            <div
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/55 via-forest-950/10 to-transparent"
+              aria-hidden="true"
+            />
+            <figcaption className="absolute inset-x-0 bottom-0 px-4 pb-3 text-[0.68rem] font-semibold uppercase leading-snug tracking-[0.14em] text-cream-50 sm:text-[0.75rem]">
               {HERO_TAGLINE}
             </figcaption>
           </div>

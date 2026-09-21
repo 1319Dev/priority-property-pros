@@ -12,6 +12,7 @@ const links = [
   { to: "/how-it-works", label: "How It Works" },
   { to: "/pricing", label: "Pricing" },
   { to: "/become-a-pro", label: "Become a Pro" },
+  { to: "/faq", label: "FAQ" },
 ];
 
 export function Header() {

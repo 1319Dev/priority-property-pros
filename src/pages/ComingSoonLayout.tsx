@@ -27,17 +27,13 @@ export function ComingSoonLayout({
             photo={photo}
             ratio="banner"
             eager
-            frameClassName="mb-8 max-h-56 rounded-3xl border border-forest-800/10 sm:max-h-64"
+            frameClassName="mb-8 max-h-40 rounded-3xl border border-forest-800/10 sm:max-h-48"
             sizes="(max-width: 768px) 100vw, 672px"
           />
         ) : null}
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">{eyebrow}</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">{title}</h1>
         <p className="mt-4 text-lg leading-relaxed text-ink-700">{body}</p>
-        <p className="mt-3 rounded-2xl bg-cream-100 px-4 py-3 text-sm text-ink-700">
-          Customer posting, contractor onboarding, matching, estimates, and pending bookings are live for signed-in
-          accounts. {`Online payment setup is coming soon.`}
-        </p>
         {extra}
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <ButtonLink to="/">Back home</ButtonLink>
@@ -53,7 +49,7 @@ export function ComingSoonLayout({
 export function SeeServicesLink() {
   return (
     <p className="mt-4 text-sm">
-      <Link to="/" className="font-semibold text-forest-800 underline">
+      <Link to="/#services" className="font-semibold text-forest-800 underline">
         See popular services
       </Link>
     </p>

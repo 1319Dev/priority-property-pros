@@ -381,3 +381,18 @@ describe("Public contractor directory SQL", () => {
     expect(sql).not.toMatch(/DROP FUNCTION public\.booking_job_contact/i);
   });
 });
+
+describe("Platform reviews SQL migrations", () => {
+  const sql = allSql();
+
+  it("adds platform_reviews with RLS, auto-approve, and admin moderation", () => {
+    expect(sql).toMatch(/CREATE TABLE public\.platform_reviews/);
+    expect(sql).toMatch(/ALTER TABLE public\.platform_reviews ENABLE ROW LEVEL SECURITY/);
+    expect(sql).toMatch(/GRANT SELECT ON TABLE public\.platform_reviews TO anon, authenticated/);
+    expect(sql).toMatch(/GRANT INSERT ON TABLE public\.platform_reviews TO authenticated/);
+    expect(sql).toMatch(/USING \(status = 'APPROVED'\)/);
+    expect(sql).toMatch(/NEW\.status := 'APPROVED'/);
+    expect(sql).toMatch(/only an admin can change a platform review/);
+    expect(sql).not.toMatch(/GRANT INSERT ON TABLE public\.platform_reviews TO anon/);
+  });
+});

@@ -67,7 +67,7 @@ function BrowseCtas() {
         {GET_ESTIMATES_CTA}
       </ButtonLink>
       <p className="text-sm leading-relaxed text-ink-700">
-        {HOMEPAGE_SIGNUP_HEADLINE} {SIGNUP_FEE_NON_REFUNDABLE} Checkout is not live yet.
+        {HOMEPAGE_SIGNUP_HEADLINE} {SIGNUP_FEE_NON_REFUNDABLE}
       </p>
     </div>
   );
@@ -211,13 +211,11 @@ export function FindAProPage() {
   return (
     <section className="py-8 sm:py-12">
       <Container className="max-w-3xl">
-        <BrowseIllustration kind="hero" className="mb-6 min-h-36 border border-forest-800/10" />
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">Browse local independents.</h1>
         <p className="mt-4 text-base leading-relaxed text-ink-700 sm:text-lg">
-          Live cards are real approved, active contractors shown without business names or contact details. Example /
-          Demo cards are fictional so you can see the marketplace. PPP is not the contractor. Listings are still few —
-          we do not invent popularity counts.
+          Live cards are real approved, active contractors shown without business names or contact details. Example
+          cards stay labeled so this page does not look busier than it is. PPP is not the contractor.
         </p>
         <BrowseCtas />
 
@@ -320,80 +318,88 @@ export function FindAProPage() {
 
         <section className="mt-12" aria-labelledby="demo-heading">
           <h2 id="demo-heading" className="font-display text-2xl text-forest-800">
-            Example / Demo showcase
+            Labeled examples
           </h2>
-          <p className="mt-2 rounded-2xl bg-gold-500/20 px-4 py-3 text-sm text-forest-950">{DEMO_BANNER}</p>
-          <p className="mt-3 text-sm text-ink-700">
-            Example ratings never mix into live marketplace stats. Demo reviews stay labeled.
+          <p className="mt-2 text-sm text-ink-700">
+            These are fictional, labeled EXAMPLE / DEMO cards so you can see the layout. They are not live listings.
           </p>
+          <details className="mt-4 rounded-3xl border border-forest-800/10 bg-cream-50 px-4 py-3">
+            <summary className="cursor-pointer py-2 text-sm font-semibold text-forest-800">
+              Show labeled example cards
+            </summary>
+            <p className="mt-2 rounded-2xl bg-gold-500/20 px-4 py-3 text-sm text-forest-950">{DEMO_BANNER}</p>
+            <p className="mt-3 text-sm text-ink-700">
+              Example ratings never mix into live marketplace stats. Demo reviews stay labeled.
+            </p>
 
-          <h3 className="mt-6 text-sm font-semibold uppercase tracking-[0.16em] text-gold-700">Example contractors</h3>
-          <ul className="mt-3 space-y-3">
-            {filteredDemos.map((row) => (
-              <li key={row.slug}>
-                <DirectoryCard
-                  to={demoContractorPath(row.slug)}
-                  name={row.displayLabel}
-                  initials={row.photoInitials}
-                  meta={`${row.serviceArea} · ${row.categories.join(" • ")}`}
-                  description={row.shortDescription}
-                  extra={<p className="mt-2 text-sm font-medium text-forest-800">{cardRatingLine(row, true)}</p>}
-                  demo
-                />
-              </li>
-            ))}
-          </ul>
+            <h3 className="mt-6 text-sm font-semibold uppercase tracking-[0.16em] text-gold-700">Example contractors</h3>
+            <ul className="mt-3 space-y-3">
+              {filteredDemos.map((row) => (
+                <li key={row.slug}>
+                  <DirectoryCard
+                    to={demoContractorPath(row.slug)}
+                    name={row.displayLabel}
+                    initials={row.photoInitials}
+                    meta={`${row.serviceArea} · ${row.categories.join(" • ")}`}
+                    description={row.shortDescription}
+                    extra={<p className="mt-2 text-sm font-medium text-forest-800">{cardRatingLine(row, true)}</p>}
+                    demo
+                  />
+                </li>
+              ))}
+            </ul>
 
-          <h3 className="mt-8 text-sm font-semibold uppercase tracking-[0.16em] text-gold-700">Example homeowners</h3>
-          <ul className="mt-3 space-y-3">
-            {DEMO_HOMEOWNERS.map((row) => (
-              <li key={row.slug}>
-                <DirectoryCard
-                  to={demoHomeownerPath(row.slug)}
-                  name={row.displayName}
-                  initials={row.photoInitials}
-                  meta={row.generalArea}
-                  description={row.shortDescription}
-                  demo
-                  cta="View example"
-                />
-              </li>
-            ))}
-          </ul>
+            <h3 className="mt-8 text-sm font-semibold uppercase tracking-[0.16em] text-gold-700">Example homeowners</h3>
+            <ul className="mt-3 space-y-3">
+              {DEMO_HOMEOWNERS.map((row) => (
+                <li key={row.slug}>
+                  <DirectoryCard
+                    to={demoHomeownerPath(row.slug)}
+                    name={row.displayName}
+                    initials={row.photoInitials}
+                    meta={row.generalArea}
+                    description={row.shortDescription}
+                    demo
+                    cta="View example"
+                  />
+                </li>
+              ))}
+            </ul>
 
-          <h3 className="mt-8 text-sm font-semibold uppercase tracking-[0.16em] text-gold-700">Example verifiers</h3>
-          <ul className="mt-3 space-y-3">
-            {DEMO_VERIFIERS.map((row) => (
-              <li key={row.slug}>
-                <DirectoryCard
-                  to={demoVerifierPath(row.slug)}
-                  name={row.displayName}
-                  initials={row.photoInitials}
-                  meta={row.coverageArea}
-                  description={row.shortDescription}
-                  demo
-                  cta="View example"
-                />
-              </li>
-            ))}
-          </ul>
+            <h3 className="mt-8 text-sm font-semibold uppercase tracking-[0.16em] text-gold-700">Example verifiers</h3>
+            <ul className="mt-3 space-y-3">
+              {DEMO_VERIFIERS.map((row) => (
+                <li key={row.slug}>
+                  <DirectoryCard
+                    to={demoVerifierPath(row.slug)}
+                    name={row.displayName}
+                    initials={row.photoInitials}
+                    meta={row.coverageArea}
+                    description={row.shortDescription}
+                    demo
+                    cta="View example"
+                  />
+                </li>
+              ))}
+            </ul>
 
-          <h3 className="mt-8 text-sm font-semibold uppercase tracking-[0.16em] text-gold-700">Sample projects</h3>
-          <ul className="mt-3 space-y-3">
-            {DEMO_PROJECTS.map((row) => (
-              <li key={row.slug}>
-                <DirectoryCard
-                  to={demoProjectPath(row.slug)}
-                  name={row.title}
-                  initials="EX"
-                  meta={`${row.category} · ${row.city}, ${row.state} ${row.zip} · ${row.timing}`}
-                  description={row.shortDescription}
-                  demo
-                  cta="View example"
-                />
-              </li>
-            ))}
-          </ul>
+            <h3 className="mt-8 text-sm font-semibold uppercase tracking-[0.16em] text-gold-700">Sample projects</h3>
+            <ul className="mt-3 space-y-3">
+              {DEMO_PROJECTS.map((row) => (
+                <li key={row.slug}>
+                  <DirectoryCard
+                    to={demoProjectPath(row.slug)}
+                    name={row.title}
+                    initials="EX"
+                    meta={`${row.category} · ${row.city}, ${row.state} ${row.zip} · ${row.timing}`}
+                    description={row.shortDescription}
+                    demo
+                    cta="View example"
+                  />
+                </li>
+              ))}
+            </ul>
+          </details>
         </section>
       </Container>
     </section>

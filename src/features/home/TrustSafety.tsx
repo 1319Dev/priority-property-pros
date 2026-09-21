@@ -18,7 +18,7 @@ export function TrustSafety() {
             <h3 className="font-display text-2xl text-forest-800">What PPP is</h3>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink-700">
               <li>A technology marketplace that connects homeowners, property owners, landlords, property managers, and businesses with independent local contractors.</li>
-              <li>Live posting, estimates, and a $4.99 Connection Fee lifecycle. Online payment setup is coming soon. Clicking Connect does not unlock contact while payments are off.</li>
+              <li>Live posting and estimates. Contractors pay $4.99 only when they choose to connect. Project payment is between the customer and the pro.</li>
               <li>{SIGNUP_FEE_NOT_MONTHLY}</li>
             </ul>
           </div>

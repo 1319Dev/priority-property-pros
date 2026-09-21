@@ -72,7 +72,7 @@ export function HomeBrowsePreview() {
             </Link>
           </p>
         </div>
-        <BrowseIllustration kind="hero" className="min-h-40 border border-forest-800/10" />
+        <BrowseIllustration kind="yard" className="min-h-40 border border-forest-800/10" />
       </Container>
     </section>
   );

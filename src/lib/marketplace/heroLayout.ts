@@ -6,14 +6,12 @@ export const HERO_TAGLINE = "A marketplace, not a crew";
 export const HERO_ART_VIEWBOX = "0 0 280 170";
 
 /**
- * Homepage house photo crop window.
- * Aspect-ratio and max-height must live on the same box so object-cover /
- * object-position apply to the visible frame (a max-height parent wrapping a
- * taller 16:9 child clips from the top and cuts the house in half on desktop).
- * Mobile heights stay compact; md+ opens the frame around the facade and yard.
+ * Compact homepage house photo — copy and CTAs stay above the fold.
+ * Aspect-ratio and max-height live on the same overflow box so object-cover
+ * does not clip the facade from the top.
  */
 export const HERO_PHOTO_FRAME_CLASS =
-  "relative aspect-[16/9] max-h-[13.75rem] w-full overflow-hidden sm:max-h-[17.5rem] md:aspect-[2/1] md:max-h-[24rem] lg:max-h-[28rem] xl:max-h-[32rem] 2xl:max-h-[36rem]";
+  "relative aspect-[16/10] max-h-[10.5rem] w-full overflow-hidden rounded-[1.5rem] border border-forest-800/10 sm:max-h-[13rem] lg:aspect-[4/3] lg:max-h-[20rem]";
 
 export const HERO_PHOTO_OBJECT_POSITION = "center 40%";
 

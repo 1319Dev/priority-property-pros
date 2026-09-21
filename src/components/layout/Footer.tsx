@@ -10,6 +10,10 @@ const footerLinks = [
   { to: "/pricing", label: "Pricing" },
   { to: "/become-a-pro", label: "Become a pro" },
   { to: "/post-project", label: "Post a project" },
+  { to: "/faq", label: "FAQ" },
+  { to: "/contact", label: "Contact" },
+  { to: "/reviews", label: "Reviews" },
+  { to: "/reviews", label: "Leave a review" },
   { to: "/trust", label: "Trust & safety" },
   { to: "/sign-in", label: "Sign in" },
   { to: "/sign-up", label: "Create account" },
@@ -17,7 +21,7 @@ const footerLinks = [
 
 export function Footer() {
   return (
-    <footer className="mt-8 border-t border-forest-800/10 bg-forest-900 text-cream-100">
+    <footer className="mt-8 border-t border-forest-800/10 bg-forest-900 pb-32 text-cream-100 lg:pb-0">
       <Container className="grid gap-10 py-12 md:grid-cols-[1.4fr_1fr]">
         <div>
           <Logo inverted />
@@ -35,7 +39,7 @@ export function Footer() {
           </p>
           <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
             {footerLinks.map((link) => (
-              <li key={link.to}>
+              <li key={`${link.to}-${link.label}`}>
                 <Link to={link.to} className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
                   {link.label}
                 </Link>
@@ -47,7 +51,7 @@ export function Footer() {
       <div className="border-t border-cream-50/10">
         <Container className="flex flex-col gap-2 py-5 text-xs text-cream-200 sm:flex-row sm:justify-between">
           <p>© {new Date().getFullYear()} {COMPANY_NAME}. All rights reserved.</p>
-          <p>A marketplace, not a crew. Online payment setup is coming soon.</p>
+          <p>A marketplace, not a crew.</p>
         </Container>
       </div>
     </footer>

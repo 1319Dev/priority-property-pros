@@ -51,6 +51,7 @@ export function AdminPeoplePage() {
 }
 
 export { AdminApprovalDetailPage, AdminApprovalsPage } from "./admin/AdminApprovalsPages";
+export { AdminReviewsPage } from "./admin/AdminReviewsPage";
 
 export function AdminAuditPage() {
   return (
