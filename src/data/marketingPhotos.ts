@@ -89,7 +89,7 @@ export function createMarketingPhotos(
     twoStory: photoAsset(
       "twoStory",
       "A finished two-story brick-and-siding home with a stone walkway, flowering shrubs, and a tidy front lawn.",
-      "center 40%",
+      "center 68%",
       baseUrl,
     ),
     porch: photoAsset(
@@ -107,7 +107,7 @@ export function createMarketingPhotos(
     dusk: photoAsset(
       "dusk",
       "A finished navy two-story home at dusk with warm interior lights and a lit brick walkway.",
-      "center 40%",
+      "center 55%",
       baseUrl,
     ),
   };

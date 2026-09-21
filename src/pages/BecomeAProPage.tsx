@@ -1,4 +1,4 @@
-import { MarketingPhotoFrame } from "../components/media/MarketingPhoto";
+import { MarketingPhoto } from "../components/media/MarketingPhoto";
 import { ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
 import { CONTRACTOR_CTA } from "../data/brand";
@@ -32,13 +32,13 @@ export function BecomeAProPage() {
   return (
     <section className="py-10 sm:py-16">
       <Container className="max-w-3xl">
-        <MarketingPhotoFrame
-          photo={MARKETING_SECTION_PHOTOS.becomeAPro}
-          ratio="banner"
-          eager
-          frameClassName="mb-8 max-h-40 rounded-3xl border border-forest-800/10 sm:max-h-48"
-          sizes="(max-width: 768px) 100vw, 672px"
-        />
+        <div className="mb-8 h-52 w-full overflow-hidden rounded-3xl border border-forest-800/10 sm:h-64">
+          <MarketingPhoto
+            photo={MARKETING_SECTION_PHOTOS.becomeAPro}
+            eager
+            sizes="(max-width: 768px) 100vw, 672px"
+          />
+        </div>
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Become a Pro</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">
           Real projects. Real customers. Fair competition.
