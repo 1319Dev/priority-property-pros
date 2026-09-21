@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { MarketingPhoto } from "../../components/media/MarketingPhoto";
+import { MarketingPhoto, MarketingPhotoFrame } from "../../components/media/MarketingPhoto";
 import { Container } from "../../components/ui/Container";
+import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
 
 type IllustrationKind = "hero" | "fence" | "interior" | "yard";
 
@@ -44,7 +45,11 @@ export function BrowseIllustration({ kind, className = "" }: { kind: Illustratio
   return (
     <div className={`overflow-hidden rounded-3xl bg-forest-800/10 ${className}`}>
       {kind === "hero" ? (
-        <MarketingPhoto photo="house" className="aspect-[16/10] min-h-32" sizes="(max-width: 1024px) 100vw, 520px" />
+        <MarketingPhoto
+          photo={MARKETING_SECTION_PHOTOS.homepageFindAProPreview}
+          className="aspect-[16/10] min-h-32"
+          sizes="(max-width: 1024px) 100vw, 520px"
+        />
       ) : null}
       {kind === "fence" ? <FenceArt /> : null}
       {kind === "interior" ? <InteriorArt /> : null}
@@ -72,7 +77,12 @@ export function HomeBrowsePreview() {
             </Link>
           </p>
         </div>
-        <BrowseIllustration kind="yard" className="min-h-40 border border-forest-800/10" />
+        <MarketingPhotoFrame
+          photo={MARKETING_SECTION_PHOTOS.homepageFindAProPreview}
+          ratio="banner"
+          frameClassName="min-h-40 rounded-3xl border border-forest-800/10"
+          sizes="(max-width: 1024px) 100vw, 520px"
+        />
       </Container>
     </section>
   );

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
+import { MarketingPhotoFrame } from "../components/media/MarketingPhoto";
 import { ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
 import { CUSTOMER_CTA } from "../data/brand";
+import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
 import {
   DEMO_BANNER,
   DEMO_CONTRACTORS,
@@ -211,6 +213,13 @@ export function FindAProPage() {
   return (
     <section className="py-8 sm:py-12">
       <Container className="max-w-3xl">
+        <MarketingPhotoFrame
+          photo={MARKETING_SECTION_PHOTOS.findAProHeader}
+          ratio="banner"
+          eager
+          frameClassName="mb-8 max-h-40 rounded-3xl border border-forest-800/10 sm:max-h-48"
+          sizes="(max-width: 768px) 100vw, 672px"
+        />
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">Browse local independents.</h1>
         <p className="mt-4 text-base leading-relaxed text-ink-700 sm:text-lg">
