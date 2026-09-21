@@ -79,6 +79,8 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
       screen.getAllByText(/whatever your property needs, find the right local professional/i).length,
     ).toBeGreaterThan(0);
     expect(screen.getAllByAltText(/finished suburban home/i).length).toBeGreaterThan(0);
+    expect(screen.getByAltText(/cream-and-stone ranch/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/professionally landscaped front yard/i)).toBeInTheDocument();
     expect(screen.queryByAltText(/property owner and a local professional/i)).not.toBeInTheDocument();
     expect(screen.queryByAltText(/fencing contractor/i)).not.toBeInTheDocument();
     expect(screen.queryByAltText(/lawn professional/i)).not.toBeInTheDocument();
@@ -171,6 +173,8 @@ describe("Phase 3 marketplace surfaces", () => {
   it("describes live posting with a max of three contractors on How it works", () => {
     renderApp("/how-it-works");
     expect(screen.getByText(/up to three local independents/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/craftsman bungalow with a deep front porch/i)).toBeInTheDocument();
+    expect(screen.queryByAltText(/finished suburban home/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/live posting is not on yet/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/online payment setup is coming soon/i)).not.toBeInTheDocument();
   });
@@ -286,6 +290,8 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
     renderApp("/become-a-pro");
     expect(screen.getByRole("heading", { name: /real projects\. real customers\. fair competition/i })).toBeInTheDocument();
     expect(screen.getByText(/\$4\.99 per connection/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/navy two-story home at dusk/i)).toBeInTheDocument();
+    expect(screen.queryByAltText(/finished suburban home/i)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /become a priority pro/i })).toHaveAttribute("href", "/sign-up/contractor");
   });
 });

@@ -1,4 +1,6 @@
+import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { Container, SectionHeading } from "../../components/ui/Container";
+import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
 import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING } from "../../data/pricing";
 
 const steps = [
@@ -36,6 +38,12 @@ export function HowItWorks() {
         <h2 id="how-heading" className="sr-only">
           How PPP works
         </h2>
+        <div className="mt-8 h-52 w-full overflow-hidden rounded-3xl border border-forest-800/10 sm:h-64">
+          <MarketingPhoto
+            photo={MARKETING_SECTION_PHOTOS.homepageHowItWorks}
+            sizes="(max-width: 1024px) 100vw, 960px"
+          />
+        </div>
         <ol className="mt-10 grid gap-5 md:grid-cols-2">
           {steps.map((step) => (
             <li

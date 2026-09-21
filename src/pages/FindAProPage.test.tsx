@@ -31,6 +31,7 @@ describe("Find a Pro public browse", () => {
     expect(screen.getByLabelText(/sort/i)).toBeInTheDocument();
     expect(screen.getByText(/no paid placement/i)).toBeInTheDocument();
     expect(screen.getByText(/show labeled example cards/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/two-story brick-and-siding home/i)).toBeInTheDocument();
     expect(screen.queryByAltText(/finished suburban home/i)).not.toBeInTheDocument();
     await user.click(screen.getByText(/show labeled example cards/i));
     expect(screen.getAllByText(/view profile/i).length).toBeGreaterThan(0);

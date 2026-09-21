@@ -6,6 +6,7 @@ import { PROJECT_PLACEHOLDERS } from "../../data/services";
 import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { ButtonLink } from "../../components/ui/Button";
 import { Container } from "../../components/ui/Container";
+import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
 import { HERO_PHOTO_FRAME_CLASS, HERO_PHOTO_OBJECT_POSITION, HERO_TAGLINE } from "../../lib/marketplace/heroLayout";
 
 export function Hero() {
@@ -82,7 +83,7 @@ export function Hero() {
         <figure className="relative mx-auto w-full min-w-0 max-w-md lg:justify-self-end">
           <div className={HERO_PHOTO_FRAME_CLASS}>
             <MarketingPhoto
-              photo="house"
+              photo={MARKETING_SECTION_PHOTOS.homepageHero}
               eager
               sizes="(min-width: 1024px) 380px, 90vw"
               objectPosition={HERO_PHOTO_OBJECT_POSITION}

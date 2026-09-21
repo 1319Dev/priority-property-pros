@@ -1,6 +1,8 @@
+import { MarketingPhoto } from "../components/media/MarketingPhoto";
 import { ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
 import { CONTRACTOR_CTA } from "../data/brand";
+import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
 import {
   CONNECTION_FEE_PER_LABEL,
   CONTRACTOR_SIGNUP_HEADLINE,
@@ -30,6 +32,13 @@ export function BecomeAProPage() {
   return (
     <section className="py-10 sm:py-16">
       <Container className="max-w-3xl">
+        <div className="mb-8 h-52 w-full overflow-hidden rounded-3xl border border-forest-800/10 sm:h-64">
+          <MarketingPhoto
+            photo={MARKETING_SECTION_PHOTOS.becomeAPro}
+            eager
+            sizes="(max-width: 768px) 100vw, 672px"
+          />
+        </div>
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Become a Pro</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">
           Real projects. Real customers. Fair competition.
