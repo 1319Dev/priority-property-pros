@@ -70,6 +70,7 @@ describe("Phase 4A authorization mirrors", () => {
         bookingStatus: "PENDING",
         reviewerIsCustomerOwner: true,
         alreadyReviewed: false,
+        mutuallyHired: false,
       }),
     ).toBe(false);
     expect(canReadExactAddress(pro, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CANCELLED")).toBe(

@@ -358,6 +358,8 @@ export type Booking = {
   cancelled_at: string | null;
   disputed_at: string | null;
   cancel_reason: string | null;
+  customer_hired_at?: string | null;
+  contractor_hired_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -394,11 +396,15 @@ export type ChangeOrder = {
   updated_at: string;
 };
 
+export const BOOKING_REVIEW_ROLES = ["CUSTOMER", "CONTRACTOR"] as const;
+export type BookingReviewRole = (typeof BOOKING_REVIEW_ROLES)[number];
+
 export type BookingReview = {
   id: string;
   booking_id: string;
   customer_id: string;
   contractor_profile_id: string;
+  reviewer_role: BookingReviewRole;
   rating: number;
   body: string | null;
   is_verified: boolean;

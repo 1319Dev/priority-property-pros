@@ -7,10 +7,12 @@ import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
 import {
   completeBooking,
+  confirmBookingHired,
   expireStalePendingBookings,
   fetchBooking,
   fetchBookingContactAccess,
   fetchBookingJobContact,
+  fetchBookingReviews,
   fetchChangeOrders,
   fetchContractorProfileByUser,
   fetchMyBookings,
@@ -18,11 +20,14 @@ import {
   proposeChangeOrder,
   respondChangeOrder,
   startBooking,
+  submitBookingReview,
 } from "../../../lib/marketplace/api";
 import { BOOKING_STATUS_LABELS, contactAccessRowAllowsReveal, paymentsComingSoonCopy, privateContactLockedCopy } from "../../../lib/marketplace/bookings";
 import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
-import type { Booking, BookingContactAccess, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
+import { isMutuallyHired, bookingListHiredLabel } from "../../../lib/marketplace/hired";
+import type { Booking, BookingContactAccess, BookingReview, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
+import { HiredConfirmationCard, ProfileReviewForm } from "../../../components/marketplace/HiredConfirmation";
 
 function statusLabel(status: string) {
   return BOOKING_STATUS_LABELS[status as BookingStatus] ?? status.replaceAll("_", " ");
@@ -94,14 +99,22 @@ export function ProBookingsPage() {
         <EmptyState title="No bookings" body="When a customer selects you, a pending booking appears here." />
       ) : (
         <ul className="space-y-3">
-          {rows.map((row) => (
+          {rows.map((row) => {
+            const hiredLabel = bookingListHiredLabel({
+              bookingStatus: row.status,
+              customerHiredAt: row.customer_hired_at,
+              contractorHiredAt: row.contractor_hired_at,
+            });
+            return (
             <li key={row.id}>
               <Link to={`/app/pro/bookings/${row.id}`} className="block rounded-3xl border border-forest-800/10 px-5 py-4">
-                <p className="font-semibold text-forest-800">{statusLabel(row.status)}</p>
+                <p className="font-semibold text-forest-800">{hiredLabel ?? statusLabel(row.status)}</p>
+                {hiredLabel ? <p className="text-sm text-ink-500">{statusLabel(row.status)}</p> : null}
                 <p className="text-sm text-ink-500">{formatUsdFromCents(row.billable_amount_cents || row.amount_cents)}</p>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>
@@ -117,9 +130,13 @@ export function ProBookingDetailPage() {
   const [contact, setContact] = useState<{ street?: string; phone?: string; email?: string } | null>(null);
   const [contactAccess, setContactAccess] = useState<BookingContactAccess | null>(null);
   const [orders, setOrders] = useState<ChangeOrder[]>([]);
+  const [reviews, setReviews] = useState<BookingReview[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [delta, setDelta] = useState("");
   const [note, setNote] = useState("");
+  const [rating, setRating] = useState("5");
+  const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
 
   async function reload() {
     const row = (await fetchBooking(bookingId)) as Booking;
@@ -128,6 +145,7 @@ export function ProBookingDetailPage() {
     setTitle(project.title);
     setCityZip([project.city, project.state, project.zip_code].filter(Boolean).join(", "));
     setOrders((await fetchChangeOrders(bookingId)) as ChangeOrder[]);
+    setReviews(await fetchBookingReviews(bookingId));
     const access = await fetchBookingContactAccess(row.id).catch(() => null);
     setContactAccess(access);
     if (contactAccessRowAllowsReveal(access)) {
@@ -156,6 +174,23 @@ export function ProBookingDetailPage() {
       <p className="text-sm text-ink-500">{statusLabel(booking.status)}</p>
       <FormError message={error} />
       {pending ? <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm font-semibold">{paymentsComingSoonCopy()}</p> : null}
+      <HiredConfirmationCard
+        role="contractor"
+        bookingStatus={booking.status}
+        customerHiredAt={booking.customer_hired_at}
+        contractorHiredAt={booking.contractor_hired_at}
+        busy={busy}
+        onConfirm={() => {
+          setBusy(true);
+          void confirmBookingHired(booking.id)
+            .then(() => {
+              toast.push("Hired confirmed.");
+              return reload();
+            })
+            .catch((err: Error) => setError(err.message))
+            .finally(() => setBusy(false));
+        }}
+      />
       <section className="rounded-3xl border border-forest-800/10 px-5 py-4 text-sm">
         <p className="font-semibold">Approximate location</p>
         <p>{cityZip}</p>
@@ -232,6 +267,24 @@ export function ProBookingDetailPage() {
           </Button>
         </section>
       )}
+      <ProfileReviewForm
+        role="contractor"
+        bookingStatus={booking.status}
+        mutuallyHired={isMutuallyHired({
+          customerHiredAt: booking.customer_hired_at,
+          contractorHiredAt: booking.contractor_hired_at,
+        })}
+        reviews={reviews}
+        rating={rating}
+        body={body}
+        onRatingChange={setRating}
+        onBodyChange={setBody}
+        onSubmit={() => {
+          void submitBookingReview(booking.id, Number(rating), body)
+            .then(() => reload())
+            .catch((err: Error) => setError(err.message));
+        }}
+      />
     </div>
   );
 }

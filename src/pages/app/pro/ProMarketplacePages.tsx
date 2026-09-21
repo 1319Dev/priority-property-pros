@@ -15,6 +15,7 @@ import {
   addEstimateItem,
   addPortfolioItem,
   askEstimateQuestion,
+  confirmBookingHired,
   deleteEstimateItem,
   fetchContractorAreas,
   fetchContractorProfileByUser,
@@ -26,6 +27,7 @@ import {
   fetchOpportunity,
   fetchMyOpportunities,
   fetchPortfolio,
+  fetchProjectBooking,
   fetchProjectConnectionAvailability,
   fetchConnectionFeeCheckoutFlags,
   fetchMyProjectConnections,
@@ -53,7 +55,7 @@ import {
 } from "../../../lib/marketplace/api";
 import { opportunityListTitle } from "../../../lib/marketplace/opportunityAttach";
 import { centsToDollarString, dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
-import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type EstimateItemKind, type EstimateStatus, type ServiceAreaMode, type ServiceCategory } from "../../../lib/marketplace/types";
+import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type Booking, type EstimateItemKind, type EstimateStatus, type ServiceAreaMode, type ServiceCategory } from "../../../lib/marketplace/types";
 import { OPPORTUNITY_STATUS_LABELS, opportunityNextActions } from "../../../lib/marketplace/statusLabels";
 import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import {
@@ -65,6 +67,7 @@ import {
 import { ConnectConfirmDialog } from "../../../components/marketplace/ConnectConfirm";
 import { ContractorConnectionCta } from "../../../components/marketplace/ContractorConnectionCta";
 import { EndJobDialog } from "../../../components/marketplace/EndJobDialog";
+import { HiredConfirmationCard } from "../../../components/marketplace/HiredConfirmation";
 import {
   CONNECT_SINGLE_STEP_COPY,
   declineJobButtonLabel,
@@ -532,6 +535,7 @@ export function OpportunityDetailPage() {
   const [myConnection, setMyConnection] = useState<Awaited<ReturnType<typeof fetchMyProjectConnections>>[number] | null>(
     null,
   );
+  const [booking, setBooking] = useState<Booking | null>(null);
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
   const [connectOpen, setConnectOpen] = useState(false);
@@ -540,14 +544,16 @@ export function OpportunityDetailPage() {
   async function reload() {
     const opp = await fetchOpportunity(opportunityId);
     setRow(opp);
-    const [photoRows, projectAnswers, spots, mine] = await Promise.all([
+    const [photoRows, projectAnswers, spots, mine, selectedBooking] = await Promise.all([
       fetchProjectPhotos(opp.project_id),
       fetchProjectAnswers(opp.project_id),
       fetchProjectConnectionAvailability(opp.project_id).catch(() => null),
       fetchMyProjectConnections(opp.project_id).catch(() => []),
+      fetchProjectBooking(opp.project_id).catch(() => null),
     ]);
     setAvailability(spots);
     setMyConnection(mine[0] ?? null);
+    setBooking(selectedBooking);
     setAnswers(projectAnswers);
     if (opp.projects?.category_id) setQuestions(await fetchServiceQuestions(opp.projects.category_id));
     setQa(await fetchEstimateQuestions(opp.project_id, opp.id));
@@ -656,6 +662,30 @@ export function OpportunityDetailPage() {
           );
         })}
       </ul>
+      {booking ? (
+        <>
+          <HiredConfirmationCard
+            role="contractor"
+            bookingStatus={booking.status}
+            customerHiredAt={booking.customer_hired_at}
+            contractorHiredAt={booking.contractor_hired_at}
+            busy={busy}
+            onConfirm={() => {
+              setBusy(true);
+              void confirmBookingHired(booking.id)
+                .then(() => {
+                  toast.push("Hired confirmed.");
+                  return reload();
+                })
+                .catch((err: Error) => setError(err.message))
+                .finally(() => setBusy(false));
+            }}
+          />
+          <ButtonLink to={`/app/pro/bookings/${booking.id}`} variant="outline" className="min-h-14 w-full">
+            View booking
+          </ButtonLink>
+        </>
+      ) : null}
       {showConnectionCta ? (
         <ContractorConnectionCta state={connectionUiState} busy={busy} onConnect={() => setConnectOpen(true)} />
       ) : null}

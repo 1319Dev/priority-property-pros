@@ -47,8 +47,18 @@ describe("human project states", () => {
         projectStatus: "CONTRACTOR_SELECTED",
         bookingId: "b1",
         bookingStatus: "PENDING",
-      }).some((item) => item.label === "View booking"),
+      }).some((item) => item.label === "Confirm hired"),
     ).toBe(true);
+    expect(
+      customerNextActions({
+        projectId: "p1",
+        projectStatus: "CONTRACTOR_SELECTED",
+        bookingId: "b1",
+        bookingStatus: "PENDING",
+        customerHiredAt: "2026-09-21T12:00:00Z",
+        contractorHiredAt: "2026-09-21T12:01:00Z",
+      }).some((item) => item.label === "Confirm hired"),
+    ).toBe(false);
     expect(
       customerNextActions({
         projectId: "p1",

@@ -42,33 +42,45 @@ describe("change orders", () => {
 });
 
 describe("verified reviews", () => {
-  it("allows a review only on a COMPLETED booking owned by the customer", () => {
+  it("allows a profile review only after mutual Hired, for either participant", () => {
     expect(
       canSubmitVerifiedReview({
-        bookingStatus: "COMPLETED",
+        bookingStatus: "PENDING",
         reviewerIsCustomerOwner: true,
         alreadyReviewed: false,
+        mutuallyHired: true,
       }),
     ).toBe(true);
     expect(
       canSubmitVerifiedReview({
-        bookingStatus: "CONFIRMED",
+        bookingStatus: "COMPLETED",
         reviewerIsCustomerOwner: true,
         alreadyReviewed: false,
+        mutuallyHired: false,
       }),
     ).toBe(false);
     expect(
       canSubmitVerifiedReview({
-        bookingStatus: "COMPLETED",
+        bookingStatus: "PENDING",
+        reviewerIsParticipant: true,
+        alreadyReviewed: false,
+        mutuallyHired: true,
+      }),
+    ).toBe(true);
+    expect(
+      canSubmitVerifiedReview({
+        bookingStatus: "PENDING",
         reviewerIsCustomerOwner: false,
         alreadyReviewed: false,
+        mutuallyHired: true,
       }),
     ).toBe(false);
     expect(
       canSubmitVerifiedReview({
-        bookingStatus: "COMPLETED",
+        bookingStatus: "PENDING",
         reviewerIsCustomerOwner: true,
         alreadyReviewed: true,
+        mutuallyHired: true,
       }),
     ).toBe(false);
   });

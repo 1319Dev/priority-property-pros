@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CompletenessBadge } from "../../../components/marketplace/CompletenessBadge";
+import { HiredConfirmationCard } from "../../../components/marketplace/HiredConfirmation";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { Button, ButtonLink } from "../../../components/ui/Button";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
@@ -12,6 +13,7 @@ import { useAuth } from "../../../lib/auth/useAuth";
 import {
   answerEstimateQuestion,
   cancelCustomerProject,
+  confirmBookingHired,
   declineEstimate,
   fetchCustomerProjects,
   fetchEstimate,
@@ -20,6 +22,7 @@ import {
   fetchMyBookings,
   fetchMyCustomerProject,
   fetchPrivateLocation,
+  fetchProjectBooking,
   fetchProjectEstimates,
   fetchProjectNotices,
   fetchPublicContractor,
@@ -112,6 +115,8 @@ export function CustomerHomePage() {
             projectStatus: project.status,
             bookingId: booking?.id ?? project.selected_booking_id,
             bookingStatus: booking?.status ?? null,
+            customerHiredAt: booking?.customer_hired_at,
+            contractorHiredAt: booking?.contractor_hired_at,
           });
           return (
             <li key={project.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
@@ -217,6 +222,8 @@ export function CustomerProjectsPage() {
               projectStatus: project.status,
               bookingId: booking?.id ?? project.selected_booking_id,
               bookingStatus: booking?.status ?? null,
+              customerHiredAt: booking?.customer_hired_at,
+              contractorHiredAt: booking?.contractor_hired_at,
             });
             return (
               <li key={project.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
@@ -248,6 +255,7 @@ export function CustomerProjectDetailPage() {
   const toast = useToast();
   const { profile } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
+  const [booking, setBooking] = useState<Booking | null>(null);
   const [missing, setMissing] = useState(false);
   const [street, setStreet] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Awaited<ReturnType<typeof fetchEstimateQuestions>>>([]);
@@ -264,6 +272,8 @@ export function CustomerProjectDetailPage() {
   async function reload() {
     const row = await fetchMyCustomerProject(projectId);
     setProject(row);
+    const selected = await fetchProjectBooking(projectId).catch(() => null);
+    setBooking(selected);
     const loc = await fetchPrivateLocation(projectId).catch(() => null);
     setStreet(loc?.street_line1 ?? null);
     setQuestions(await fetchEstimateQuestions(projectId));
@@ -381,6 +391,26 @@ export function CustomerProjectDetailPage() {
           </Button>
         ) : null}
       </div>
+      {booking ? (
+        <HiredConfirmationCard
+          role="customer"
+          bookingStatus={booking.status}
+          customerHiredAt={booking.customer_hired_at}
+          contractorHiredAt={booking.contractor_hired_at}
+          contractorProfileId={booking.contractor_profile_id}
+          busy={busy}
+          onConfirm={() => {
+            setBusy(true);
+            void confirmBookingHired(booking.id)
+              .then(() => {
+                toast.push("Hired confirmed.");
+                return reload();
+              })
+              .catch((err: Error) => setError(err.message))
+              .finally(() => setBusy(false));
+          }}
+        />
+      ) : null}
       <section className="space-y-3">
         <h2 className="font-display text-2xl text-forest-800">Questions from contractors</h2>
         {questions.length === 0 ? <p className="text-ink-500">No questions yet.</p> : null}

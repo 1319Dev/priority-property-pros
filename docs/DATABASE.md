@@ -151,6 +151,22 @@ Apply `20260920000001` through `20260920000003` after Phase 4A. Additive. Full r
 | `list_my_customer_projects` / `get_my_customer_project` | Customer isolation: `customer_id = auth.uid()` only. |
 | `booking_contact_access` / `booking_has_contact_access` | Server-authoritative private-contact gate. Default LOCKED. |
 
+## Mutual Hired confirmation
+
+Apply `20261005000001_mutual_hired.sql` after the existing migrations. Additive. Does not change Stripe flags or fee amounts. **Do not apply to production from the feature PR until an owner runs it.**
+
+The live “we’re working together” row is the **booking** created by `select_estimate` (PENDING until payments are live). Both parties must click **Hired**.
+
+| Object | Purpose |
+| --- | --- |
+| `bookings.customer_hired_at` / `contractor_hired_at` | Timestamps. Set only by `confirm_booking_hired`. Cannot be cleared. No un-hire RPC; existing `cancel_pending_booking` remains the pending cancel path. |
+| `confirm_booking_hired(booking_id)` | Authenticated homeowner or booked pro stamps **only their own** column. Idempotent. Returns `WAITING_FOR_PRO` / `WAITING_FOR_HOMEOWNER` / `HIRED`. |
+| `booking_is_mutually_hired(booking_id)` | True when both timestamps are set and the booking is not cancelled. |
+| `booking_reviews.reviewer_role` | `CUSTOMER` or `CONTRACTOR`. Unique `(booking_id, reviewer_role)`. |
+| `submit_booking_review` | Either participant may review the other **only after mutual Hired**. Completed booking is not required. Cancelled/disputed blocked. `platform_reviews` stay separate. |
+
+Pending bookings with either Hired timestamp set are **not** expired by `expire_stale_pending_bookings`. Public contractor directory ratings/reviews still use homeowner→pro rows only (`reviewer_role = 'CUSTOMER'`).
+
 ## Platform reviews
 
 Apply `20261003000001_platform_reviews.sql` on production after the existing migrations. Additive. Does not change Stripe flags.

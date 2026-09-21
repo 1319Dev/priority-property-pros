@@ -12,7 +12,9 @@ import {
   OPPORTUNITY_WITH_PROJECTS_SELECT,
 } from "./opportunityAttach";
 import type {
+  Booking,
   BookingContactAccess,
+  BookingReview,
   ConnectionAvailability,
   Project,
   ProjectConnection,
@@ -414,10 +416,27 @@ export async function fetchChangeOrders(bookingId: string) {
   return data ?? [];
 }
 
-export async function fetchBookingReview(bookingId: string) {
-  const { data, error } = await client().from("booking_reviews").select("*").eq("booking_id", bookingId).maybeSingle();
+export async function fetchBookingReviews(bookingId: string): Promise<BookingReview[]> {
+  const { data, error } = await client().from("booking_reviews").select("*").eq("booking_id", bookingId);
   if (error) throw new Error(asError(error, "Could not load the review."));
-  return data;
+  return (data as BookingReview[] | null) ?? [];
+}
+
+/** @deprecated Use fetchBookingReviews. A booking can have one review per party after mutual Hired. */
+export async function fetchBookingReview(bookingId: string) {
+  const rows = await fetchBookingReviews(bookingId);
+  return rows.find((row) => row.reviewer_role === "CUSTOMER") ?? rows[0] ?? null;
+}
+
+export async function fetchProjectBooking(projectId: string): Promise<Booking | null> {
+  const { data, error } = await client()
+    .from("bookings")
+    .select("*")
+    .eq("project_id", projectId)
+    .neq("status", "CANCELLED")
+    .maybeSingle();
+  if (error) throw new Error(asError(error, "Could not load the booking."));
+  return (data as Booking | null) ?? null;
 }
 
 export async function fetchBookingEvents(bookingId: string) {
@@ -486,6 +505,12 @@ export async function submitBookingReview(bookingId: string, rating: number, bod
     p_body: body ?? null,
   });
   if (error) throw new Error(asError(error, "Could not save the review."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function confirmBookingHired(bookingId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("confirm_booking_hired", { p_booking_id: bookingId });
+  if (error) throw new Error(asError(error, "Could not confirm Hired."));
   return (data ?? {}) as RpcJson;
 }
 

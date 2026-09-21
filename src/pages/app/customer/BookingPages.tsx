@@ -8,10 +8,11 @@ import { useAuth } from "../../../lib/auth/useAuth";
 import {
   cancelPendingBooking,
   completeBooking,
+  confirmBookingHired,
   disputeBooking,
   expireStalePendingBookings,
   fetchBooking,
-  fetchBookingReview,
+  fetchBookingReviews,
   fetchChangeOrders,
   fetchHireAgainContractors,
   fetchMyBookings,
@@ -25,8 +26,10 @@ import {
 } from "../../../lib/marketplace/api";
 import { BOOKING_STATUS_LABELS, paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
-import type { Booking, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
+import { isMutuallyHired, bookingListHiredLabel } from "../../../lib/marketplace/hired";
+import type { Booking, BookingReview, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
+import { HiredConfirmationCard, ProfileReviewForm } from "../../../components/marketplace/HiredConfirmation";
 
 function statusLabel(status: string) {
   return BOOKING_STATUS_LABELS[status as BookingStatus] ?? status.replaceAll("_", " ");
@@ -54,16 +57,24 @@ export function CustomerBookingsPage() {
         <EmptyState title="No bookings yet" body="When you select a contractor, the booking will wait here. Nothing is marked paid." />
       ) : (
         <ul className="space-y-3">
-          {rows.map((row) => (
+          {rows.map((row) => {
+            const hiredLabel = bookingListHiredLabel({
+              bookingStatus: row.status,
+              customerHiredAt: row.customer_hired_at,
+              contractorHiredAt: row.contractor_hired_at,
+            });
+            return (
             <li key={row.id}>
               <Link to={`/app/customer/bookings/${row.id}`} className="block rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
-                <p className="font-semibold text-forest-800">{statusLabel(row.status)}</p>
+                <p className="font-semibold text-forest-800">{hiredLabel ?? statusLabel(row.status)}</p>
+                {hiredLabel ? <p className="text-sm text-ink-500">{statusLabel(row.status)}</p> : null}
                 <p className="mt-1 text-sm text-ink-500">
                   Job {formatUsdFromCents(row.billable_amount_cents || row.amount_cents)}
                 </p>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>
@@ -77,7 +88,7 @@ export function CustomerBookingDetailPage() {
   const [title, setTitle] = useState("");
   const [contractor, setContractor] = useState<string>("");
   const [orders, setOrders] = useState<ChangeOrder[]>([]);
-  const [review, setReview] = useState<Awaited<ReturnType<typeof fetchBookingReview>>>(null);
+  const [reviews, setReviews] = useState<BookingReview[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [delta, setDelta] = useState("");
   const [note, setNote] = useState("");
@@ -93,7 +104,7 @@ export function CustomerBookingDetailPage() {
     const pro = await fetchPublicContractor(row.contractor_profile_id).catch(() => null);
     setContractor(pro?.display_label ?? "Local pro");
     setOrders((await fetchChangeOrders(bookingId)) as ChangeOrder[]);
-    setReview(await fetchBookingReview(bookingId));
+    setReviews(await fetchBookingReviews(bookingId));
   }
 
   useEffect(() => {
@@ -116,6 +127,24 @@ export function CustomerBookingDetailPage() {
       {pending ? (
         <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm font-semibold text-forest-800">{paymentsComingSoonCopy()}</p>
       ) : null}
+      <HiredConfirmationCard
+        role="customer"
+        bookingStatus={booking.status}
+        customerHiredAt={booking.customer_hired_at}
+        contractorHiredAt={booking.contractor_hired_at}
+        contractorProfileId={booking.contractor_profile_id}
+        busy={busy}
+        onConfirm={() => {
+          setBusy(true);
+          void confirmBookingHired(booking.id)
+            .then(() => {
+              toast.push("Hired confirmed.");
+              return reload();
+            })
+            .catch((err: Error) => setError(err.message))
+            .finally(() => setBusy(false));
+        }}
+      />
       <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm">
         <p>Job total {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
         <p className="mt-2 text-ink-500">
@@ -220,27 +249,24 @@ export function CustomerBookingDetailPage() {
         </section>
       )}
 
-      {booking.status === "COMPLETED" && !review ? (
-        <section className="space-y-3">
-          <h2 className="font-display text-2xl text-forest-800">Leave a verified review</h2>
-          <TextInput label="Rating (1–5)" inputMode="numeric" value={rating} onChange={(e) => setRating(e.target.value)} />
-          <textarea className="w-full rounded-2xl border px-4 py-3" value={body} onChange={(e) => setBody(e.target.value)} />
-          <Button
-            type="button"
-            className="min-h-14 w-full"
-            onClick={() => {
-              void submitBookingReview(booking.id, Number(rating), body)
-                .then(() => reload())
-                .catch((err: Error) => setError(err.message));
-            }}
-          >
-            Submit review
-          </Button>
-        </section>
-      ) : null}
-      {review ? (
-        <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm">Verified review saved · {review.rating} / 5</p>
-      ) : null}
+      <ProfileReviewForm
+        role="customer"
+        bookingStatus={booking.status}
+        mutuallyHired={isMutuallyHired({
+          customerHiredAt: booking.customer_hired_at,
+          contractorHiredAt: booking.contractor_hired_at,
+        })}
+        reviews={reviews}
+        rating={rating}
+        body={body}
+        onRatingChange={setRating}
+        onBodyChange={setBody}
+        onSubmit={() => {
+          void submitBookingReview(booking.id, Number(rating), body)
+            .then(() => reload())
+            .catch((err: Error) => setError(err.message));
+        }}
+      />
       <ButtonLink to={`/app/customer/projects/${booking.project_id}`} variant="ghost">
         Back to project
       </ButtonLink>
