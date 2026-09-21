@@ -2,16 +2,26 @@ import { describe, expect, it, vi } from "vitest";
 import {
   acceptFailureBlocksConnect,
   canContractorEndJob,
+  canPassOpportunity,
   connectRequiresSeparateParticipate,
+  contractorDeclineUsesPassCopy,
   contractorEndJobPlan,
+  declineJobButtonLabel,
+  declineJobConfirmLabel,
+  declineJobTitle,
+  declineJobToast,
   endJobConfirmBody,
   opportunityAllowsConnectCta,
   runContractorConnect,
   shouldAcceptOpportunityOnConnect,
   CONNECT_SINGLE_STEP_COPY,
   END_JOB_BODY_PAID,
-  END_JOB_BODY_UNPAID,
   END_JOB_BUTTON_LABEL,
+  PASS_SKIP_BODY,
+  PASS_SKIP_CONFIRM,
+  PASS_SKIP_LABEL,
+  PASS_SKIP_TITLE,
+  PASS_SKIP_TOAST,
 } from "./contractorJobActions";
 
 describe("single Connect flow", () => {
@@ -23,6 +33,14 @@ describe("single Connect flow", () => {
     expect(shouldAcceptOpportunityOnConnect("AVAILABLE")).toBe(true);
     expect(shouldAcceptOpportunityOnConnect("ACCEPTED")).toBe(false);
     expect(CONNECT_SINGLE_STEP_COPY).toMatch(/do not need a separate Participate step/i);
+    expect(canPassOpportunity({ opportunityStatus: "AVAILABLE" })).toBe(true);
+    expect(canPassOpportunity({ opportunityStatus: "AVAILABLE", projectStatus: "CANCELLED" })).toBe(false);
+    expect(canPassOpportunity({ opportunityStatus: "ACCEPTED", connectionStatus: "PAYMENT_DISABLED" })).toBe(true);
+    expect(canPassOpportunity({ opportunityStatus: "ACCEPTED", connectionStatus: "PAID" })).toBe(false);
+    expect(canPassOpportunity({ opportunityStatus: "PASSED" })).toBe(false);
+    expect(PASS_SKIP_LABEL).toBe("Pass on this job");
+    expect(PASS_SKIP_TITLE).toBe("Pass on this job?");
+    expect(PASS_SKIP_CONFIRM).toBe("Pass on this job");
   });
 
   it("accepts AVAILABLE then connects, and still connects if accept is optional-full", async () => {
@@ -76,7 +94,7 @@ describe("single Connect flow", () => {
   });
 });
 
-describe("End this job plan", () => {
+describe("Pass on this job copy and plan", () => {
   it("passes an unused AVAILABLE job without touching slots or contact", () => {
     expect(canContractorEndJob({ opportunityStatus: "AVAILABLE" })).toBe(true);
     expect(contractorEndJobPlan({ opportunityStatus: "AVAILABLE" })).toEqual({
@@ -87,7 +105,14 @@ describe("End this job plan", () => {
       withdrawOpenEstimates: false,
       contactUnlocked: false,
     });
-    expect(endJobConfirmBody(null)).toBe(END_JOB_BODY_UNPAID);
+    expect(endJobConfirmBody(null)).toBe(PASS_SKIP_BODY);
+    expect(endJobConfirmBody("PAYMENT_DISABLED")).toBe(PASS_SKIP_BODY);
+    expect(PASS_SKIP_BODY).toMatch(/next best-suited contractor/i);
+    expect(declineJobTitle("PAYMENT_DISABLED")).toBe("Pass on this job?");
+    expect(declineJobConfirmLabel(null)).toBe("Pass on this job");
+    expect(declineJobButtonLabel("PAYMENT_DISABLED")).toBe("Pass on this job");
+    expect(declineJobToast(null)).toBe(PASS_SKIP_TOAST);
+    expect(contractorDeclineUsesPassCopy("PAYMENT_DISABLED")).toBe(true);
     expect(END_JOB_BUTTON_LABEL).toBe("End this job");
   });
 
@@ -120,6 +145,9 @@ describe("End this job plan", () => {
       contactUnlocked: false,
     });
     expect(endJobConfirmBody("PAID")).toBe(END_JOB_BODY_PAID);
+    expect(declineJobTitle("PAID")).toBe("End this job?");
+    expect(declineJobButtonLabel("PAID")).toBe("End this job");
+    expect(contractorDeclineUsesPassCopy("PAID")).toBe(false);
   });
 
   it("refuses to unwind a hire unless the paid connection is only being completed", () => {

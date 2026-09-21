@@ -1,8 +1,8 @@
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import {
-  END_JOB_CANCEL,
-  END_JOB_CONFIRM,
-  END_JOB_TITLE,
+  declineJobCancelLabel,
+  declineJobConfirmLabel,
+  declineJobTitle,
   endJobConfirmBody,
 } from "../../lib/marketplace/contractorJobActions";
 import type { ProjectConnectionStatus } from "../../lib/marketplace/types";
@@ -23,10 +23,10 @@ export function EndJobDialog({
   return (
     <ConfirmDialog
       open={open}
-      title={END_JOB_TITLE}
+      title={declineJobTitle(connectionStatus)}
       body={endJobConfirmBody(connectionStatus)}
-      confirmLabel={END_JOB_CONFIRM}
-      cancelLabel={END_JOB_CANCEL}
+      confirmLabel={declineJobConfirmLabel(connectionStatus)}
+      cancelLabel={declineJobCancelLabel(connectionStatus)}
       tone="danger"
       busy={busy}
       onConfirm={onConfirm}

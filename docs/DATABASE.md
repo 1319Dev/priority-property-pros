@@ -97,9 +97,9 @@ Apply `supabase/migrations/20260917000001_*.sql` through `20260917000011_*.sql` 
 | `project_photos` | Private storage paths. |
 | `project_answers` | Answers to `service_questions`. |
 | `project_status_history` | Logged on every status change. |
-| `matches` | Eligible contractors after post. |
-| `opportunities` | `AVAILABLE\|ACCEPTED\|PASSED\|EXPIRED\|CLOSED`. |
-| `opportunity_slots` | Atomic max-3: PK `(project_id, slot_number)` with `slot_number BETWEEN 1 AND 3`. |
+| `matches` | Eligible contractors after post, with fit `score` and `rank_order` (fairness-adjusted queue). |
+| `opportunities` | `AVAILABLE\|ACCEPTED\|PASSED\|EXPIRED\|CLOSED`. Live **offers** are at most 3 minus participating. |
+| `opportunity_slots` | Atomic max-3 **participate/accept** cap: PK `(project_id, slot_number)` with `slot_number BETWEEN 1 AND 3`. Not “who was offered.” |
 | `estimate_questions` | Pre-estimate Q&A for accepted participants only. |
 | `estimates` / `estimate_items` | Totals recomputed in the database. Line kinds: LABOR / MATERIALS / EQUIPMENT / CUSTOM. Duration, available_from, valid_until are informational. Fee preview is not a charge. Status/money cannot be patched from the client. |
 
@@ -113,13 +113,14 @@ Customer-safe views (approved contractors only, no license numbers or document p
 | --- | --- | --- |
 | `post_project(id)` | Customer owner | DRAFT → POSTED → matching. |
 | `accept_opportunity(id)` | Contractor | Claims a slot under a project row lock. 4th accept fails. |
-| `pass_opportunity(id)` | Contractor | AVAILABLE → PASSED. |
+| `pass_opportunity(id)` | Contractor | AVAILABLE → PASSED, then immediately backfills the next ranked unused eligible contractor into the open offer slot. |
+| `contractor_end_job(id)` | Contractor | Pass/leave: AVAILABLE/ACCEPTED → PASSED (or CLOSED after paid complete). Frees unpaid connection spots and backfills the offer queue. |
 | `submit_estimate(id)` | Contractor | Validates line totals + ~7% fee preview. |
 | `withdraw_estimate(id)` | Contractor | Withdraws an open estimate. |
 | `select_estimate(project, estimate)` | Customer | One accepted estimate; others decline; remaining opps close. **No payment.** |
 | `fee_preview(cents)` | Anyone signed in | `{ total, fee, earnings, charges_live: false }`. |
 
-Matching uses category, ZIP/radius, services, `ACTIVE` + `APPROVED`, `accepting_work`, job-size prefs, and verified credentials when a category requires them.
+Matching uses category, ZIP/radius, services, `ACTIVE` + `APPROVED`, `accepting_work`, job-size prefs, and verified credentials when a category requires them. After post, only the top **3** ranked eligible contractors receive an `AVAILABLE` opportunity. Rank = fit score minus a capped fairness penalty (recent offers in the last 14 days), then never/oldest last offered, then contractor id — so similar-quality pros rotate and the same people are not always first. Passing immediately offers the next unused eligible contractor. Out-of-area contractors never receive an opportunity. Re-running `match_project` can refill an empty slot if new people became eligible; skip itself does not rematch the whole market.
 
 ## Phase 4A
 

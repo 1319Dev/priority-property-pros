@@ -36,6 +36,7 @@ import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type EstimateItemKind, type Es
 import { comparisonDisplayOrder } from "../../../lib/marketplace/flows";
 import { planDeleteOrCancel } from "../../../lib/marketplace/lifecycle";
 import { canCustomerDeclineFrom, canCustomerSelectFrom, customerEstimateStatusLabel } from "../../../lib/marketplace/estimateLifecycle";
+import { HOMEOWNER_OFFER_QUEUE_COPY } from "../../../lib/marketplace/matching";
 import {
   CUSTOMER_DASHBOARD_TABS,
   customerLifecycleLabel,
@@ -309,6 +310,13 @@ export function CustomerProjectDetailPage() {
         <p>Street (private until a paid $4.99 connection entitlement or an admin unlock): {street ?? "—"}</p>
         <p>{project.timing ? TIMING_LABELS[project.timing] : ""}</p>
       </section>
+      {project.status !== "DRAFT" && project.status !== "CANCELLED" && project.status !== "CONTRACTOR_SELECTED" ? (
+        <StatusBanner
+          tone="info"
+          title="Finding local pros"
+          body={HOMEOWNER_OFFER_QUEUE_COPY}
+        />
+      ) : null}
       <div className="flex min-w-0 flex-col gap-2">
         {project.status === "DRAFT" ? (
           <ButtonLink to={`/app/customer/projects/${project.id}/wizard`} className="min-h-14 w-full">

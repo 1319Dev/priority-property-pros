@@ -12,7 +12,7 @@ const steps = [
   {
     n: "02",
     title: "Pros choose to connect",
-    body: "Up to three local independents can connect for $4.99 each. Connecting does not guarantee a hire. The $4.99 Connection Fee is non-refundable.",
+    body: "Up to three local independents can connect for $4.99 each. We invite the best-suited pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited. Connecting does not guarantee a hire. The $4.99 Connection Fee is non-refundable.",
   },
   {
     n: "03",

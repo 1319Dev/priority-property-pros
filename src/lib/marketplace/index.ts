@@ -1,7 +1,17 @@
 export { computeCompleteness, canPostProject, normalizeZip, completenessFromProject } from "./completeness";
 export { previewFee, feeCentsFromTotal, lineTotalCents, totalsFromItems, assertValidTotals, formatUsdFromCents } from "./fees";
 export { computeMarketplaceFee, ORIGINAL_FEE_BRACKETS, LEGACY_PROGRESSIVE_FEE_ENGINE } from "./feeEngine";
-export { matchContractors, contractorEligibleForProject, locationMatches, haversineMiles } from "./matching";
+export {
+  matchContractors,
+  contractorEligibleForProject,
+  locationMatches,
+  haversineMiles,
+  projectContractorFitScore,
+  rankEligibleContractorsForOffers,
+  nextOfferContractorIds,
+  openOfferSlotsNeeded,
+  HOMEOWNER_OFFER_QUEUE_COPY,
+} from "./matching";
 export { nextOpportunitySlot, claimSlotExclusive } from "./slots";
 export { canReadExactAddress, opportunityVisibleToCustomer, estimateVisibleToCustomer, canSelfVerifyCredential, sanitizeUploadName } from "./privacy";
 export {

@@ -508,6 +508,7 @@ export type Database = {
           project_id: string;
           contractor_profile_id: string;
           score: number;
+          rank_order: number;
           reasons: Json;
         };
         Insert: never;
