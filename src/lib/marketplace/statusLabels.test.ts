@@ -12,6 +12,8 @@ import {
 } from "./statusLabels";
 import {
   HERO_ART_VIEWBOX,
+  HERO_BANNER_FRAME_CLASS,
+  HERO_BANNER_OBJECT_POSITION,
   HERO_PHOTO_FRAME_CLASS,
   HERO_PHOTO_OBJECT_POSITION,
   HERO_TAGLINE,
@@ -98,5 +100,23 @@ describe("homepage house photo crop contract", () => {
     expect(heroSource).toContain("HERO_PHOTO_FRAME_CLASS");
     expect(heroSource).toContain("HERO_PHOTO_OBJECT_POSITION");
     expect(heroSource).not.toMatch(/max-h-\[10\.5rem\][\s\S]*aspect-\[16\/10\][\s\S]*MarketingPhoto/);
+  });
+});
+
+describe("homepage branded hero banner contract", () => {
+  it("shows the full first-party banner without a max-height crop that would clip the logo or CTA bar", () => {
+    expect(HERO_BANNER_FRAME_CLASS).toMatch(/w-full/);
+    expect(HERO_BANNER_FRAME_CLASS).not.toMatch(/max-h-/);
+    expect(HERO_BANNER_OBJECT_POSITION).toBe("center center");
+
+    const heroSource = readFileSync(path.join(repoRoot, "src/features/home/Hero.tsx"), "utf8");
+    expect(heroSource).toContain("HeroBanner");
+
+    const bannerSource = readFileSync(path.join(repoRoot, "src/features/home/HeroBanner.tsx"), "utf8");
+    expect(bannerSource).toContain("homepageHeroBanner");
+    expect(bannerSource).toContain('objectFit="contain"');
+    expect(bannerSource).toContain("HERO_BANNER_FRAME_CLASS");
+    expect(bannerSource).not.toMatch(/max-h-/);
+    expect(bannerSource).not.toMatch(/object-cover/);
   });
 });

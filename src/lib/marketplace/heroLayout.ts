@@ -15,6 +15,16 @@ export const HERO_PHOTO_FRAME_CLASS =
 
 export const HERO_PHOTO_OBJECT_POSITION = "center 40%";
 
+/**
+ * Full-bleed branded banner — keep the intrinsic 3:2 frame so object-contain
+ * shows the logo, story, steps, and CTA bar without cropping.
+ */
+export const HERO_BANNER_FRAME_CLASS = "relative w-full overflow-hidden bg-cream-50";
+
+export const HERO_BANNER_SIZES = "100vw";
+
+export const HERO_BANNER_OBJECT_POSITION = "center center";
+
 export function heroTaglineFitsWidth(widthPx: number): boolean {
   return IPHONE_LAYOUT_WIDTHS.includes(widthPx as (typeof IPHONE_LAYOUT_WIDTHS)[number]) || widthPx >= 320;
 }

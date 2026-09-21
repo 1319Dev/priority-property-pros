@@ -3,14 +3,22 @@ import { basename, resolve } from "node:path";
 import sharp from "sharp";
 
 /**
- * Rebuilds compressed WebP + JPEG derivatives for first-party finished-exterior
- * marketing photos. Sources are original generated assets documented in
+ * Rebuilds compressed WebP + JPEG derivatives for first-party marketing photos
+ * and the branded homepage banner. Sources are documented in
  * docs/IMAGE_LICENSES.md. Masters are not committed; derivatives are.
  */
 const WIDTHS = [480, 640, 768, 960, 1152];
 const outDir = resolve("public/images/marketing");
 
 const ASSETS = [
+  {
+    id: "brand-hero-from-need-to-done",
+    masters: [
+      "/opt/cursor/artifacts/assets/brand-hero-from-need-to-done.png",
+      "/tmp/marketing-masters/brand-hero-from-need-to-done.png",
+      resolve("public/images/marketing/brand-hero-from-need-to-done-1152w.jpg"),
+    ],
+  },
   {
     id: "service-finished-exterior",
     masters: [

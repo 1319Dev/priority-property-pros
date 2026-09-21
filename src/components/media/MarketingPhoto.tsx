@@ -1,4 +1,9 @@
-import { MARKETING_PHOTOS, type MarketingPhotoAsset, type MarketingPhotoId } from "../../data/marketingPhotos";
+import {
+  MARKETING_PHOTOS,
+  type MarketingPhotoAsset,
+  type MarketingPhotoFit,
+  type MarketingPhotoId,
+} from "../../data/marketingPhotos";
 import { cn } from "../../utils/cn";
 
 export function MarketingPhoto({
@@ -8,6 +13,7 @@ export function MarketingPhoto({
   eager = false,
   decorative = false,
   objectPosition,
+  objectFit,
 }: {
   photo: MarketingPhotoAsset | MarketingPhotoId;
   className?: string;
@@ -15,12 +21,15 @@ export function MarketingPhoto({
   eager?: boolean;
   decorative?: boolean;
   objectPosition?: string;
+  objectFit?: MarketingPhotoFit;
 }) {
   const asset = typeof photo === "string" ? MARKETING_PHOTOS[photo] : photo;
   const resolvedSizes = sizes ?? asset.defaultSizes;
+  const fit = objectFit ?? asset.objectFit;
+  const natural = fit === "contain";
 
   return (
-    <picture className="block h-full w-full">
+    <picture className={cn("block w-full", natural ? "h-auto" : "h-full")}>
       {asset.sources.map((source) => (
         <source key={source.type} type={source.type} srcSet={source.srcSet} sizes={resolvedSizes} />
       ))}
@@ -34,7 +43,11 @@ export function MarketingPhoto({
         loading={eager ? "eager" : "lazy"}
         decoding="async"
         fetchPriority={eager ? "high" : "low"}
-        className={cn("h-full w-full object-cover", className)}
+        className={cn(
+          "w-full",
+          natural ? "h-auto object-contain" : "h-full object-cover",
+          className,
+        )}
         style={{ objectPosition: objectPosition ?? asset.objectPosition }}
       />
     </picture>
