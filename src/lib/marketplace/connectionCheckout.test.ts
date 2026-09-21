@@ -9,7 +9,7 @@ import {
   CONNECTION_FEE_CURRENCY,
   CONNECTION_RESERVATION_TTL_SECONDS,
   LEGACY_JOB_PAYMENT_FUNCTIONS,
-  SIGNUP_FEE_FUNCTIONS_OWNED_BY_PR_12,
+  SIGNUP_FEE_CHECKOUT_FUNCTIONS,
   STRIPE_ACTIVATION_PRICE_ID,
   STRIPE_CONNECTION_PRICE_ID,
   allowedReturnOrigin,
@@ -454,8 +454,15 @@ describe("Connection Fee TEST Checkout", () => {
       expect(fn).not.toMatch(new RegExp(`rpc\\("${name.replace(/-/g, "_")}"`));
     }
     expect(fn).not.toMatch(/create-payment-intent|create-connect-account-link|create-transfer|create-refund/);
-    expect(fn).not.toMatch(/transfer_data|application_fee|destination_charge/);
-    expect(SIGNUP_FEE_FUNCTIONS_OWNED_BY_PR_12.every((name) => !fn.includes(name))).toBe(true);
+    const connectionOnly = [
+      "create-connection-checkout",
+      "reconcile-connection-checkout",
+      "connection-fee-webhook",
+    ]
+      .map((name) => readFileSync(path.join(repoRoot, "supabase/functions", name, "index.ts"), "utf8"))
+      .join("\n");
+    expect(connectionOnly).not.toMatch(/transfer_data|application_fee|destination_charge/);
+    expect(SIGNUP_FEE_CHECKOUT_FUNCTIONS.every((name) => !connectionOnly.includes(name))).toBe(true);
     expect(requireTestStripeSecret("sk_test_1234567890abcd")).toBe("sk_test_1234567890abcd");
     expect(() => requireTestStripeSecret("sk_live_1234567890abcd")).toThrow(/TEST/);
     expect(fn).toMatch(/requireSecretForMode/);

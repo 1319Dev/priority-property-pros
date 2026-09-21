@@ -35,6 +35,8 @@ function auth(partial: Partial<AuthContextValue> = {}): AuthContextValue {
     profile: profile(),
     account_type: "CUSTOMER",
     account_status: "ACTIVE",
+    signup_fee_status: null,
+    signup_fee_enabled: false,
     signIn: async () => ({ error: null }),
     signUp: async () => ({ error: null, needsEmailConfirm: true }),
     signOut: async () => undefined,

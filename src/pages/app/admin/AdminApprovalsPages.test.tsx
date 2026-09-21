@@ -233,6 +233,8 @@ describe("Admin Approvals nav badge", () => {
       },
       account_type: "ADMIN",
       account_status: "ACTIVE",
+      signup_fee_status: "NOT_REQUIRED",
+      signup_fee_enabled: false,
       signIn: async () => ({ error: null }),
       signUp: async () => ({ error: null, needsEmailConfirm: true }),
       signOut: async () => undefined,

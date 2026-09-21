@@ -3,8 +3,10 @@ import { useAuth } from "../../lib/auth/useAuth";
 import { postLoginPath } from "../../lib/auth/roles";
 
 export function BottomNav() {
-  const { loading, user, account_type, account_status } = useAuth();
-  const accountTo = user ? postLoginPath(account_type, account_status) : "/sign-in";
+  const { loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status } = useAuth();
+  const accountTo = user
+    ? postLoginPath(account_type, account_status, { enabled: signup_fee_enabled, status: signup_fee_status })
+    : "/sign-in";
   const accountLabel = user ? "Account" : "Sign in";
 
   const items = [

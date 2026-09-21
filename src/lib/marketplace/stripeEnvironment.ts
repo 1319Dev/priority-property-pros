@@ -12,7 +12,7 @@ export const CONNECTION_PRICE_TYPE = "one_time";
 /** Known Stripe TEST catalog Price ID. Never a LIVE fallback. Never sent by the client. */
 export const STRIPE_TEST_CONNECTION_PRICE_ID = "price_1UH1RsPYJQAIQDv721IhjKS0";
 
-/** Config-only $9.99 activation Price ID. Must not be used for Connection Fee. */
+/** Config-only known TEST catalog $9.99 activation Price ID. Signup checkout reads STRIPE_ACTIVATION_PRICE_ID from Edge env. */
 export const STRIPE_ACTIVATION_PRICE_ID = "price_1UH1SePYJQAIQDv7nrMo32Xp";
 
 export type StripeEnvironmentMode = "test" | "live";

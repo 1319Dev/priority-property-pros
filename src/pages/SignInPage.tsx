@@ -8,7 +8,7 @@ import { useAuth } from "../lib/auth/useAuth";
 import { SIGN_IN_CREATE_ACCOUNT_NOTE } from "../data/pricing";
 
 export function SignInPage() {
-  const { signIn, configured, refreshProfile, account_type, account_status, user, loading } = useAuth();
+  const { signIn, configured, refreshProfile, account_type, account_status, signup_fee_enabled, signup_fee_status, user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from;
@@ -19,9 +19,9 @@ export function SignInPage() {
 
   useEffect(() => {
     if (!loading && user && account_type) {
-      navigate(from || postLoginPath(account_type, account_status), { replace: true });
+      navigate(from || postLoginPath(account_type, account_status, { enabled: signup_fee_enabled, status: signup_fee_status }), { replace: true });
     }
-  }, [loading, user, account_type, account_status, from, navigate]);
+  }, [loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status, from, navigate]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();

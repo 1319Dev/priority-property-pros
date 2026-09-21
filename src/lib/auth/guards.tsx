@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { Skeleton } from "../../components/ui/Skeleton";
-import { BLOCKED_STATUSES, ROLE_HOME } from "./roles";
+import { BLOCKED_STATUSES, ROLE_HOME, postLoginPath } from "./roles";
 import { useAuth } from "./useAuth";
 import type { AccountType } from "./types";
 
@@ -17,7 +17,7 @@ function AuthLoadingScreen() {
 }
 
 export function RequireAuth() {
-  const { loading, user, profile, account_status } = useAuth();
+  const { loading, user, profile, account_status, account_type, signup_fee_enabled, signup_fee_status } = useAuth();
   const location = useLocation();
 
   if (loading) return <AuthLoadingScreen />;
@@ -29,6 +29,13 @@ export function RequireAuth() {
   }
   if (user && !user.email_confirmed_at && !profile) {
     return <Navigate to="/auth/verify?state=check-email" replace />;
+  }
+  const activate = postLoginPath(account_type, account_status, {
+    enabled: signup_fee_enabled,
+    status: signup_fee_status,
+  });
+  if (activate === "/account/activate" && location.pathname !== "/account/activate") {
+    return <Navigate to="/account/activate" replace />;
   }
   return <Outlet />;
 }

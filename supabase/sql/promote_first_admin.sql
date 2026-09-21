@@ -25,6 +25,14 @@ BEGIN
     account_status = 'ACTIVE'
   WHERE id = admin_id;
 
+  BEGIN
+    UPDATE public.profiles
+    SET signup_fee_status = 'NOT_REQUIRED'
+    WHERE id = admin_id;
+  EXCEPTION WHEN undefined_column THEN
+    NULL;
+  END;
+
   INSERT INTO public.audit_logs (actor_id, action, entity_type, entity_id, metadata)
   VALUES (
     admin_id,

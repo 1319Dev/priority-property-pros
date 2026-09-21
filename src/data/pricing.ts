@@ -30,6 +30,9 @@ export const SIGNUP_FEE_PUBLIC_NOTE =
 export const SIGNUP_FEE_CHECKOUT_NOTE =
   "$9.99 one-time account activation. Non-refundable. Not a monthly subscription. Checkout is not live yet.";
 
+export const SIGNUP_FEE_CHECKOUT_LIVE_NOTE =
+  "$9.99 one-time account activation. Non-refundable. Not a monthly subscription. After you verify your email, you will pay $9.99 to activate.";
+
 export const SIGNUP_TERMS_ACCEPTANCE =
   "I agree to the Terms of Use and Privacy Policy. The $9.99 account activation fee is non-refundable. PPP is a marketplace, not the contractor.";
 

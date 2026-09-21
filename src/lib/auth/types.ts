@@ -1,3 +1,5 @@
+import type { SignupFeeStatus } from "../signupFee/constants";
+
 export const ACCOUNT_TYPES = ["CUSTOMER", "CONTRACTOR", "VERIFIER", "ADMIN"] as const;
 export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
@@ -33,6 +35,8 @@ export type Profile = {
   avatar_url: string | null;
   account_type: AccountType;
   account_status: AccountStatus;
+  signup_fee_status?: SignupFeeStatus | null;
+  signup_fee_paid_at?: string | null;
   created_at: string;
   updated_at: string;
 };

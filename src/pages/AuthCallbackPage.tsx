@@ -6,7 +6,7 @@ import { postLoginPath } from "../lib/auth/roles";
 import { useAuth } from "../lib/auth/useAuth";
 
 export function AuthCallbackPage() {
-  const { refreshProfile, account_type, account_status, loading, user } = useAuth();
+  const { refreshProfile, account_type, account_status, signup_fee_enabled, signup_fee_status, loading, user } = useAuth();
   const navigate = useNavigate();
   const [failed, setFailed] = useState(false);
 
@@ -40,9 +40,9 @@ export function AuthCallbackPage() {
   useEffect(() => {
     if (loading) return;
     if (user) {
-      navigate(postLoginPath(account_type, account_status), { replace: true });
+      navigate(postLoginPath(account_type, account_status, { enabled: signup_fee_enabled, status: signup_fee_status }), { replace: true });
     }
-  }, [loading, user, account_type, account_status, navigate]);
+  }, [loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status, navigate]);
 
   if (failed) {
     return (

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { TextInput } from "../components/ui/Input";
@@ -10,10 +10,12 @@ import {
   CONTRACTOR_SIGNUP_LEDE,
   CUSTOMER_SIGNUP_LEDE,
   SIGNUP_FEE_CHECKOUT_NOTE,
+  SIGNUP_FEE_CHECKOUT_LIVE_NOTE,
   SIGNUP_TERMS_ACCEPTANCE,
   VERIFIER_SIGNUP_LEDE,
 } from "../data/pricing";
 import { preHireContactError, PRE_HIRE_CONTACT_HINT } from "../lib/marketplace/antiCircumvention";
+import { fetchSignupFeeCheckoutFlags } from "../lib/signupFee/api";
 
 const copy: Record<PublicSignupType, { eyebrow: string; title: string; lede: string }> = {
   CUSTOMER: { eyebrow: "Customer", title: "Create a customer account.", lede: CUSTOMER_SIGNUP_LEDE },
@@ -36,6 +38,7 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [checkoutLive, setCheckoutLive] = useState(false);
   const [values, setValues] = useState({
     firstName: "",
     lastName: "",
@@ -52,6 +55,17 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
   function set(name: keyof typeof values, value: string) {
     setValues((current) => ({ ...current, [name]: value }));
   }
+
+  useEffect(() => {
+    if (!configured) return;
+    let cancelled = false;
+    void fetchSignupFeeCheckoutFlags().then((flags) => {
+      if (!cancelled) setCheckoutLive(flags.enabled === true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [configured]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -214,7 +228,7 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
           {busy ? "Creating account…" : "Create account"}
         </Button>
         <p id="signup-fee-note" className="text-sm text-ink-500">
-          {SIGNUP_FEE_CHECKOUT_NOTE}
+          {checkoutLive ? SIGNUP_FEE_CHECKOUT_LIVE_NOTE : SIGNUP_FEE_CHECKOUT_NOTE}
         </p>
       </form>
     </AuthCard>

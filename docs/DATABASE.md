@@ -15,6 +15,7 @@ The database is the authority for `account_type` and `account_status`. JWT metad
 | `first_name`, `last_name`, `phone`, `avatar_url` | Owner may update |
 | `account_type` | `CUSTOMER` \| `CONTRACTOR` \| `VERIFIER` \| `ADMIN` |
 | `account_status` | `ACTIVE` \| `PENDING` \| `SUSPENDED` \| `DISABLED` \| `DELETED` |
+| `signup_fee_status` | `UNPAID` \| `PAID` \| `NOT_REQUIRED` — isolated $9.99 activation. Existing profiles at migration time are grandfathered `NOT_REQUIRED`. Collection is gated by `signup_fee_enabled` (default 0). Paying never changes `account_status`, contractor approval, or `#14` contact. |
 | `created_at`, `updated_at` | Triggers maintain `updated_at` |
 
 Customers become `ACTIVE` when email is confirmed. Contractors and verifiers stay `PENDING` until an admin (or SQL) approves them later.

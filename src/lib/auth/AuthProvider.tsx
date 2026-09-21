@@ -5,10 +5,20 @@ import { AUTH_CALLBACK_PATH, AUTH_RESET_PATH, authRedirectUrl } from "./redirect
 import { AuthContext } from "./AuthContext";
 import { buildSignupMetadata } from "./signupMetadata";
 import type { Profile, SignUpInput } from "./types";
+import type { SignupFeeStatus } from "../signupFee/constants";
+import { fetchSignupFeeCheckoutFlags } from "../signupFee/api";
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
+  const withFee = await supabase
+    .from("profiles")
+    .select(
+      "id, email, first_name, last_name, phone, avatar_url, account_type, account_status, signup_fee_status, signup_fee_paid_at, created_at, updated_at",
+    )
+    .eq("id", userId)
+    .maybeSingle();
+  if (!withFee.error) return withFee.data as Profile;
   const { data, error } = await supabase
     .from("profiles")
     .select(
@@ -29,14 +39,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [signupFeeEnabled, setSignupFeeEnabled] = useState(false);
 
   const applySession = useCallback(async (next: Session | null) => {
     setSession(next);
     setUser(next?.user ?? null);
     if (next?.user) {
-      setProfile(await fetchProfile(next.user.id));
+      const [nextProfile, flags] = await Promise.all([
+        fetchProfile(next.user.id),
+        fetchSignupFeeCheckoutFlags(),
+      ]);
+      setProfile(nextProfile);
+      setSignupFeeEnabled(flags.enabled === true);
     } else {
       setProfile(null);
+      setSignupFeeEnabled(false);
     }
   }, []);
 
@@ -71,6 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     setProfile(await fetchProfile(user.id));
+    const flags = await fetchSignupFeeCheckoutFlags();
+    setSignupFeeEnabled(flags.enabled === true);
   }, [user]);
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -105,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setUser(null);
     setSession(null);
+    setSignupFeeEnabled(false);
   }, []);
 
   const requestPasswordReset = useCallback(async (email: string) => {
@@ -143,6 +163,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       account_type: profile?.account_type ?? null,
       account_status: profile?.account_status ?? null,
+      signup_fee_status: (profile?.signup_fee_status as SignupFeeStatus | null | undefined) ?? null,
+      signup_fee_enabled: signupFeeEnabled,
       signIn,
       signUp,
       signOut,
@@ -157,6 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       session,
       profile,
+      signupFeeEnabled,
       signIn,
       signUp,
       signOut,

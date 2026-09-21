@@ -1,4 +1,5 @@
 const CONNECTION_FEE_CENTS = 499;
+const ACTIVATION_FEE_CENTS = 999;
 const CONNECTION_FEE_CURRENCY = "usd";
 const CONNECTION_PRICE_TYPE = "one_time";
 const ACTIVATION_PRICE_ID = "price_1UH1SePYJQAIQDv7nrMo32Xp";
@@ -14,6 +15,10 @@ export type StripePriceLike = {
 
 export function connectionFeeCents(): number {
   return CONNECTION_FEE_CENTS;
+}
+
+export function activationFeeCents(): number {
+  return ACTIVATION_FEE_CENTS;
 }
 
 export function stripeTestModeFromFlags(snapshot: { stripe_test_mode?: boolean } | null | undefined): boolean {
@@ -47,6 +52,14 @@ export function requireConnectionPriceId(envPriceId: string | null | undefined):
   }
   if (value === ACTIVATION_PRICE_ID) {
     throw new Error("activation Price ID must not be used for Connection Fee");
+  }
+  return value;
+}
+
+export function requireActivationPriceId(envPriceId: string | null | undefined): string {
+  const value = (envPriceId ?? "").trim();
+  if (!value.startsWith("price_") || value.length < 8) {
+    throw new Error("STRIPE_ACTIVATION_PRICE_ID is required");
   }
   return value;
 }
@@ -96,6 +109,34 @@ export function assertConnectionPriceOrThrow(
   }
   if (price.type && price.type !== CONNECTION_PRICE_TYPE) {
     throw new Error("connection Price must be a one_time Price");
+  }
+}
+
+export function assertActivationPriceOrThrow(
+  price: StripePriceLike | null | undefined,
+  input: { expectedPriceId: string; testMode: boolean },
+): void {
+  const expected = (input.expectedPriceId ?? "").trim();
+  if (!expected.startsWith("price_")) {
+    throw new Error("STRIPE_ACTIVATION_PRICE_ID is required");
+  }
+  if (!price || !price.id) {
+    throw new Error("STRIPE_ACTIVATION_PRICE_ID is required");
+  }
+  if (price.id !== expected) {
+    throw new Error("wrong activation Price ID");
+  }
+  if (!livemodeMatchesStripeTestMode(Boolean(price.livemode), input.testMode)) {
+    throw new Error("Stripe Price livemode does not match stripe_test_mode");
+  }
+  if ((price.currency ?? "").toLowerCase() !== CONNECTION_FEE_CURRENCY) {
+    throw new Error("signup fee currency must be usd");
+  }
+  if (price.unit_amount !== ACTIVATION_FEE_CENTS) {
+    throw new Error("signup fee is server-authoritative and must be 999 cents");
+  }
+  if (price.type && price.type !== CONNECTION_PRICE_TYPE) {
+    throw new Error("activation Price must be a one_time Price");
   }
 }
 
@@ -165,6 +206,33 @@ export function assertPaidConnectionSession(
   const currency = sessionCurrency(session);
   if (currency !== CONNECTION_FEE_CURRENCY) {
     throw new Error("connection fee currency must be usd");
+  }
+  return { priceId, amountCents, currency };
+}
+
+export function assertPaidActivationSession(
+  session: Record<string, unknown>,
+  input: { expectedPriceId: string; testMode: boolean },
+): { priceId: string; amountCents: number; currency: string } {
+  if (!livemodeMatchesStripeTestMode(Boolean(session.livemode), input.testMode)) {
+    throw new Error(livemodeMismatchMessage(input.testMode));
+  }
+  const sessionId = String(session.id ?? "");
+  if (!checkoutSessionIdMatchesMode(sessionId, input.testMode)) {
+    throw new Error(input.testMode
+      ? "stripe_test_mode=1 requires a Stripe TEST checkout session (cs_test_)"
+      : "stripe_test_mode=0 requires a Stripe LIVE checkout session (cs_live_)");
+  }
+  const priceId = sessionLinePriceId(session);
+  if (!priceId) throw new Error("STRIPE_ACTIVATION_PRICE_ID is required");
+  if (priceId !== input.expectedPriceId) throw new Error("wrong activation Price ID");
+  const amountCents = sessionAmountCents(session);
+  if (amountCents !== ACTIVATION_FEE_CENTS) {
+    throw new Error("signup fee is server-authoritative and must be 999 cents");
+  }
+  const currency = sessionCurrency(session);
+  if (currency !== CONNECTION_FEE_CURRENCY) {
+    throw new Error("signup fee currency must be usd");
   }
   return { priceId, amountCents, currency };
 }
