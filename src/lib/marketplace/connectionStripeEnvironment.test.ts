@@ -396,7 +396,14 @@ describe("Connection Fee Stripe TEST/LIVE environment control", () => {
     expect(latest).not.toMatch(/charges_live',\s*1/);
     expect(latest).not.toMatch(/signup_fee_enabled',\s*1/);
     expect(fn).not.toMatch(/sk_live_[A-Za-z0-9]{8,}/);
-    expect(fn).not.toMatch(/create-signup-fee-checkout/);
+    const connectionOnly = [
+      "create-connection-checkout",
+      "reconcile-connection-checkout",
+      "connection-fee-webhook",
+    ]
+      .map((name) => readFileSync(path.join(repoRoot, "supabase/functions", name, "index.ts"), "utf8"))
+      .join("\n");
+    expect(connectionOnly).not.toMatch(/create-signup-fee-checkout/);
     expect(config).toMatch(/connection-fee-webhook/);
     expect(config).toMatch(/verify_jwt = false/);
   });

@@ -29,6 +29,8 @@ function auth(partial: Partial<AuthContextValue>): AuthContextValue {
     profile: null,
     account_type: null,
     account_status: null,
+    signup_fee_status: null,
+    signup_fee_enabled: false,
     signIn: async () => ({ error: null }),
     signUp: async () => ({ error: null, needsEmailConfirm: true }),
     signOut: async () => undefined,
@@ -55,6 +57,7 @@ function renderGuard(entry: string, value: AuthContextValue) {
           </Route>
           <Route path="/sign-in" element={<div>sign-in</div>} />
           <Route path="/account/status" element={<div>status-page</div>} />
+          <Route path="/account/activate" element={<div>activate-page</div>} />
           <Route path="/app/pro" element={<div>pro-home</div>} />
         </Routes>
       </MemoryRouter>
@@ -117,5 +120,39 @@ describe("protected routes", () => {
     );
     expect(screen.queryByText("admin-home")).not.toBeInTheDocument();
     expect(screen.getByText("customer-home")).toBeInTheDocument();
+  });
+
+  it("keeps current dashboards when signup fee checkout is disabled", () => {
+    const p = profile("CUSTOMER");
+    renderGuard(
+      "/app/customer",
+      auth({
+        user: { id: "user-1", email: "pat@example.com", email_confirmed_at: "2026-01-01" } as AuthContextValue["user"],
+        profile: { ...p, signup_fee_status: "UNPAID" },
+        account_type: "CUSTOMER",
+        account_status: "ACTIVE",
+        signup_fee_status: "UNPAID",
+        signup_fee_enabled: false,
+      }),
+    );
+    expect(screen.getByText("customer-home")).toBeInTheDocument();
+    expect(screen.queryByText("activate-page")).not.toBeInTheDocument();
+  });
+
+  it("sends unpaid customers to activate only when signup_fee_enabled is on", () => {
+    const p = profile("CUSTOMER");
+    renderGuard(
+      "/app/customer",
+      auth({
+        user: { id: "user-1", email: "pat@example.com", email_confirmed_at: "2026-01-01" } as AuthContextValue["user"],
+        profile: { ...p, signup_fee_status: "UNPAID" },
+        account_type: "CUSTOMER",
+        account_status: "ACTIVE",
+        signup_fee_status: "UNPAID",
+        signup_fee_enabled: true,
+      }),
+    );
+    expect(screen.getByText("activate-page")).toBeInTheDocument();
+    expect(screen.queryByText("customer-home")).not.toBeInTheDocument();
   });
 });

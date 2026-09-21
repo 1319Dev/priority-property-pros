@@ -1,0 +1,18 @@
+-- Account activation / signup-fee Checkout expectations.
+-- Do NOT run against production bersftkjpbzpgtahbqwd from the implementing PR.
+-- Staging only after secrets: giiskdvitimksdewnelc
+--
+-- payments_live=0 charges_live=0 signup_fee_enabled=0 (until owner enables)
+-- connection_fee_checkout_enabled unchanged
+-- stripe_test_mode=1 (TEST) by default; 0 = LIVE. Explicit environment control.
+-- signup_fee_cents=999. Connection Fee stays 499. Signup fee ≠ connection fee.
+--
+-- Manual SQL-editor checks (staging only, never production):
+-- 1. Flags stay off after applying 20261005000001_signup_activation_checkout.sql
+-- 2. Existing profiles are NOT_REQUIRED (grandfathered)
+-- 3. New CUSTOMER/CONTRACTOR inserts are UNPAID; VERIFIER/ADMIN are NOT_REQUIRED
+-- 4. With signup_fee_enabled=0, post_project / accept_opportunity still work for UNPAID
+-- 5. With signup_fee_enabled=1 (staging only), unpaid customer cannot insert a project
+-- 6. fulfill_signup_fee_checkout requires 999 / usd / Price ID / livemode match
+-- 7. Fulfill does not write booking_contact_access and does not change account_status
+-- 8. Live event while stripe_test_mode=1 is rejected; test event while LIVE is rejected

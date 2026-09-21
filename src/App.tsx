@@ -28,6 +28,7 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import { AccountStatusPage } from "./pages/AccountStatusPage";
+import { ActivateAccountPage } from "./pages/ActivateAccountPage";
 import { TrustPage } from "./pages/TrustPage";
 import { CustomerShell } from "./pages/app/CustomerShell";
 import { ProShell } from "./pages/app/ProShell";
@@ -94,6 +95,7 @@ export default function App() {
         <Route path="/auth/verify" element={<VerifyEmailPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/account/status" element={<AccountStatusPage />} />
+        <Route path="/account/activate" element={<ActivateAccountPage />} />
         <Route path="/post-project" element={<PostProjectPage />} />
         <Route path="/trust" element={<TrustPage />} />
       </Route>

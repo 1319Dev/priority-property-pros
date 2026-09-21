@@ -31,6 +31,9 @@ export type Database = {
           avatar_url: string | null;
           account_type: AccountType;
           account_status: AccountStatus;
+          signup_fee_status?: import("../signupFee/constants").SignupFeeStatus;
+          signup_fee_paid_at?: string | null;
+          signup_fee_charge_id?: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -965,6 +968,10 @@ export type Database = {
       };
       connection_fee_checkout_flags: { Args: Record<string, never>; Returns: Json };
       connection_fee_checkout_enabled: { Args: Record<string, never>; Returns: boolean };
+      signup_fee_checkout_flags: { Args: Record<string, never>; Returns: Json };
+      signup_fee_enabled: { Args: Record<string, never>; Returns: boolean };
+      signup_fee_state_for_me: { Args: Record<string, never>; Returns: Json };
+      signup_fee_is_satisfied: { Args: { p_profile_id: string }; Returns: boolean };
       stop_new_project_connections: { Args: { p_project_id: string }; Returns: Json };
       list_my_project_connections: { Args: { p_project_id?: string | null }; Returns: Json };
       submit_content_report: {
@@ -1001,6 +1008,7 @@ export type Database = {
       relationship_status: import("../marketplace/types").RelationshipStatus;
       change_order_status: import("../marketplace/types").ChangeOrderStatus;
       project_connection_status: import("../marketplace/types").ProjectConnectionStatus;
+      signup_fee_status: import("../signupFee/constants").SignupFeeStatus;
       platform_review_status: import("../marketplace/platformReviews").PlatformReviewStatus;
     };
   };

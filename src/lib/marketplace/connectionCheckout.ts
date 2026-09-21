@@ -2,7 +2,7 @@
  * Connection Fee Checkout — server-authoritative rules for TEST and LIVE.
  * stripe_test_mode (DB) is the environment control. Price ID and amount never come from the browser.
  * Success URLs never unlock contact. Do not import Stripe secrets here.
- * Do not enable job payments / Connect / payouts / $9.99 signup fee.
+ * Do not enable job payments / Connect / payouts. Signup/activation is a separate $9.99 flow.
  */
 
 import { CONNECTION_FEE_CENTS } from "./types";
@@ -23,7 +23,7 @@ import {
 /** Known TEST catalog Price ID. Not a LIVE fallback. Never send from the client. */
 export const STRIPE_CONNECTION_PRICE_ID = STRIPE_TEST_CONNECTION_PRICE_ID;
 
-/** Config compatibility only. Activation checkout stays in parked PR #12. Unused by this flow. */
+/** Known TEST catalog $9.99 activation Price ID. Signup checkout uses env STRIPE_ACTIVATION_PRICE_ID. */
 export const STRIPE_ACTIVATION_PRICE_ID = ACTIVATION_PRICE_ID;
 
 export const CONNECTION_FEE_CURRENCY = "usd";
@@ -41,9 +41,9 @@ export const LEGACY_JOB_PAYMENT_FUNCTIONS = [
   "create-refund",
 ] as const;
 
-export const SIGNUP_FEE_FUNCTIONS_OWNED_BY_PR_12 = [
+export const SIGNUP_FEE_CHECKOUT_FUNCTIONS = [
   "create-signup-fee-checkout",
-  "confirm-signup-fee-session",
+  "reconcile-signup-fee-checkout",
   "signup-fee-webhook",
 ] as const;
 

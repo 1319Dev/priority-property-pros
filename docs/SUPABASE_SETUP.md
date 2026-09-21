@@ -89,6 +89,8 @@ Later additive files in `supabase/migrations/` must also be applied in filename 
 
 **Email confirm:** keep the current Auth confirm-email setting so testers are not locked out. Before public launch, enable **Confirm email**, add SMTP, and keep the redirect URLs in section D. Do not silently switch to auto-confirm in production.
 
+See [SIGNUP_FEE_CHECKOUT.md](SIGNUP_FEE_CHECKOUT.md) for the $9.99 activation Checkout (flags stay off until the owner enables collection).
+
 ---
 
 ## D. Turn on email auth (and nothing else required)

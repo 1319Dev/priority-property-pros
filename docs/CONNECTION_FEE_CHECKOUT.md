@@ -46,15 +46,15 @@ Paid-but-not-reservable (expired / 4th slot) → `needs_refund` flag (no silent 
 
 `contractor_has_contact_access_on_project` does **not** OR a second table. `connection_contact_access` is dropped. Missing entitlement = no private contact. Success URLs, query params, frontend state, and project/estimate/booking status never unlock.
 
-## PR #12 activation
+## Account activation (PR signup checkout)
 
-`STRIPE_ACTIVATION_PRICE_ID` / `price_1UH1SePYJQAIQDv7nrMo32Xp` is config-only here. Do **not** duplicate `create-signup-fee-checkout`. Do **not** activate the $9.99 signup fee. Webhook secrets and endpoints stay separate.
+The $9.99 activation Checkout lives in [SIGNUP_FEE_CHECKOUT.md](SIGNUP_FEE_CHECKOUT.md). `STRIPE_ACTIVATION_PRICE_ID` is required by `create-signup-fee-checkout` / `signup-fee-webhook` / `reconcile-signup-fee-checkout`. Do **not** use that Price ID for Connection Fee. Webhook secrets and endpoints stay separate. `signup_fee_enabled` stays 0 in this Connection Fee path.
 
 ## Secrets (names only — set later, not in this PR)
 
 - `STRIPE_SECRET_KEY` (`sk_test_` while `stripe_test_mode=1`; `sk_live_` only later when the DB is LIVE)
 - `STRIPE_CONNECTION_PRICE_ID` (TEST Price now; LIVE Connection Price later)
-- `STRIPE_ACTIVATION_PRICE_ID` (unused by these functions)
+- `STRIPE_ACTIVATION_PRICE_ID` (used by the separate $9.99 signup/activation functions; must not be the Connection Price)
 - `STRIPE_WEBHOOK_SECRET` (`whsec_` for `connection-fee-webhook`; TEST vs LIVE endpoint)
 
 Staging project **giiskdvitimksdewnelc**: TEST secrets only. Never LIVE secrets on staging.

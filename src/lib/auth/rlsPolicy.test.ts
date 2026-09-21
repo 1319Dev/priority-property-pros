@@ -6,6 +6,7 @@ import {
   canInsertOwnAcceptance,
   canClientPatchApprovalFields,
   canMutateAuditLog,
+  canChangeSignupFeeFields,
   canReadOtherUsersRow,
   canReadProfile,
   canSelfApprove,
@@ -49,6 +50,12 @@ describe("RLS privilege escalation (policy mirror)", () => {
 
   it("forbids every client role from mutating audit_logs", () => {
     expect(canMutateAuditLog()).toBe(false);
+  });
+
+  it("blocks JWT clients from changing signup fee fields", () => {
+    expect(canChangeSignupFeeFields(customer)).toBe(false);
+    expect(canChangeSignupFeeFields(admin)).toBe(false);
+    expect(canChangeSignupFeeFields(sqlEditor)).toBe(true);
   });
 
   it("allows a user to insert only their own agreement acceptance", () => {

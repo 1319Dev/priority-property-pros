@@ -1,16 +1,17 @@
-// Connection Fee Stripe webhook (JWT verification off).
+// Account activation ($9.99) Stripe webhook (JWT verification off).
 // Environment is controlled by platform_settings.stripe_test_mode (1=TEST, 0=LIVE).
-// Secrets must match that flag. connection_fee_checkout_enabled is the customer kill switch.
-//   STRIPE_WEBHOOK_SECRET = whsec_...   required, signature verification
-//   STRIPE_SECRET_KEY     = sk_test_... when stripe_test_mode=1; sk_live_... when stripe_test_mode=0
-//   STRIPE_CONNECTION_PRICE_ID required; retrieved and validated (499 USD one_time, livemode matches)
+// Secrets must match that flag. signup_fee_enabled is the customer kill switch.
+//   STRIPE_SIGNUP_FEE_WEBHOOK_SECRET = whsec_...   required, signature verification
+//   STRIPE_SECRET_KEY                 = sk_test_... when stripe_test_mode=1; sk_live_... when stripe_test_mode=0
+//   STRIPE_ACTIVATION_PRICE_ID        required; retrieved and validated (999 USD one_time, livemode matches)
+// Does not grant #14 contact. Does not fulfill Connection Fee events.
 import { json } from "../_shared/cors.ts";
 import { restRpc } from "../_shared/supabase.ts";
 import {
-  assertPaidConnectionSession,
+  assertPaidActivationSession,
   livemodeMatchesStripeTestMode,
   livemodeMismatchMessage,
-  requireConnectionPriceId,
+  requireActivationPriceId,
   requireSecretForMode,
   requireWebhookSecret,
   stripeGet,
@@ -29,7 +30,7 @@ Deno.serve(async (req) => {
   const header = req.headers.get("Stripe-Signature") ?? "";
   let webhookSecret: string;
   try {
-    webhookSecret = requireWebhookSecret(Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "");
+    webhookSecret = requireWebhookSecret(Deno.env.get("STRIPE_SIGNUP_FEE_WEBHOOK_SECRET") ?? "");
   } catch {
     return json({ error: "webhook secret missing" }, 500);
   }
@@ -43,7 +44,7 @@ Deno.serve(async (req) => {
     data?: { object?: Record<string, unknown> };
   };
 
-  const flags = await restRpc("connection_fee_checkout_flags", {});
+  const flags = await restRpc("signup_fee_checkout_flags", {});
   if (flags.error) return json({ error: flags.error, contact_unlocked: false }, 500);
   const snapshot = (flags.data ?? {}) as { stripe_test_mode?: boolean };
   const testMode = stripeTestModeFromFlags(snapshot);
@@ -56,17 +57,17 @@ Deno.serve(async (req) => {
   const metadata = (obj.metadata ?? {}) as Record<string, string>;
   const checkoutId = String(obj.id ?? "");
 
-  if (metadata.ppp_kind && metadata.ppp_kind !== "connection_fee") {
+  if (metadata.ppp_kind && metadata.ppp_kind !== "signup_fee") {
     return json({
       ignored: true,
-      reason: "not a connection_fee event",
+      reason: "not a signup_fee event",
       contact_unlocked: false,
       payments_live: false,
       charges_live: false,
     });
   }
 
-  const recorded = await restRpc("record_connection_checkout_event", {
+  const recorded = await restRpc("record_signup_fee_event", {
     p_processor_event_id: event.id ?? `${type}:${checkoutId}`,
     p_event_type: type,
     p_stripe_checkout_session_id: checkoutId || null,
@@ -76,24 +77,19 @@ Deno.serve(async (req) => {
   const duplicate = Boolean((recorded.data as { duplicate?: boolean } | null)?.duplicate);
 
   if (type === "checkout.session.expired" || type === "checkout.session.async_payment_failed") {
-    const expired = await restRpc("expire_connection_checkout_session", {
-      p_stripe_checkout_session_id: checkoutId,
-      p_processor_event_id: `${event.id ?? checkoutId}:expire`,
-      p_reason: type,
-    });
-    if (expired.error) return json({ error: expired.error, contact_unlocked: false }, 400);
     return json({
       ok: true,
       released: true,
       duplicate,
       contact_unlocked: false,
+      paid: false,
       payments_live: false,
       charges_live: false,
     });
   }
 
   if (type !== "checkout.session.completed" && type !== "checkout.session.async_payment_succeeded") {
-    return json({ ignored: true, type, duplicate, payments_live: false, charges_live: false });
+    return json({ ignored: true, type, duplicate, contact_unlocked: false, payments_live: false, charges_live: false });
   }
 
   if (String(obj.payment_status ?? "") !== "paid") {
@@ -108,44 +104,44 @@ Deno.serve(async (req) => {
     });
   }
 
-  const context = await restRpc("connection_checkout_context", {
+  const profileId = String(metadata.profile_id ?? obj.client_reference_id ?? "");
+  if (!profileId || !checkoutId) {
+    return json({ error: "missing profile or checkout id", contact_unlocked: false }, 400);
+  }
+
+  const context = await restRpc("signup_fee_checkout_context", {
     p_stripe_checkout_session_id: checkoutId,
   });
-  if (context.error) return json({ error: context.error, contact_unlocked: false }, 400);
-  const row = (context.data ?? {}) as {
-    connection_id?: string;
-    project_id?: string;
-    contractor_profile_id?: string;
-  };
-
-  if (metadata.connection_id && metadata.connection_id !== row.connection_id) {
-    const flagged = await restRpc("flag_connection_checkout_needs_refund", {
+  const row = (context.data ?? {}) as { profile_id?: string };
+  if (!context.error && row.profile_id && row.profile_id !== profileId) {
+    const flagged = await restRpc("flag_signup_checkout_needs_refund", {
       p_stripe_checkout_session_id: checkoutId,
       p_reason: "mismatched_metadata",
     });
     return json({ error: "mismatched metadata", needs_refund: true, result: flagged.data, contact_unlocked: false }, 400);
   }
 
-  const envPrice = requireConnectionPriceId(Deno.env.get("STRIPE_CONNECTION_PRICE_ID"));
+  const envPrice = requireActivationPriceId(Deno.env.get("STRIPE_ACTIVATION_PRICE_ID"));
   const stripeSecret = requireSecretForMode(Deno.env.get("STRIPE_SECRET_KEY") ?? "", testMode);
   const retrieved = await stripeGet(stripeSecret, `checkout/sessions/${checkoutId}?expand[]=line_items`);
   let validated: { priceId: string; amountCents: number; currency: string };
   try {
-    validated = assertPaidConnectionSession(retrieved, { expectedPriceId: envPrice, testMode });
+    validated = assertPaidActivationSession(retrieved, { expectedPriceId: envPrice, testMode });
   } catch (err) {
     const message = err instanceof Error ? err.message : "invalid Stripe session";
     const reason = message.includes("Price ID") ? "wrong_price_id"
-      : message.includes("499") ? "wrong_amount"
+      : message.includes("999") ? "wrong_amount"
       : message.includes("usd") ? "wrong_currency"
       : "invalid_session";
-    const flagged = await restRpc("flag_connection_checkout_needs_refund", {
+    const flagged = await restRpc("flag_signup_checkout_needs_refund", {
       p_stripe_checkout_session_id: checkoutId,
       p_reason: reason,
     });
     return json({ error: message, needs_refund: true, result: flagged.data, contact_unlocked: false }, 400);
   }
+
   const paymentIntentId = stripePaymentIntentId(retrieved.payment_intent) ?? stripePaymentIntentId(obj.payment_intent);
-  const fulfilled = await restRpc("fulfill_connection_fee_checkout", {
+  const fulfilled = await restRpc("fulfill_signup_fee_checkout", {
     p_stripe_checkout_session_id: checkoutId,
     p_processor_event_id: event.id ?? `webhook:${checkoutId}`,
     p_amount_cents: validated.amountCents,
@@ -153,9 +149,7 @@ Deno.serve(async (req) => {
     p_price_id: validated.priceId,
     p_payment_status: String(obj.payment_status ?? ""),
     p_livemode: Boolean(retrieved.livemode ?? obj.livemode ?? event.livemode),
-    p_connection_id: row.connection_id,
-    p_project_id: row.project_id,
-    p_contractor_profile_id: row.contractor_profile_id,
+    p_profile_id: profileId,
     p_stripe_payment_intent_id: paymentIntentId,
   });
   if (fulfilled.error) return json({ error: fulfilled.error, contact_unlocked: false, duplicate }, 400);
@@ -163,6 +157,7 @@ Deno.serve(async (req) => {
     ok: true,
     result: fulfilled.data,
     duplicate,
+    contact_unlocked: false,
     payments_live: false,
     charges_live: false,
     connect_payouts_enabled: false,

@@ -32,9 +32,11 @@ describe("post-login routing", () => {
     expect(postLoginPath("ADMIN", "ACTIVE")).toBe("/app/admin");
   });
 
-  it("sends suspended accounts to the status page", () => {
-    expect(postLoginPath("CUSTOMER", "SUSPENDED")).toBe("/account/status");
-    expect(postLoginPath("ADMIN", "DISABLED")).toBe("/account/status");
+  it("sends unpaid accounts to activate only when the signup fee is enabled", () => {
+    expect(postLoginPath("CUSTOMER", "ACTIVE", { enabled: true, status: "UNPAID" })).toBe("/account/activate");
+    expect(postLoginPath("CUSTOMER", "ACTIVE", { enabled: false, status: "UNPAID" })).toBe("/app/customer");
+    expect(postLoginPath("CUSTOMER", "ACTIVE", { enabled: true, status: "PAID" })).toBe("/app/customer");
+    expect(postLoginPath("VERIFIER", "PENDING", { enabled: true, status: "UNPAID" })).toBe("/app/verifier");
   });
 });
 

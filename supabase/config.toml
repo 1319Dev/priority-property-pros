@@ -1,15 +1,16 @@
-# Connection Fee Checkout Edge Functions (TEST and LIVE capable).
-# DO NOT deploy to production bersftkjpbzpgtahbqwd from this PR.
-# Staging only: giiskdvitimksdewnelc — after the owner sets TEST secrets.
+# Connection Fee + account-activation Checkout Edge Functions (TEST and LIVE capable).
+# DO NOT deploy to production bersftkjpbzpgtahbqwd from this PR until the owner is ready.
+# Staging only first: giiskdvitimksdewnelc — after the owner sets TEST secrets.
 # Environment control is platform_settings.stripe_test_mode (1=TEST, 0=LIVE).
 # Do NOT put LIVE Stripe secrets in staging. Do NOT enable payment flags here.
 # Secrets (Dashboard → Edge Functions → Secrets), never Vite / never git:
-#   STRIPE_SECRET_KEY              (sk_test_ when stripe_test_mode=1; sk_live_ later in production only)
-#   STRIPE_CONNECTION_PRICE_ID     (required; TEST or LIVE Connection Price matching the mode)
-#   STRIPE_ACTIVATION_PRICE_ID     (config only; unused by these functions; must not be the Connection Price)
-#   STRIPE_WEBHOOK_SECRET          (whsec_ for connection-fee-webhook; TEST vs LIVE endpoint)
-# connection_fee_checkout_enabled is the customer-facing kill switch (keep 0 until owner enables).
-# Do not set payments_live, charges_live, or signup_fee_enabled to enable this.
+#   STRIPE_SECRET_KEY                    (sk_test_ when stripe_test_mode=1; sk_live_ later in production only)
+#   STRIPE_CONNECTION_PRICE_ID           (required for Connection Fee; TEST or LIVE Price matching the mode)
+#   STRIPE_ACTIVATION_PRICE_ID           (required for $9.99 signup/activation; unit_amount=999 usd one_time)
+#   STRIPE_WEBHOOK_SECRET                (whsec_ for connection-fee-webhook; TEST vs LIVE endpoint)
+#   STRIPE_SIGNUP_FEE_WEBHOOK_SECRET     (whsec_ for signup-fee-webhook; keep endpoints separate)
+# connection_fee_checkout_enabled and signup_fee_enabled stay 0 until the owner enables each.
+# Do not set payments_live or charges_live to enable either fee.
 
 [functions.create-connection-checkout]
 verify_jwt = true
@@ -22,3 +23,12 @@ verify_jwt = false
 
 [functions.delete-account]
 verify_jwt = true
+
+[functions.create-signup-fee-checkout]
+verify_jwt = true
+
+[functions.reconcile-signup-fee-checkout]
+verify_jwt = true
+
+[functions.signup-fee-webhook]
+verify_jwt = false

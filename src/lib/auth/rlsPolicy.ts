@@ -53,6 +53,10 @@ export function canClientPatchApprovalFields(actor: Actor): boolean {
   return actor.id === null;
 }
 
+export function canChangeSignupFeeFields(actor: Actor): boolean {
+  return actor.id === null;
+}
+
 export function canMutateAuditLog(): boolean {
   return false;
 }

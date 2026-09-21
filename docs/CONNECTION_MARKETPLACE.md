@@ -12,7 +12,7 @@ Active product model: PPP is a **connection marketplace**. It does **not** proce
 | --- | --- |
 | `payments_live` | 0 (unchanged) |
 | `charges_live` | 0 (unchanged) |
-| `signup_fee_enabled` | 0 (recorded; $9.99 checkout stays in parked PR #12) |
+| `signup_fee_enabled` | 0 (recorded; $9.99 Checkout is implemented separately and stays off until the owner enables it — see [SIGNUP_FEE_CHECKOUT.md](SIGNUP_FEE_CHECKOUT.md)) |
 | `stripe_test_mode` | 1 = TEST (default), 0 = LIVE. Explicit server-side Stripe environment control. Do not infer safety from the installed key. |
 | `connection_fee_checkout_enabled` | 0 by default. Customer-facing kill switch for $4.99 Stripe Checkout. Independent of `payments_live`. May stay 0 with LIVE secrets installed later. |
 
