@@ -103,20 +103,25 @@ describe("homepage house photo crop contract", () => {
   });
 });
 
-describe("homepage branded hero banner contract", () => {
-  it("shows the full first-party banner without a max-height crop that would clip the logo or CTA bar", () => {
+describe("homepage hero banner contract", () => {
+  it("crops a property exterior with object-cover inside a fixed frame", () => {
     expect(HERO_BANNER_FRAME_CLASS).toMatch(/w-full/);
-    expect(HERO_BANNER_FRAME_CLASS).not.toMatch(/max-h-/);
-    expect(HERO_BANNER_OBJECT_POSITION).toBe("center center");
+    expect(HERO_BANNER_FRAME_CLASS).toMatch(/overflow-hidden/);
+    expect(HERO_BANNER_FRAME_CLASS).toMatch(/h-56/);
+    expect(HERO_BANNER_FRAME_CLASS).toMatch(/sm:h-72/);
+    expect(HERO_BANNER_FRAME_CLASS).toMatch(/lg:h-96/);
+    expect(HERO_BANNER_OBJECT_POSITION).toBe("center 28%");
 
     const heroSource = readFileSync(path.join(repoRoot, "src/features/home/Hero.tsx"), "utf8");
     expect(heroSource).toContain("HeroBanner");
 
     const bannerSource = readFileSync(path.join(repoRoot, "src/features/home/HeroBanner.tsx"), "utf8");
     expect(bannerSource).toContain("homepageHeroBanner");
-    expect(bannerSource).toContain('objectFit="contain"');
     expect(bannerSource).toContain("HERO_BANNER_FRAME_CLASS");
-    expect(bannerSource).not.toMatch(/max-h-/);
-    expect(bannerSource).not.toMatch(/object-cover/);
+    expect(bannerSource).toContain('className="h-full w-full"');
+    expect(bannerSource).toContain("HERO_BANNER_OBJECT_POSITION");
+    expect(bannerSource).not.toMatch(/objectFit/);
+    expect(bannerSource).not.toMatch(/object-contain/);
+    expect(bannerSource).not.toMatch(/brandHero/);
   });
 });

@@ -73,14 +73,15 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     expect(services.queryByRole("button", { name: /if it is a real local job/i })).not.toBeInTheDocument();
   });
 
-  it("shows the branded banner as the homepage hero plus distinct section exteriors", () => {
+  it("shows a property exterior as the homepage hero banner plus other section photos", () => {
     renderApp("/");
     expect(
       screen.getAllByText(/whatever your property needs, find the right local professional/i).length,
     ).toBeGreaterThan(0);
-    expect(screen.getByAltText(/from need to done/i)).toBeInTheDocument();
-    expect(screen.getAllByAltText(/finished suburban home/i).length).toBeGreaterThan(0);
+    expect(screen.queryByAltText(/from need to done/i)).not.toBeInTheDocument();
     expect(screen.getByAltText(/cream-and-stone ranch/i)).toBeInTheDocument();
+    expect(screen.getAllByAltText(/finished suburban home/i).length).toBeGreaterThan(0);
+    expect(screen.getByAltText(/two-story brick-and-siding home/i)).toBeInTheDocument();
     expect(screen.getByAltText(/professionally landscaped front yard/i)).toBeInTheDocument();
     expect(screen.queryByAltText(/property owner and a local professional/i)).not.toBeInTheDocument();
     expect(screen.queryByAltText(/fencing contractor/i)).not.toBeInTheDocument();

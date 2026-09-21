@@ -16,14 +16,17 @@ export const HERO_PHOTO_FRAME_CLASS =
 export const HERO_PHOTO_OBJECT_POSITION = "center 40%";
 
 /**
- * Full-bleed branded banner — keep the intrinsic 3:2 frame so object-contain
- * shows the logo, story, steps, and CTA bar without cropping.
+ * Full-bleed homepage exterior. Fixed height plus overflow matches the other
+ * marketing property photos so object-cover crops the facade instead of
+ * letterboxing a graphic.
  */
-export const HERO_BANNER_FRAME_CLASS = "relative w-full overflow-hidden bg-cream-50";
+export const HERO_BANNER_FRAME_CLASS =
+  "relative h-56 w-full overflow-hidden bg-forest-800/10 sm:h-72 lg:h-96";
 
 export const HERO_BANNER_SIZES = "100vw";
 
-export const HERO_BANNER_OBJECT_POSITION = "center center";
+/** Keep the facade in a short full-bleed crop; the asset default sits too low here. */
+export const HERO_BANNER_OBJECT_POSITION = "center 28%";
 
 export function heroTaglineFitsWidth(widthPx: number): boolean {
   return IPHONE_LAYOUT_WIDTHS.includes(widthPx as (typeof IPHONE_LAYOUT_WIDTHS)[number]) || widthPx >= 320;

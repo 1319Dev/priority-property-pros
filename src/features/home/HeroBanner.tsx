@@ -13,9 +13,8 @@ export function HeroBanner() {
         photo={MARKETING_SECTION_PHOTOS.homepageHeroBanner}
         eager
         sizes={HERO_BANNER_SIZES}
-        objectFit="contain"
         objectPosition={HERO_BANNER_OBJECT_POSITION}
-        className="h-auto w-full"
+        className="h-full w-full"
       />
     </figure>
   );

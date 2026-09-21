@@ -41,11 +41,14 @@ const PHOTO_FILES: Record<MarketingPhotoId, string> = {
   dusk: "service-dusk-exterior",
 };
 
-/** Distinct visuals for each public marketing surface — never reuse the hero crop. */
+/**
+ * Public marketing surfaces. The homepage banner crop stays unique —
+ * do not reuse it on another section.
+ */
 export const MARKETING_SECTION_PHOTOS = {
-  homepageHeroBanner: "brandHero",
+  homepageHeroBanner: "ranch",
   homepageHero: "house",
-  homepageFindAProPreview: "ranch",
+  homepageFindAProPreview: "twoStory",
   homepageHowItWorks: "landscaped",
   findAProHeader: "twoStory",
   howItWorks: "porch",
