@@ -8,6 +8,7 @@ import { ButtonLink } from "../../components/ui/Button";
 import { Container } from "../../components/ui/Container";
 import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
 import { HERO_PHOTO_FRAME_CLASS, HERO_PHOTO_OBJECT_POSITION, HERO_TAGLINE } from "../../lib/marketplace/heroLayout";
+import { HeroBanner } from "./HeroBanner";
 
 export function Hero() {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export function Hero() {
 
   return (
     <section className="relative overflow-x-hidden border-b border-forest-800/10 bg-cream-50">
+      <HeroBanner />
       <Container className="grid items-start gap-8 py-8 sm:py-12 lg:grid-cols-[1.2fr_0.8fr] lg:items-center lg:py-14">
         <div className="min-w-0">
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">{HERO_TAGLINE}</p>
@@ -80,7 +82,7 @@ export function Hero() {
             </div>
           </form>
         </div>
-        <figure className="relative mx-auto w-full min-w-0 max-w-md lg:justify-self-end">
+        <figure className="relative mx-auto hidden w-full min-w-0 max-w-md lg:block lg:justify-self-end">
           <div className={HERO_PHOTO_FRAME_CLASS}>
             <MarketingPhoto
               photo={MARKETING_SECTION_PHOTOS.homepageHero}

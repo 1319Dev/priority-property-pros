@@ -1,6 +1,15 @@
 import { joinWithBase } from "../utils/cn";
 
-export type MarketingPhotoId = "house" | "ranch" | "twoStory" | "porch" | "landscaped" | "dusk";
+export type MarketingPhotoId =
+  | "brandHero"
+  | "house"
+  | "ranch"
+  | "twoStory"
+  | "porch"
+  | "landscaped"
+  | "dusk";
+
+export type MarketingPhotoFit = "cover" | "contain";
 
 export type MarketingPhotoSource = {
   type: "image/webp" | "image/jpeg";
@@ -13,6 +22,7 @@ export type MarketingPhotoAsset = {
   width: number;
   height: number;
   objectPosition: string;
+  objectFit: MarketingPhotoFit;
   src: string;
   sources: MarketingPhotoSource[];
   defaultSizes: string;
@@ -22,6 +32,7 @@ const MARKETING_DIR = "images/marketing";
 const PHOTO_WIDTHS = [480, 640, 768, 960, 1152] as const;
 
 const PHOTO_FILES: Record<MarketingPhotoId, string> = {
+  brandHero: "brand-hero-from-need-to-done",
   house: "service-finished-exterior",
   ranch: "service-ranch-exterior",
   twoStory: "service-two-story-exterior",
@@ -30,8 +41,9 @@ const PHOTO_FILES: Record<MarketingPhotoId, string> = {
   dusk: "service-dusk-exterior",
 };
 
-/** Distinct exteriors for each public marketing surface — never reuse the hero crop. */
+/** Distinct visuals for each public marketing surface — never reuse the hero crop. */
 export const MARKETING_SECTION_PHOTOS = {
+  homepageHeroBanner: "brandHero",
   homepageHero: "house",
   homepageFindAProPreview: "ranch",
   homepageHowItWorks: "landscaped",
@@ -53,20 +65,27 @@ function photoAsset(
   alt: string,
   objectPosition: string,
   baseUrl: string,
+  extras: {
+    width?: number;
+    height?: number;
+    defaultSizes?: string;
+    objectFit?: MarketingPhotoFit;
+  } = {},
 ): MarketingPhotoAsset {
   const file = PHOTO_FILES[id];
   return {
     id,
     alt,
-    width: 1152,
-    height: 864,
+    width: extras.width ?? 1152,
+    height: extras.height ?? 864,
     objectPosition,
+    objectFit: extras.objectFit ?? "cover",
     src: marketingAssetUrl(`${file}-1152w.jpg`, baseUrl),
     sources: [
       { type: "image/webp", srcSet: variants(file, "webp", baseUrl) },
       { type: "image/jpeg", srcSet: variants(file, "jpg", baseUrl) },
     ],
-    defaultSizes: "(max-width: 1024px) 100vw, 720px",
+    defaultSizes: extras.defaultSizes ?? "(max-width: 1024px) 100vw, 720px",
   };
 }
 
@@ -74,6 +93,18 @@ export function createMarketingPhotos(
   baseUrl: string = import.meta.env.BASE_URL,
 ): Record<MarketingPhotoId, MarketingPhotoAsset> {
   return {
+    brandHero: photoAsset(
+      "brandHero",
+      "Priority Property Pros branded banner: a homeowner on a couch messages for a pro while a Priority Property Pros contractor by a van receives a new job request, with the logo, From Need to Done, post-connect-get-it-done steps, and Find a Pro Today.",
+      "center center",
+      baseUrl,
+      {
+        width: 1152,
+        height: 768,
+        defaultSizes: "100vw",
+        objectFit: "contain",
+      },
+    ),
     house: photoAsset(
       "house",
       "A finished suburban home with new landscaping, a clean driveway, and a cedar privacy fence.",

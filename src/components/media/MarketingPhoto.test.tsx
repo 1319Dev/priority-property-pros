@@ -17,4 +17,14 @@ describe("MarketingPhoto", () => {
     render(<MarketingPhoto photo="house" objectPosition="center 40%" />);
     expect(screen.getByAltText(/finished suburban home/i)).toHaveStyle({ objectPosition: "center 40%" });
   });
+
+  it("renders the branded banner with object-contain so the logo and CTA bar are not cropped", () => {
+    const { container } = render(<MarketingPhoto photo="brandHero" />);
+    const picture = container.querySelector("picture");
+    const img = screen.getByAltText(/from need to done/i);
+    expect(picture).toHaveClass("block", "h-auto", "w-full");
+    expect(img).toHaveClass("h-auto", "w-full", "object-contain");
+    expect(img).not.toHaveClass("object-cover");
+    expect(img).toHaveStyle({ objectPosition: MARKETING_PHOTOS.brandHero.objectPosition });
+  });
 });
