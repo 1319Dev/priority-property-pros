@@ -11,9 +11,9 @@ See [DATABASE.md](DATABASE.md), [SECURITY.md](SECURITY.md), [PHASE4A.md](PHASE4A
 ## Flow
 
 1. Customer drafts a project (need → category → photos → questions → location → when → budget → review) and **POST**s.
-2. The database matches approved, in-area contractors (category, ZIP/radius, job size, availability, credentials when required).
-3. Matched contractors see an **opportunity** with approximate location only (city/ZIP, not street).
-4. At most **3** contractors can accept. The last slot is race-safe (`opportunity_slots` + project row lock).
+2. The database matches approved, in-area contractors (category, ZIP/radius, job size, availability, credentials when required) and **offers the job to at most 3** at a time, rotating fairly among similarly suited pros.
+3. Matched contractors see an **opportunity** with approximate location only (city/ZIP, not street). They can **Connect** or **Pass on this job**. Passing frees the offer slot for the next ranked pro.
+4. At most **3** contractors can accept/participate. The last slot is race-safe (`opportunity_slots` + project row lock). Passing does not fill that participate cap.
 5. Accepted contractors may ask questions; the customer answers.
 6. Contractors submit estimates. Totals are recomputed from line items. Fee preview = total, PPP fee, contractor earnings. **No charge.**
 7. Customer compares factual fields and **SELECT THIS PRO**. That creates a **PENDING booking**. Exact address stays private. **No payment.** Stop before confirmation.

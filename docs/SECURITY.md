@@ -69,7 +69,7 @@ New tables are deny-by-default with RLS. Extra rules:
 - Customers cannot `SELECT` `AVAILABLE` opportunities (matching pool is hidden).
 - Contractors cannot set credential `status` to `VERIFIED`.
 - Estimate `ACCEPTED` / project `CONTRACTOR_SELECTED` happen only through `select_estimate`. Contractors cannot PATCH an estimate to `ACCEPTED` or rewrite money columns; `protect_estimate_row` allows those changes only from submit/withdraw/select/recompute.
-- Slot table PK + `SELECT … FOR UPDATE` on the project row cap participating contractors at 3.
+- Slot table PK + `SELECT … FOR UPDATE` on the project row cap participating contractors at 3. Live **offers** are a separate cap of 3 minus participating; `match_project` / `fill_project_opportunity_offers` / `rank_project_matches` stay internal (no `authenticated` grant). `pass_opportunity` is granted to signed-in contractors and backfills one unused eligible contractor.
 - Storage buckets `project-photos` and `contractor-docs` are private. Credential files are owner/admin; portfolio images of **approved** contractors may be read by signed-in users.
 
 `public.is_admin()` remains `SECURITY DEFINER`. New helpers (`current_contractor_profile_id`, `is_project_owner`, `contractor_has_open_opportunity`, `contractor_is_selected_on_project`) are also definer functions with `search_path = public`.

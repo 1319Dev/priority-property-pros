@@ -3,14 +3,22 @@ import type { OpportunityStatus, ProjectConnectionStatus, ProjectStatus } from "
 export const CONNECT_SINGLE_STEP_COPY =
   "Tap Connect to take this job. You do not need a separate Participate step.";
 
+export const PASS_SKIP_LABEL = "Pass on this job";
+export const PASS_SKIP_TITLE = "Pass on this job?";
+export const PASS_SKIP_BODY =
+  "Passing removes this job from your list. Unpaid connection spots and this offer slot are freed for other pros — the next best-suited contractor can be invited. History is kept. Contact stays locked. This cannot be undone from here.";
+export const PASS_SKIP_CONFIRM = "Pass on this job";
+export const PASS_SKIP_CANCEL = "Keep this job";
+export const PASS_SKIP_TOAST = "You passed on this job";
+
 export const END_JOB_BUTTON_LABEL = "End this job";
 export const END_JOB_TITLE = "End this job?";
 export const END_JOB_CONFIRM = "End this job";
 export const END_JOB_CANCEL = "Keep this job";
-export const END_JOB_BODY_UNPAID =
-  "This removes the job from your active list. Unpaid connection spots are freed for other pros. History is kept. Contact stays locked. This cannot be undone from here.";
+export const END_JOB_BODY_UNPAID = PASS_SKIP_BODY;
 export const END_JOB_BODY_PAID =
   "This marks your connection complete and removes the job from your active list. A paid $4.99 spot stays used. Contact stays available only if a paid or admin entitlement already exists. This cannot be undone from here.";
+export const END_JOB_TOAST = "Job ended. History was kept.";
 
 export const ACTIVE_BOOKING_STATUSES = [
   "PENDING",
@@ -69,6 +77,16 @@ export async function runContractorConnect(input: {
   await input.requestConnection();
 }
 
+export function canPassOpportunity(input: {
+  opportunityStatus: OpportunityStatus;
+  projectStatus?: ProjectStatus | null;
+  connectionStatus?: ProjectConnectionStatus | null;
+}): boolean {
+  if (input.projectStatus === "CANCELLED") return false;
+  if (input.connectionStatus === "PAID" || input.connectionStatus === "COMPLETED") return false;
+  return opportunityAllowsConnectCta(input.opportunityStatus);
+}
+
 export function canContractorEndJob(input: {
   opportunityStatus: OpportunityStatus;
   projectStatus?: ProjectStatus | null;
@@ -80,9 +98,36 @@ export function canContractorEndJob(input: {
   return opportunityAllowsConnectCta(input.opportunityStatus);
 }
 
+/** Unpaid skip/decline uses Pass. Paid complete keeps End this job. */
+export function contractorDeclineUsesPassCopy(
+  connectionStatus?: ProjectConnectionStatus | null,
+): boolean {
+  return connectionStatus !== "PAID" && connectionStatus !== "COMPLETED";
+}
+
+export function declineJobButtonLabel(connectionStatus?: ProjectConnectionStatus | null): string {
+  return contractorDeclineUsesPassCopy(connectionStatus) ? PASS_SKIP_LABEL : END_JOB_BUTTON_LABEL;
+}
+
+export function declineJobTitle(connectionStatus?: ProjectConnectionStatus | null): string {
+  return contractorDeclineUsesPassCopy(connectionStatus) ? PASS_SKIP_TITLE : END_JOB_TITLE;
+}
+
+export function declineJobConfirmLabel(connectionStatus?: ProjectConnectionStatus | null): string {
+  return contractorDeclineUsesPassCopy(connectionStatus) ? PASS_SKIP_CONFIRM : END_JOB_CONFIRM;
+}
+
+export function declineJobCancelLabel(connectionStatus?: ProjectConnectionStatus | null): string {
+  return contractorDeclineUsesPassCopy(connectionStatus) ? PASS_SKIP_CANCEL : END_JOB_CANCEL;
+}
+
+export function declineJobToast(connectionStatus?: ProjectConnectionStatus | null): string {
+  return contractorDeclineUsesPassCopy(connectionStatus) ? PASS_SKIP_TOAST : END_JOB_TOAST;
+}
+
 export function endJobConfirmBody(connectionStatus?: ProjectConnectionStatus | null): string {
   if (connectionStatus === "PAID" || connectionStatus === "COMPLETED") return END_JOB_BODY_PAID;
-  return END_JOB_BODY_UNPAID;
+  return PASS_SKIP_BODY;
 }
 
 export function contractorEndJobPlan(input: {

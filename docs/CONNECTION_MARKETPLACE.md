@@ -40,7 +40,7 @@ At most **3 occupying** connections per project (`connection_slots`, `SELECT …
 
 **Connect** is the only primary step. Participate/accept is optional server-side: matched `AVAILABLE` or `ACCEPTED` opportunities may reserve or request a connection. The UI no longer asks contractors to tap Participate before Connect. Connect still never unlocks contact by itself.
 
-**End this job** (`contractor_end_job`) is a soft-end:
+**Pass on this job** (`contractor_end_job`) is the contractor skip/leave action. The UI says Pass for unpaid / open jobs (not “End this job”). Passing marks the opportunity `PASSED`, frees unpaid connection spots, and backfills the next ranked contractor.
 
 | Starting state | Opportunity | Connection | Slots |
 | --- | --- | --- | --- |
@@ -49,7 +49,7 @@ At most **3 occupying** connections per project (`connection_slots`, `SELECT …
 | Paid, not hired | `CLOSED` | `COMPLETED` | paid connection slot stays occupied |
 | Hired booking | refused unless already `PAID`, then `COMPLETED` only | hire kept | not freed |
 
-Hard delete is blocked by purchase-history triggers. `#14` is never granted by End or Connect.
+Hard delete is blocked by purchase-history triggers. `#14` is never granted by Pass, End, or Connect. Paid-complete still uses **End this job** copy because that is finishing a paid connection, not skipping.
 
 ## Estimates (kept)
 

@@ -66,7 +66,8 @@ import { ContractorConnectionCta } from "../../../components/marketplace/Contrac
 import { EndJobDialog } from "../../../components/marketplace/EndJobDialog";
 import {
   CONNECT_SINGLE_STEP_COPY,
-  END_JOB_BUTTON_LABEL,
+  declineJobButtonLabel,
+  declineJobToast,
   canContractorEndJob,
   opportunityAllowsConnectCta,
   runContractorConnect,
@@ -388,31 +389,40 @@ export function OpportunitiesPage() {
   const { user } = useAuth();
   const [rows, setRows] = useState<OpportunityRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [passId, setPassId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const toast = useToast();
 
-  useEffect(() => {
-    if (!user) return;
-    void fetchContractorProfileByUser(user.id)
+  function reload() {
+    if (!user) return Promise.resolve();
+    return fetchContractorProfileByUser(user.id)
       .then((profile) => {
         if (!profile) throw new Error("Contractor profile missing.");
         return fetchMyOpportunities(profile.id);
       })
-      .then(setRows)
-      .catch((err: Error) => setError(err.message));
+      .then(setRows);
+  }
+
+  useEffect(() => {
+    if (!user) return;
+    void reload().catch((err: Error) => setError(err.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const active = rows.filter((row) => row.status === "AVAILABLE" || row.status === "ACCEPTED");
   const history = rows.filter((row) => row.status !== "AVAILABLE" && row.status !== "ACCEPTED");
   const live = active.filter((row) => row.projects?.status !== "CANCELLED");
-  const cancelledParticipated = active.filter((row) => row.projects?.status === "CANCELLED").concat(
-    history.filter((row) => row.projects?.status === "CANCELLED" || row.status === "CLOSED"),
-  );
+  const historyRows = history
+    .filter((row) => row.projects?.status === "CANCELLED" || row.status === "CLOSED" || row.status === "PASSED")
+    .slice(0, 8);
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Jobs</h1>
       <p className="text-sm text-ink-700">
         Approximate location only. Exact street stays hidden until a paid $4.99 connection entitlement (payments coming
-        soon) or an admin unlock. Tap Connect to take a job — one step. End a job you do not want or have finished.
+        soon) or an admin unlock. Tap Connect to take a job — one step. Pass on this job if it is not a fit; that
+        opening can go to the next pro.
       </p>
       <FormError message={error} />
       {live.length === 0 ? (
@@ -425,6 +435,10 @@ export function OpportunitiesPage() {
               status: row.status,
               projectStatus: row.projects?.status ?? "POSTED",
             });
+            const showPass = canContractorEndJob({
+              opportunityStatus: row.status,
+              projectStatus: row.projects?.status,
+            });
             return (
               <li key={row.id} className="rounded-3xl border border-forest-800/10 px-5 py-4">
                 <HumanStatus label={OPPORTUNITY_STATUS_LABELS[row.status]} />
@@ -432,29 +446,66 @@ export function OpportunitiesPage() {
                 <p className="text-sm text-ink-500">
                   {[row.projects?.city, row.projects?.state, row.projects?.zip_code].filter(Boolean).join(", ")}
                 </p>
-                <Link to={actions[0]?.to ?? `/app/pro/opportunities/${row.id}`} className="mt-3 inline-flex min-h-12 items-center font-semibold text-forest-800">
-                  {actions[0]?.label ?? "View opportunity"}
-                </Link>
+                <div className="mt-3 flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <Link to={actions[0]?.to ?? `/app/pro/opportunities/${row.id}`} className="inline-flex min-h-12 items-center font-semibold text-forest-800">
+                    {actions[0]?.label ?? "View opportunity"}
+                  </Link>
+                  {showPass ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      disabled={busy}
+                      onClick={() => setPassId(row.id)}
+                    >
+                      {declineJobButtonLabel(null)}
+                    </Button>
+                  ) : null}
+                </div>
               </li>
             );
           })}
         </ul>
       )}
-      {cancelledParticipated.length > 0 ? (
+      {historyRows.length > 0 ? (
         <section className="space-y-3">
           <h2 className="font-display text-2xl text-forest-800">History</h2>
           <ul className="space-y-3">
-            {cancelledParticipated.slice(0, 8).map((row) => (
+            {historyRows.map((row) => (
               <li key={row.id}>
                 <Link to={`/app/pro/opportunities/${row.id}`} className="block rounded-3xl border border-forest-800/10 px-5 py-4">
                   <HumanStatus label={row.projects?.status === "CANCELLED" ? "Cancelled" : OPPORTUNITY_STATUS_LABELS[row.status]} />
                   <p className="mt-2 font-semibold text-forest-800">{row.projects?.title ?? "Project"}</p>
+                  {row.status === "PASSED" ? (
+                    <p className="mt-1 text-sm text-ink-500">You passed on this job. It is no longer actionable for you.</p>
+                  ) : null}
                 </Link>
               </li>
             ))}
           </ul>
         </section>
       ) : null}
+      <EndJobDialog
+        open={Boolean(passId)}
+        busy={busy}
+        connectionStatus={null}
+        onClose={() => {
+          if (!busy) setPassId(null);
+        }}
+        onConfirm={() => {
+          if (!passId) return;
+          setBusy(true);
+          void endContractorJob(passId)
+            .then(() => {
+              toast.push(declineJobToast(null));
+              setPassId(null);
+              return reload();
+            })
+            .catch((err: Error) => setError(err.message))
+            .finally(() => setBusy(false));
+        }}
+      />
     </div>
   );
 }
@@ -529,7 +580,7 @@ export function OpportunityDetailPage() {
     reservedUntil: myConnection?.reserved_until ?? null,
   });
   const showConnectionCta = !cancelled && opportunityAllowsConnectCta(row.status);
-  const showEndJob = canContractorEndJob({
+  const showDecline = canContractorEndJob({
     opportunityStatus: row.status,
     projectStatus: project?.status,
     connectionStatus: myConnection?.status ?? null,
@@ -542,6 +593,9 @@ export function OpportunityDetailPage() {
       <FormError message={error} />
       {cancelled ? (
         <StatusBanner tone="warning" title="This project was cancelled" body="It is no longer an active opportunity. Your estimate history is kept if you already participated." />
+      ) : null}
+      {row.status === "PASSED" && !cancelled ? (
+        <StatusBanner tone="info" title="You passed on this job" body="It is no longer an open opportunity for you. You cannot reclaim it." />
       ) : null}
       {notices.map((notice) => (
         <StatusBanner key={notice.id} title={notice.title} body={notice.body} tone={notice.kind.includes("SCOPE") ? "warning" : "info"} />
@@ -601,7 +655,7 @@ export function OpportunityDetailPage() {
       {showConnectionCta ? (
         <ContractorConnectionCta state={connectionUiState} busy={busy} onConnect={() => setConnectOpen(true)} />
       ) : null}
-      {showEndJob ? (
+      {showDecline ? (
         <Button
           type="button"
           variant="outline"
@@ -609,7 +663,7 @@ export function OpportunityDetailPage() {
           disabled={busy}
           onClick={() => setEndOpen(true)}
         >
-          {END_JOB_BUTTON_LABEL}
+          {declineJobButtonLabel(myConnection?.status ?? null)}
         </Button>
       ) : null}
       {row.status === "ACCEPTED" && !cancelled ? (
@@ -695,7 +749,7 @@ export function OpportunityDetailPage() {
           setBusy(true);
           void endContractorJob(row.id)
             .then(() => {
-              toast.push("Job ended. History was kept.");
+              toast.push(declineJobToast(myConnection?.status ?? null));
               setEndOpen(false);
               return navigate("/app/pro/opportunities");
             })

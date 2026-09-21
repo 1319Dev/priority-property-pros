@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { contractorEligibleForProject, haversineMiles, type MatchingContractor } from "./matching";
+import {
+  compareOfferRank,
+  contractorEligibleForProject,
+  contractorOfferFairnessPenalty,
+  effectiveOfferScore,
+  haversineMiles,
+  nextOfferContractorIds,
+  OFFER_FAIRNESS_MAX_PENALTY,
+  openOfferSlotsNeeded,
+  projectContractorFitScore,
+  rankEligibleContractorsForOffers,
+  type MatchingContractor,
+  type OfferLoad,
+} from "./matching";
 
 function pro(partial: Partial<MatchingContractor> = {}): MatchingContractor {
   return {
@@ -125,5 +138,95 @@ describe("matching eligibility", () => {
         requires_verified_credential: true,
       }).ok,
     ).toBe(false);
+  });
+});
+
+describe("offer queue ranking and fairness", () => {
+  it("scores ZIP matches above radius-only and never ranks ineligible contractors", () => {
+    const zipPro = pro({ id: "zip", years_experience: 4 });
+    const radiusPro = pro({
+      id: "radius",
+      years_experience: 4,
+      areas: [
+        {
+          mode: "RADIUS",
+          center_zip: "30318",
+          center_lat: 33.79,
+          center_lng: -84.44,
+          radius_miles: 20,
+          zip_codes: [],
+        },
+      ],
+    });
+    const farProject = { ...project, zip_code: "99999", lat: 33.8, lng: -84.45 };
+    expect(projectContractorFitScore(zipPro, project)).toBeGreaterThan(
+      projectContractorFitScore(radiusPro, farProject),
+    );
+    expect(projectContractorFitScore(pro({ approval_status: "PENDING" }), project)).toBe(0);
+  });
+
+  it("caps the fairness penalty so a much better fit still ranks first", () => {
+    const busy: OfferLoad = {
+      sameCategoryRecentOffers: 8,
+      otherRecentOffers: 8,
+      openAvailableCount: 3,
+      lastOfferedAt: "2026-09-20T00:00:00.000Z",
+    };
+    const idle: OfferLoad = {
+      sameCategoryRecentOffers: 0,
+      otherRecentOffers: 0,
+      openAvailableCount: 0,
+      lastOfferedAt: null,
+    };
+    expect(contractorOfferFairnessPenalty(busy)).toBe(OFFER_FAIRNESS_MAX_PENALTY);
+    expect(effectiveOfferScore(90, busy)).toBeGreaterThan(effectiveOfferScore(50, idle));
+  });
+
+  it("rotates similarly suited contractors toward whoever has had fewer recent offers", () => {
+    const load = {
+      star: {
+        sameCategoryRecentOffers: 3,
+        otherRecentOffers: 0,
+        openAvailableCount: 1,
+        lastOfferedAt: "2026-09-20T00:00:00.000Z",
+      },
+      rest: {
+        sameCategoryRecentOffers: 0,
+        otherRecentOffers: 0,
+        openAvailableCount: 0,
+        lastOfferedAt: null,
+      },
+    };
+    const ranked = rankEligibleContractorsForOffers(
+      project,
+      [pro({ id: "star", years_experience: 5 }), pro({ id: "rest", years_experience: 5 })],
+      load,
+    );
+    expect(ranked[0]).toBe("rest");
+    expect(ranked[1]).toBe("star");
+  });
+
+  it("offers only the next unused contractors up to remaining live slots", () => {
+    expect(openOfferSlotsNeeded(0, 0)).toBe(3);
+    expect(openOfferSlotsNeeded(2, 1)).toBe(0);
+    expect(openOfferSlotsNeeded(1, 0)).toBe(2);
+    expect(nextOfferContractorIds(["a", "b", "c", "d"], ["a", "c"], 1)).toEqual(["b"]);
+    expect(nextOfferContractorIds(["a", "b", "c", "d"], [], 3)).toEqual(["a", "b", "c"]);
+    expect(nextOfferContractorIds(["a", "b"], ["a", "b"], 1)).toEqual([]);
+  });
+
+  it("tie-breaks never-offered before older offers, then contractor id", () => {
+    expect(
+      compareOfferRank(
+        { effectiveScore: 80, lastOfferedAt: null, contractorId: "b" },
+        { effectiveScore: 80, lastOfferedAt: "2026-01-01T00:00:00.000Z", contractorId: "a" },
+      ),
+    ).toBeLessThan(0);
+    expect(
+      compareOfferRank(
+        { effectiveScore: 80, lastOfferedAt: null, contractorId: "a" },
+        { effectiveScore: 80, lastOfferedAt: null, contractorId: "b" },
+      ),
+    ).toBeLessThan(0);
   });
 });
