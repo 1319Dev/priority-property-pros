@@ -1,3 +1,4 @@
+import { SUPPORT_EMAIL } from "./brand";
 import {
   CONNECTION_FEE,
   HOMEPAGE_SIGNUP_HEADLINE,
@@ -48,6 +49,6 @@ export const FAQ_ITEMS = [
   {
     question: "How do I contact PPP?",
     answer:
-      "Use the Contact page. That is the right place for marketplace questions — not for paying a contractor or sending job photos.",
+      `Email ${SUPPORT_EMAIL} or use the Contact page. That is the right place for marketplace questions — not for paying a contractor or sending job photos.`,
   },
 ] as const;

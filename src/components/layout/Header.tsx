@@ -3,12 +3,13 @@ import { Logo } from "../brand/Logo";
 import { ButtonLink } from "../ui/Button";
 import { Container } from "../ui/Container";
 import { CUSTOMER_CTA } from "../../data/brand";
+import { REVIEWED_PROS_NAV_LABEL, REVIEWED_PROS_PATH } from "../../lib/marketplace/reviewedContractors";
 import { useAuth } from "../../lib/auth/useAuth";
 import { AccountMenu } from "../account/AccountMenu";
 import { Skeleton } from "../ui/Skeleton";
 
 const links = [
-  { to: "/find-a-pro", label: "Find a Pro" },
+  { to: REVIEWED_PROS_PATH, label: REVIEWED_PROS_NAV_LABEL },
   { to: "/how-it-works", label: "How It Works" },
   { to: "/pricing", label: "Pricing" },
   { to: "/become-a-pro", label: "Become a Pro" },

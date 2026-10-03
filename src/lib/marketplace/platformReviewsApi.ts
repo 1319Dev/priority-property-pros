@@ -1,6 +1,7 @@
 import { getSupabaseClient } from "../supabase/client";
 import {
   canInsertPlatformReview,
+  isPublishablePlatformReview,
   normalizePlatformReviewDraft,
   validatePlatformReviewDraft,
   type PlatformReview,
@@ -29,7 +30,7 @@ export async function fetchApprovedPlatformReviews(limit = 12): Promise<PublicPl
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw new Error(asError(error, "Could not load reviews."));
-  return (data ?? []) as PublicPlatformReview[];
+  return ((data ?? []) as PublicPlatformReview[]).filter(isPublishablePlatformReview);
 }
 
 export async function fetchOwnPlatformReview(userId: string): Promise<PlatformReview | null> {

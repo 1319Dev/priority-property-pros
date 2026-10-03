@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../lib/auth/useAuth";
 import { postLoginPath } from "../../lib/auth/roles";
+import { REVIEWED_PROS_PATH } from "../../lib/marketplace/reviewedContractors";
 
 export function BottomNav() {
   const { loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status } = useAuth();
@@ -11,7 +12,7 @@ export function BottomNav() {
 
   const items = [
     { to: "/", label: "Home", icon: HomeIcon, end: true },
-    { to: "/find-a-pro", label: "Find", icon: FindIcon, end: false },
+    { to: REVIEWED_PROS_PATH, label: "Reviewed", icon: FindIcon, end: false },
     { to: "/post-project", label: "Post", icon: PostIcon, end: false, prominent: true },
     { to: "/become-a-pro", label: "Pros", icon: ProIcon, end: false },
     { to: accountTo, label: loading ? "…" : accountLabel, icon: SignIcon, end: false },
