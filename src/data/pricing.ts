@@ -38,6 +38,10 @@ export const SIGNUP_TERMS_ACCEPTANCE =
 
 export const PRICING_PAGE_TITLE = "Simple pricing. No percentage of your job.";
 
+/** Job cost, stated without restating the account or connection fees. */
+export const JOB_PAYMENT_PLAIN =
+  "The customer pays the contractor directly for any job cost. Priority Property Pros does not collect that payment or take a cut of the work.";
+
 export const PRICING_PRIMARY =
   "See the opportunity first. Pay $4.99 only when you choose to connect.";
 
@@ -108,6 +112,10 @@ export const PRICING_FAQ = [
     question: "What do contractors pay?",
     answer:
       "After the one-time $9.99 account activation, contractors pay $0/month and browse eligible opportunities. The $4.99 Connection Fee is paid only when a contractor chooses to connect. There is no bid fee and no percentage of the job.",
+  },
+  {
+    question: "Who pays for the job?",
+    answer: JOB_PAYMENT_PLAIN,
   },
   {
     question: "Does the Connection Fee guarantee a hire?",

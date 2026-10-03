@@ -9,6 +9,7 @@ import { ToastProvider } from "./components/ui/Toast";
 import {
   CONNECTION_FEE_PER_LABEL,
   HOMEOWNER_PRICING_SUMMARY,
+  JOB_PAYMENT_PLAIN,
   PRICING_HOMEPAGE_LINE,
   PRICING_PAGE_TITLE,
   PRICING_PRIMARY,
@@ -177,6 +178,7 @@ describe("Phase 3 marketplace surfaces", () => {
   it("describes live posting with a max of three contractors on How it works", () => {
     renderApp("/how-it-works");
     expect(screen.getByText(/up to three local independents/i)).toBeInTheDocument();
+    expect(screen.getAllByText(JOB_PAYMENT_PLAIN).length).toBeGreaterThan(0);
     expect(screen.getByAltText(/craftsman bungalow with a deep front porch/i)).toBeInTheDocument();
     expect(screen.queryByAltText(/finished suburban home/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/live posting is not on yet/i)).not.toBeInTheDocument();
@@ -225,6 +227,7 @@ describe("Public marketplace pricing", () => {
     expect(container.textContent).not.toMatch(/free to join|free signup|accounts are free|pay when you win|no lead fees/i);
     expect(container.textContent).toMatch(/non-refundable/i);
     expect(screen.getByText(/are the \$9\.99 activation fee and \$4\.99 connection fee refundable/i)).toBeInTheDocument();
+    expect(screen.getAllByText(JOB_PAYMENT_PLAIN).length).toBeGreaterThan(0);
   });
 
   it("mentions the one-time account activation on signup and for-pros surfaces", () => {

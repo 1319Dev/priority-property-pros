@@ -2,6 +2,7 @@ import { ButtonLink } from "../../components/ui/Button";
 import { Container } from "../../components/ui/Container";
 import {
   HOMEPAGE_SIGNUP_SUPPORTING,
+  JOB_PAYMENT_PLAIN,
   PRICING_HOMEPAGE_LINE,
   PRICING_PATH,
   SEE_PRICING_LABEL,
@@ -23,6 +24,7 @@ export function SimplePricing() {
             <p className="mt-3 text-sm leading-relaxed text-cream-200 sm:text-base">
               {HOMEPAGE_SIGNUP_SUPPORTING} {SIGNUP_FEE_NOT_MONTHLY}
             </p>
+            <p className="mt-3 text-sm font-semibold leading-relaxed text-cream-50 sm:text-base">{JOB_PAYMENT_PLAIN}</p>
           </div>
           <ButtonLink to={PRICING_PATH} variant="gold" size="lg" className="shrink-0 self-start sm:self-center">
             {SEE_PRICING_LABEL}
