@@ -1,6 +1,8 @@
 import type { ApprovalStatus, AccountStatus } from "../auth/types";
 import { containsPreHireContact } from "./antiCircumvention";
 import { detectContactLeak } from "./contactLeak";
+import { countsTowardPublicRating } from "./contractorReviews";
+import { isSmokeTesterText } from "./publicReviewFilters";
 
 /** Public directory fields returned to anon. Keep in sync with list_public_directory_contractors. */
 export const PUBLIC_CONTRACTOR_DIRECTORY_FIELDS = [
@@ -97,6 +99,13 @@ export type PublicSafeReview = {
   rating: number;
   body: string;
   demo?: boolean;
+  category?: string | null;
+  createdAt?: string | null;
+  verified?: boolean;
+  homeownerDisplay?: string | null;
+  responseBody?: string | null;
+  responseCreatedAt?: string | null;
+  responseUpdatedAt?: string | null;
 };
 
 export type PublicContractorCard = {
@@ -366,11 +375,21 @@ export function toPublicSafePortfolioItem(input: {
   return item;
 }
 
-export function realPppReviewStats(reviews: Array<{ rating: number; demo?: boolean; verified?: boolean }>): {
+export function realPppReviewStats(
+  reviews: Array<{
+    rating: number;
+    demo?: boolean;
+    verified?: boolean;
+    reviewClass?: "VERIFIED_PPP_PROJECT" | "CUSTOMER_REVIEW" | null;
+    moderationStatus?: "PUBLISHED" | "HIDDEN" | "REMOVED" | null;
+    body?: string | null;
+    contractorId?: string | null;
+  }>,
+): {
   ratingAverage: number | null;
   ratingCount: number;
 } {
-  const real = reviews.filter((review) => !review.demo && review.verified !== false);
+  const real = reviews.filter((review) => countsTowardPublicRating(review));
   if (real.length === 0) return { ratingAverage: null, ratingCount: 0 };
   const sum = real.reduce((total, review) => total + review.rating, 0);
   return { ratingAverage: Math.round((sum / real.length) * 10) / 10, ratingCount: real.length };
@@ -383,19 +402,64 @@ export function toPublicSafeReview(input: {
   demo?: boolean;
   customerName?: string | null;
   bookingId?: string | null;
+  category?: string | null;
+  createdAt?: string | null;
+  verified?: boolean;
+  homeownerDisplay?: string | null;
+  responseBody?: string | null;
+  responseCreatedAt?: string | null;
+  responseUpdatedAt?: string | null;
+  moderationStatus?: "PUBLISHED" | "HIDDEN" | "REMOVED" | null;
+  reviewClass?: "VERIFIED_PPP_PROJECT" | "CUSTOMER_REVIEW" | null;
 }): PublicSafeReview | null {
   if (input.rating < 1 || input.rating > 5) return null;
+  if (input.moderationStatus && input.moderationStatus !== "PUBLISHED") return null;
+  if (input.reviewClass === "CUSTOMER_REVIEW") return null;
+  if (input.verified === false) return null;
+  if (isSmokeTesterText(input.body) || isSmokeTesterText(input.homeownerDisplay) || isSmokeTesterText(input.category)) {
+    return null;
+  }
   const raw = input.body?.trim().replace(/\s+/g, " ") ?? "";
   const body = raw && !publicTextLooksUnsafe(raw) ? (raw.length > 280 ? `${raw.slice(0, 277).trim()}…` : raw) : "Verified PPP review.";
+  const responseRaw = input.responseBody?.trim().replace(/\s+/g, " ") ?? "";
+  const responseBody =
+    responseRaw && !publicTextLooksUnsafe(responseRaw) && !isSmokeTesterText(responseRaw)
+      ? responseRaw.length > 280
+        ? `${responseRaw.slice(0, 277).trim()}…`
+        : responseRaw
+      : null;
+  const homeowner =
+    input.homeownerDisplay && !publicTextLooksUnsafe(input.homeownerDisplay) && !isSmokeTesterText(input.homeownerDisplay)
+      ? input.homeownerDisplay
+      : input.homeownerDisplay
+        ? "Homeowner"
+        : null;
   const review: PublicSafeReview = {
     id: input.id,
     rating: input.rating,
     body: input.demo ? `${body} (Example review — not a real customer.)` : body,
     demo: input.demo,
+    category: input.category?.trim() || null,
+    createdAt: input.createdAt ?? null,
+    verified: input.verified,
+    homeownerDisplay: homeowner,
+    responseBody,
+    responseCreatedAt: responseBody ? input.responseCreatedAt ?? null : null,
+    responseUpdatedAt: responseBody ? input.responseUpdatedAt ?? null : null,
   };
   const blob = JSON.stringify(review);
-  if (input.customerName && blob.includes(input.customerName)) return { ...review, body: input.demo ? "Example review — not a real customer." : "Verified PPP review." };
-  if (input.bookingId && blob.includes(input.bookingId)) return { ...review, body: input.demo ? "Example review — not a real customer." : "Verified PPP review." };
+  const leaksIdentity =
+    (input.customerName && blob.includes(input.customerName)) || (input.bookingId && blob.includes(input.bookingId));
+  if (leaksIdentity) {
+    return {
+      ...review,
+      body: input.demo ? "Example review — not a real customer." : "Verified PPP review.",
+      homeownerDisplay: "Homeowner",
+      responseBody: null,
+      responseCreatedAt: null,
+      responseUpdatedAt: null,
+    };
+  }
   return review;
 }
 

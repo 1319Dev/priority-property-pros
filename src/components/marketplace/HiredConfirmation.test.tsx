@@ -98,14 +98,15 @@ describe("profile review CTA", () => {
         bookingStatus="PENDING"
         mutuallyHired={false}
         reviews={[]}
-        rating="5"
+        rating={5}
         body=""
+        contractorLabel="Approved Handyman Pro"
         onRatingChange={() => undefined}
         onBodyChange={() => undefined}
         onSubmit={() => undefined}
       />,
     );
-    expect(screen.queryByRole("heading", { name: /review this pro/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /how did your project go/i })).not.toBeInTheDocument();
 
     rerender(
       <ProfileReviewForm
@@ -113,15 +114,18 @@ describe("profile review CTA", () => {
         bookingStatus="PENDING"
         mutuallyHired
         reviews={[]}
-        rating="5"
+        rating={5}
         body=""
+        contractorLabel="Approved Handyman Pro"
         onRatingChange={() => undefined}
         onBodyChange={() => undefined}
         onSubmit={() => undefined}
       />,
     );
-    expect(screen.getByRole("heading", { name: /review this pro/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /how did your project go/i })).toBeInTheDocument();
+    expect(screen.getByText("Review Approved Handyman Pro.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /submit review/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /5 stars/i })).toBeInTheDocument();
 
     rerender(
       <ProfileReviewForm
@@ -129,7 +133,7 @@ describe("profile review CTA", () => {
         bookingStatus="PENDING"
         mutuallyHired
         reviews={[review("CUSTOMER")]}
-        rating="5"
+        rating={5}
         body=""
         onRatingChange={() => undefined}
         onBodyChange={() => undefined}
