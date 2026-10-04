@@ -36,6 +36,8 @@ describe("opportunity offer queue SQL", () => {
   const fairness = functionBody(sql, "contractor_offer_fairness_penalty");
   const endJob = functionBody(sql, "contractor_end_job");
   const reserve = functionBody(sql, "reserve_connection_checkout");
+  const postProject = functionBody(sql, "post_project");
+  const rematch = functionBody(sql, "call_match_project_for_contractor");
 
   it("does not enable Stripe or flip live flags", () => {
     expect(PAYMENTS_LIVE).toBe(false);
@@ -76,6 +78,35 @@ describe("opportunity offer queue SQL", () => {
     expect(rank).toMatch(/last_offered_at ASC NULLS FIRST/);
     expect(rank).toMatch(/contractor_profile_id ASC/);
     expect(latest).toMatch(/ADD COLUMN IF NOT EXISTS rank_order integer NOT NULL DEFAULT 0/);
+  });
+
+  it("calls the existing match_project from a successful post", () => {
+    expect(postProject).toMatch(/matched := public\.match_project\(p_project_id\)/);
+    expect(postProject).not.toMatch(/INSERT INTO public\.opportunities/);
+    expect(postProject).not.toMatch(/INSERT INTO public\.matches/);
+  });
+
+  it("re-runs match_project when eligibility inputs change, without a second matcher", () => {
+    const eligibilityMigration = readFileSync(
+      path.join(repoRoot, "supabase/migrations", "20261004232745_rematch_open_projects_on_eligibility_change.sql"),
+      "utf8",
+    );
+    expect(rematch).toMatch(/PERFORM public\.match_project\(proj_id\)/);
+    expect(rematch).not.toMatch(/INSERT INTO public\.opportunities/);
+    expect(rematch).not.toMatch(/INSERT INTO public\.matches/);
+    expect(rematch).toMatch(/contractor_eligible_for_project/);
+    expect(rematch).toMatch(/signup_fee_is_satisfied/);
+    expect(eligibilityMigration).toMatch(/ppp_rpc_is\('match_project'\)/);
+    expect(eligibilityMigration).toMatch(/contractor_service_areas_match_projects/);
+    expect(eligibilityMigration).toMatch(
+      /REVOKE ALL ON FUNCTION public\.match_project\(uuid\) FROM PUBLIC, anon, authenticated/,
+    );
+    expect(eligibilityMigration).toMatch(
+      /REVOKE ALL ON FUNCTION public\.call_match_project_for_contractor\(uuid\) FROM PUBLIC, anon, authenticated/,
+    );
+    expect(eligibilityMigration).not.toMatch(/payments_live',\s*1/);
+    expect(eligibilityMigration).not.toMatch(/charges_live',\s*1/);
+    expect(eligibilityMigration).not.toMatch(/signup_fee_enabled',\s*1/);
   });
 
   it("keeps match_project internal and pass_opportunity authenticated-only", () => {
