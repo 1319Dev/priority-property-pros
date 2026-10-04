@@ -14,7 +14,7 @@ import { loadReviewedContractor, type ReviewedContractorCard } from "../lib/mark
 import { isSupabaseConfigured } from "../lib/supabase/config";
 
 export function FindAProPage() {
-  const { cards, error, loading } = useReviewedContractors();
+  const { cards, failed, loading, retry } = useReviewedContractors();
 
   return (
     <section className="py-8 sm:py-12">
@@ -36,7 +36,7 @@ export function FindAProPage() {
           </ButtonLink>
         </div>
         <div className="mt-10">
-          <ReviewedContractorsList cards={cards} error={error} loading={loading} />
+          <ReviewedContractorsList cards={cards} failed={failed} loading={loading} onRetry={retry} />
         </div>
       </Container>
     </section>
@@ -65,7 +65,10 @@ export function PublicContractorPage() {
         setAbout(result?.about ?? null);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Could not load this review.");
+        if (!cancelled) {
+          console.warn("Reviewed contractor could not be loaded", err);
+          setError("This review could not be loaded. You can try again in a moment.");
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

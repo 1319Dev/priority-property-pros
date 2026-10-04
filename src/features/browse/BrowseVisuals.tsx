@@ -61,7 +61,7 @@ export function BrowseIllustration({ kind, className = "" }: { kind: Illustratio
 }
 
 export function HomeBrowsePreview() {
-  const { cards, error, loading } = useReviewedContractors();
+  const { cards, failed, loading, retry } = useReviewedContractors();
 
   return (
     <section className="border-y border-forest-800/10 bg-cream-100/70 py-12" aria-labelledby="browse-preview-heading">
@@ -73,7 +73,7 @@ export function HomeBrowsePreview() {
           </h2>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-700">{REVIEWED_PROS_INTRO}</p>
           <div className="mt-6">
-            <ReviewedContractorsList cards={cards} error={error} loading={loading} compactEmpty />
+            <ReviewedContractorsList cards={cards} failed={failed} loading={loading} onRetry={retry} compactEmpty />
           </div>
         </div>
         <MarketingPhotoFrame

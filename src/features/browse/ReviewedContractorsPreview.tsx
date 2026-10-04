@@ -57,24 +57,33 @@ export function ReviewedContractorCardView({ card }: { card: ReviewedContractorC
 
 export function ReviewedContractorsList({
   cards,
-  error,
+  failed = false,
   loading,
   compactEmpty = false,
+  onRetry,
 }: {
   cards: ReviewedContractorCard[];
-  error: string | null;
+  failed?: boolean;
   loading: boolean;
   compactEmpty?: boolean;
+  onRetry?: () => void;
 }) {
+  const showEmpty = !loading && cards.length === 0;
   return (
     <div>
       {loading ? <p className="text-sm text-ink-700">Loading reviewed contractors…</p> : null}
-      {error ? (
-        <p className="text-sm text-danger-600">
-          {error} Sample contractors are not shown in their place.
+      {showEmpty ? <ReviewedContractorsEmpty compact={compactEmpty} /> : null}
+      {showEmpty && failed && onRetry ? (
+        <p className="mt-3">
+          <button
+            type="button"
+            onClick={onRetry}
+            className="min-h-11 inline-flex items-center text-sm font-semibold text-forest-800 underline"
+          >
+            Try again
+          </button>
         </p>
       ) : null}
-      {!loading && !error && cards.length === 0 ? <ReviewedContractorsEmpty compact={compactEmpty} /> : null}
       {cards.length > 0 ? (
         <ul className="space-y-3">
           {cards.map((card) => (

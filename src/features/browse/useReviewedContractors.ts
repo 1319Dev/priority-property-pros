@@ -1,32 +1,50 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { loadReviewedContractors, type ReviewedContractorCard } from "../../lib/marketplace/reviewedContractorsApi";
 import { isSupabaseConfigured } from "../../lib/supabase/config";
 
 export function useReviewedContractors() {
   const configured = isSupabaseConfigured();
   const [cards, setCards] = useState<ReviewedContractorCard[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(configured);
+  const generation = useRef(0);
 
-  useEffect(() => {
-    if (!configured) return;
-    let cancelled = false;
+  const retry = useCallback(() => {
+    if (!configured) {
+      setLoading(false);
+      setFailed(false);
+      setCards([]);
+      return;
+    }
+
+    const generationId = ++generation.current;
+    setLoading(true);
+    setFailed(false);
+
     void loadReviewedContractors()
+      .catch(() => loadReviewedContractors())
       .then((rows) => {
-        if (!cancelled) setCards(rows);
+        if (generation.current !== generationId) return;
+        setCards(rows);
+        setFailed(false);
       })
       .catch((err: unknown) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Could not load reviewed contractors.");
-        }
+        if (generation.current !== generationId) return;
+        console.warn("Reviewed contractors could not be loaded", err);
+        setCards([]);
+        setFailed(true);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (generation.current === generationId) setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
   }, [configured]);
 
-  return { cards, error, loading };
+  useEffect(() => {
+    retry();
+    return () => {
+      generation.current += 1;
+    };
+  }, [retry]);
+
+  return { cards, failed, loading, retry };
 }
