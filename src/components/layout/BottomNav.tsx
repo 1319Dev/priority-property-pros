@@ -23,15 +23,15 @@ export function BottomNav() {
       aria-label="App"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-forest-800/10 bg-cream-50/95 pb-safe backdrop-blur-md lg:hidden"
     >
-      <ul className="mx-auto grid max-w-lg grid-cols-5 px-2 pt-1">
+      <ul className="mx-auto grid max-w-lg grid-cols-5 px-1 pt-1">
         {items.map((item) => (
-          <li key={item.label} className="flex justify-center">
+          <li key={item.label} className="flex min-w-0 justify-center">
             <NavLink
               to={item.to}
               end={item.end}
               aria-label={item.label}
               className={({ isActive }) =>
-                `flex min-h-12 min-w-12 flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1 text-[0.65rem] font-semibold ${
+                `flex min-h-12 w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-0.5 py-1 text-[0.62rem] font-semibold leading-tight ${
                   item.prominent
                     ? "text-forest-950"
                     : isActive
@@ -51,7 +51,7 @@ export function BottomNav() {
                   >
                     <item.icon active={isActive || Boolean(item.prominent)} />
                   </span>
-                  {item.label}
+                  <span className="max-w-full whitespace-nowrap">{item.label}</span>
                 </>
               )}
             </NavLink>

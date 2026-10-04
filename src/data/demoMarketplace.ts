@@ -81,11 +81,7 @@ export const DEMO_CONTRACTORS: DemoContractor[] = [
     yearsExperience: 11,
     ratingAverage: 4.8,
     ratingCount: 12,
-    badges: [
-      { kind: "APPROVED", label: "Approved Pro" },
-      { kind: "LICENSE", label: "License reviewed" },
-      { kind: "INSURANCE", label: "Insurance reviewed" },
-    ],
+    badges: [{ kind: "APPROVED", label: "Approved Pro" }],
     shortDescription: "Example independent fence work used to show a public pro card. Fictional — not a real business.",
     about: "EXAMPLE / DEMO PROFILE. This fictional fence specialist shows how a public card looks after approval. No real business name or contact is listed.",
     portfolio: [
@@ -114,10 +110,7 @@ export const DEMO_CONTRACTORS: DemoContractor[] = [
     yearsExperience: 8,
     ratingAverage: 4.6,
     ratingCount: 9,
-    badges: [
-      { kind: "APPROVED", label: "Approved Pro" },
-      { kind: "INSURANCE", label: "Insurance reviewed" },
-    ],
+    badges: [{ kind: "APPROVED", label: "Approved Pro" }],
     shortDescription: "Demo handyman profile so visitors can browse a sample card. Fictional — not a real contractor.",
     about: "EXAMPLE / DEMO PROFILE. Sample indoor-repair card used to show services, badges, and example reviews. Not a live contractor.",
     portfolio: [
@@ -146,10 +139,7 @@ export const DEMO_CONTRACTORS: DemoContractor[] = [
     yearsExperience: 6,
     ratingAverage: null,
     ratingCount: 0,
-    badges: [
-      { kind: "APPROVED", label: "Approved Pro" },
-      { kind: "OTHER", label: "Credential reviewed" },
-    ],
+    badges: [{ kind: "APPROVED", label: "Approved Pro" }],
     shortDescription: "Example outdoor-care card with no ratings yet, so empty ratings stay honest. Fictional.",
     about: "EXAMPLE / DEMO PROFILE. This example has zero PPP reviews so the directory can show New to Priority Property Pros instead of a made-up score.",
     portfolio: [

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { loadReviewedContractors, type ReviewedContractorCard } from "../../lib/marketplace/reviewedContractorsApi";
 import { isSupabaseConfigured } from "../../lib/supabase/config";
+import { PUBLIC_FETCH_TIMEOUT_MS, withTimeout } from "../../lib/withTimeout";
 
 export function useReviewedContractors() {
   const configured = isSupabaseConfigured();
@@ -21,8 +22,8 @@ export function useReviewedContractors() {
     setLoading(true);
     setFailed(false);
 
-    void loadReviewedContractors()
-      .catch(() => loadReviewedContractors())
+    void withTimeout(loadReviewedContractors(), PUBLIC_FETCH_TIMEOUT_MS)
+      .catch(() => withTimeout(loadReviewedContractors(), PUBLIC_FETCH_TIMEOUT_MS))
       .then((rows) => {
         if (generation.current !== generationId) return;
         setCards(rows);

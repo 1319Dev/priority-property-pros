@@ -10,7 +10,6 @@ import { PlatformReviewCard, ReviewsEmptyState } from "../reviews/ReviewCard";
 export function HomePlatformReviews() {
   const configured = isSupabaseConfigured();
   const [reviews, setReviews] = useState<PublicPlatformReview[]>([]);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!configured) return;
@@ -20,7 +19,10 @@ export function HomePlatformReviews() {
         if (!cancelled) setReviews(rows);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Could not load reviews.");
+        if (!cancelled) {
+          console.warn("Platform reviews could not be loaded", err);
+          setReviews([]);
+        }
       });
     return () => {
       cancelled = true;
@@ -38,7 +40,6 @@ export function HomePlatformReviews() {
         <h2 id="reviews-heading" className="sr-only">
           Platform reviews
         </h2>
-        {error ? <p className="mt-6 text-sm text-danger-600">{error}</p> : null}
         <div className="mt-8">
           {reviews.length === 0 ? (
             <ReviewsEmptyState compact />

@@ -37,6 +37,7 @@ import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import { CUSTOMER_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
 import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type EstimateItemKind, type EstimateStatus, type Project } from "../../../lib/marketplace/types";
 import { comparisonDisplayOrder } from "../../../lib/marketplace/flows";
+import { shownPublicBadgeLabels } from "../../../lib/marketplace/publicDirectory";
 import { planDeleteOrCancel } from "../../../lib/marketplace/lifecycle";
 import { canCustomerDeclineFrom, canCustomerSelectFrom, customerEstimateStatusLabel } from "../../../lib/marketplace/estimateLifecycle";
 import { HOMEOWNER_OFFER_QUEUE_COPY } from "../../../lib/marketplace/matching";
@@ -601,12 +602,12 @@ export function CompareEstimatesPage() {
                 {outOfDate ? "Needs a new estimate" : customerEstimateStatusLabel(status)}
               </p>
               <p className="text-sm text-ink-700">{contractor?.short_description || "Independent contractor"}</p>
-              {extras.badges.length > 0 ? (
+              {shownPublicBadgeLabels(extras.badges).length > 0 ? (
                 <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">
-                  {extras.badges.map((badge) => badge.label).join(" · ")}
+                  {shownPublicBadgeLabels(extras.badges).join(" · ")}
                 </p>
               ) : (
-                <p className="mt-1 text-xs text-ink-500">Verification badges appear only after PPP verifies credentials.</p>
+                <p className="mt-1 text-xs text-ink-500">License and insurance badges are not shown.</p>
               )}
               <p className="mt-1 text-xs text-ink-500">
                 Phone, email, and street stay hidden until a hire is entitled. Full business identity is shared after
@@ -752,10 +753,10 @@ export function CustomerEstimateDetailPage() {
       <h1 className="font-display text-4xl font-semibold text-forest-800">{contractor?.display_label || "Estimate"}</h1>
       <p className="text-sm text-ink-500">Opening this page marks the estimate viewed. Phone, email, and street stay hidden.</p>
       <FormError message={error} />
-      {badges.length > 0 ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">{badges.map((b) => b.label).join(" · ")}</p>
+      {shownPublicBadgeLabels(badges).length > 0 ? (
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">{shownPublicBadgeLabels(badges).join(" · ")}</p>
       ) : (
-        <p className="text-xs text-ink-500">Only PPP-verified badges are shown.</p>
+        <p className="text-xs text-ink-500">License and insurance badges are not shown.</p>
       )}
       <p className="text-lg font-semibold">{formatUsdFromCents(estimate.total_cents)}</p>
       <ul className="space-y-1 text-sm">
