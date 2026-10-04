@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
 import { ScrollToTop } from "./components/layout/ScrollToTop";
 import { RequireAdmin, RequireAuth, RequireRole } from "./lib/auth/guards";
@@ -59,9 +59,19 @@ import {
   AdminReviewsPage,
 } from "./pages/app/AdminPages";
 
+function StripTrailingSlash() {
+  const location = useLocation();
+  if (location.pathname.length > 1 && location.pathname.endsWith("/")) {
+    const pathname = location.pathname.replace(/\/+$/, "");
+    return <Navigate to={`${pathname}${location.search}${location.hash}`} replace />;
+  }
+  return null;
+}
+
 export default function App() {
   return (
     <>
+      <StripTrailingSlash />
       <ScrollToTop />
       <Routes>
       <Route element={<AppShell />}>

@@ -104,9 +104,9 @@ export function PricingPage() {
         </div>
         <p className="mt-4 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
         <p className="mt-2 text-xs leading-relaxed text-ink-500">
-          Legal note (attorney review required): PPP is a technology marketplace that facilitates connections. PPP
-          does not employ contractors, perform the work, guarantee hiring or workmanship, process project payments, or
-          take a percentage of project payment under this model. {PLATFORM_FEES_NON_REFUNDABLE}
+          PPP is a technology marketplace that facilitates connections. PPP does not employ contractors, perform the
+          work, guarantee hiring or workmanship, process project payments, or take a percentage of project payment
+          under this model. {PLATFORM_FEES_NON_REFUNDABLE}
         </p>
       </Container>
     </section>

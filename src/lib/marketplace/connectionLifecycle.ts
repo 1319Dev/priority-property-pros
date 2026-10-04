@@ -47,7 +47,7 @@ export const CONNECT_DOES_NOT_UNLOCK_COPY =
 export const CONNECTION_FEE_NO_GUARANTEE = CONNECTION_FEE_NO_HIRE_GUARANTEE;
 
 export const REFUND_CONCEPT_COPY =
-  `${CONNECTION_FEE_NO_HIRE_GUARANTEE} There is no refund if you are not hired, the customer chooses someone else, the customer cancels, or you change your mind. If a charge is taken but connection access is not granted, that is a technical failure for operator review — this app does not issue refunds. Legal copy requires attorney review.`;
+  `${CONNECTION_FEE_NO_HIRE_GUARANTEE} There is no refund if you are not hired, the customer chooses someone else, the customer cancels, or you change your mind. If a charge is taken but connection access is not granted, that is a technical failure for operator review — this app does not issue refunds.`;
 
 export function occupiesConnectionSlot(status: ProjectConnectionStatus): boolean {
   return CONNECTION_OCCUPYING_STATUSES.includes(status);

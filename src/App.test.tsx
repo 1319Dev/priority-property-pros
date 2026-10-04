@@ -253,10 +253,34 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
   it("does not put payment-setup or attorney-review banners in marketing chrome", () => {
     const home = renderApp("/");
     expect(home.container.textContent).not.toMatch(/online payment setup is coming soon/i);
-    expect(home.container.textContent).not.toMatch(/attorney review required/i);
+    expect(home.container.textContent).not.toMatch(/attorney review/i);
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(heading.className).toContain("break-words");
+    expect(heading.className).not.toContain("lg:text-6xl");
+    expect(heading.closest("section")?.className ?? "").not.toContain("overflow-x-hidden");
     home.unmount();
     renderApp("/become-a-pro");
     expect(screen.queryByText(/online payment setup is coming soon/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps fee and trust meaning without attorney-review notes", () => {
+    const pricing = renderApp("/pricing");
+    expect(pricing.container.textContent).not.toMatch(/attorney review/i);
+    expect(pricing.container.textContent).not.toMatch(/legal note/i);
+    expect(pricing.container.textContent).toMatch(/does not employ contractors/i);
+    expect(pricing.container.textContent).toMatch(/take a percentage of project payment/i);
+    expect(pricing.container.textContent).toMatch(/pays the contractor directly for any job cost/i);
+    pricing.unmount();
+    const trust = renderApp("/trust");
+    expect(trust.container.textContent).not.toMatch(/attorney review/i);
+    expect(trust.container.textContent).toMatch(/\$9\.99 account activation fee and the \$4\.99 Connection Fee are non-refundable/i);
+    expect(trust.container.textContent).toMatch(/pre-connection circumvention of contact sharing is prohibited/i);
+    expect(trust.container.textContent).toMatch(/does not currently verify licenses, insurance, or workmanship/i);
+  });
+
+  it("renders a public route when the address has a trailing slash", () => {
+    renderApp("/faq/");
+    expect(screen.getByRole("heading", { name: /questions about priority property pros/i })).toBeInTheDocument();
   });
 
   it("adds FAQ, Contact, and Reviews routes plus footer links", () => {

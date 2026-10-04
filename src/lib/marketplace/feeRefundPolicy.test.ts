@@ -59,6 +59,7 @@ describe("non-refundable platform fee policy", () => {
     expect(PLATFORM_FEES_NON_REFUNDABLE).toMatch(/\$4\.99/);
     expect(REFUND_CONCEPT_COPY).toMatch(/non-refundable/i);
     expect(REFUND_CONCEPT_COPY).toMatch(/this app does not issue refunds/i);
+    expect(REFUND_CONCEPT_COPY).not.toMatch(/attorney review/i);
   });
 
   it("does not enable live payment flags", () => {

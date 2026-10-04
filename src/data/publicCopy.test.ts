@@ -117,6 +117,15 @@ describe("public pricing copy", () => {
     expect(refundFaq?.answer).toMatch(/does not guarantee a hire/i);
   });
 
+  it("does not publish internal attorney-review notes", () => {
+    const hits: string[] = [];
+    for (const file of publicFacingFiles()) {
+      const text = readFileSync(file, "utf8");
+      if (/attorney review/i.test(text)) hits.push(path.relative(repoRoot, file));
+    }
+    expect(hits).toEqual([]);
+  });
+
   it("does not use outdated free-account language in public-facing application copy", () => {
     const hits: string[] = [];
     for (const file of publicFacingFiles()) {
