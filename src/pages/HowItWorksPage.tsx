@@ -3,7 +3,7 @@ import { ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
 import { CUSTOMER_CTA, CONTRACTOR_CTA } from "../data/brand";
 import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
-import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING } from "../data/pricing";
+import { JOB_PAYMENT_PLAIN } from "../data/pricing";
 
 const steps = [
   {
@@ -24,7 +24,7 @@ const steps = [
   {
     n: "04",
     title: "They do the work",
-    body: "The contractor performs the job. Project payment is between you and that pro. PPP does not take a percentage of the job.",
+    body: `The contractor performs the job. ${JOB_PAYMENT_PLAIN}`,
   },
 ];
 
@@ -44,8 +44,10 @@ export function HowItWorksPage() {
           The marketplace in four steps.
         </h1>
         <p className="mt-4 text-lg leading-relaxed text-ink-700">
-          {HOMEPAGE_SIGNUP_HEADLINE} {HOMEPAGE_SIGNUP_SUPPORTING}
+          Post the work, see who wants it, and hire the contractor you choose. Priority Property Pros is the marketplace,
+          not the crew.
         </p>
+        <p className="mt-4 text-lg font-semibold leading-relaxed text-forest-800">{JOB_PAYMENT_PLAIN}</p>
         <ol className="mt-8 grid gap-4">
           {steps.map((step) => (
             <li key={step.n} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-5">

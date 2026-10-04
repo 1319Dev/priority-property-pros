@@ -53,6 +53,9 @@ describe("platform review policy mirror", () => {
         body: "Call me at 512-555-0199 if you want more detail about this marketplace.",
       }),
     ).toMatch(/phone numbers, emails, and links/i);
+    expect(validatePlatformReviewDraft({ display_name: "Smoke Tester", rating: 5, body: "A".repeat(25) })).toMatch(
+      /test reviews are not published/i,
+    );
     expect(validatePlatformReviewDraft({ display_name: "P", rating: 5, body: "A".repeat(25) })).toMatch(/display name/i);
     expect(
       validatePlatformReviewDraft({ display_name: "Pat", rating: 9, body: "A".repeat(25) }),

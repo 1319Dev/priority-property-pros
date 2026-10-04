@@ -9,6 +9,7 @@ import {
   CONTRACTOR_SIGNUP_SUPPORTING,
   HOMEPAGE_SIGNUP_HEADLINE,
   HOMEPAGE_SIGNUP_SUPPORTING,
+  JOB_PAYMENT_PLAIN,
   MONTHLY_PRICE,
   PLATFORM_FEES_NON_REFUNDABLE,
   PRICING_FAQ,
@@ -97,6 +98,9 @@ describe("public pricing copy", () => {
     expect(SIGNUP_FEE_NOT_MONTHLY).toMatch(/not \$9\.99\/month/i);
     expect(SIGNUP_FEE_NOT_MONTHLY).toMatch(/non-refundable/i);
     expect(MONTHLY_PRICE).toBe("$0/month");
+    expect(JOB_PAYMENT_PLAIN).toMatch(/pays the contractor directly for any job cost/i);
+    expect(JOB_PAYMENT_PLAIN).toMatch(/does not collect that payment or take a cut of the work/i);
+    expect(JOB_PAYMENT_PLAIN).not.toMatch(/\$9\.99|\$4\.99/);
   });
 
   it("states that signup and connection fees are non-refundable", () => {

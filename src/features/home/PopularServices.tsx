@@ -63,8 +63,8 @@ export function PopularServices() {
           >
             Post this project
           </Button>
-          <ButtonLink to="/find-a-pro" variant="outline">
-            Find a pro
+          <ButtonLink to="/how-it-works" variant="outline">
+            How it works
           </ButtonLink>
         </div>
       </BottomSheet>

@@ -10,5 +10,5 @@ export const MARKETPLACE_NEED_LINE =
 export const CUSTOMER_CTA = "POST A PROJECT";
 export const CONTRACTOR_CTA = "BECOME A PRIORITY PRO";
 
-export const SUPPORT_EMAIL =
-  import.meta.env.VITE_PUBLIC_SUPPORT_EMAIL ?? "hello@example.com";
+/** Public contact address. Shown on the contact page, footer, and mailto links. */
+export const SUPPORT_EMAIL = "prioritypropertypros@gmail.com";

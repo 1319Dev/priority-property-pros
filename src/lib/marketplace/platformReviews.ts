@@ -1,4 +1,5 @@
 import { detectContactLeak } from "./contactLeak";
+import { isSmokeTesterText } from "./publicReviewFilters";
 
 export const PLATFORM_REVIEW_STATUSES = ["PENDING", "APPROVED", "REJECTED"] as const;
 export type PlatformReviewStatus = (typeof PLATFORM_REVIEW_STATUSES)[number];
@@ -64,6 +65,9 @@ export function validatePlatformReviewDraft(draft: PlatformReviewDraft): string 
   }
 
   for (const field of [name, body, city]) {
+    if (isSmokeTesterText(field)) {
+      return "Test reviews are not published on the public site.";
+    }
     const leak = detectContactLeak(field);
     if (leak.blocked) {
       return "Please keep phone numbers, emails, and links out of platform reviews.";
@@ -114,6 +118,10 @@ export function canEditOthersPlatformReview(input: {
 }): boolean {
   if (input.viewerIsAdmin) return true;
   return false;
+}
+
+export function isPublishablePlatformReview(review: Pick<PublicPlatformReview, "display_name" | "city" | "body">): boolean {
+  return !isSmokeTesterText(review.display_name) && !isSmokeTesterText(review.city) && !isSmokeTesterText(review.body);
 }
 
 export function starsLabel(rating: number): string {

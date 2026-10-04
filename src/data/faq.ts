@@ -1,6 +1,8 @@
+import { SUPPORT_EMAIL } from "./brand";
 import {
   CONNECTION_FEE,
   HOMEPAGE_SIGNUP_HEADLINE,
+  JOB_PAYMENT_PLAIN,
   SIGNUP_FEE,
   SIGNUP_FEE_NON_REFUNDABLE,
   CONNECTION_FEE_NON_REFUNDABLE,
@@ -9,7 +11,7 @@ import {
 export const FAQ_PAGE_TITLE = "Questions about Priority Property Pros";
 
 export const FAQ_INTRO =
-  "PPP is a local home-services marketplace — not the crew on your driveway. Homeowners pay a one-time $9.99 account activation. Pros pay $4.99 only when they choose to connect. Project payment is between you and the contractor.";
+  `PPP is a local home-services marketplace — not the crew on your driveway. Homeowners pay a one-time $9.99 account activation. Pros pay $4.99 only when they choose to connect. ${JOB_PAYMENT_PLAIN}`;
 
 export const FAQ_ITEMS = [
   {
@@ -27,8 +29,7 @@ export const FAQ_ITEMS = [
   },
   {
     question: "Who pays for the actual job?",
-    answer:
-      "Project payment is between the customer and the contractor. PPP does not take a percentage of that payment under this model.",
+    answer: JOB_PAYMENT_PLAIN,
   },
   {
     question: "How does hiring work?",
@@ -48,6 +49,6 @@ export const FAQ_ITEMS = [
   {
     question: "How do I contact PPP?",
     answer:
-      "Use the Contact page. That is the right place for marketplace questions — not for paying a contractor or sending job photos.",
+      `Email ${SUPPORT_EMAIL} or use the Contact page. That is the right place for marketplace questions — not for paying a contractor or sending job photos.`,
   },
 ] as const;

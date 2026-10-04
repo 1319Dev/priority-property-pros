@@ -9,6 +9,7 @@ import {
   HOMEOWNER_BUSINESS_HEADING,
   HOMEOWNER_PRICING_SUMMARY,
   MONTHLY_PRICE,
+  JOB_PAYMENT_PLAIN,
   PRICING_FAQ,
   PRICING_PAGE_INTRO,
   PRICING_PAGE_TITLE,
@@ -34,6 +35,9 @@ export function PricingPage() {
         <p className="mt-4 text-lg leading-relaxed text-ink-700">{PRICING_PAGE_INTRO}</p>
         <p className="mt-4 text-base font-semibold text-forest-800">{PRICING_PRIMARY}</p>
         <p className="mt-2 text-base leading-relaxed text-ink-700">{PRICING_SECONDARY}</p>
+        <p className="mt-4 rounded-3xl bg-cream-100 px-5 py-4 text-base font-semibold leading-relaxed text-forest-800">
+          {JOB_PAYMENT_PLAIN}
+        </p>
 
         <div className="mt-8 grid gap-3">
           <article className="rounded-3xl bg-forest-800 px-5 py-6 text-cream-50">

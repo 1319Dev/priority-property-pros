@@ -9,6 +9,7 @@ import { ToastProvider } from "./components/ui/Toast";
 import {
   CONNECTION_FEE_PER_LABEL,
   HOMEOWNER_PRICING_SUMMARY,
+  JOB_PAYMENT_PLAIN,
   PRICING_HOMEPAGE_LINE,
   PRICING_PAGE_TITLE,
   PRICING_PRIMARY,
@@ -107,14 +108,16 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     window.scrollTo = scrollTo;
     renderApp("/");
     scrollTo.mockClear();
-    await user.click(screen.getAllByRole("link", { name: /find a pro/i })[0]);
-    expect(screen.getByRole("heading", { name: /browse local independents/i })).toBeInTheDocument();
+    await user.click(screen.getAllByRole("link", { name: /reviewed pros/i })[0]);
+    expect(screen.getByRole("heading", { name: /contractors with reviews/i })).toBeInTheDocument();
     expect(scrollTo).toHaveBeenCalled();
   });
 
   it("renders header navigation targets", () => {
     renderApp("/");
-    expect(screen.getAllByRole("link", { name: /find a pro/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /reviewed pros/i }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("link", { name: /find a pro/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /view the public directory/i })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /how it works/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /^pricing$/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /become a pro/i }).length).toBeGreaterThan(0);
@@ -175,21 +178,20 @@ describe("Phase 3 marketplace surfaces", () => {
   it("describes live posting with a max of three contractors on How it works", () => {
     renderApp("/how-it-works");
     expect(screen.getByText(/up to three local independents/i)).toBeInTheDocument();
+    expect(screen.getAllByText(JOB_PAYMENT_PLAIN).length).toBeGreaterThan(0);
     expect(screen.getByAltText(/craftsman bungalow with a deep front porch/i)).toBeInTheDocument();
     expect(screen.queryByAltText(/finished suburban home/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/live posting is not on yet/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/online payment setup is coming soon/i)).not.toBeInTheDocument();
   });
 
-  it("shows labeled demo browse and $9.99 signup CTAs on Find a Pro", () => {
+  it("shows a review preview and the connection fee instead of a public directory", () => {
     renderApp("/find-a-pro");
-    expect(screen.getByRole("heading", { name: /browse local independents/i })).toBeInTheDocument();
-    expect(screen.getByText(/show labeled example cards/i)).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /post a project/i }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: /get estimates/i }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/join priority property pros for a one-time \$9\.99 account activation/i).length).toBeGreaterThan(
-      0,
-    );
+    expect(screen.getByRole("heading", { name: /contractors with reviews/i })).toBeInTheDocument();
+    expect(screen.getByText(/no reviewed contractors yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/\$4\.99 connection fee/i)).toBeInTheDocument();
+    expect(screen.queryByText(/loading live directory/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/show labeled example cards/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/free signup/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/checkout is not live yet/i)).not.toBeInTheDocument();
   });
@@ -225,6 +227,7 @@ describe("Public marketplace pricing", () => {
     expect(container.textContent).not.toMatch(/free to join|free signup|accounts are free|pay when you win|no lead fees/i);
     expect(container.textContent).toMatch(/non-refundable/i);
     expect(screen.getByText(/are the \$9\.99 activation fee and \$4\.99 connection fee refundable/i)).toBeInTheDocument();
+    expect(screen.getAllByText(JOB_PAYMENT_PLAIN).length).toBeGreaterThan(0);
   });
 
   it("mentions the one-time account activation on signup and for-pros surfaces", () => {
@@ -263,6 +266,11 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
     faq.unmount();
     const contact = renderApp("/contact");
     expect(screen.getByRole("heading", { name: /talk to priority property pros/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /prioritypropertypros@gmail.com/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /prioritypropertypros@gmail.com/i })[0]).toHaveAttribute(
+      "href",
+      "mailto:prioritypropertypros@gmail.com",
+    );
     contact.unmount();
     const reviews = renderApp("/reviews");
     expect(screen.getByRole("heading", { name: /reviews of priority property pros/i })).toBeInTheDocument();

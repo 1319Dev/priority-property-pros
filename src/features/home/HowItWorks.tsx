@@ -1,7 +1,7 @@
 import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { Container, SectionHeading } from "../../components/ui/Container";
 import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
-import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING } from "../../data/pricing";
+import { JOB_PAYMENT_PLAIN } from "../../data/pricing";
 
 const steps = [
   {
@@ -22,7 +22,7 @@ const steps = [
   {
     n: "04",
     title: "They do the work",
-    body: "The contractor performs the job. PPP is the marketplace — not the crew on your driveway.",
+    body: `The contractor performs the job. ${JOB_PAYMENT_PLAIN}`,
   },
 ];
 
@@ -33,7 +33,7 @@ export function HowItWorks() {
         <SectionHeading
           eyebrow="How PPP works"
           title="Four steps. No mystery middleman."
-          kicker={`${HOMEPAGE_SIGNUP_HEADLINE} ${HOMEPAGE_SIGNUP_SUPPORTING}`}
+          kicker={JOB_PAYMENT_PLAIN}
         />
         <h2 id="how-heading" className="sr-only">
           How PPP works

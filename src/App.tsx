@@ -1,18 +1,11 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
 import { ScrollToTop } from "./components/layout/ScrollToTop";
 import { RequireAdmin, RequireAuth, RequireRole } from "./lib/auth/guards";
 import { BecomeAProPage } from "./pages/BecomeAProPage";
 import { ContactPage } from "./pages/ContactPage";
 import { FaqPage } from "./pages/FaqPage";
-import {
-  DemoContractorPage,
-  DemoHomeownerPage,
-  DemoProjectPage,
-  DemoVerifierPage,
-  FindAProPage,
-  PublicContractorPage,
-} from "./pages/FindAProPage";
+import { FindAProPage, PublicContractorPage } from "./pages/FindAProPage";
 import { HomePage } from "./pages/HomePage";
 import { HowItWorksPage } from "./pages/HowItWorksPage";
 import { LegacyPathRedirect } from "./pages/LegacyPathRedirect";
@@ -74,11 +67,11 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/find-a-pro" element={<FindAProPage />} />
-        <Route path="/find-a-pro/example/:slug" element={<DemoContractorPage />} />
+        <Route path="/find-a-pro/example/:slug" element={<Navigate to="/find-a-pro" replace />} />
         <Route path="/find-a-pro/:contractorId" element={<PublicContractorPage />} />
-        <Route path="/examples/homeowners/:slug" element={<DemoHomeownerPage />} />
-        <Route path="/examples/verifiers/:slug" element={<DemoVerifierPage />} />
-        <Route path="/examples/projects/:slug" element={<DemoProjectPage />} />
+        <Route path="/examples/homeowners/:slug" element={<Navigate to="/find-a-pro" replace />} />
+        <Route path="/examples/verifiers/:slug" element={<Navigate to="/find-a-pro" replace />} />
+        <Route path="/examples/projects/:slug" element={<Navigate to="/find-a-pro" replace />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/become-a-pro" element={<BecomeAProPage />} />
