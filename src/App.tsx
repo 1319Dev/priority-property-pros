@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { PriorityHelp } from "./components/help/PriorityHelp";
 import { AppShell } from "./components/layout/AppShell";
 import { PublicPageMeta } from "./components/seo/PublicPageMeta";
 import { ScrollToTop } from "./components/layout/ScrollToTop";
@@ -77,6 +78,7 @@ export default function App() {
       <PublicPageMeta />
       <StripTrailingSlash />
       <ScrollToTop />
+      <PriorityHelp />
       <Routes>
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
