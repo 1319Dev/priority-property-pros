@@ -23,19 +23,41 @@ export function Hero() {
   }, []);
 
   return (
-    <section className="relative overflow-x-hidden border-b border-forest-800/10 bg-cream-50">
+    <section className="relative border-b border-forest-800/10 bg-cream-50">
       <HeroBanner />
-      <Container className="grid items-start gap-8 py-8 sm:py-12 lg:grid-cols-[1.2fr_0.8fr] lg:items-center lg:py-14">
-        <div className="min-w-0">
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">{HERO_TAGLINE}</p>
-          <h1 className="mt-4 font-display text-[2.1rem] leading-[1.12] font-semibold tracking-tight text-forest-800 sm:text-5xl lg:text-6xl">
-            {CUSTOMER_TAGLINE.split(". ").map((part, index, all) => (
-              <span key={part} className="block">
-                {index === all.length - 1 ? part : `${part}.`}
-              </span>
-            ))}
-          </h1>
-          <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-700">
+      <Container className="py-8 sm:py-12 lg:py-14">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10">
+          <div className="min-w-0">
+            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">{HERO_TAGLINE}</p>
+            <h1 className="mt-4 max-w-full text-balance font-display text-[2.1rem] leading-[1.12] font-semibold tracking-tight break-words text-forest-800 sm:text-4xl lg:text-5xl">
+              {CUSTOMER_TAGLINE.split(". ").map((part, index, all) => (
+                <span key={part} className="block">
+                  {index === all.length - 1 ? part : `${part}.`}
+                </span>
+              ))}
+            </h1>
+          </div>
+          <figure className="relative hidden w-full min-w-0 lg:block">
+            <div className={HERO_PHOTO_FRAME_CLASS}>
+              <MarketingPhoto
+                photo={MARKETING_SECTION_PHOTOS.homepageHero}
+                eager
+                sizes="(min-width: 1024px) 42vw, 90vw"
+                objectPosition={HERO_PHOTO_OBJECT_POSITION}
+                className="h-full w-full"
+              />
+              <div
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/55 via-forest-950/10 to-transparent"
+                aria-hidden="true"
+              />
+              <figcaption className="absolute inset-x-0 bottom-0 px-4 pb-3 text-[0.68rem] font-semibold uppercase leading-snug tracking-[0.14em] text-cream-50 sm:text-[0.75rem]">
+                {HERO_TAGLINE}
+              </figcaption>
+            </div>
+          </figure>
+        </div>
+        <div className="mt-5 min-w-0 max-w-3xl">
+          <p className="max-w-xl text-lg leading-relaxed text-ink-700">
             {MARKETPLACE_NEED_LINE} Independent local contractors compete fairly. You hire. They perform. Priority
             Property Pros is the place — not the crew.
           </p>
@@ -82,24 +104,6 @@ export function Hero() {
             </div>
           </form>
         </div>
-        <figure className="relative mx-auto hidden w-full min-w-0 max-w-md lg:block lg:justify-self-end">
-          <div className={HERO_PHOTO_FRAME_CLASS}>
-            <MarketingPhoto
-              photo={MARKETING_SECTION_PHOTOS.homepageHero}
-              eager
-              sizes="(min-width: 1024px) 380px, 90vw"
-              objectPosition={HERO_PHOTO_OBJECT_POSITION}
-              className="h-full w-full"
-            />
-            <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/55 via-forest-950/10 to-transparent"
-              aria-hidden="true"
-            />
-            <figcaption className="absolute inset-x-0 bottom-0 px-4 pb-3 text-[0.68rem] font-semibold uppercase leading-snug tracking-[0.14em] text-cream-50 sm:text-[0.75rem]">
-              {HERO_TAGLINE}
-            </figcaption>
-          </div>
-        </figure>
       </Container>
     </section>
   );
