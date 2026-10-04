@@ -1,8 +1,14 @@
 import { useState } from "react";
 import { Button, ButtonLink } from "../ui/Button";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
-import { TextInput } from "../ui/Input";
 import { StatusBanner } from "../ui/StatusBanner";
+import { StarInput } from "./StarInput";
+import {
+  REVIEW_PROMPT_TITLE,
+  reviewContractorCta,
+  shouldShowProjectReviewPrompt,
+  validateCustomerReviewBody,
+} from "../../lib/marketplace/contractorReviews";
 import { liveContractorPath } from "../../lib/marketplace/publicDirectory";
 import type { BookingReview, BookingStatus } from "../../lib/marketplace/types";
 import {
@@ -84,6 +90,40 @@ export function HiredConfirmationCard({
   );
 }
 
+export function ProjectReviewPrompt({
+  bookingStatus,
+  mutuallyHired,
+  alreadyReviewed,
+  contractorLabel,
+  bookingId,
+}: {
+  bookingStatus: BookingStatus | null | undefined;
+  mutuallyHired: boolean;
+  alreadyReviewed: boolean;
+  contractorLabel: string;
+  bookingId: string;
+}) {
+  if (
+    !shouldShowProjectReviewPrompt({
+      mutuallyHired,
+      bookingStatus,
+      alreadyReviewed,
+      reviewerIsProjectOwner: true,
+    })
+  ) {
+    return null;
+  }
+  return (
+    <section className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
+      <h2 className="font-display text-2xl text-forest-800">{REVIEW_PROMPT_TITLE}</h2>
+      <p className="text-sm leading-relaxed text-ink-700">{reviewContractorCta(contractorLabel)}</p>
+      <ButtonLink to={`/app/customer/bookings/${bookingId}#review`} className="min-h-14 w-full">
+        {reviewContractorCta(contractorLabel)}
+      </ButtonLink>
+    </section>
+  );
+}
+
 export function ProfileReviewForm({
   role,
   bookingStatus,
@@ -91,6 +131,7 @@ export function ProfileReviewForm({
   reviews,
   rating,
   body,
+  contractorLabel,
   onRatingChange,
   onBodyChange,
   onSubmit,
@@ -99,12 +140,14 @@ export function ProfileReviewForm({
   bookingStatus: BookingStatus;
   mutuallyHired: boolean;
   reviews: BookingReview[];
-  rating: string;
+  rating: number;
   body: string;
-  onRatingChange: (value: string) => void;
+  contractorLabel?: string | null;
+  onRatingChange: (value: number) => void;
   onBodyChange: (value: string) => void;
   onSubmit: () => void;
 }) {
+  const [localError, setLocalError] = useState<string | null>(null);
   const mine = reviews.find((review) => review.reviewer_role === ownReviewerRole(role));
   const visible = canSeeReviewCta({ mutuallyHired, bookingStatus });
   const canSubmit = canSubmitProfileReview({
@@ -113,22 +156,69 @@ export function ProfileReviewForm({
     alreadyReviewed: Boolean(mine),
     reviewerIsParticipant: true,
   });
+  const party = role === "customer" ? contractorLabel?.trim() || "your contractor" : otherPartyLabel(role);
 
   if (!visible) return null;
 
   if (mine) {
-    return <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm">Your review of {otherPartyLabel(role)} is saved · {mine.rating} / 5</p>;
+    return (
+      <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm">
+        Your review of {party} is saved · {mine.rating} / 5
+      </p>
+    );
   }
 
   if (!canSubmit) return null;
 
   return (
-    <section className="space-y-3">
-      <h2 className="font-display text-2xl text-forest-800">Review {otherPartyLabel(role)}</h2>
-      <p className="text-sm text-ink-700">This is a profile review of the other party after mutual Hired. It is not a review of the Priority Property Pros marketplace.</p>
-      <TextInput label="Rating (1–5)" inputMode="numeric" value={rating} onChange={(e) => onRatingChange(e.target.value)} />
-      <textarea className="w-full rounded-2xl border border-forest-800/15 px-4 py-3" value={body} onChange={(e) => onBodyChange(e.target.value)} />
-      <Button type="button" className="min-h-14 w-full" onClick={onSubmit}>
+    <section id="review" className="max-w-full space-y-3">
+      {role === "customer" ? (
+        <>
+          <h2 className="font-display text-2xl text-forest-800">{REVIEW_PROMPT_TITLE}</h2>
+          <p className="text-sm leading-relaxed text-ink-700">{reviewContractorCta(contractorLabel)}</p>
+        </>
+      ) : (
+        <>
+          <h2 className="font-display text-2xl text-forest-800">Review {otherPartyLabel(role)}</h2>
+          <p className="text-sm text-ink-700">
+            This is a profile review of the other party after mutual Hired. It is not a review of the Priority Property
+            Pros marketplace.
+          </p>
+        </>
+      )}
+      <StarInput value={rating} onChange={onRatingChange} />
+      <label className="block" htmlFor={`review-body-${role}`}>
+        <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
+          Your review
+        </span>
+        <textarea
+          id={`review-body-${role}`}
+          className="min-h-32 w-full max-w-full rounded-2xl border border-forest-800/15 px-4 py-3 text-base"
+          value={body}
+          maxLength={1000}
+          onChange={(event) => onBodyChange(event.target.value)}
+        />
+      </label>
+      {localError ? <p className="text-sm text-ink-700">{localError}</p> : null}
+      <Button
+        type="button"
+        className="min-h-14 w-full"
+        onClick={() => {
+          if (rating < 1 || rating > 5) {
+            setLocalError("Choose a rating from 1 to 5 stars.");
+            return;
+          }
+          if (role === "customer") {
+            const bodyError = validateCustomerReviewBody(body);
+            if (bodyError) {
+              setLocalError(bodyError);
+              return;
+            }
+          }
+          setLocalError(null);
+          onSubmit();
+        }}
+      >
         Submit review
       </Button>
     </section>

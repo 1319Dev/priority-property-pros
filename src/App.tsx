@@ -49,6 +49,8 @@ import { ConnectionCheckoutReturnPage } from "./pages/app/pro/ConnectionCheckout
 import { ProProfilePage } from "./pages/app/pro/ProProfilePages";
 import { ProEstimatesPage } from "./pages/app/pro/ProEstimatesPages";
 import { ProBookingDetailPage, ProBookingsPage } from "./pages/app/pro/ProBookingPages";
+import { ProReviewsPage } from "./pages/app/pro/ProReviewsPage";
+import { AdminContractorReviewsPage } from "./pages/app/admin/AdminContractorReviewsPage";
 import { VerifierHomePage, VerifierMessagesPage, VerifierVisitsPage } from "./pages/app/VerifierPages";
 import {
   AdminApprovalDetailPage,
@@ -135,6 +137,7 @@ export default function App() {
             <Route path="connections/return" element={<ConnectionCheckoutReturnPage />} />
             <Route path="bookings" element={<ProBookingsPage />} />
             <Route path="bookings/:bookingId" element={<ProBookingDetailPage />} />
+            <Route path="reviews" element={<ProReviewsPage />} />
             <Route path="estimates" element={<ProEstimatesPage />} />
             <Route path="onboarding" element={<ProOnboardingPage />} />
             <Route path="profile" element={<ProProfilePage />} />
@@ -157,6 +160,7 @@ export default function App() {
             <Route path="approvals" element={<AdminApprovalsPage />} />
             <Route path="approvals/:contractorProfileId" element={<AdminApprovalDetailPage />} />
             <Route path="reviews" element={<AdminReviewsPage />} />
+            <Route path="contractor-reviews" element={<AdminContractorReviewsPage />} />
             <Route path="audit" element={<AdminAuditPage />} />
             <Route path="bookings" element={<AdminBookingsPage />} />
             <Route path="account" element={<AccountPage />} />

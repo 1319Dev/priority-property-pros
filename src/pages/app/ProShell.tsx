@@ -5,6 +5,7 @@ const items = [
   { to: "/app/pro/opportunities", label: "Jobs" },
   { to: "/app/pro/estimates", label: "Estimates" },
   { to: "/app/pro/bookings", label: "Bookings" },
+  { to: "/app/pro/reviews", label: "Reviews" },
   { to: "/app/pro/profile", label: "Profile" },
 ];
 

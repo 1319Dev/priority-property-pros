@@ -37,11 +37,40 @@ function cardFromDirectoryRow(row: PublicDirectoryRpcRow): PublicContractorCard 
 }
 
 function snippetsFromRows(
-  rows: Array<{ id: string; rating: number; body: string }>,
+  rows: Array<{
+    id: string;
+    rating: number;
+    body: string;
+    category?: string | null;
+    created_at?: string | null;
+    homeowner_display?: string | null;
+    verified?: boolean | null;
+    response_body?: string | null;
+    response_created_at?: string | null;
+    response_updated_at?: string | null;
+  }>,
 ): ReviewedContractorSnippet[] {
   return publishableReviewSnippets(
     rows
-      .map((review) => toPublicSafeReview({ id: review.id, rating: review.rating, body: review.body }))
+      .map((review) => {
+        const safe = toPublicSafeReview({
+          id: review.id,
+          rating: review.rating,
+          body: review.body,
+          category: review.category,
+          createdAt: review.created_at,
+          homeownerDisplay: review.homeowner_display,
+          verified: review.verified ?? undefined,
+          responseBody: review.response_body,
+          responseCreatedAt: review.response_created_at,
+          responseUpdatedAt: review.response_updated_at,
+        });
+        if (!safe) return null;
+        return {
+          ...safe,
+          verified: safe.verified,
+        };
+      })
       .filter((review): review is NonNullable<typeof review> => Boolean(review)),
   );
 }

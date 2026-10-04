@@ -92,7 +92,7 @@ export function CustomerBookingDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [delta, setDelta] = useState("");
   const [note, setNote] = useState("");
-  const [rating, setRating] = useState("5");
+  const [rating, setRating] = useState(0);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -259,10 +259,11 @@ export function CustomerBookingDetailPage() {
         reviews={reviews}
         rating={rating}
         body={body}
+        contractorLabel={contractor}
         onRatingChange={setRating}
         onBodyChange={setBody}
         onSubmit={() => {
-          void submitBookingReview(booking.id, Number(rating), body)
+          void submitBookingReview(booking.id, rating, body)
             .then(() => reload())
             .catch((err: Error) => setError(err.message));
         }}

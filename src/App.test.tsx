@@ -250,7 +250,8 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
       expect(link).toHaveAttribute("href", "/become-a-pro");
     }
     expect(screen.getAllByText(/a marketplace, not a crew/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/be the first to review/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/be the first to review/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/what people say about the marketplace/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/verified google review/i)).not.toBeInTheDocument();
   });
 

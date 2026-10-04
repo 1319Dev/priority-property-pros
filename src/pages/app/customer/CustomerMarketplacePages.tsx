@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CompletenessBadge } from "../../../components/marketplace/CompletenessBadge";
-import { HiredConfirmationCard } from "../../../components/marketplace/HiredConfirmation";
+import { HiredConfirmationCard, ProjectReviewPrompt } from "../../../components/marketplace/HiredConfirmation";
+import { ContractorDecisionRating } from "../../../components/marketplace/ContractorDecisionRating";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { Button, ButtonLink } from "../../../components/ui/Button";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
@@ -24,6 +25,7 @@ import {
   fetchPrivateLocation,
   fetchProjectBooking,
   fetchProjectEstimates,
+  fetchBookingReviews,
   fetchProjectNotices,
   fetchPublicContractor,
   fetchPublicContractorExtras,
@@ -38,6 +40,7 @@ import { CUSTOMER_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
 import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type EstimateItemKind, type EstimateStatus, type Project } from "../../../lib/marketplace/types";
 import { comparisonDisplayOrder } from "../../../lib/marketplace/flows";
 import { shownPublicBadgeLabels } from "../../../lib/marketplace/publicDirectory";
+import { isMutuallyHired } from "../../../lib/marketplace/hired";
 import { planDeleteOrCancel } from "../../../lib/marketplace/lifecycle";
 import { canCustomerDeclineFrom, canCustomerSelectFrom, customerEstimateStatusLabel } from "../../../lib/marketplace/estimateLifecycle";
 import { HOMEOWNER_OFFER_QUEUE_COPY } from "../../../lib/marketplace/matching";
@@ -269,12 +272,24 @@ export function CustomerProjectDetailPage() {
   const [cancelBody, setCancelBody] = useState("");
   const [cancelAction, setCancelAction] = useState<"delete" | "cancel">("cancel");
   const [busy, setBusy] = useState(false);
+  const [customerReviewed, setCustomerReviewed] = useState(false);
+  const [contractorLabel, setContractorLabel] = useState("your contractor");
 
   async function reload() {
     const row = await fetchMyCustomerProject(projectId);
     setProject(row);
     const selected = await fetchProjectBooking(projectId).catch(() => null);
     setBooking(selected);
+    if (selected) {
+      const [reviews, pro] = await Promise.all([
+        fetchBookingReviews(selected.id).catch(() => []),
+        fetchPublicContractor(selected.contractor_profile_id).catch(() => null),
+      ]);
+      setCustomerReviewed(reviews.some((review) => review.reviewer_role === "CUSTOMER"));
+      setContractorLabel(pro?.display_label || "your contractor");
+    } else {
+      setCustomerReviewed(false);
+    }
     const loc = await fetchPrivateLocation(projectId).catch(() => null);
     setStreet(loc?.street_line1 ?? null);
     setQuestions(await fetchEstimateQuestions(projectId));
@@ -392,6 +407,18 @@ export function CustomerProjectDetailPage() {
           </Button>
         ) : null}
       </div>
+      {booking ? (
+        <ProjectReviewPrompt
+          bookingStatus={booking.status}
+          mutuallyHired={isMutuallyHired({
+            customerHiredAt: booking.customer_hired_at,
+            contractorHiredAt: booking.contractor_hired_at,
+          })}
+          alreadyReviewed={customerReviewed}
+          contractorLabel={contractorLabel}
+          bookingId={booking.id}
+        />
+      ) : null}
       {booking ? (
         <HiredConfirmationCard
           role="customer"
@@ -621,6 +648,11 @@ export function CompareEstimatesPage() {
                 />
               ) : null}
               <p className="mt-3 text-lg font-semibold">{formatUsdFromCents(estimate.total_cents)}</p>
+              <ContractorDecisionRating
+                average={contractor?.rating_average}
+                count={contractor?.rating_count}
+                contractorId={estimate.contractor_profile_id}
+              />
               <ul className="mt-3 space-y-1 text-sm">
                 {items.map((item) => (
                   <li key={item.id}>
@@ -759,6 +791,11 @@ export function CustomerEstimateDetailPage() {
         <p className="text-xs text-ink-500">License and insurance badges are not shown.</p>
       )}
       <p className="text-lg font-semibold">{formatUsdFromCents(estimate.total_cents)}</p>
+      <ContractorDecisionRating
+        average={contractor?.rating_average}
+        count={contractor?.rating_count}
+        contractorId={estimate.contractor_profile_id}
+      />
       <ul className="space-y-1 text-sm">
         {items.map((item) => (
           <li key={item.id}>
