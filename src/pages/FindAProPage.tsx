@@ -8,10 +8,12 @@ import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
 import { PRICING_PATH } from "../data/pricing";
 import { ReviewedContractorsList } from "../features/browse/ReviewedContractorsPreview";
 import { useReviewedContractors } from "../features/browse/useReviewedContractors";
+import { applyPublicMeta, resolvePublicMeta } from "../data/publicSeo";
 import { formatPublicRating, isUuid, publicAboutText } from "../lib/marketplace/publicDirectory";
 import { REVIEWED_PROS_INTRO, REVIEWED_PROS_PATH, REVIEWED_PROS_TITLE } from "../lib/marketplace/reviewedContractors";
 import { loadReviewedContractor, type ReviewedContractorCard } from "../lib/marketplace/reviewedContractorsApi";
 import { isSupabaseConfigured } from "../lib/supabase/config";
+import { PUBLIC_FETCH_TIMEOUT_MS, withTimeout } from "../lib/withTimeout";
 
 export function FindAProPage() {
   const { cards, failed, loading, retry } = useReviewedContractors();
@@ -52,13 +54,23 @@ export function PublicContractorPage() {
   const [loading, setLoading] = useState(configured && isUuid(contractorId));
 
   useEffect(() => {
+    const meta = resolvePublicMeta(`/find-a-pro/${contractorId || "contractor"}`);
+    applyPublicMeta({
+      ...meta,
+      title: card?.displayLabel ? `${card.displayLabel} | Priority Property Pros` : meta.title,
+      canonicalPath: `/find-a-pro/${contractorId}`,
+    });
+  }, [card, contractorId]);
+
+  useEffect(() => {
     if (!isUuid(contractorId) || !configured) {
       setLoading(false);
       setCard(null);
       return;
     }
     let cancelled = false;
-    void loadReviewedContractor(contractorId)
+
+    void withTimeout(loadReviewedContractor(contractorId), PUBLIC_FETCH_TIMEOUT_MS)
       .then((result) => {
         if (cancelled) return;
         setCard(result?.card ?? null);

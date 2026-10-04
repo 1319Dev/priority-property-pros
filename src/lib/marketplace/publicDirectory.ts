@@ -230,27 +230,33 @@ export function publicRatingOrNew(
   return formatPublicRating(average, count, opts) ?? NEW_TO_PPP;
 }
 
+/** License and insurance claims are not shown. Public copy says PPP does not verify them. */
+export function isHiddenPublicBadge(badge: { kind?: string | null; label?: string | null }): boolean {
+  const kind = (badge.kind ?? "").trim().toUpperCase();
+  const label = (badge.label ?? "").trim();
+  if (kind === "LICENSE" || kind === "INSURANCE") return true;
+  return /license reviewed|insurance reviewed/i.test(label);
+}
+
+export function shownPublicBadgeLabels(
+  badges: Array<{ kind?: string | null; label?: string | null }>,
+): string[] {
+  const approved = badges.some((badge) => {
+    if (isHiddenPublicBadge(badge)) return false;
+    const kind = (badge.kind ?? "").trim().toUpperCase();
+    const label = (badge.label ?? "").trim();
+    return kind === "APPROVED" || /^approved pro$/i.test(label);
+  });
+  return approved ? ["Approved Pro"] : [];
+}
+
 export function genericCredentialBadges(badges: PublicContractorBadge[]): PublicContractorBadge[] {
-  const seen = new Set<string>();
-  const next: PublicContractorBadge[] = [];
+  const labels = new Set<string>(["Approved Pro"]);
   for (const badge of badges) {
-    const kind = badge.kind.trim().toUpperCase() || "OTHER";
-    if (kind === "APPROVED") {
-      if (!seen.has("APPROVED")) {
-        seen.add("APPROVED");
-        next.push({ kind: "APPROVED", label: "Approved Pro" });
-      }
-      continue;
-    }
-    const label =
-      kind === "LICENSE" ? "License reviewed" : kind === "INSURANCE" ? "Insurance reviewed" : "Credential reviewed";
-    const key = `${kind}:${label}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    next.push({ kind, label });
+    if (isHiddenPublicBadge(badge)) continue;
+    if (badge.kind.trim().toUpperCase() === "APPROVED") labels.add("Approved Pro");
   }
-  if (!seen.has("APPROVED")) next.unshift({ kind: "APPROVED", label: "Approved Pro" });
-  return next;
+  return [...labels].map((label) => ({ kind: "APPROVED", label }));
 }
 
 export function stripPrivateDirectoryFields<T extends Record<string, unknown>>(row: T): Record<string, unknown> {

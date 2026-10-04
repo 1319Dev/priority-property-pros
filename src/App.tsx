@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
+import { PublicPageMeta } from "./components/seo/PublicPageMeta";
 import { ScrollToTop } from "./components/layout/ScrollToTop";
 import { RequireAdmin, RequireAuth, RequireRole } from "./lib/auth/guards";
 import { BecomeAProPage } from "./pages/BecomeAProPage";
@@ -71,6 +72,7 @@ function StripTrailingSlash() {
 export default function App() {
   return (
     <>
+      <PublicPageMeta />
       <StripTrailingSlash />
       <ScrollToTop />
       <Routes>
@@ -90,6 +92,8 @@ export default function App() {
         <Route path="/reviews" element={<ReviewsPage />} />
         <Route path="/services" element={<LegacyPathRedirect />} />
         <Route path="/about" element={<LegacyPathRedirect />} />
+        <Route path="/login" element={<Navigate to="/sign-in" replace />} />
+        <Route path="/signup" element={<Navigate to="/sign-up" replace />} />
         <Route path="/sign-in" element={<SignInPage />} />
         <Route path="/sign-up" element={<SignUpRolePage />} />
         <Route path="/sign-up/:role" element={<SignUpPage />} />

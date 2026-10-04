@@ -24,6 +24,7 @@ import {
 } from "../../../lib/marketplace/api";
 import { centsToDollarString, dollarsToCents } from "../../../lib/marketplace/fees";
 import { MANAGE_PROFILE_SECTIONS, showManageProfile, verifiedBadgeVisible } from "../../../lib/marketplace/profileManage";
+import { isHiddenPublicBadge } from "../../../lib/marketplace/publicDirectory";
 import type { ServiceAreaMode, ServiceCategory } from "../../../lib/marketplace/types";
 import { PRO_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
 import { useToast } from "../../../hooks/useToast";
@@ -515,7 +516,15 @@ export function ManageProfileView() {
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-ink-500">Verification badges</dt>
-            <dd className="font-semibold">{badges.length ? badges.map((b) => b.label).join(", ") : "None"} — not self-assignable</dd>
+            <dd className="font-semibold">
+              {badges.some((badge) => !isHiddenPublicBadge(badge))
+                ? badges
+                    .filter((badge) => !isHiddenPublicBadge(badge))
+                    .map((badge) => badge.label)
+                    .join(", ")
+                : "None"}{" "}
+              — not self-assignable
+            </dd>
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-ink-500">Marketplace fee</dt>

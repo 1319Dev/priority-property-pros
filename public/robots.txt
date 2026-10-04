@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /app/
 
-# Custom domain at site root. Sitemap uses the published origin.
+# Custom domain at site root. Sitemap lists real public pages only.
 Sitemap: https://prioritypropertypros.com/sitemap.xml

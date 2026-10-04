@@ -25,7 +25,6 @@ export function ReviewsPage() {
   const { user, profile } = useAuth();
   const [reviews, setReviews] = useState<PublicPlatformReview[]>([]);
   const [alreadyReviewed, setAlreadyReviewed] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -53,7 +52,10 @@ export function ReviewsPage() {
         setAlreadyReviewed(Boolean(own));
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Could not load reviews.");
+        if (!cancelled) {
+          console.warn("Platform reviews could not be loaded", err);
+          setReviews([]);
+        }
       });
     return () => {
       cancelled = true;
@@ -85,7 +87,8 @@ export function ReviewsPage() {
         return [publicRow, ...current];
       });
     } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : "Could not save your review.");
+      const raw = err instanceof Error ? err.message : "";
+      setFormError(/failed to fetch|typeerror|network/i.test(raw) ? "Could not save your review." : raw || "Could not save your review.");
     } finally {
       setBusy(false);
     }
@@ -190,7 +193,6 @@ export function ReviewsPage() {
 
         <div className="mt-10">
           <h2 className="font-display text-2xl text-forest-800">Latest reviews</h2>
-          {error ? <p className="mt-3 text-sm text-danger-600">{error}</p> : null}
           <div className="mt-4 space-y-4">
             {reviews.length === 0 ? (
               <ReviewsEmptyState />

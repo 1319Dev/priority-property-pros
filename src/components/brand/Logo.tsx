@@ -53,7 +53,7 @@ export function Logo({ className, markClassName, inverted = false }: LogoProps) 
       <span className="flex min-w-0 flex-col leading-none">
         <span
           className={cn(
-            "font-display text-[0.62rem] font-semibold tracking-[0.22em]",
+            "truncate font-display text-[0.58rem] font-semibold tracking-[0.14em] sm:text-[0.62rem] sm:tracking-[0.22em]",
             inverted ? "text-gold-300" : "text-gold-600",
           )}
         >
@@ -61,7 +61,7 @@ export function Logo({ className, markClassName, inverted = false }: LogoProps) 
         </span>
         <span
           className={cn(
-            "font-display text-[1.05rem] font-semibold tracking-tight",
+            "truncate font-display text-[0.95rem] font-semibold tracking-tight sm:text-[1.05rem]",
             inverted ? "text-cream-50" : "text-forest-800",
           )}
         >
