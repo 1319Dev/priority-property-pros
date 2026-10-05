@@ -178,6 +178,7 @@ describe("contact-access entitlement helpers", () => {
     expect(privateContactLockedCopy()).toMatch(/\$4\.99 connection entitlement/i);
     expect(privateContactLockedCopy()).toMatch(/admin/i);
     expect(privateContactLockedCopy()).not.toMatch(/until (the )?booking is confirmed/i);
+    expect(privateContactLockedCopy()).not.toMatch(/payments are off|coming soon/i);
     expect(privateContactHintCopy()).toMatch(/\$4\.99 connection entitlement/i);
     expect(unauthorizedPayloadLeaksPrivateContact({ project_id: "p1" })).toBe(false);
     expect(unauthorizedPayloadLeaksPrivateContact({ phone: "404-555-0100" })).toBe(true);

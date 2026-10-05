@@ -128,8 +128,22 @@ export function tryReserve(input: {
   if (!input.ledger.accepting) return { ok: false, reason: "customer stopped new connections" };
 
   const existing = existingPair(input.ledger, input.projectId, input.contractorProfileId);
-  if (existing?.status === "PAID" || existing?.status === "COMPLETED" || existing?.status === "PAYMENT_DISABLED") {
+  if (existing?.status === "PAID" || existing?.status === "COMPLETED") {
     return { ok: false, reason: "duplicate connection" };
+  }
+  if (existing?.status === "PAYMENT_DISABLED") {
+    const holdsSlot = existing.slot != null && input.ledger.slots.some((slot) => slot.connectionId === existing.id);
+    if (!holdsSlot) return { ok: false, reason: "connections full" };
+    const ttlMs = (input.ttlSeconds ?? CONNECTION_RESERVATION_TTL_SECONDS) * 1000;
+    const sessionId = `cs_test_${input.ledger.nextId}`;
+    existing.status = "RESERVED";
+    existing.reservedUntil = new Date(now.getTime() + ttlMs).toISOString();
+    existing.stripeSessionId = sessionId;
+    existing.needsRefund = false;
+    existing.refundReason = null;
+    input.ledger.checkoutSessions.push(sessionId);
+    input.ledger.nextId += 1;
+    return { ok: true, connection: existing, idempotent: false, createdSession: true };
   }
   if (
     existing?.status === "RESERVED" &&

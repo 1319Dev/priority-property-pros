@@ -246,7 +246,9 @@ describe("Phase 4A pre-merge security checks", () => {
     expect(sql).not.toMatch(/payment_intents/i);
     expect(frontend).not.toMatch(/createPaymentIntent|stripe\.charges|checkout\.sessions/i);
     expect(frontend).toMatch(/This is not “Pay now succeeded.”|This is not "Pay now succeeded."/);
-    expect(frontend).toMatch(/Online payment setup is coming soon/);
+    expect(frontend).toMatch(/\$4\.99 checkout is temporarily unavailable/);
+    expect(frontend).not.toMatch(/online payment setup is coming soon/i);
+    expect(frontend).not.toMatch(/payments\s+coming\s+soon/i);
   });
 
   it("13. no payment-processor secrets or privileged credentials are exposed to the frontend", () => {
