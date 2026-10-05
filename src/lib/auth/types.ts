@@ -3,7 +3,7 @@ import type { SignupFeeStatus } from "../signupFee/constants";
 export const ACCOUNT_TYPES = ["CUSTOMER", "CONTRACTOR", "VERIFIER", "ADMIN"] as const;
 export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
-export const PUBLIC_SIGNUP_TYPES = ["CUSTOMER", "CONTRACTOR", "VERIFIER"] as const;
+export const PUBLIC_SIGNUP_TYPES = ["CUSTOMER", "CONTRACTOR"] as const;
 export type PublicSignupType = (typeof PUBLIC_SIGNUP_TYPES)[number];
 
 export const ACCOUNT_STATUSES = [

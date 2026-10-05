@@ -153,9 +153,33 @@ describe("Phase 2 auth surfaces", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /i need work done/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /i want to get hired/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /verify completed jobs/i })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /verify completed jobs/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/verifier/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /admin/i })).not.toBeInTheDocument();
     expect(screen.getByText(/no public admin signup/i)).toBeInTheDocument();
+  });
+
+  it("does not start a verifier signup from a direct role URL or query param", () => {
+    const { unmount } = renderApp("/sign-up/verifier");
+    expect(screen.getByRole("heading", { name: /how will you use priority property pros/i })).toBeInTheDocument();
+    expect(screen.queryByText(/independent verifier/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/coverage area/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /verify completed jobs/i })).not.toBeInTheDocument();
+    unmount();
+
+    renderApp("/sign-up?role=verifier");
+    expect(screen.getByRole("heading", { name: /how will you use priority property pros/i })).toBeInTheDocument();
+    expect(screen.queryByText(/verifier/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /i need work done/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /i want to get hired/i })).toBeInTheDocument();
+  });
+
+  it("ignores a verifier query param on the customer signup form", () => {
+    renderApp("/sign-up/customer?role=verifier&account_type=VERIFIER");
+    expect(screen.getByRole("heading", { name: /how will you use priority property pros/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /create a customer account/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/coverage area/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/verifier/i)).not.toBeInTheDocument();
   });
 
   it("shows contractor foundation fields on contractor signup", () => {

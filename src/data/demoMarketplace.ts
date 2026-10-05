@@ -1,7 +1,7 @@
 /**
  * Fictional EXAMPLE / DEMO marketplace content.
  * These are not live accounts. They must stay labeled so they cannot be
- * mistaken for real contractors, homeowners, verifiers, or jobs.
+ * mistaken for real contractors, homeowners, or jobs.
  * Demo contractor cards use anonymized trade labels, not googable business names.
  */
 
@@ -49,14 +49,6 @@ export type DemoHomeowner = {
   displayName: string;
   photoInitials: string;
   generalArea: string;
-  shortDescription: string;
-};
-
-export type DemoVerifier = {
-  slug: string;
-  displayName: string;
-  photoInitials: string;
-  coverageArea: string;
   shortDescription: string;
 };
 
@@ -182,23 +174,6 @@ export const DEMO_HOMEOWNERS: DemoHomeowner[] = [
   },
 ];
 
-export const DEMO_VERIFIERS: DemoVerifier[] = [
-  {
-    slug: "example-morgan-lee",
-    displayName: "Example verifier Morgan Lee",
-    photoInitials: "ML",
-    coverageArea: "Central Texas (example)",
-    shortDescription: "Example verifier profile. Fictional person.",
-  },
-  {
-    slug: "demo-casey-nguyen",
-    displayName: "Demo verifier Casey Nguyen",
-    photoInitials: "CN",
-    coverageArea: "Austin suburbs (example)",
-    shortDescription: "Demo verifier card so the browse can show the role. Not a real verifier.",
-  },
-];
-
 export const DEMO_PROJECTS: DemoProject[] = [
   {
     slug: "example-cedar-fence-repair",
@@ -240,10 +215,6 @@ export function demoHomeownerPath(slug: string): string {
   return `/examples/homeowners/${slug}`;
 }
 
-export function demoVerifierPath(slug: string): string {
-  return `/examples/verifiers/${slug}`;
-}
-
 export function demoProjectPath(slug: string): string {
   return `/examples/projects/${slug}`;
 }
@@ -254,10 +225,6 @@ export function findDemoContractor(slug: string): DemoContractor | undefined {
 
 export function findDemoHomeowner(slug: string): DemoHomeowner | undefined {
   return DEMO_HOMEOWNERS.find((row) => row.slug === slug);
-}
-
-export function findDemoVerifier(slug: string): DemoVerifier | undefined {
-  return DEMO_VERIFIERS.find((row) => row.slug === slug);
 }
 
 export function findDemoProject(slug: string): DemoProject | undefined {

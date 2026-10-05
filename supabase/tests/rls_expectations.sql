@@ -4,6 +4,7 @@
 -- Expected: signup helper never returns ADMIN
 -- SELECT public.permitted_signup_account_type('ADMIN');  -- CUSTOMER
 -- SELECT public.permitted_signup_account_type('contractor'); -- CONTRACTOR
+-- SELECT public.permitted_signup_account_type('VERIFIER'); -- error (public signup cannot create a verifier)
 -- SELECT public.permitted_signup_account_type('hacker'); -- CUSTOMER
 
 -- Expected: RLS enabled

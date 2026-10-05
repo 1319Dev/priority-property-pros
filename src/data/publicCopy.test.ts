@@ -126,6 +126,32 @@ describe("public pricing copy", () => {
     expect(hits).toEqual([]);
   });
 
+  it("does not offer a public verifier or verify-completed-jobs account", () => {
+    const phrases = [
+      /verify completed jobs/i,
+      /independent verifier/i,
+      /verifier accounts/i,
+      /i want to verify/i,
+      /completion verifier/i,
+      /sign-up\/verifier/i,
+      /apply as an independent verifier/i,
+    ];
+    const allowed = new Set([
+      "src/pages/app/VerifierPages.tsx",
+      "src/pages/app/VerifierShell.tsx",
+    ]);
+    const hits: string[] = [];
+    for (const file of publicFacingFiles()) {
+      const relative = path.relative(repoRoot, file);
+      if (allowed.has(relative)) continue;
+      const text = readFileSync(file, "utf8");
+      for (const pattern of phrases) {
+        if (pattern.test(text)) hits.push(`${relative} matches ${pattern}`);
+      }
+    }
+    expect(hits).toEqual([]);
+  });
+
   it("does not use outdated free-account language in public-facing application copy", () => {
     const hits: string[] = [];
     for (const file of publicFacingFiles()) {

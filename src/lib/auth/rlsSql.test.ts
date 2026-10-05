@@ -50,6 +50,20 @@ describe("Phase 2 SQL migrations", () => {
     expect(sql).toMatch(/ADMIN cannot be assigned from the client/);
   });
 
+  it("rejects VERIFIER on the latest public signup function without dropping the role", () => {
+    const marker = "CREATE OR REPLACE FUNCTION public.permitted_signup_account_type";
+    const start = sql.lastIndexOf(marker);
+    expect(start).toBeGreaterThanOrEqual(0);
+    const body = sql.slice(start, start + 1200);
+    expect(body).toMatch(/normalized = 'VERIFIER'/);
+    expect(body).toMatch(/Verifier accounts cannot be created from public signup/);
+    expect(body).not.toMatch(/WHEN 'VERIFIER' THEN 'VERIFIER'::public.account_type/);
+    expect(body).toMatch(/WHEN 'ADMIN' THEN 'CUSTOMER'::public.account_type/);
+    expect(sql).toMatch(/CREATE TABLE public\.verifier_profiles/i);
+    expect(sql).not.toMatch(/DROP TABLE public\.verifier_profiles/i);
+    expect(sql).not.toMatch(/DROP TYPE public\.account_type/i);
+  });
+
   it("blocks self-approval on contractor and verifier rows", () => {
     expect(sql).toMatch(/cannot self-approve/);
     expect(sql).toMatch(/protect_contractor_approval/);

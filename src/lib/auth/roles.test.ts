@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { accountInitials, accountSettingsPath, postLoginPath, sanitizeSignupAccountType } from "./roles";
+import {
+  accountInitials,
+  accountSettingsPath,
+  postLoginPath,
+  requestsVerifierSignup,
+  sanitizeSignupAccountType,
+} from "./roles";
 import { buildSignupMetadata } from "./signupMetadata";
 
 describe("signup metadata", () => {
@@ -16,11 +22,28 @@ describe("signup metadata", () => {
     expect(meta.account_type).not.toBe("ADMIN");
   });
 
-  it("allows only public signup types", () => {
+  it("allows only customer and contractor signup types", () => {
     expect(sanitizeSignupAccountType("CONTRACTOR")).toBe("CONTRACTOR");
-    expect(sanitizeSignupAccountType("verifier")).toBe("VERIFIER");
+    expect(sanitizeSignupAccountType(" customer ")).toBe("CUSTOMER");
+    expect(sanitizeSignupAccountType("verifier")).toBe("CUSTOMER");
+    expect(sanitizeSignupAccountType("VERIFIER")).toBe("CUSTOMER");
     expect(sanitizeSignupAccountType("ADMIN")).toBe("CUSTOMER");
     expect(sanitizeSignupAccountType("superuser")).toBe("CUSTOMER");
+    expect(requestsVerifierSignup(["verifier", null, "customer"])).toBe(true);
+    expect(requestsVerifierSignup(["customer", "contractor"])).toBe(false);
+  });
+
+  it("does not put VERIFIER in signup metadata", () => {
+    const meta = buildSignupMetadata({
+      email: "x@example.com",
+      password: "password12",
+      firstName: "Pat",
+      lastName: "Lee",
+      accountType: "VERIFIER" as never,
+      acceptedTerms: true,
+    });
+    expect(meta.account_type).toBe("CUSTOMER");
+    expect(meta.account_type).not.toBe("VERIFIER");
   });
 });
 

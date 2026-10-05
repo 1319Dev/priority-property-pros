@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { AuthCard } from "../lib/auth/AuthCard";
+import { requestsVerifierSignup } from "../lib/auth/roles";
 import { SIGNUP_ROLE_LEDE } from "../data/pricing";
 
 const options = [
@@ -15,15 +16,14 @@ const options = [
     detail:
       "Independent contractors. One-time $9.99 account activation, then $0/month. Browse first. Pay $4.99 only when you choose to connect. The $9.99 activation fee and the $4.99 Connection Fee are non-refundable.",
   },
-  {
-    to: "/sign-up/verifier",
-    label: "I want to verify completed jobs",
-    detail:
-      "Verifier accounts. One-time $9.99 account activation. This is not a workmanship inspection. The $9.99 account activation fee is non-refundable.",
-  },
 ];
 
 export function SignUpRolePage() {
+  const [params] = useSearchParams();
+  if (requestsVerifierSignup([params.get("role"), params.get("account_type"), params.get("accountType"), params.get("type")])) {
+    return <Navigate to="/sign-up" replace />;
+  }
+
   return (
     <AuthCard
       eyebrow="Create account"
