@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { ContractorAvatar } from "../../components/media/ContractorAvatar";
 import { formatPublicRating, liveContractorPath } from "../../lib/marketplace/publicDirectory";
 import {
   REVIEWED_PROS_EMPTY_BODY,
@@ -28,7 +29,10 @@ export function ReviewedContractorCardView({ card }: { card: ReviewedContractorC
   const categories = card.categories.length > 0 ? ` · ${card.categories.join(" • ")}` : "";
   return (
     <article className="rounded-3xl border border-forest-800/10 bg-cream-50 p-4">
-      <h3 className="font-display text-xl font-semibold text-forest-800">{card.displayLabel}</h3>
+      <div className="flex items-center gap-3">
+        <ContractorAvatar size={56} />
+        <h3 className="font-display text-xl font-semibold text-forest-800">{card.displayLabel}</h3>
+      </div>
       <p className="mt-1 text-sm text-ink-700">
         {card.serviceArea}
         {categories}

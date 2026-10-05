@@ -74,16 +74,24 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     expect(services.queryByRole("button", { name: /if it is a real local job/i })).not.toBeInTheDocument();
   });
 
-  it("shows a property exterior as the homepage hero banner plus other section photos", () => {
+  it("shows official marketing photos with live HTML copy", () => {
     renderApp("/");
     expect(
       screen.getAllByText(/whatever your property needs, find the right local professional/i).length,
     ).toBeGreaterThan(0);
     expect(screen.queryByAltText(/from need to done/i)).not.toBeInTheDocument();
-    expect(screen.getByAltText(/cream-and-stone ranch/i)).toBeInTheDocument();
-    expect(screen.getAllByAltText(/finished suburban home/i).length).toBeGreaterThan(0);
+    expect(screen.getByAltText(/homeowners standing together/i)).toBeInTheDocument();
+    expect(screen.queryByAltText(/cream-and-stone ranch/i)).not.toBeInTheDocument();
+    expect(screen.queryByAltText(/finished suburban home/i)).not.toBeInTheDocument();
     expect(screen.getByAltText(/two-story brick-and-siding home/i)).toBeInTheDocument();
     expect(screen.getByAltText(/professionally landscaped front yard/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/yellow drill/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/bright kitchen/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/outdoor air-conditioning condenser/i)).toBeInTheDocument();
+    expect(screen.queryByAltText(/not a contractor's completed project/i)).not.toBeInTheDocument();
+    expect(screen.getByAltText(/not identified as Priority Property Pros customers/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/not a background check/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/verified pros/i)).not.toBeInTheDocument();
     expect(screen.queryByAltText(/property owner and a local professional/i)).not.toBeInTheDocument();
     expect(screen.queryByAltText(/fencing contractor/i)).not.toBeInTheDocument();
     expect(screen.queryByAltText(/lawn professional/i)).not.toBeInTheDocument();
@@ -325,7 +333,8 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
     renderApp("/become-a-pro");
     expect(screen.getByRole("heading", { name: /real projects\. real customers\. fair competition/i })).toBeInTheDocument();
     expect(screen.getByText(/\$4\.99 per connection/i)).toBeInTheDocument();
-    expect(screen.getByAltText(/navy two-story home at dusk/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/yellow drill/i)).toBeInTheDocument();
+    expect(screen.queryByAltText(/navy two-story home at dusk/i)).not.toBeInTheDocument();
     expect(screen.queryByAltText(/finished suburban home/i)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /become a priority pro/i })).toHaveAttribute("href", "/sign-up/contractor");
   });

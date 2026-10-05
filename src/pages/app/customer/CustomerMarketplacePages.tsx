@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { ContractorAvatar } from "../../../components/media/ContractorAvatar";
 import { CompletenessBadge } from "../../../components/marketplace/CompletenessBadge";
 import { HiredConfirmationCard } from "../../../components/marketplace/HiredConfirmation";
 import { EmptyState } from "../../../components/layout/DashboardShell";
@@ -596,7 +597,10 @@ export function CompareEstimatesPage() {
           const declinable = canCustomerDeclineFrom(status) && project?.status !== "CONTRACTOR_SELECTED";
           return (
             <article key={estimate.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 p-5">
-              <h2 className="font-display text-2xl text-forest-800">{contractor?.display_label || "Local pro"}</h2>
+              <div className="flex items-center gap-3">
+                <ContractorAvatar size={56} />
+                <h2 className="font-display text-2xl text-forest-800">{contractor?.display_label || "Local pro"}</h2>
+              </div>
               <p className="text-sm text-ink-500">
                 {outOfDate ? "Needs a new estimate" : customerEstimateStatusLabel(status)}
               </p>
@@ -749,7 +753,10 @@ export function CustomerEstimateDetailPage() {
       <ButtonLink to={`/app/customer/projects/${projectId}/compare`} variant="ghost" size="sm">
         Back to comparison
       </ButtonLink>
-      <h1 className="font-display text-4xl font-semibold text-forest-800">{contractor?.display_label || "Estimate"}</h1>
+      <div className="flex items-center gap-4">
+        <ContractorAvatar size={72} />
+        <h1 className="font-display text-4xl font-semibold text-forest-800">{contractor?.display_label || "Estimate"}</h1>
+      </div>
       <p className="text-sm text-ink-500">Opening this page marks the estimate viewed. Phone, email, and street stay hidden.</p>
       <FormError message={error} />
       {badges.length > 0 ? (

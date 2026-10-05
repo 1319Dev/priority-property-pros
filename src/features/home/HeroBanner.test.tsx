@@ -5,18 +5,20 @@ import { HERO_BANNER_OBJECT_POSITION } from "../../lib/marketplace/heroLayout";
 import { HeroBanner } from "./HeroBanner";
 
 describe("HeroBanner", () => {
-  it("covers the frame with the ranch exterior the way other property photos do", () => {
+  it("covers the frame with the official homeowners photo and no baked headline", () => {
     const { container } = render(<HeroBanner />);
-    const img = screen.getByAltText(/cream-and-stone ranch/i);
+    const img = screen.getByAltText(/homeowners standing together/i);
     expect(img).toHaveClass("h-full", "w-full", "object-cover");
     expect(img).not.toHaveClass("object-contain");
-    expect(img).toHaveAttribute("width", String(MARKETING_PHOTOS.ranch.width));
-    expect(img).toHaveAttribute("height", String(MARKETING_PHOTOS.ranch.height));
+    expect(img).toHaveAttribute("width", String(MARKETING_PHOTOS.homeowners.width));
+    expect(img).toHaveAttribute("height", String(MARKETING_PHOTOS.homeowners.height));
     expect(img).toHaveAttribute("sizes", "100vw");
+    expect(img).toHaveAttribute("loading", "eager");
     expect(img).toHaveStyle({ objectPosition: HERO_BANNER_OBJECT_POSITION });
-    expect(HERO_BANNER_OBJECT_POSITION).not.toBe(MARKETING_PHOTOS.ranch.objectPosition);
+    expect(img.getAttribute("alt")).not.toMatch(/find trusted|post a project|verified pros/i);
     expect(screen.queryByAltText(/from need to done/i)).not.toBeInTheDocument();
+    expect(screen.queryByAltText(/cream-and-stone ranch/i)).not.toBeInTheDocument();
     const figure = container.querySelector("figure");
-    expect(figure).toHaveClass("h-56", "w-full", "overflow-hidden");
+    expect(figure).toHaveClass("aspect-[650/312]", "w-full", "overflow-hidden");
   });
 });

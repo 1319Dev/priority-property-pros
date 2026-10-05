@@ -1,5 +1,7 @@
 import { CONTRACTOR_CTA, CONTRACTOR_TAGLINE } from "../../data/brand";
 import { CONTRACTOR_SIGNUP_HEADLINE, CONTRACTOR_SIGNUP_SUPPORTING, SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
+import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
+import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { ButtonLink } from "../../components/ui/Button";
 import { Container } from "../../components/ui/Container";
 
@@ -7,7 +9,8 @@ export function ForContractors() {
   return (
     <section className="py-14 sm:py-16" aria-labelledby="pros-heading">
       <Container>
-        <div className="overflow-hidden rounded-[2rem] bg-forest-950 px-5 py-10 text-cream-50 sm:px-10">
+        <div className="grid overflow-hidden rounded-[2rem] bg-forest-950 text-cream-50 lg:grid-cols-[minmax(0,1.15fr)_minmax(16rem,0.85fr)]">
+          <div className="px-5 py-10 sm:px-10">
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-300">
             For contractors
           </p>
@@ -32,6 +35,16 @@ export function ForContractors() {
             </ButtonLink>
             <p className="mt-3 text-sm text-cream-200">{SIGNUP_FEE_PUBLIC_NOTE}</p>
           </div>
+          </div>
+          <figure className="relative min-h-56 lg:min-h-full">
+            <div className="aspect-[467/370] h-full min-h-56 w-full lg:absolute lg:inset-0 lg:aspect-auto">
+              <MarketingPhoto
+                photo={MARKETING_SECTION_PHOTOS.contractorMarketing}
+                sizes="(max-width: 1024px) 100vw, 480px"
+                className="h-full w-full"
+              />
+            </div>
+          </figure>
         </div>
       </Container>
     </section>

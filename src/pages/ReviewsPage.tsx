@@ -1,7 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { MarketingPhoto } from "../components/media/MarketingPhoto";
 import { Button, ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
+import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
 import { TextInput } from "../components/ui/Input";
 import { FormError } from "../lib/auth/AuthCard";
 import { displayName } from "../lib/auth/roles";
@@ -99,6 +101,17 @@ export function ReviewsPage() {
           Reviews of Priority Property Pros
         </h1>
         <p className="mt-4 text-lg leading-relaxed text-ink-700">{PLATFORM_REVIEWS_NOT_GOOGLE}</p>
+        <figure className="mt-8 overflow-hidden rounded-3xl border border-forest-800/10 bg-cream-100">
+          <div className="aspect-[322/194] w-full">
+            <MarketingPhoto
+              photo={MARKETING_SECTION_PHOTOS.trustLifestyle}
+              sizes="(max-width: 768px) 100vw, 672px"
+            />
+          </div>
+          <figcaption className="px-4 py-3 text-sm leading-relaxed text-ink-700">
+            Marketing photo only. These people are not Priority Property Pros customers, and this image is not a review.
+          </figcaption>
+        </figure>
 
         <div className="mt-8 rounded-[1.75rem] border border-forest-800/10 bg-cream-50 px-5 py-6">
           <h2 className="font-display text-2xl text-forest-800">Leave a review</h2>

@@ -1,4 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { ContractorAvatar } from "../../../components/media/ContractorAvatar";
+import { PortfolioExample } from "../../../components/media/PortfolioExample";
 import { Button, ButtonLink } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/Input";
 import { HumanStatus, StatusBanner } from "../../../components/ui/StatusBanner";
@@ -308,7 +310,10 @@ export function ManageProfileView() {
         editing={editing === "business"}
         onEdit={() => setEditing(editing === "business" ? null : "business")}
       >
-        {photoUrl ? <img src={photoUrl} alt="" className="mb-3 h-24 w-24 rounded-full object-cover" /> : <p className="text-sm text-ink-500">No profile photo yet.</p>}
+        <div className="mb-3 flex items-center gap-3">
+          <ContractorAvatar photoUrl={photoUrl} size={96} />
+          {photoUrl ? null : <p className="text-sm text-ink-500">No profile photo yet.</p>}
+        </div>
         {editing === "business" ? (
           <div className="space-y-3">
             <TextInput label="Business name" value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
@@ -638,6 +643,7 @@ function PortfolioManage({
         {rows.length} photo(s). New uploads stay private until a human marks them public-safe. Original filenames are
         not shown on public browse.
       </p>
+      {rows.length === 0 ? <PortfolioExample /> : null}
       {editing ? (
         <div className="mt-3 space-y-2">
           <input
