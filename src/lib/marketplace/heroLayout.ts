@@ -16,17 +16,16 @@ export const HERO_PHOTO_FRAME_CLASS =
 export const HERO_PHOTO_OBJECT_POSITION = "center 40%";
 
 /**
- * Full-bleed homepage exterior. Fixed height plus overflow matches the other
- * marketing property photos so object-cover crops the facade instead of
- * letterboxing a graphic.
+ * Official homeowners photo. The frame matches the crop (650×312) so faces are
+ * not cut off on a phone. A max height keeps the desktop banner from pushing
+ * the live headline below a very tall image.
  */
 export const HERO_BANNER_FRAME_CLASS =
-  "relative h-56 w-full overflow-hidden bg-forest-800/10 sm:h-72 lg:h-96";
+  "relative aspect-[650/312] w-full overflow-hidden bg-forest-950 sm:max-h-[22rem] lg:max-h-[26rem]";
 
 export const HERO_BANNER_SIZES = "100vw";
 
-/** Keep the facade in a short full-bleed crop; the asset default sits too low here. */
-export const HERO_BANNER_OBJECT_POSITION = "center 28%";
+export const HERO_BANNER_OBJECT_POSITION = "center center";
 
 export function heroTaglineFitsWidth(widthPx: number): boolean {
   return IPHONE_LAYOUT_WIDTHS.includes(widthPx as (typeof IPHONE_LAYOUT_WIDTHS)[number]) || widthPx >= 320;

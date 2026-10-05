@@ -88,29 +88,26 @@ describe("homepage iPhone hero contract", () => {
 });
 
 describe("homepage house photo crop contract", () => {
-  it("keeps aspect-ratio and max-height on the same overflow box so the compact hero does not clip the house from the top", () => {
-    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/aspect-\[16\/10\]/);
-    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/overflow-hidden/);
-    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/max-h-\[10\.5rem\]/);
-    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/sm:max-h-\[13rem\]/);
-    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/lg:max-h-\[20rem\]/);
-    expect(HERO_PHOTO_OBJECT_POSITION).toBe("center 40%");
-
+  it("keeps the official homeowners photo as the only homepage hero image", () => {
+    expect(HERO_BANNER_FRAME_CLASS).toMatch(/aspect-\[650\/312\]/);
+    expect(HERO_BANNER_OBJECT_POSITION).toBe("center center");
     const heroSource = readFileSync(path.join(repoRoot, "src/features/home/Hero.tsx"), "utf8");
-    expect(heroSource).toContain("HERO_PHOTO_FRAME_CLASS");
-    expect(heroSource).toContain("HERO_PHOTO_OBJECT_POSITION");
-    expect(heroSource).not.toMatch(/max-h-\[10\.5rem\][\s\S]*aspect-\[16\/10\][\s\S]*MarketingPhoto/);
+    expect(heroSource).not.toContain("HERO_PHOTO_FRAME_CLASS");
+    expect(heroSource).not.toContain("homepageHero");
+    expect(heroSource).toContain("TrustMarkList");
+    expect(HERO_PHOTO_FRAME_CLASS).toMatch(/overflow-hidden/);
+    expect(HERO_PHOTO_OBJECT_POSITION).toBe("center 40%");
   });
 });
 
 describe("homepage hero banner contract", () => {
-  it("crops a property exterior with object-cover inside a fixed frame", () => {
+  it("crops the official homeowners photo with object-cover inside a fixed frame", () => {
     expect(HERO_BANNER_FRAME_CLASS).toMatch(/w-full/);
     expect(HERO_BANNER_FRAME_CLASS).toMatch(/overflow-hidden/);
-    expect(HERO_BANNER_FRAME_CLASS).toMatch(/h-56/);
-    expect(HERO_BANNER_FRAME_CLASS).toMatch(/sm:h-72/);
-    expect(HERO_BANNER_FRAME_CLASS).toMatch(/lg:h-96/);
-    expect(HERO_BANNER_OBJECT_POSITION).toBe("center 28%");
+    expect(HERO_BANNER_FRAME_CLASS).toMatch(/aspect-\[650\/312\]/);
+    expect(HERO_BANNER_FRAME_CLASS).toMatch(/sm:max-h-\[22rem\]/);
+    expect(HERO_BANNER_FRAME_CLASS).toMatch(/lg:max-h-\[26rem\]/);
+    expect(HERO_BANNER_OBJECT_POSITION).toBe("center center");
 
     const heroSource = readFileSync(path.join(repoRoot, "src/features/home/Hero.tsx"), "utf8");
     expect(heroSource).toContain("HeroBanner");

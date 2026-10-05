@@ -3,11 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { CUSTOMER_CTA, CUSTOMER_TAGLINE, CONTRACTOR_CTA, MARKETPLACE_NEED_LINE } from "../../data/brand";
 import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING, SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
 import { PROJECT_PLACEHOLDERS } from "../../data/services";
-import { MarketingPhoto } from "../../components/media/MarketingPhoto";
+import { TrustMarkList } from "../../components/brand/TrustMarks";
 import { ButtonLink } from "../../components/ui/Button";
 import { Container } from "../../components/ui/Container";
-import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
-import { HERO_PHOTO_FRAME_CLASS, HERO_PHOTO_OBJECT_POSITION, HERO_TAGLINE } from "../../lib/marketplace/heroLayout";
+import { HERO_TAGLINE } from "../../lib/marketplace/heroLayout";
 import { HeroBanner } from "./HeroBanner";
 
 export function Hero() {
@@ -26,35 +25,15 @@ export function Hero() {
     <section className="relative border-b border-forest-800/10 bg-cream-50">
       <HeroBanner />
       <Container className="py-8 sm:py-12 lg:py-14">
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10">
-          <div className="min-w-0">
-            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">{HERO_TAGLINE}</p>
-            <h1 className="mt-4 max-w-full text-balance font-display text-[2.1rem] leading-[1.12] font-semibold tracking-tight break-words text-forest-800 sm:text-4xl lg:text-5xl">
-              {CUSTOMER_TAGLINE.split(". ").map((part, index, all) => (
-                <span key={part} className="block">
-                  {index === all.length - 1 ? part : `${part}.`}
-                </span>
-              ))}
-            </h1>
-          </div>
-          <figure className="relative hidden w-full min-w-0 lg:block">
-            <div className={HERO_PHOTO_FRAME_CLASS}>
-              <MarketingPhoto
-                photo={MARKETING_SECTION_PHOTOS.homepageHero}
-                eager
-                sizes="(min-width: 1024px) 42vw, 90vw"
-                objectPosition={HERO_PHOTO_OBJECT_POSITION}
-                className="h-full w-full"
-              />
-              <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-forest-950/55 via-forest-950/10 to-transparent"
-                aria-hidden="true"
-              />
-              <figcaption className="absolute inset-x-0 bottom-0 px-4 pb-3 text-[0.68rem] font-semibold uppercase leading-snug tracking-[0.14em] text-cream-50 sm:text-[0.75rem]">
-                {HERO_TAGLINE}
-              </figcaption>
-            </div>
-          </figure>
+        <div className="min-w-0">
+          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">{HERO_TAGLINE}</p>
+          <h1 className="mt-4 max-w-full text-balance font-display text-[2.1rem] leading-[1.12] font-semibold tracking-tight break-words text-forest-800 sm:text-4xl lg:text-5xl">
+            {CUSTOMER_TAGLINE.split(". ").map((part, index, all) => (
+              <span key={part} className="block">
+                {index === all.length - 1 ? part : `${part}.`}
+              </span>
+            ))}
+          </h1>
         </div>
         <div className="mt-5 min-w-0 max-w-3xl">
           <p className="max-w-xl text-lg leading-relaxed text-ink-700">
@@ -73,6 +52,9 @@ export function Hero() {
             </ButtonLink>
           </div>
           <p className="mt-3 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
+          <div className="mt-6 max-w-3xl">
+            <TrustMarkList />
+          </div>
           <form
             className="mt-8 rounded-3xl border border-forest-800/10 bg-cream-100/80 p-3 shadow-[0_18px_50px_-28px_rgba(16,36,28,0.45)]"
             onSubmit={(event) => {

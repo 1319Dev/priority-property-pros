@@ -1,5 +1,8 @@
+import { TrustMarkList } from "../../components/brand/TrustMarks";
+import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { ButtonLink } from "../../components/ui/Button";
 import { Container, SectionHeading } from "../../components/ui/Container";
+import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
 import { SIGNUP_FEE_NOT_MONTHLY } from "../../data/pricing";
 
 export function TrustSafety() {
@@ -13,6 +16,21 @@ export function TrustSafety() {
         <h2 id="trust-heading" className="sr-only">
           Trust and safety
         </h2>
+        <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <figure className="overflow-hidden rounded-3xl border border-forest-800/10 bg-cream-100">
+            <div className="aspect-[322/194] w-full">
+              <MarketingPhoto
+                photo={MARKETING_SECTION_PHOTOS.trustLifestyle}
+                sizes="(max-width: 1024px) 100vw, 420px"
+              />
+            </div>
+            <figcaption className="px-4 py-3 text-sm leading-relaxed text-ink-700">
+              Marketing photo only. These people are not identified as Priority Property Pros customers, and this is
+              not a review.
+            </figcaption>
+          </figure>
+          <TrustMarkList />
+        </div>
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <div className="rounded-3xl border border-forest-800/10 bg-cream-50 p-6">
             <h3 className="font-display text-2xl text-forest-800">What PPP is</h3>

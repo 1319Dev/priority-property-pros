@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { MARKETPLACE_NEED_LINE } from "../../data/brand";
-import { FEATURED_SERVICE_VISUALS } from "../../data/marketingPhotos";
+import { OFFICIAL_CATEGORY_CARDS } from "../../data/marketingPhotos";
+import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { Container } from "../../components/ui/Container";
 
 export function ServiceVisuals() {
@@ -10,7 +11,7 @@ export function ServiceVisuals() {
     <section className="border-b border-forest-800/10 py-12 sm:py-16" aria-labelledby="service-visuals-heading">
       <Container>
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">
-          Homeowners & businesses
+          Popular project categories
         </p>
         <h2
           id="service-visuals-heading"
@@ -22,23 +23,25 @@ export function ServiceVisuals() {
           Fence work, lawn care, interior repairs, plumbing, electrical — post the job once. Independent local
           contractors compete fairly. You hire. They perform.
         </p>
-        <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURED_SERVICE_VISUALS.map((item) => (
+        <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {OFFICIAL_CATEGORY_CARDS.map((item) => (
             <li key={item.id}>
               <button
                 type="button"
                 onClick={() => {
-                  navigate(`/post-project?service=${encodeURIComponent(item.serviceName)}`);
+                  const params = new URLSearchParams();
+                  if (item.serviceName) params.set("service", item.serviceName);
+                  else params.set("q", item.postQuery);
+                  navigate(`/post-project?${params.toString()}`);
                 }}
-                className="group flex min-h-44 w-full flex-col overflow-hidden rounded-3xl border border-forest-800/10 bg-cream-50 text-left shadow-[0_1px_0_rgba(255,255,255,0.7)] transition-colors hover:border-gold-500"
+                className="group flex h-full w-full flex-col overflow-hidden rounded-3xl border border-forest-800/10 bg-cream-50 text-left shadow-[0_1px_0_rgba(255,255,255,0.7)] transition-colors hover:border-gold-500"
               >
-                <span className={`block h-2 w-full ${item.accent}`} aria-hidden="true" />
-                <span className="flex flex-1 flex-col px-4 py-4">
-                  <span className="font-display text-xl font-semibold text-forest-800">{item.title}</span>
+                <span className="block aspect-[196/136] w-full overflow-hidden bg-forest-800/10">
+                  <MarketingPhoto photo={item.photoId} sizes="(max-width: 640px) 46vw, 240px" />
+                </span>
+                <span className="flex flex-1 flex-col px-3 py-3 sm:px-4">
+                  <span className="font-display text-lg font-semibold text-forest-800">{item.title}</span>
                   <span className="mt-1 block text-sm leading-relaxed text-ink-700">{item.blurb}</span>
-                  <span className="mt-auto pt-4 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-gold-700">
-                    Post this project
-                  </span>
                 </span>
               </button>
             </li>

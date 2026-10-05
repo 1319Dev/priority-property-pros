@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { ContractorAvatar } from "../../components/media/ContractorAvatar";
 import { ButtonLink } from "../../components/ui/Button";
 import { CUSTOMER_CTA } from "../../data/brand";
 import {
@@ -19,12 +20,7 @@ export function ContractorStorefront({ profile }: { profile: FindAProProfile }) 
     <article className={`min-w-0 max-w-full break-words ${FIND_A_PRO_LAYOUT_CLASS}`}>
       <header className="rounded-3xl border border-forest-800/10 bg-cream-50 p-4 sm:p-6">
         <div className="flex min-w-0 items-start gap-3">
-          <div
-            className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-forest-800 text-base font-semibold text-cream-50"
-            aria-hidden="true"
-          >
-            {profile.photoInitials}
-          </div>
+          <ContractorAvatar size={64} />
           <div className="min-w-0">
             <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
             <h1 className="mt-2 font-display text-3xl font-semibold text-forest-800 sm:text-4xl">{profile.displayLabel}</h1>

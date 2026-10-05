@@ -3,15 +3,17 @@ import { cn } from "../../utils/cn";
 type MarkProps = {
   className?: string;
   title?: string;
+  decorative?: boolean;
 };
 
-export function BrandMark({ className, title = "Priority Property Pros" }: MarkProps) {
+export function BrandMark({ className, title = "Priority Property Pros", decorative = false }: MarkProps) {
   return (
     <svg
       viewBox="0 0 64 64"
       className={cn("block", className)}
-      role="img"
-      aria-label={title}
+      role={decorative ? undefined : "img"}
+      aria-hidden={decorative ? true : undefined}
+      aria-label={decorative ? undefined : title}
     >
       <rect width="64" height="64" rx="14" fill="#1A3C2E" />
       <path

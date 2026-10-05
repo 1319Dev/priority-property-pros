@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { EmptyState } from "../../../components/layout/DashboardShell";
+import { PortfolioExample } from "../../../components/media/PortfolioExample";
 import { Button, ButtonLink } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/Input";
 import { ErrorState, LoadingState } from "../../../components/ui/PageState";
@@ -385,6 +386,7 @@ function PortfolioBlock({
         }}
       />
       <p className="text-sm text-ink-500">{rows.length} photo(s)</p>
+      {rows.length === 0 ? <PortfolioExample /> : null}
     </div>
   );
 }

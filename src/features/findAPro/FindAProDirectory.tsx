@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { ContractorAvatar } from "../../components/media/ContractorAvatar";
 import { ButtonLink } from "../../components/ui/Button";
 import { TextInput } from "../../components/ui/Input";
 import { CUSTOMER_CTA } from "../../data/brand";
@@ -25,12 +26,7 @@ export function FindAProCardView({ card }: { card: FindAProCard }) {
   return (
     <article className={`min-w-0 max-w-full break-words rounded-3xl border border-forest-800/10 bg-cream-50 p-4 ${FIND_A_PRO_LAYOUT_CLASS}`}>
       <div className="flex min-w-0 items-start gap-3">
-        <div
-          className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-forest-800 text-sm font-semibold text-cream-50"
-          aria-hidden="true"
-        >
-          {card.photoInitials}
-        </div>
+        <ContractorAvatar size={56} />
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-xl font-semibold text-forest-800">{card.displayLabel}</h2>
           {card.primaryService ? (
