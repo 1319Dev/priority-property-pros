@@ -248,6 +248,12 @@ describe("Flat $4.99 Connection Marketplace", () => {
       canReadExactAddress(pro, { customer_id: "cust-a", selected_contractor_profile_id: null }, null, "UNLOCKED", {
         contractorProfileId: "pro-1",
       }),
+    ).toBe(false);
+    expect(
+      canReadExactAddress(pro, { customer_id: "cust-a", selected_contractor_profile_id: null }, null, "UNLOCKED", {
+        contractorProfileId: "pro-1",
+        customerShared: true,
+      }),
     ).toBe(true);
   });
 });

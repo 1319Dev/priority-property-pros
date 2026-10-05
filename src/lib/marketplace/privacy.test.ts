@@ -41,6 +41,11 @@ describe("privacy and IDOR mirrors", () => {
     ).toBe(false);
     expect(
       canReadExactAddress(pro, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED", "UNLOCKED"),
+    ).toBe(false);
+    expect(
+      canReadExactAddress(pro, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED", "UNLOCKED", {
+        customerShared: true,
+      }),
     ).toBe(true);
     expect(
       canReadExactAddress(otherPro, { customer_id: "cust", selected_contractor_profile_id: "pro-1" }, "CONFIRMED", "UNLOCKED"),

@@ -29,6 +29,7 @@ import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fee
 import { isMutuallyHired, bookingListHiredLabel } from "../../../lib/marketplace/hired";
 import type { Booking, BookingReview, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
+import { ContactSharePanel } from "../../../components/marketplace/ContactSharePanel";
 import { HiredConfirmationCard, ProfileReviewForm } from "../../../components/marketplace/HiredConfirmation";
 
 function statusLabel(status: string) {
@@ -152,6 +153,11 @@ export function CustomerBookingDetailPage() {
           {paymentsComingSoonCopy()}
         </p>
       </section>
+      <ContactSharePanel
+        role="customer"
+        projectId={booking.project_id}
+        contractorProfileId={booking.contractor_profile_id}
+      />
       {pending ? (
         <Button
           type="button"

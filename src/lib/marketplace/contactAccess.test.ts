@@ -111,14 +111,28 @@ describe("contact-access entitlement helpers", () => {
     expect(canReadExactAddress(hired, hiredProject, "COMPLETED", "LOCKED")).toBe(false);
   });
 
-  it("4. hired contractor WITH entitlement can retrieve private customer info", () => {
-    expect(canReadExactAddress(hired, hiredProject, "CONFIRMED", "UNLOCKED")).toBe(true);
-    expect(canReadExactAddress(hired, hiredProject, "PENDING", "ADMIN_OVERRIDE")).toBe(true);
+  it("4. hired contractor retrieves private customer info only after the customer shares", () => {
+    expect(canReadExactAddress(hired, hiredProject, "CONFIRMED", "UNLOCKED")).toBe(false);
+    expect(canReadExactAddress(hired, hiredProject, "PENDING", "ADMIN_OVERRIDE")).toBe(false);
+    expect(
+      canReadExactAddress(hired, hiredProject, "CONFIRMED", "UNLOCKED", { customerShared: true }),
+    ).toBe(true);
+    expect(
+      canReadExactAddress(hired, hiredProject, "PENDING", "ADMIN_OVERRIDE", { customerShared: true }),
+    ).toBe(true);
     expect(
       canReadCustomerContact(hired, "cust", {
         bookingStatus: "CONFIRMED",
         selectedContractorProfileId: "pro-1",
         contactAccess: "UNLOCKED",
+      }),
+    ).toBe(false);
+    expect(
+      canReadCustomerContact(hired, "cust", {
+        bookingStatus: "CONFIRMED",
+        selectedContractorProfileId: "pro-1",
+        contactAccess: "UNLOCKED",
+        customerShared: true,
       }),
     ).toBe(true);
     expect(
@@ -126,6 +140,7 @@ describe("contact-access entitlement helpers", () => {
         bookingStatus: "IN_PROGRESS",
         selectedContractorProfileId: "pro-1",
         contactAccess: "ADMIN_OVERRIDE",
+        customerShared: true,
       }),
     ).toBe(true);
   });
@@ -151,7 +166,10 @@ describe("contact-access entitlement helpers", () => {
   });
 
   it("9. admin override is targeted and does not globally bypass contractors", () => {
-    expect(canReadExactAddress(hired, hiredProject, "CONFIRMED", "ADMIN_OVERRIDE")).toBe(true);
+    expect(canReadExactAddress(hired, hiredProject, "CONFIRMED", "ADMIN_OVERRIDE")).toBe(false);
+    expect(
+      canReadExactAddress(hired, hiredProject, "CONFIRMED", "ADMIN_OVERRIDE", { customerShared: true }),
+    ).toBe(true);
     expect(canReadExactAddress(unhired, hiredProject, "CONFIRMED", "ADMIN_OVERRIDE")).toBe(false);
     expect(canReadExactAddress(estimateOnly, openProject, null, "ADMIN_OVERRIDE")).toBe(false);
   });

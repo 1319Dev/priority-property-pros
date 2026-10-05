@@ -71,6 +71,15 @@ describe("location privacy", () => {
         selectedContractorProfileId: "pro-1",
         contactAccess: "UNLOCKED",
       }),
+    ).toBe(false);
+    expect(
+      canReadCustomerContact(pro, "cust", {
+        bookingStatus: "CONFIRMED",
+        contractorProfileId: "pro-1",
+        selectedContractorProfileId: "pro-1",
+        contactAccess: "UNLOCKED",
+        customerShared: true,
+      }),
     ).toBe(true);
   });
 });

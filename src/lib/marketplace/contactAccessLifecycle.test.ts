@@ -75,7 +75,8 @@ describe("#16 + #14 integration matrix", () => {
     expect(contactAccessAllowsReveal("LOCKED")).toBe(false);
     expect(contactAccessRowAllowsReveal(null)).toBe(false);
     expect(canReadExactAddress(hired, hiredProject, "CONFIRMED", null)).toBe(false);
-    expect(canReadExactAddress(hired, hiredProject, "PENDING", "UNLOCKED")).toBe(true);
+    expect(canReadExactAddress(hired, hiredProject, "PENDING", "UNLOCKED")).toBe(false);
+    expect(canReadExactAddress(hired, hiredProject, "PENDING", "UNLOCKED", { customerShared: true })).toBe(true);
     expect(canReadExactAddress(other, hiredProject, "CONFIRMED", "UNLOCKED")).toBe(false);
     expect(
       canReadCustomerContact(otherCustomer, "cust", {
@@ -111,7 +112,8 @@ describe("#16 + #14 integration matrix", () => {
 
   it("admin override is admin-targeted; revoke is immediate loss of access", () => {
     expect(canReadExactAddress(admin, hiredProject, null, "LOCKED")).toBe(true);
-    expect(canReadExactAddress(hired, hiredProject, "CONFIRMED", "ADMIN_OVERRIDE")).toBe(true);
+    expect(canReadExactAddress(hired, hiredProject, "CONFIRMED", "ADMIN_OVERRIDE")).toBe(false);
+    expect(canReadExactAddress(hired, hiredProject, "CONFIRMED", "ADMIN_OVERRIDE", { customerShared: true })).toBe(true);
     expect(contactAccessRowAllowsReveal({ status: "ADMIN_OVERRIDE", revoked_at: null })).toBe(true);
     expect(
       contactAccessRowAllowsReveal({

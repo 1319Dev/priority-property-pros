@@ -23,6 +23,7 @@ import {
   submitBookingReview,
 } from "../../../lib/marketplace/api";
 import { BOOKING_STATUS_LABELS, contactAccessRowAllowsReveal, paymentsComingSoonCopy, privateContactLockedCopy } from "../../../lib/marketplace/bookings";
+import { SHARE_CONTACT_WAITING_COPY, jobContactWasShared } from "../../../lib/marketplace/contactShare";
 import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { isMutuallyHired, bookingListHiredLabel } from "../../../lib/marketplace/hired";
 import type { Booking, BookingContactAccess, BookingReview, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
@@ -34,6 +35,7 @@ function statusLabel(status: string) {
 }
 
 export type ProjectContactFields = {
+  name?: string;
   street?: string;
   phone?: string;
   email?: string;
@@ -41,16 +43,22 @@ export type ProjectContactFields = {
 
 export function ProjectContactSection({
   entitled,
+  shared,
   contact,
 }: {
   entitled: boolean;
+  shared: boolean;
   contact: ProjectContactFields | null;
 }) {
   return (
     <section className="rounded-3xl border border-forest-800/10 px-5 py-4 text-sm">
       <h2 className="font-display text-2xl text-forest-800">Project Contact</h2>
-      {entitled && contact ? (
+      {entitled && shared && contact ? (
         <dl className="mt-3 space-y-2">
+          <div>
+            <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Name</dt>
+            <dd className="mt-1 font-semibold text-forest-800">{contact.name || "Not provided"}</dd>
+          </div>
           <div>
             <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Street</dt>
             <dd className="mt-1 font-semibold text-forest-800">{contact.street || "Not provided"}</dd>
@@ -64,6 +72,8 @@ export function ProjectContactSection({
             <dd className="mt-1 font-semibold text-forest-800">{contact.email || "Not provided"}</dd>
           </div>
         </dl>
+      ) : entitled ? (
+        <p className="mt-3 leading-relaxed text-ink-700">{SHARE_CONTACT_WAITING_COPY}</p>
       ) : (
         <p className="mt-3 leading-relaxed text-ink-700">{privateContactLockedCopy()}</p>
       )}
@@ -127,7 +137,8 @@ export function ProBookingDetailPage() {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [title, setTitle] = useState("");
   const [cityZip, setCityZip] = useState("");
-  const [contact, setContact] = useState<{ street?: string; phone?: string; email?: string } | null>(null);
+  const [contact, setContact] = useState<ProjectContactFields | null>(null);
+  const [contactShared, setContactShared] = useState(false);
   const [contactAccess, setContactAccess] = useState<BookingContactAccess | null>(null);
   const [orders, setOrders] = useState<ChangeOrder[]>([]);
   const [reviews, setReviews] = useState<BookingReview[]>([]);
@@ -150,12 +161,21 @@ export function ProBookingDetailPage() {
     setContactAccess(access);
     if (contactAccessRowAllowsReveal(access)) {
       const payload = await fetchBookingJobContact(row.id);
-      setContact({
-        street: [payload.street_line1, payload.street_line2].filter(Boolean).join(", "),
-        phone: String(payload.phone ?? ""),
-        email: String(payload.email ?? ""),
-      });
+      if (jobContactWasShared(payload)) {
+        const name = [payload.first_name, payload.last_name].filter((part) => typeof part === "string" && part).join(" ");
+        setContactShared(true);
+        setContact({
+          name,
+          street: [payload.street_line1, payload.street_line2].filter(Boolean).join(", "),
+          phone: String(payload.phone ?? ""),
+          email: String(payload.email ?? ""),
+        });
+      } else {
+        setContactShared(false);
+        setContact(null);
+      }
     } else {
+      setContactShared(false);
       setContact(null);
     }
   }
@@ -199,7 +219,11 @@ export function ProBookingDetailPage() {
           PPP does not take a percentage of this job. Project payment is between you and the customer. {paymentsComingSoonCopy()}
         </p>
       </section>
-      <ProjectContactSection entitled={contactAccessRowAllowsReveal(contactAccess)} contact={contact} />
+      <ProjectContactSection
+        entitled={contactAccessRowAllowsReveal(contactAccess)}
+        shared={contactShared}
+        contact={contact}
+      />
       {booking.status === "CONFIRMED" ? (
         <Button
           type="button"

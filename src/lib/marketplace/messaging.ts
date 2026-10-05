@@ -14,7 +14,7 @@ export const THREAD_EMPTY_BODY =
   "No messages yet. Write about the work. Phone, email, and street address stay out of this thread.";
 
 export const MESSAGE_COMPOSER_HINT =
-  "Don't include a phone number, email, link, social handle, or exact street. Those stay in Project Contact after you connect, not in this thread.";
+  "Don't include a phone number, email, link, social handle, or exact street. Use Share my contact & address when you want this contractor to see them. This thread will not carry that.";
 
 export const MESSAGE_NOTIFICATION_TITLE = "New message";
 
