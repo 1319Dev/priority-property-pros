@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from "../../lib/supabase/config";
 import type { PublicPlatformReview } from "../../lib/marketplace/platformReviews";
 import { PLATFORM_REVIEWS_NOT_GOOGLE } from "../../lib/marketplace/platformReviews";
 import { fetchApprovedPlatformReviews } from "../../lib/marketplace/platformReviewsApi";
-import { PlatformReviewCard } from "../reviews/ReviewCard";
+import { PlatformReviewCard, ReviewsEmptyState } from "../reviews/ReviewCard";
 
 export function HomePlatformReviews() {
   const configured = isSupabaseConfigured();
@@ -29,8 +29,6 @@ export function HomePlatformReviews() {
     };
   }, [configured]);
 
-  if (!configured || reviews.length === 0) return null;
-
   return (
     <section className="border-t border-forest-800/10 py-14 sm:py-16" aria-labelledby="reviews-heading">
       <Container>
@@ -42,13 +40,19 @@ export function HomePlatformReviews() {
         <h2 id="reviews-heading" className="sr-only">
           Platform reviews
         </h2>
-        <ul className="mt-8 grid gap-4 lg:grid-cols-3">
-          {reviews.map((review) => (
-            <li key={review.id}>
-              <PlatformReviewCard review={review} />
-            </li>
-          ))}
-        </ul>
+        <div className="mt-8">
+          {reviews.length === 0 ? (
+            <ReviewsEmptyState compact />
+          ) : (
+            <ul className="grid gap-4 lg:grid-cols-3">
+              {reviews.map((review) => (
+                <li key={review.id}>
+                  <PlatformReviewCard review={review} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <p className="mt-6">
           <Link to="/reviews" className="min-h-11 inline-flex items-center font-semibold text-forest-800 underline">
             All reviews

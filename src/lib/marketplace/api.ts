@@ -508,46 +508,6 @@ export async function submitBookingReview(bookingId: string, rating: number, bod
   return (data ?? {}) as RpcJson;
 }
 
-export async function respondToBookingReview(reviewId: string, body: string): Promise<RpcJson> {
-  const { data, error } = await client().rpc("respond_to_booking_review", {
-    p_review_id: reviewId,
-    p_body: body,
-  });
-  if (error) throw new Error(asError(error, "Could not save the response."));
-  return (data ?? {}) as RpcJson;
-}
-
-export async function reportBookingReview(reviewId: string, reason: string, note?: string): Promise<RpcJson> {
-  const { data, error } = await client().rpc("report_booking_review", {
-    p_review_id: reviewId,
-    p_reason: reason,
-    p_note: note ?? null,
-  });
-  if (error) throw new Error(asError(error, "Could not report the review."));
-  return (data ?? {}) as RpcJson;
-}
-
-export async function moderateBookingReview(reviewId: string, action: string): Promise<RpcJson> {
-  const { data, error } = await client().rpc("moderate_booking_review", {
-    p_review_id: reviewId,
-    p_action: action,
-  });
-  if (error) throw new Error(asError(error, "Could not moderate the review."));
-  return (data ?? {}) as RpcJson;
-}
-
-export async function fetchMyContractorReviews(): Promise<RpcJson> {
-  const { data, error } = await client().rpc("list_my_contractor_reviews");
-  if (error) throw new Error(asError(error, "Could not load your reviews."));
-  return (data ?? {}) as RpcJson;
-}
-
-export async function fetchContractorReviewsForAdmin(): Promise<RpcJson> {
-  const { data, error } = await client().rpc("list_contractor_reviews_for_admin");
-  if (error) throw new Error(asError(error, "Could not load contractor reviews."));
-  return (data ?? {}) as RpcJson;
-}
-
 export async function confirmBookingHired(bookingId: string): Promise<RpcJson> {
   const { data, error } = await client().rpc("confirm_booking_hired", { p_booking_id: bookingId });
   if (error) throw new Error(asError(error, "Could not confirm Hired."));
@@ -983,13 +943,6 @@ export type PublicDirectoryReviewRow = {
   id: string;
   rating: number;
   body: string;
-  category?: string | null;
-  created_at?: string | null;
-  homeowner_display?: string | null;
-  verified?: boolean | null;
-  response_body?: string | null;
-  response_created_at?: string | null;
-  response_updated_at?: string | null;
 };
 
 function parseDirectoryBadges(value: Json | null | undefined): Array<{ kind: string; label: string }> {

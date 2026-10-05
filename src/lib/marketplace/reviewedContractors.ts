@@ -25,15 +25,6 @@ export type ReviewedContractorSnippet = {
   rating: number;
   body: string;
   demo?: boolean;
-  category?: string | null;
-  createdAt?: string | null;
-  verified?: boolean;
-  homeownerDisplay?: string | null;
-  responseBody?: string | null;
-  responseCreatedAt?: string | null;
-  responseUpdatedAt?: string | null;
-  moderationStatus?: "PUBLISHED" | "HIDDEN" | "REMOVED" | null;
-  reviewClass?: "VERIFIED_PPP_PROJECT" | "CUSTOMER_REVIEW" | null;
 };
 
 export type ReviewedContractorInput = {
@@ -44,17 +35,7 @@ export type ReviewedContractorInput = {
 };
 
 export function publishableReviewSnippets<T extends ReviewedContractorSnippet>(reviews: T[]): T[] {
-  return reviews.filter((review) => {
-    if (review.demo) return false;
-    if (review.verified === false) return false;
-    if (review.reviewClass === "CUSTOMER_REVIEW") return false;
-    if (review.moderationStatus && review.moderationStatus !== "PUBLISHED") return false;
-    if (review.rating < 1 || review.rating > 5) return false;
-    if (isSmokeTesterText(review.body) || isSmokeTesterText(review.homeownerDisplay) || isSmokeTesterText(review.category)) {
-      return false;
-    }
-    return true;
-  });
+  return reviews.filter((review) => !review.demo && review.rating >= 1 && review.rating <= 5 && !isSmokeTesterText(review.body));
 }
 
 export function reviewedContractorAverage(reviews: Array<{ rating: number }>): number | null {

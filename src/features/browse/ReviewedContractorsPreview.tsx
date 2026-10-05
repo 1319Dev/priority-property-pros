@@ -33,15 +33,7 @@ export function ReviewedContractorCardView({ card }: { card: ReviewedContractorC
         {card.serviceArea}
         {categories}
       </p>
-      {rating ? (
-        <p className="mt-2 text-sm font-medium text-forest-800">
-          <Link to={`${liveContractorPath(card.id)}#reviews`} className="underline">
-            {rating}
-          </Link>
-        </p>
-      ) : (
-        <p className="mt-2 text-sm text-ink-700">No reviews yet. New on Priority Property Pros.</p>
-      )}
+      {rating ? <p className="mt-2 text-sm font-medium text-forest-800">{rating}</p> : null}
       <p className="mt-2 text-sm leading-relaxed text-ink-700">{card.shortDescription}</p>
       <ul className="mt-3 space-y-2">
         {card.reviews.map((review) => (
