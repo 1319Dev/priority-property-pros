@@ -27,11 +27,11 @@ export function Header() {
       >
         Skip to content
       </a>
-      <Container className="flex min-h-16 items-center justify-between gap-2 py-2 sm:gap-4">
-        <NavLink to="/" aria-label="Priority Property Pros home" className="min-w-0 shrink">
+      <Container className="flex min-h-16 items-center justify-between gap-4 py-2">
+        <NavLink to="/" aria-label="Priority Property Pros home" className="shrink-0">
           <Logo />
         </NavLink>
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
             {links.map((link) => (
               <NavLink
@@ -57,7 +57,7 @@ export function Header() {
           ) : (
             <NavLink
               to="/sign-in"
-              className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full px-3 text-sm font-semibold text-forest-800"
+              className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-forest-800"
             >
               Sign In
             </NavLink>

@@ -22,7 +22,7 @@ const footerLinks = [
 
 export function Footer() {
   return (
-    <footer className="mt-8 border-t border-forest-800/10 bg-forest-900 pb-[calc(7.5rem+env(safe-area-inset-bottom))] text-cream-100 lg:pb-0">
+    <footer className="mt-8 border-t border-forest-800/10 bg-forest-900 pb-32 text-cream-100 lg:pb-0">
       <Container className="grid gap-10 py-12 md:grid-cols-[1.4fr_1fr]">
         <div>
           <Logo inverted />

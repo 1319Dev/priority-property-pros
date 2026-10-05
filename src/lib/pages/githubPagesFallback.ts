@@ -16,8 +16,6 @@ export const GITHUB_PAGES_SPA_ROUTES = [
   "/reviews",
   "/services",
   "/about",
-  "/login",
-  "/signup",
   "/sign-in",
   "/sign-up",
   "/forgot-password",

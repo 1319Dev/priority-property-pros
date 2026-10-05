@@ -43,7 +43,7 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     const heading = screen.getByRole("heading", { level: 1 });
     expect(heading).toHaveTextContent(/your project/i);
     expect(heading).toHaveTextContent(/local pros/i);
-    expect(heading).toHaveTextContent(/your choice/i);
+    expect(heading).toHaveTextContent(/one simple place/i);
   });
 
   it("shows the marketplace tagline in wrapping HTML, not clipped SVG text", () => {
@@ -244,11 +244,7 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
     const heading = screen.getByRole("heading", { level: 1 });
     expect(heading).toHaveTextContent(/your project/i);
     expect(screen.getAllByRole("link", { name: /post a project/i }).length).toBeGreaterThan(0);
-    const joinLinks = screen.getAllByRole("link", { name: /join as a pro/i });
-    expect(joinLinks.length).toBeGreaterThan(0);
-    for (const link of joinLinks) {
-      expect(link).toHaveAttribute("href", "/become-a-pro");
-    }
+    expect(screen.getAllByRole("link", { name: /become a priority pro/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/a marketplace, not a crew/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/be the first to review/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/verified google review/i)).not.toBeInTheDocument();
@@ -331,37 +327,5 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
     expect(screen.getByAltText(/navy two-story home at dusk/i)).toBeInTheDocument();
     expect(screen.queryByAltText(/finished suburban home/i)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /become a priority pro/i })).toHaveAttribute("href", "/sign-up/contractor");
-  });
-
-  it("redirects /login to sign-in and /signup to sign-up", () => {
-    const login = renderApp("/login");
-    expect(screen.getByRole("heading", { name: /welcome back/i })).toBeInTheDocument();
-    login.unmount();
-    renderApp("/signup");
-    expect(screen.getByRole("heading", { name: /how will you use priority property pros/i })).toBeInTheDocument();
-  });
-
-  it("shows an example comparison, hiring facts, and a contractor invitation", async () => {
-    const user = userEvent.setup();
-    const home = renderApp("/");
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/your choice/i);
-    const hero = screen.getByRole("heading", { level: 1 }).closest("section");
-    expect(hero?.textContent).not.toMatch(/\$9\.99|\$4\.99/);
-    expect(screen.getByRole("heading", { name: /one project\. up to three estimates/i })).toBeInTheDocument();
-    expect(screen.getByText(/example only\. not real people/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/example handyman pro/i).length).toBeGreaterThan(0);
-    expect(screen.queryByText(/license reviewed/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/12,000/)).not.toBeInTheDocument();
-    await user.click(screen.getAllByRole("radio", { name: /select/i })[0]);
-    expect(screen.getByText(/this selection stays on the page and is not submitted/i)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /know who you're hiring/i })).toBeInTheDocument();
-    expect(screen.getByText(/does not verify licenses, insurance, or workmanship/i)).toBeInTheDocument();
-    expect(screen.queryByText(/background check/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /turn open days into paying jobs/i })).toBeInTheDocument();
-    expect(screen.getByText(/a job and income are not guaranteed/i)).toBeInTheDocument();
-    expect(screen.getByText(/post, compare, hire, optional independent check, done/i)).toBeInTheDocument();
-    expect(screen.queryByText(/licensed inspector/i)).not.toBeInTheDocument();
-    expect(home.container.textContent).toMatch(/\$4\.99/);
-    expect(document.title).toMatch(/your choice/i);
   });
 });

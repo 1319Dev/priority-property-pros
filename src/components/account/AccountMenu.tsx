@@ -44,7 +44,7 @@ export function AccountMenu() {
     <div className="relative" ref={rootRef}>
       <button
         type="button"
-        className="inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-full bg-forest-800 px-2.5 pr-3 text-sm font-semibold text-cream-50"
+        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-forest-800 px-2.5 pr-3 text-sm font-semibold text-cream-50"
         aria-label="Account menu"
         aria-haspopup="menu"
         aria-expanded={open}
