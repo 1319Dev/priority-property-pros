@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { CHARGES_LIVE, PAYMENTS_LIVE } from "./types";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const migrationName = "20261008000001_customer_contact_share.sql";
+const migrationName = "20261008000002_customer_contact_share.sql";
 
 function migrationSql(): string {
   return readFileSync(path.join(repoRoot, "supabase/migrations", migrationName), "utf8");
