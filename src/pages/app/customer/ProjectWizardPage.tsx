@@ -425,7 +425,7 @@ export function ProjectWizardPage() {
       {step === 5 ? (
         <div className="space-y-4">
           <p className="text-sm text-ink-700">
-            Your exact street stays protected until a contractor has a paid $4.99 connection entitlement (payments coming soon) or an admin unlocks that record. Matched pros only see city and state before connecting.
+            Your exact street stays protected until a contractor has a paid $4.99 connection entitlement or an admin unlocks that record. Matched pros only see city and state before connecting.
           </p>
           <TextInput label="Street address" value={street} onChange={(e) => setStreet(e.target.value)} autoComplete="street-address" />
           <TextInput label="Apt / unit (optional)" value={street2} onChange={(e) => setStreet2(e.target.value)} />

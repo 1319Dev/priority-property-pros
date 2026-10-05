@@ -1,3 +1,4 @@
+import { JOB_PAYMENT_PLAIN } from "../../data/pricing";
 import type { AccountType } from "../auth/types";
 import { BOOKING_STATUSES, type BookingStatus, type ContactAccessStatus } from "./types";
 
@@ -31,8 +32,8 @@ export const ENTITLED_CONTACT_FIELDS = [
 export { BOOKING_STATUSES };
 
 export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
-  PENDING: "Waiting for payment",
-  AWAITING_PAYMENT: "Waiting for payment",
+  PENDING: "Pay the contractor directly",
+  AWAITING_PAYMENT: "Pay the contractor directly",
   CONFIRMED: "Confirmed",
   IN_PROGRESS: "In progress",
   COMPLETED: "Completed",
@@ -116,7 +117,7 @@ export function privateContactLockedCopy(): string {
 }
 
 export function privateContactHintCopy(): string {
-  return "Stays private until a paid $4.99 connection entitlement (payments coming soon) or an admin unlock.";
+  return "Stays private until a paid $4.99 connection entitlement or an admin unlock.";
 }
 
 export function formatContactAccessState(
@@ -141,7 +142,7 @@ export function bookingIsAbandoned(status: BookingStatus, expiresAt: string | nu
 }
 
 export function paymentsComingSoonCopy(): string {
-  return "Online payment setup is coming soon.";
+  return JOB_PAYMENT_PLAIN;
 }
 
 export function clientCannotSpoofConfirmed(): boolean {

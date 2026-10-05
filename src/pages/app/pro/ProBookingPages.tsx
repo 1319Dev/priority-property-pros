@@ -92,7 +92,7 @@ export function ProBookingsPage() {
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
       <p className="text-sm text-ink-700">
-        Exact street, phone, and email stay hidden until a paid $4.99 connection entitlement. {paymentsComingSoonCopy()}
+        Exact street, phone, and email stay hidden until a paid $4.99 connection entitlement. You are paid directly by the customer. Priority Property Pros does not charge for the job.
       </p>
       <FormError message={error} />
       {rows.length === 0 ? (

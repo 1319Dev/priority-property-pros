@@ -742,6 +742,42 @@ export type Database = {
         Update: { read_at?: string | null };
         Relationships: [];
       };
+      project_message_threads: {
+        Row: {
+          id: string;
+          project_id: string;
+          contractor_profile_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          project_id: string;
+          contractor_profile_id: string;
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      project_messages: {
+        Row: {
+          id: string;
+          thread_id: string;
+          sender_profile_id: string;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          thread_id: string;
+          sender_profile_id: string;
+          body: string;
+          id?: string;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: {
       contractor_public_profiles: {
@@ -900,6 +936,15 @@ export type Database = {
       decline_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       list_my_estimates: { Args: Record<string, never>; Returns: Json };
       list_my_notifications: { Args: Record<string, never>; Returns: Json };
+      list_my_message_threads: { Args: Record<string, never>; Returns: Json };
+      ensure_message_thread: {
+        Args: { p_project_id: string; p_contractor_profile_id: string };
+        Returns: Json;
+      };
+      message_pair_has_connection_entitlement: {
+        Args: { p_project_id: string; p_contractor_profile_id: string };
+        Returns: boolean;
+      };
       mark_notification_read: { Args: { p_notification_id: string }; Returns: Json };
       text_contains_contact_info: { Args: { p_text: string }; Returns: boolean };
       list_my_customer_projects: { Args: Record<string, never>; Returns: Json };

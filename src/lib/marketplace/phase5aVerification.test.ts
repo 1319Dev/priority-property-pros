@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { PAYMENTS_LIVE, CHARGES_LIVE } from "./types";
 import { customerCanReadProject, filterCustomerProjectList, type PrivacyActor } from "./customerPrivacy";
+import { JOB_PAYMENT_PLAIN } from "../../data/pricing";
 import { paymentsComingSoonCopy } from "./bookings";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -28,7 +29,8 @@ describe("Phase 5A security and pause constraints", () => {
     expect(sql).toMatch(/CONSTRAINT bookings_payments_not_live CHECK \(payments_live = false\)/);
     expect(sql).not.toMatch(/payments_live',\s*1/);
     expect(sql).not.toMatch(/charges_live',\s*1/);
-    expect(paymentsComingSoonCopy()).toBe("Online payment setup is coming soon.");
+    expect(paymentsComingSoonCopy()).toBe(JOB_PAYMENT_PLAIN);
+    expect(paymentsComingSoonCopy()).not.toMatch(/coming soon/i);
   });
 
   it("does not let customer A read customer B's project", () => {

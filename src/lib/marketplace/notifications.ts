@@ -9,11 +9,12 @@ export const NOTIFICATION_KINDS = [
   "estimate.received",
   "estimate.updated",
   "estimate.withdrawn",
+  "message.received",
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
-export type NotificationAudience = "contractor" | "customer";
+export type NotificationAudience = "contractor" | "customer" | "both";
 
 export type NotificationEvent = {
   kind: NotificationKind;
@@ -72,6 +73,13 @@ export const NOTIFICATION_CATALOG: Record<NotificationKind, NotificationEvent> =
     title: "Estimate withdrawn",
     body: "A contractor withdrew an estimate on your project.",
     oncePerEntity: true,
+  },
+  "message.received": {
+    kind: "message.received",
+    audience: "both",
+    title: "New message",
+    body: "You have a new message about a project.",
+    oncePerEntity: false,
   },
 };
 
