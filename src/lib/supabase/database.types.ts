@@ -778,6 +778,20 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      project_contact_shares: {
+        Row: {
+          id: string;
+          project_id: string;
+          contractor_profile_id: string;
+          customer_id: string;
+          shared_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: {
       contractor_public_profiles: {
@@ -942,6 +956,18 @@ export type Database = {
         Returns: Json;
       };
       message_pair_has_connection_entitlement: {
+        Args: { p_project_id: string; p_contractor_profile_id: string };
+        Returns: boolean;
+      };
+      get_shared_project_contact: {
+        Args: { p_project_id: string; p_contractor_profile_id: string };
+        Returns: Json;
+      };
+      share_project_contact: {
+        Args: { p_project_id: string; p_contractor_profile_id: string };
+        Returns: Json;
+      };
+      customer_has_shared_project_contact: {
         Args: { p_project_id: string; p_contractor_profile_id: string };
         Returns: boolean;
       };

@@ -10,6 +10,7 @@ export const NOTIFICATION_KINDS = [
   "estimate.updated",
   "estimate.withdrawn",
   "message.received",
+  "contact.shared",
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
@@ -79,6 +80,13 @@ export const NOTIFICATION_CATALOG: Record<NotificationKind, NotificationEvent> =
     audience: "both",
     title: "New message",
     body: "You have a new message about a project.",
+    oncePerEntity: false,
+  },
+  "contact.shared": {
+    kind: "contact.shared",
+    audience: "contractor",
+    title: "Contact shared",
+    body: "The customer shared project contact with you.",
     oncePerEntity: false,
   },
 };

@@ -186,7 +186,9 @@ export function ProNotificationsList() {
       <ul className="space-y-2">
         {rows.slice(0, 5).map((row) => {
           const messageHref =
-            row.kind === "message.received" ? messageNotificationHref("contractor", row.payload) : null;
+            row.kind === "message.received" || row.kind === "contact.shared"
+              ? messageNotificationHref("contractor", row.payload)
+              : null;
           return (
           <li key={row.id}>
             {messageHref ? (

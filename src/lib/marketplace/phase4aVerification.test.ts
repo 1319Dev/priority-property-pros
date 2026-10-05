@@ -101,12 +101,21 @@ describe("Phase 4A pre-merge security checks", () => {
       expect(bookingUnlocksContact(status)).toBe(false);
       expect(canReadExactAddress(pro, selectedProject, status, "LOCKED")).toBe(false);
       expect(contactAccessAllowsReveal("LOCKED")).toBe(false);
-      expect(canReadExactAddress(pro, selectedProject, status, "UNLOCKED")).toBe(true);
+      expect(canReadExactAddress(pro, selectedProject, status, "UNLOCKED")).toBe(false);
+      expect(canReadExactAddress(pro, selectedProject, status, "UNLOCKED", { customerShared: true })).toBe(true);
       expect(
         canReadCustomerContact(pro, "cust", {
           bookingStatus: status,
           selectedContractorProfileId: "pro-1",
           contactAccess: "UNLOCKED",
+        }),
+      ).toBe(false);
+      expect(
+        canReadCustomerContact(pro, "cust", {
+          bookingStatus: status,
+          selectedContractorProfileId: "pro-1",
+          contactAccess: "UNLOCKED",
+          customerShared: true,
         }),
       ).toBe(true);
       expect(canReadExactAddress(stranger, selectedProject, status, "UNLOCKED")).toBe(false);

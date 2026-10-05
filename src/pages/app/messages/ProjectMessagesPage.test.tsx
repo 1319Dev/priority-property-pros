@@ -16,6 +16,8 @@ const ensureMessageThread = vi.fn();
 const listProjectMessages = vi.fn();
 const sendProjectMessage = vi.fn();
 const subscribeToProjectMessages = vi.fn(() => () => undefined);
+const getSharedProjectContact = vi.fn();
+const shareProjectContact = vi.fn();
 
 function pass(mock: { (...args: never[]): unknown }, args: unknown[]) {
   return (mock as (...inner: unknown[]) => unknown)(...args);
@@ -31,6 +33,11 @@ vi.mock("../../../lib/marketplace/messagingApi", () => ({
 
 vi.mock("../../../lib/marketplace/api", () => ({
   fetchMyNotifications: vi.fn(async () => []),
+}));
+
+vi.mock("../../../lib/marketplace/contactShareApi", () => ({
+  getSharedProjectContact: (...args: unknown[]) => pass(getSharedProjectContact, args),
+  shareProjectContact: (...args: unknown[]) => pass(shareProjectContact, args),
 }));
 
 function profile(): Profile {
@@ -76,6 +83,8 @@ function renderAt(path: string, ui: ReactNode = <ProjectMessagesPage role="custo
         <Routes>
           <Route path="/app/customer/messages" element={ui} />
           <Route path="/app/customer/messages/:projectId/:contractorProfileId" element={ui} />
+          <Route path="/app/pro/messages" element={ui} />
+          <Route path="/app/pro/messages/:projectId/:contractorProfileId" element={ui} />
           <Route path="/app/customer/*" element={<CustomerShell />} />
           <Route path="/app/pro/*" element={<ProShell />} />
         </Routes>
@@ -95,6 +104,30 @@ describe("project messages UI", () => {
     listProjectMessages.mockResolvedValue([]);
     ensureMessageThread.mockResolvedValue("thread-1");
     sendProjectMessage.mockResolvedValue(undefined);
+    getSharedProjectContact.mockResolvedValue({
+      eligible: true,
+      customer_shared: false,
+      name: "Pat Lee",
+      phone: "404-555-0199",
+      email: "pat@example.com",
+      street_line1: "12 Oak Street",
+      street_line2: null,
+      city: "Decatur",
+      state: "GA",
+      zip_code: "30030",
+    });
+    shareProjectContact.mockResolvedValue({
+      eligible: true,
+      customer_shared: true,
+      name: "Pat Lee",
+      phone: "404-555-0199",
+      email: "pat@example.com",
+      street_line1: "12 Oak Street",
+      street_line2: null,
+      city: "Decatur",
+      state: "GA",
+      zip_code: "30030",
+    });
   });
 
   it("explains that activation alone does not open a thread", async () => {
@@ -127,6 +160,9 @@ describe("project messages UI", () => {
     expect(screen.getAllByText("Approved Fence Pro").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Decatur, GA").length).toBeGreaterThan(0);
     expect(screen.getByText(/does not show phone, email, or street/i)).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /share my contact & address/i })).toBeInTheDocument();
+    expect(screen.getByText("404-555-0199")).toBeInTheDocument();
+    expect(screen.getByText(/message box still blocks/i)).toBeInTheDocument();
     await user.type(screen.getByPlaceholderText(/write about the work/i), "Monday morning works.");
     await user.click(screen.getByRole("button", { name: "Send" }));
     expect(sendProjectMessage).toHaveBeenCalledWith("thread-1", "user-1", "Monday morning works.");
@@ -147,6 +183,39 @@ describe("project messages UI", () => {
     renderAt("/app/customer/messages/p1/pro-2");
     expect(await screen.findByText(MESSAGES_LOCKED_BODY)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Send" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /share my contact/i })).not.toBeInTheDocument();
+    expect(screen.queryByText("404-555-0199")).not.toBeInTheDocument();
+    expect(screen.queryByText("12 Oak Street")).not.toBeInTheDocument();
+  });
+
+  it("asks before sharing and does not put contact into the message", async () => {
+    const user = userEvent.setup();
+    renderAt("/app/customer/messages/p1/pro-1");
+    await user.click(await screen.findByRole("button", { name: /share my contact & address/i }));
+    await user.click(screen.getByRole("button", { name: /share with this contractor/i }));
+    expect(shareProjectContact).toHaveBeenCalledWith("p1", "pro-1");
+    expect(sendProjectMessage).not.toHaveBeenCalled();
+    expect(await screen.findByText(/shared with this contractor/i)).toBeInTheDocument();
+  });
+
+  it("hides phone, email, and street from the contractor until the customer shares", async () => {
+    getSharedProjectContact.mockResolvedValue({
+      eligible: true,
+      customer_shared: false,
+      name: "Pat Lee",
+      phone: "404-555-0199",
+      email: "pat@example.com",
+      street_line1: "12 Oak Street",
+      city: "Decatur",
+      state: "GA",
+      zip_code: "30030",
+    });
+    renderAt("/app/pro/messages/p1/pro-1", <ProjectMessagesPage role="contractor" />);
+    expect(await screen.findByText(/has not shared contact yet/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /share my contact/i })).not.toBeInTheDocument();
+    expect(screen.queryByText("404-555-0199")).not.toBeInTheDocument();
+    expect(screen.queryByText("pat@example.com")).not.toBeInTheDocument();
+    expect(screen.queryByText(/12 Oak Street/i)).not.toBeInTheDocument();
   });
 });
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { EmptyState } from "../../../components/layout/DashboardShell";
+import { ContactSharePanel } from "../../../components/marketplace/ContactSharePanel";
 import { Button } from "../../../components/ui/Button";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
@@ -231,11 +232,18 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
               <p className="mt-1 text-sm text-ink-700">{selected?.contractor_label ?? "Connected pro"}</p>
               {place ? <p className="text-sm text-ink-500">{place}</p> : null}
               <p className="mt-2 text-sm text-ink-500">
-                Project contact stays on the booking. This thread does not show phone, email, or street.
+                This thread does not show phone, email, or street.
               </p>
             </header>
             <FormError message={error} />
             {locked ? <EmptyState title="Messaging is locked" body={MESSAGES_LOCKED_BODY} /> : null}
+            {!locked && threadId ? (
+              <ContactSharePanel
+                role={role}
+                projectId={projectId}
+                contractorProfileId={contractorProfileId}
+              />
+            ) : null}
             {!locked && threadId && messages.length === 0 ? (
               <EmptyState title="Start the conversation" body={THREAD_EMPTY_BODY} />
             ) : null}

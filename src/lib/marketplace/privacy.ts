@@ -23,6 +23,7 @@ export function canReadExactAddress(
   contactAccess: ContactAccessStatus | null = null,
   entitled?: {
     contractorProfileId?: string | null;
+    customerShared?: boolean;
   },
 ): boolean {
   if (!actor.id) return false;
@@ -31,6 +32,7 @@ export function canReadExactAddress(
   if (bookingStatus === "CANCELLED") return false;
   if (!contactAccessAllowsReveal(contactAccess)) return false;
   if (!actor.contractorProfileId) return false;
+  if (entitled?.customerShared !== true) return false;
   if (project.selected_contractor_profile_id && actor.contractorProfileId === project.selected_contractor_profile_id) {
     return true;
   }
@@ -45,6 +47,7 @@ export function canReadCustomerContact(
     contractorProfileId?: string | null;
     selectedContractorProfileId?: string | null;
     contactAccess?: ContactAccessStatus | null;
+    customerShared?: boolean;
   },
 ): boolean {
   if (!actor.id) return false;
@@ -54,6 +57,7 @@ export function canReadCustomerContact(
   if (actor.accountType !== "CONTRACTOR") return false;
   if (!contactAccessAllowsReveal(opts.contactAccess)) return false;
   if (!actor.contractorProfileId) return false;
+  if (opts.customerShared !== true) return false;
   if (opts.selectedContractorProfileId && actor.contractorProfileId === opts.selectedContractorProfileId) {
     return true;
   }
