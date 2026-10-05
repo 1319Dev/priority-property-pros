@@ -963,6 +963,16 @@ export async function fetchPublicContractorDirectory(): Promise<PublicDirectoryR
   return (Array.isArray(data) ? data : []) as PublicDirectoryRpcRow[];
 }
 
+/** Accepting-work flag from the existing public profile view. Only id + accepting_work. */
+export async function fetchPublicDirectoryAcceptingWork(): Promise<Array<{ id: string; accepting_work: boolean }>> {
+  const { data, error } = await client().from("contractor_public_profiles").select("id, accepting_work");
+  if (error) throw new Error(asError(error, "Could not load directory availability."));
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    accepting_work: row.accepting_work === true,
+  }));
+}
+
 export async function fetchPublicContractor(id: string): Promise<PublicDirectoryRpcRow | null> {
   const { data, error } = await client().rpc("get_public_directory_contractor", { p_id: id });
   if (error) throw new Error(asError(error, "Could not load the contractor."));
