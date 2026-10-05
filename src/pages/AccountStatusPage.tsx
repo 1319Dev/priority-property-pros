@@ -7,7 +7,7 @@ const messages: Record<string, string> = {
   SUSPENDED: "This account is suspended. Contact support if you believe that is a mistake.",
   DISABLED: "This account is disabled.",
   DELETED: "This account is closed.",
-  PENDING: "This account is pending. Confirm your email, or wait for an admin review if you applied as a pro or verifier.",
+  PENDING: "This account is pending. Confirm your email, or wait for an admin review if you applied as a pro.",
 };
 
 export function AccountStatusPage() {

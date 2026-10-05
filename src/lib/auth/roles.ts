@@ -24,10 +24,16 @@ export function isPublicSignupType(value: string): value is PublicSignupType {
   return (PUBLIC_SIGNUP_TYPES as readonly string[]).includes(value);
 }
 
-/** Client metadata may request these types only. ADMIN is never accepted. */
+/** True when a path segment or query value is asking to open a verifier signup. */
+export function requestsVerifierSignup(values: readonly unknown[]): boolean {
+  return values.some((value) => typeof value === "string" && value.trim().toUpperCase() === "VERIFIER");
+}
+
+/** Client metadata may request customer or contractor only. ADMIN and VERIFIER are never accepted. */
 export function sanitizeSignupAccountType(value: unknown): PublicSignupType {
-  if (typeof value === "string" && isPublicSignupType(value.toUpperCase())) {
-    return value.toUpperCase() as PublicSignupType;
+  if (typeof value === "string") {
+    const normalized = value.trim().toUpperCase();
+    if (normalized !== "VERIFIER" && isPublicSignupType(normalized)) return normalized;
   }
   return "CUSTOMER";
 }

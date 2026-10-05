@@ -1,9 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { TextInput } from "../components/ui/Input";
 import { AuthCard, FormError } from "../lib/auth/AuthCard";
-import { isPublicSignupType } from "../lib/auth/roles";
+import { isPublicSignupType, requestsVerifierSignup } from "../lib/auth/roles";
 import type { PublicSignupType } from "../lib/auth/types";
 import { useAuth } from "../lib/auth/useAuth";
 import {
@@ -12,21 +12,29 @@ import {
   SIGNUP_FEE_CHECKOUT_NOTE,
   SIGNUP_FEE_CHECKOUT_LIVE_NOTE,
   SIGNUP_TERMS_ACCEPTANCE,
-  VERIFIER_SIGNUP_LEDE,
 } from "../data/pricing";
-import { preHireContactError, PRE_HIRE_CONTACT_HINT } from "../lib/marketplace/antiCircumvention";
+import { preHireContactError } from "../lib/marketplace/antiCircumvention";
 import { fetchSignupFeeCheckoutFlags } from "../lib/signupFee/api";
 
 const copy: Record<PublicSignupType, { eyebrow: string; title: string; lede: string }> = {
   CUSTOMER: { eyebrow: "Customer", title: "Create a customer account.", lede: CUSTOMER_SIGNUP_LEDE },
   CONTRACTOR: { eyebrow: "Priority Pro", title: "Apply as an independent contractor.", lede: CONTRACTOR_SIGNUP_LEDE },
-  VERIFIER: { eyebrow: "Verifier", title: "Apply as an independent verifier.", lede: VERIFIER_SIGNUP_LEDE },
 };
 
 export function SignUpPage() {
   const { role } = useParams();
-  const requested = (role ?? "").toUpperCase();
-  if (!isPublicSignupType(requested)) {
+  const [params] = useSearchParams();
+  const requested = (role ?? "").trim().toUpperCase();
+  if (
+    requestsVerifierSignup([
+      role,
+      params.get("role"),
+      params.get("account_type"),
+      params.get("accountType"),
+      params.get("type"),
+    ]) ||
+    !isPublicSignupType(requested)
+  ) {
     return <Navigate to="/sign-up" replace />;
   }
   return <SignUpForm accountType={requested} />;
@@ -48,8 +56,6 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
     businessName: "",
     primaryTrade: "",
     serviceArea: "",
-    coverageArea: "",
-    bio: "",
   });
 
   function set(name: keyof typeof values, value: string) {
@@ -75,7 +81,6 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
       return;
     }
     const contactError =
-      preHireContactError(values.bio) ||
       preHireContactError(values.businessName) ||
       preHireContactError(values.primaryTrade) ||
       preHireContactError(values.serviceArea);
@@ -95,8 +100,6 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
       businessName: values.businessName,
       primaryTrade: values.primaryTrade,
       serviceArea: values.serviceArea,
-      coverageArea: values.coverageArea,
-      bio: values.bio,
     });
     setBusy(false);
     if (result.error) {
@@ -191,23 +194,6 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
               hint="City or county you cover."
               value={values.serviceArea}
               onChange={(e) => set("serviceArea", e.target.value)}
-            />
-          </>
-        ) : null}
-        {accountType === "VERIFIER" ? (
-          <>
-            <TextInput
-              label="Coverage area"
-              name="coverageArea"
-              value={values.coverageArea}
-              onChange={(e) => set("coverageArea", e.target.value)}
-            />
-            <TextInput
-              label="Short bio"
-              name="bio"
-              hint={PRE_HIRE_CONTACT_HINT}
-              value={values.bio}
-              onChange={(e) => set("bio", e.target.value)}
             />
           </>
         ) : null}

@@ -1,7 +1,7 @@
 import type { SignUpInput } from "./types";
 import { sanitizeSignupAccountType } from "./roles";
 
-/** Metadata sent at signup. ADMIN is stripped even if a client forges the payload. */
+/** Metadata sent at signup. ADMIN and VERIFIER are never sent, even if a client forges the payload. */
 export function buildSignupMetadata(input: SignUpInput): Record<string, string> {
   const accountType = sanitizeSignupAccountType(input.accountType);
   return {

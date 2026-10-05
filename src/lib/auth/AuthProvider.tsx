@@ -3,6 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { getSupabaseClient, isSupabaseConfigured } from "../supabase/client";
 import { AUTH_CALLBACK_PATH, AUTH_RESET_PATH, authRedirectUrl } from "./redirects";
 import { AuthContext } from "./AuthContext";
+import { requestsVerifierSignup } from "./roles";
 import { buildSignupMetadata } from "./signupMetadata";
 import type { Profile, SignUpInput } from "./types";
 import type { SignupFeeStatus } from "../signupFee/constants";
@@ -104,6 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return { error: "Supabase is not configured yet.", needsEmailConfirm: false };
     if (!input.acceptedTerms) {
       return { error: "You must accept the Terms of Use and Privacy Policy.", needsEmailConfirm: false };
+    }
+    if (requestsVerifierSignup([input.accountType])) {
+      return { error: "That account type is not available.", needsEmailConfirm: false };
     }
     const { data, error } = await supabase.auth.signUp({
       email: input.email.trim(),

@@ -5,7 +5,6 @@ import {
   DEMO_HOMEOWNERS,
   DEMO_LABEL,
   DEMO_PROJECTS,
-  DEMO_VERIFIERS,
 } from "../../data/demoMarketplace";
 import { computeMarketplaceFee } from "./feeEngine";
 import {
@@ -153,13 +152,12 @@ describe("public marketplace directory privacy", () => {
 });
 
 describe("labeled demo marketplace content", () => {
-  it("marks contractors, homeowners, verifiers, and sample projects as Example/Demo", () => {
+  it("marks contractors, homeowners, and sample projects as Example/Demo", () => {
     expect(DEMO_LABEL).toMatch(/example/i);
     expect(DEMO_LABEL).toMatch(/demo/i);
     expect(DEMO_BANNER).toMatch(/not real/i);
     expect(DEMO_CONTRACTORS.every((row) => /example|demo/i.test(row.displayLabel))).toBe(true);
     expect(DEMO_HOMEOWNERS.every((row) => /example|demo/i.test(row.displayName))).toBe(true);
-    expect(DEMO_VERIFIERS.every((row) => /example|demo/i.test(row.displayName))).toBe(true);
     expect(DEMO_PROJECTS.every((row) => /example|demo/i.test(row.title))).toBe(true);
   });
 
@@ -167,7 +165,6 @@ describe("labeled demo marketplace content", () => {
     const blob = JSON.stringify({
       DEMO_CONTRACTORS,
       DEMO_HOMEOWNERS,
-      DEMO_VERIFIERS,
       DEMO_PROJECTS,
     });
     expect(blob).not.toMatch(/@[a-z0-9.-]+\.[a-z]{2,}/i);
