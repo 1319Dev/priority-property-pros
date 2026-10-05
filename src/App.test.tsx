@@ -108,15 +108,15 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     window.scrollTo = scrollTo;
     renderApp("/");
     scrollTo.mockClear();
-    await user.click(screen.getAllByRole("link", { name: /reviewed pros/i })[0]);
-    expect(screen.getByRole("heading", { name: /contractors with reviews/i })).toBeInTheDocument();
+    await user.click(screen.getAllByRole("link", { name: /find a pro/i })[0]);
+    expect(screen.getByRole("heading", { name: /^find a pro$/i })).toBeInTheDocument();
     expect(scrollTo).toHaveBeenCalled();
   });
 
   it("renders header navigation targets", () => {
     renderApp("/");
-    expect(screen.getAllByRole("link", { name: /reviewed pros/i }).length).toBeGreaterThan(0);
-    expect(screen.queryByRole("link", { name: /find a pro/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /find a pro/i }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("link", { name: /reviewed pros/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /view the public directory/i })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /how it works/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /^pricing$/i }).length).toBeGreaterThan(0);
@@ -185,11 +185,12 @@ describe("Phase 3 marketplace surfaces", () => {
     expect(screen.queryByText(/online payment setup is coming soon/i)).not.toBeInTheDocument();
   });
 
-  it("shows a review preview and the connection fee instead of a public directory", () => {
+  it("shows approved contractors on Find a Pro and still states the connection fee", () => {
     renderApp("/find-a-pro");
-    expect(screen.getByRole("heading", { name: /contractors with reviews/i })).toBeInTheDocument();
-    expect(screen.getByText(/no reviewed contractors yet/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /find a pro/i })).toBeInTheDocument();
+    expect(screen.getByText(/no approved contractors yet/i)).toBeInTheDocument();
     expect(screen.getByText(/\$4\.99 connection fee/i)).toBeInTheDocument();
+    expect(screen.queryByText(/not a directory/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/loading live directory/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/show labeled example cards/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/free signup/i)).not.toBeInTheDocument();

@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 import { COMPANY_NAME, PRODUCT_NAME, SUPPORT_EMAIL } from "../../data/brand";
-import { REVIEWED_PROS_NAV_LABEL, REVIEWED_PROS_PATH } from "../../lib/marketplace/reviewedContractors";
+import { FIND_A_PRO_NAV_LABEL, FIND_A_PRO_PATH } from "../../lib/marketplace/findAPro";
 import { SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
 import { Logo } from "../brand/Logo";
 import { Container } from "../ui/Container";
 
 const footerLinks = [
   { to: "/how-it-works", label: "How it works" },
-  { to: REVIEWED_PROS_PATH, label: REVIEWED_PROS_NAV_LABEL },
+  { to: FIND_A_PRO_PATH, label: FIND_A_PRO_NAV_LABEL },
   { to: "/pricing", label: "Pricing" },
   { to: "/become-a-pro", label: "Become a pro" },
   { to: "/post-project", label: "Post a project" },

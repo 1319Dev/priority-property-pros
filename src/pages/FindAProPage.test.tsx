@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { ToastProvider } from "../components/ui/Toast";
 import { SUPPORT_EMAIL } from "../data/brand";
 import { AuthProvider } from "../lib/auth/AuthProvider";
-import { REVIEWED_PROS_EMPTY_TITLE, REVIEWED_PROS_TITLE } from "../lib/marketplace/reviewedContractors";
+import { FIND_A_PRO_DOCUMENT_TITLE, FIND_A_PRO_EMPTY_TITLE, FIND_A_PRO_TITLE } from "../lib/marketplace/findAPro";
 import App from "../App";
 
 function renderApp(path: string) {
@@ -19,35 +19,38 @@ function renderApp(path: string) {
   );
 }
 
-describe("Reviewed contractor preview", () => {
-  it("shows an empty review preview instead of a live directory", () => {
+describe("Find a Pro page", () => {
+  it("lists the public directory instead of a review-only preview", () => {
     renderApp("/find-a-pro");
-    expect(screen.getByRole("heading", { name: REVIEWED_PROS_TITLE })).toBeInTheDocument();
-    expect(screen.getByText(REVIEWED_PROS_EMPTY_TITLE)).toBeInTheDocument();
-    expect(screen.getByText(/not a directory/i)).toBeInTheDocument();
+    expect(document.title).toBe(FIND_A_PRO_DOCUMENT_TITLE);
+    expect(screen.getByRole("heading", { name: FIND_A_PRO_TITLE })).toBeInTheDocument();
+    expect(screen.getByText(FIND_A_PRO_EMPTY_TITLE)).toBeInTheDocument();
     expect(screen.getByText(/\$4\.99 connection fee/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/does not take a cut of the job/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/does not take a cut of the job/i)).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /^service/i })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /^area/i })).toBeInTheDocument();
+    expect(screen.queryByText(/not a directory/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/loading live directory/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/browse local independents/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/show labeled example cards/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/example fence pro/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/smoke tester/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /view profile/i })).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/^service$/i)).not.toBeInTheDocument();
+    expect(document.body.innerHTML).not.toMatch(/tel:/i);
   });
 
   it("does not publish labeled example people", () => {
     renderApp("/find-a-pro/example/example-fence-pro");
-    expect(screen.getByRole("heading", { name: REVIEWED_PROS_TITLE })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: FIND_A_PRO_TITLE })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: /example fence pro/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/example \/ demo/i)).not.toBeInTheDocument();
   });
 
-  it("does not open a contractor who has no public review", () => {
+  it("does not open a contractor who is outside the public directory", () => {
     renderApp("/find-a-pro/11111111-1111-4111-8111-111111111111");
-    expect(screen.getByRole("heading", { name: /no public review/i })).toBeInTheDocument();
-    expect(screen.queryByText(/public directory/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /sign up to connect/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /profile not listed/i })).toBeInTheDocument();
+    expect(screen.queryByText(/public directory you can message/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /sign up to connect|invite|request estimate/i })).not.toBeInTheDocument();
+    expect(document.title).toBe(FIND_A_PRO_DOCUMENT_TITLE);
   });
 });
 
