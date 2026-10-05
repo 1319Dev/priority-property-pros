@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  BOOKING_STATUS_LABELS,
   allowedBookingTransitions,
   bookingIsAbandoned,
   bookingUnlocksContact,
@@ -31,7 +32,11 @@ describe("booking state machine", () => {
     expect(canConfirmBooking({ accountType: "CONTRACTOR", paymentsLive: false })).toBe(false);
     expect(canConfirmBooking({ accountType: "ADMIN", paymentsLive: false })).toBe(true);
     expect(clientCannotSpoofConfirmed()).toBe(true);
-    expect(paymentsComingSoonCopy()).toMatch(/online payment setup is coming soon/i);
+    expect(paymentsComingSoonCopy()).toMatch(/pays the contractor directly/i);
+    expect(paymentsComingSoonCopy()).not.toMatch(/coming soon/i);
+    expect(BOOKING_STATUS_LABELS.PENDING).toBe("Pay the contractor directly");
+    expect(BOOKING_STATUS_LABELS.AWAITING_PAYMENT).toBe("Pay the contractor directly");
+    expect(BOOKING_STATUS_LABELS.PENDING).not.toMatch(/waiting for payment/i);
   });
 
   it("never unlocks contact from booking status; entitlement is required", () => {

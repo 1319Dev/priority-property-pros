@@ -118,6 +118,7 @@ export default function App() {
             <Route path="bookings/:bookingId" element={<CustomerBookingDetailPage />} />
             <Route path="hire-again" element={<HireAgainPage />} />
             <Route path="messages" element={<CustomerMessagesPage />} />
+            <Route path="messages/:projectId/:contractorProfileId" element={<CustomerMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
           </Route>
         </Route>
@@ -135,6 +136,7 @@ export default function App() {
             <Route path="onboarding" element={<ProOnboardingPage />} />
             <Route path="profile" element={<ProProfilePage />} />
             <Route path="messages" element={<ProMessagesPage />} />
+            <Route path="messages/:projectId/:contractorProfileId" element={<ProMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
           </Route>
         </Route>

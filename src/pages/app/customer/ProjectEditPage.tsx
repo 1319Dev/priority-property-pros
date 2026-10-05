@@ -21,6 +21,7 @@ import {
   uploadProjectPhoto,
 } from "../../../lib/marketplace/api";
 import { PRE_HIRE_CONTACT_HINT } from "../../../lib/marketplace/antiCircumvention";
+import { privateContactHintCopy } from "../../../lib/marketplace/bookings";
 import { classifyProjectPatch, planMaterialEdit } from "../../../lib/marketplace/lifecycle";
 import { centsToDollarString, dollarsToCents } from "../../../lib/marketplace/fees";
 import { TIMING_PREFERENCES, type Project, type ServiceCategory, type ServiceQuestion } from "../../../lib/marketplace/types";
@@ -236,7 +237,7 @@ export function ProjectEditPage() {
       <TextInput label="City" value={city} onChange={(e) => setCity(e.target.value)} />
       <TextInput label="State" value={state} onChange={(e) => setState(e.target.value)} />
       <TextInput label="ZIP" value={zip} inputMode="numeric" onChange={(e) => setZip(e.target.value)} />
-      <TextInput label="Street" value={street} onChange={(e) => setStreet(e.target.value)} hint="Stays private until a paid $4.99 connection entitlement (payments coming soon) or an admin unlock." />
+      <TextInput label="Street" value={street} onChange={(e) => setStreet(e.target.value)} hint={privateContactHintCopy()} />
       <TextInput label="Street line 2" value={street2} onChange={(e) => setStreet2(e.target.value)} />
       <label className="block">
         <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Schedule</span>

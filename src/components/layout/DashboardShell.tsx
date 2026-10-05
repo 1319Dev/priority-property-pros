@@ -51,16 +51,16 @@ export function DashboardShell({
         className="fixed inset-x-0 bottom-0 z-40 border-t border-forest-800/10 bg-cream-50/95 pb-safe backdrop-blur-md lg:static lg:border-t-0"
       >
         <ul
-          className="mx-auto grid max-w-lg px-2 pt-1 lg:hidden"
-          style={{ gridTemplateColumns: `repeat(${Math.min(items.length, 5)}, minmax(0, 1fr))` }}
+          className="mx-auto grid w-full max-w-lg px-1 pt-1 lg:hidden"
+          style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
         >
-          {items.slice(0, 5).map((item) => (
-            <li key={item.to} className="flex justify-center">
+          {items.map((item) => (
+            <li key={item.to} className="flex min-w-0 justify-center">
               <NavLink
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
-                  `flex min-h-12 min-w-12 flex-col items-center justify-center px-2 py-1 text-[0.65rem] font-semibold ${
+                  `flex min-h-12 w-full flex-col items-center justify-center px-0.5 py-1 text-center text-[0.62rem] font-semibold leading-tight ${
                     isActive ? "text-forest-800" : "text-ink-500"
                   }`
                 }

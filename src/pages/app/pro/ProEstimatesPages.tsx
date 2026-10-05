@@ -7,6 +7,7 @@ import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
 import { deleteEstimate, fetchMyEstimates, fetchMyNotifications, markNotificationRead, type ContractorEstimateListItem } from "../../../lib/marketplace/api";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
+import { messageNotificationHref } from "../../../lib/marketplace/messaging";
 import {
   canDeleteFrom,
   contractorEstimateStatusDetail,
@@ -183,8 +184,23 @@ export function ProNotificationsList() {
     <section className="space-y-3">
       <h2 className="font-display text-2xl text-forest-800">Updates</h2>
       <ul className="space-y-2">
-        {rows.slice(0, 5).map((row) => (
+        {rows.slice(0, 5).map((row) => {
+          const messageHref =
+            row.kind === "message.received" ? messageNotificationHref("contractor", row.payload) : null;
+          return (
           <li key={row.id}>
+            {messageHref ? (
+              <Link
+                to={messageHref}
+                className="block w-full rounded-2xl border border-forest-800/10 px-4 py-3 text-left text-sm"
+                onClick={() => {
+                  if (!row.read_at) void markNotificationRead(row.id);
+                }}
+              >
+                <p className="font-semibold text-forest-800">{row.title}</p>
+                <p className="text-ink-700">{row.body}</p>
+              </Link>
+            ) : (
             <button
               type="button"
               className="w-full rounded-2xl border border-forest-800/10 px-4 py-3 text-left text-sm"
@@ -201,8 +217,10 @@ export function ProNotificationsList() {
               <p className="font-semibold text-forest-800">{row.title}</p>
               <p className="text-ink-700">{row.body}</p>
             </button>
+            )}
           </li>
-        ))}
+          );
+        })}
       </ul>
     </section>
   );

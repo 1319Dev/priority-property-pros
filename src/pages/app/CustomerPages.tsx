@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { EmptyState } from "../../components/layout/DashboardShell";
 import { DeleteAccountDialog } from "../../components/account/DeleteAccountDialog";
 import { useAuth } from "../../lib/auth/useAuth";
 import { deleteOwnAccount } from "../../lib/auth/deleteAccount";
@@ -9,15 +8,7 @@ import { Button } from "../../components/ui/Button";
 import { accountStatusLabel, accountTypeLabel } from "../../lib/marketplace/statusLabels";
 
 export { CustomerHomePage, CustomerProjectsPage } from "./customer/CustomerMarketplacePages";
-
-export function CustomerMessagesPage() {
-  return (
-    <EmptyState
-      title="No messages"
-      body="Messaging is not built yet. You will not miss a job update because none can be sent."
-    />
-  );
-}
+export { CustomerMessagesPage } from "./messages/ProjectMessagesPage";
 
 export function AccountPage() {
   const { profile, user, signOut, account_type, account_status } = useAuth();

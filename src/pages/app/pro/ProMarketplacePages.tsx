@@ -1054,11 +1054,4 @@ export function ProJobsPage() {
   return <OpportunitiesPage />;
 }
 
-export function ProMessagesPage() {
-  return (
-    <EmptyState
-      title="No messages"
-      body="Full messaging is not built yet. Use questions on an accepted job to ask the customer about the work."
-    />
-  );
-}
+export { ProMessagesPage } from "../messages/ProjectMessagesPage";

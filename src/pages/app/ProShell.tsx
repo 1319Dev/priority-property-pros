@@ -3,6 +3,7 @@ import { DashboardShell } from "../../components/layout/DashboardShell";
 const items = [
   { to: "/app/pro", label: "Home", end: true },
   { to: "/app/pro/opportunities", label: "Jobs" },
+  { to: "/app/pro/messages", label: "Messages" },
   { to: "/app/pro/estimates", label: "Estimates" },
   { to: "/app/pro/bookings", label: "Bookings" },
   { to: "/app/pro/profile", label: "Profile" },
