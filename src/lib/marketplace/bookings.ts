@@ -113,7 +113,7 @@ export function unauthorizedPayloadLeaksPrivateContact(
 }
 
 export function privateContactLockedCopy(): string {
-  return "Project contact is locked. Street, phone, and email stay hidden until this contractor has a paid $4.99 connection entitlement or an admin unlocks this specific record. Clicking Connect does not unlock contact while payments are off.";
+  return "Project contact is locked. Street, phone, and email stay hidden until this contractor has a paid $4.99 connection entitlement or an admin unlocks this specific record. Clicking Connect does not unlock contact.";
 }
 
 export function privateContactHintCopy(): string {

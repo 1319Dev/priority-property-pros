@@ -37,7 +37,14 @@ export const CONNECT_CHECKOUT_CONFIRM_EXTRA =
   "If checkout is available you will continue to a $4.99 payment page. Contact stays locked until the server verifies that payment. Returning from checkout does not unlock contact by itself.";
 
 export const CONNECT_PAYMENTS_OFF_COPY =
-  "Connection requested. Online payment setup is coming soon. Contact stays locked until a trusted $4.99 payment is verified. Clicking Connect does not unlock contact.";
+  "Connection requested. $4.99 checkout is temporarily unavailable. Contact stays locked until a verified $4.99 payment. Clicking Connect does not unlock contact.";
+
+/** Jobs list helper. Contact stays locked until the $4.99 connection is verified. */
+export const JOBS_STREET_HELPER_COPY =
+  "Approximate location only. Exact street stays hidden until a paid $4.99 connection entitlement or an admin unlock. Tap Connect to take a job — one step. Pass on this job if it is not a fit; that opening can go to the next pro.";
+
+export const OPPORTUNITY_CONTACT_LOCKED_COPY =
+  "Exact street, phone, email, name, and precise coordinates stay hidden until a paid $4.99 connection entitlement or an admin unlock. Clicking Connect does not unlock contact.";
 
 export const CONNECT_REDIRECTING_COPY = "Continuing to $4.99 checkout. Contact stays locked until payment is verified.";
 
@@ -85,9 +92,14 @@ export function contractorConnectionUiState(input: {
   myConnectionStatus?: ProjectConnectionStatus | null;
   reservedUntil?: string | Date | null;
   now?: Date;
+  /** platform_settings.connection_fee_checkout_enabled. Independent of payments_live. */
+  checkoutEnabled?: boolean;
 }): ContractorConnectionUiState {
   if (input.myConnectionStatus === "PAID" || input.myConnectionStatus === "COMPLETED") return "connected";
-  if (input.myConnectionStatus === "PAYMENT_DISABLED") return "requested";
+  if (input.myConnectionStatus === "PAYMENT_DISABLED") {
+    if (input.checkoutEnabled && !input.cancelled && input.accepting !== false) return "connect";
+    return "requested";
+  }
   if (input.cancelled || input.accepting === false) return "closed";
   if (input.myConnectionStatus === "RESERVED") {
     const until = input.reservedUntil;

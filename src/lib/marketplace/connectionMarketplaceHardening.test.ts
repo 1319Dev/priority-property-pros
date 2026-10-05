@@ -139,9 +139,48 @@ describe("Connection Marketplace staging hardening", () => {
     const otherProject = tryReserve({ ledger, projectId: "proj-2", contractorProfileId: "pro-1", now: t0 });
     expect(otherProject.ok).toBe(true);
 
-    expect(reserve).toMatch(/IF existing\.status IN \('PAID', 'COMPLETED', 'PAYMENT_DISABLED'\) THEN/);
+    expect(reserve).toMatch(/IF existing\.status IN \('PAID', 'COMPLETED'\) THEN/);
+    expect(reserve).toMatch(/existing\.status = 'PAYMENT_DISABLED'/);
+    expect(reserve).toMatch(/'resumed_from', 'PAYMENT_DISABLED'/);
+    expect(reserve).toMatch(/fee_cents = 499/);
+    expect(reserve).toMatch(/payments_live = false/);
+    expect(reserve).toMatch(/charges_live = false/);
     expect(reserve).toMatch(/RAISE EXCEPTION 'duplicate connection'/);
     expect(sql).toMatch(/CONSTRAINT project_connections_pair UNIQUE \(project_id, contractor_profile_id\)/);
+  });
+
+  it("resumes an unpaid PAYMENT_DISABLED connection into checkout without unlocking contact", () => {
+    const ledger = createHardeningLedger();
+    ledger.connections.push({
+      id: "conn-legacy",
+      projectId: "proj-1",
+      contractorProfileId: "pro-1",
+      status: "PAYMENT_DISABLED",
+      reservedUntil: null,
+      slot: 1,
+      stripeSessionId: null,
+      needsRefund: false,
+      refundReason: null,
+    });
+    ledger.slots.push({ projectId: "proj-1", slot: 1, connectionId: "conn-legacy" });
+
+    const resumed = tryReserve({ ledger, projectId: "proj-1", contractorProfileId: "pro-1", now: t0 });
+    expect(resumed.ok).toBe(true);
+    if (!resumed.ok) return;
+    expect(resumed.connection.status).toBe("RESERVED");
+    expect(resumed.connection.id).toBe("conn-legacy");
+    expect(ledger.connections).toHaveLength(1);
+    expect(ledger.slots).toEqual([{ projectId: "proj-1", slot: 1, connectionId: "conn-legacy" }]);
+    expect(ledger.entitlements).toHaveLength(0);
+    expect(ledger.stripeCharges).toBe(0);
+    expect(contactVisibleFor({ ledger, projectId: "proj-1", contractorProfileId: "pro-1" })).toBe(false);
+
+    const again = tryReserve({ ledger, projectId: "proj-1", contractorProfileId: "pro-1", now: t0 });
+    expect(again.ok).toBe(true);
+    if (!again.ok) return;
+    expect(again.idempotent).toBe(true);
+    expect(ledger.slots).toHaveLength(1);
+    expect(ledger.entitlements).toHaveLength(0);
   });
 
   it("3. final-slot concurrency allows at most one winner and never a 4th PAID", () => {
@@ -472,6 +511,13 @@ describe("Connection Marketplace staging hardening", () => {
     expect(contractorConnectionUiState({ remaining: 0 })).toBe("full");
     expect(contractorConnectionUiState({ accepting: false })).toBe("closed");
     expect(contractorConnectionUiState({ myConnectionStatus: "PAYMENT_DISABLED" })).toBe("requested");
+    expect(contractorConnectionUiState({ myConnectionStatus: "PAYMENT_DISABLED", checkoutEnabled: false })).toBe(
+      "requested",
+    );
+    expect(
+      contractorConnectionUiState({ myConnectionStatus: "PAYMENT_DISABLED", checkoutEnabled: true }),
+    ).toBe("connect");
+    expect(showConnectButton("connect")).toBe(true);
     expect(contractorConnectionUiState({})).toBe("connect");
     expect(showConnectButton("connect")).toBe(true);
     expect(showConnectButton("checkout_pending")).toBe(true);
@@ -479,6 +525,7 @@ describe("Connection Marketplace staging hardening", () => {
     expect(showConnectButton("full")).toBe(false);
 
     expect(detailPage).toMatch(/fetchMyProjectConnections/);
+    expect(detailPage).toMatch(/checkoutEnabled: availability\?\.checkout_enabled === true/);
     expect(detailPage).toMatch(/contractorConnectionUiState/);
     expect(detailPage).toMatch(/ContractorConnectionCta/);
     expect(detailPage).toMatch(/runContractorConnect/);

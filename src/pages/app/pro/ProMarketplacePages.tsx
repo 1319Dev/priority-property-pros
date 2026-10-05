@@ -62,6 +62,8 @@ import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import {
   CONNECT_PAYMENTS_OFF_COPY,
   CONNECT_REDIRECTING_COPY,
+  JOBS_STREET_HELPER_COPY,
+  OPPORTUNITY_CONTACT_LOCKED_COPY,
   connectionAvailabilityCopy,
   contractorConnectionUiState,
 } from "../../../lib/marketplace/connectionLifecycle";
@@ -428,11 +430,7 @@ export function OpportunitiesPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Jobs</h1>
-      <p className="text-sm text-ink-700">
-        Approximate location only. Exact street stays hidden until a paid $4.99 connection entitlement (payments coming
-        soon) or an admin unlock. Tap Connect to take a job — one step. Pass on this job if it is not a fit; that
-        opening can go to the next pro.
-      </p>
+      <p className="text-sm text-ink-700">{JOBS_STREET_HELPER_COPY}</p>
       <FormError message={error} />
       {live.length === 0 ? (
         <EmptyState title="No open jobs" body="Nearby matching jobs will land here. You can browse anonymized opportunities at no charge. At most three paid connections per project. Cancelled jobs leave this list." />
@@ -590,6 +588,7 @@ export function OpportunityDetailPage() {
     remaining: availability?.remaining ?? 3,
     myConnectionStatus: myConnection?.status ?? null,
     reservedUntil: myConnection?.reserved_until ?? null,
+    checkoutEnabled: availability?.checkout_enabled === true,
   });
   const showConnectionCta = !cancelled && opportunityAllowsConnectCta(row.status);
   const showDecline = canContractorEndJob({
@@ -616,10 +615,7 @@ export function OpportunityDetailPage() {
         <p>{project?.description}</p>
         <p className="mt-2 font-semibold">Approximate location</p>
         <p>{[project?.city, project?.state].filter(Boolean).join(", ")}</p>
-        <p className="text-ink-500">
-          Exact street, phone, email, name, and precise coordinates stay hidden until a paid $4.99 connection
-          entitlement or an admin unlock. Clicking Connect does not unlock contact while payments are off.
-        </p>
+        <p className="text-ink-500">{OPPORTUNITY_CONTACT_LOCKED_COPY}</p>
         <p className="mt-2">{project?.timing ? TIMING_LABELS[project.timing] : ""}</p>
         {project?.budget_min_cents != null || project?.budget_max_cents != null ? (
           <p className="mt-2">
