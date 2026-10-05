@@ -5,11 +5,12 @@ import { isSupabaseConfigured } from "../../lib/supabase/config";
 import type { PublicPlatformReview } from "../../lib/marketplace/platformReviews";
 import { PLATFORM_REVIEWS_NOT_GOOGLE } from "../../lib/marketplace/platformReviews";
 import { fetchApprovedPlatformReviews } from "../../lib/marketplace/platformReviewsApi";
-import { PlatformReviewCard } from "../reviews/ReviewCard";
+import { PlatformReviewCard, ReviewsEmptyState } from "../reviews/ReviewCard";
 
 export function HomePlatformReviews() {
   const configured = isSupabaseConfigured();
   const [reviews, setReviews] = useState<PublicPlatformReview[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!configured) return;
@@ -19,17 +20,12 @@ export function HomePlatformReviews() {
         if (!cancelled) setReviews(rows);
       })
       .catch((err: unknown) => {
-        if (!cancelled) {
-          console.warn("Platform reviews could not be loaded", err);
-          setReviews([]);
-        }
+        if (!cancelled) setError(err instanceof Error ? err.message : "Could not load reviews.");
       });
     return () => {
       cancelled = true;
     };
   }, [configured]);
-
-  if (!configured || reviews.length === 0) return null;
 
   return (
     <section className="border-t border-forest-800/10 py-14 sm:py-16" aria-labelledby="reviews-heading">
@@ -42,13 +38,20 @@ export function HomePlatformReviews() {
         <h2 id="reviews-heading" className="sr-only">
           Platform reviews
         </h2>
-        <ul className="mt-8 grid gap-4 lg:grid-cols-3">
-          {reviews.map((review) => (
-            <li key={review.id}>
-              <PlatformReviewCard review={review} />
-            </li>
-          ))}
-        </ul>
+        {error ? <p className="mt-6 text-sm text-danger-600">{error}</p> : null}
+        <div className="mt-8">
+          {reviews.length === 0 ? (
+            <ReviewsEmptyState compact />
+          ) : (
+            <ul className="grid gap-4 lg:grid-cols-3">
+              {reviews.map((review) => (
+                <li key={review.id}>
+                  <PlatformReviewCard review={review} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <p className="mt-6">
           <Link to="/reviews" className="min-h-11 inline-flex items-center font-semibold text-forest-800 underline">
             All reviews

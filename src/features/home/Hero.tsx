@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CUSTOMER_CTA, CUSTOMER_TAGLINE, HERO_SUPPORTING, JOIN_AS_A_PRO } from "../../data/brand";
+import { CUSTOMER_CTA, CUSTOMER_TAGLINE, CONTRACTOR_CTA, MARKETPLACE_NEED_LINE } from "../../data/brand";
+import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING, SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
 import { PROJECT_PLACEHOLDERS } from "../../data/services";
 import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { ButtonLink } from "../../components/ui/Button";
@@ -56,15 +57,22 @@ export function Hero() {
           </figure>
         </div>
         <div className="mt-5 min-w-0 max-w-3xl">
-          <p className="max-w-xl text-lg leading-relaxed text-ink-700">{HERO_SUPPORTING}</p>
+          <p className="max-w-xl text-lg leading-relaxed text-ink-700">
+            {MARKETPLACE_NEED_LINE} Independent local contractors compete fairly. You hire. They perform. Priority
+            Property Pros is the place — not the crew.
+          </p>
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-700">
+            {HOMEPAGE_SIGNUP_HEADLINE} {HOMEPAGE_SIGNUP_SUPPORTING}
+          </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <ButtonLink to="/post-project" size="lg">
               {CUSTOMER_CTA}
             </ButtonLink>
             <ButtonLink to="/become-a-pro" variant="outline" size="lg">
-              {JOIN_AS_A_PRO}
+              {CONTRACTOR_CTA}
             </ButtonLink>
           </div>
+          <p className="mt-3 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
           <form
             className="mt-8 rounded-3xl border border-forest-800/10 bg-cream-100/80 p-3 shadow-[0_18px_50px_-28px_rgba(16,36,28,0.45)]"
             onSubmit={(event) => {

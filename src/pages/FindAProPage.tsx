@@ -8,13 +8,10 @@ import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
 import { PRICING_PATH } from "../data/pricing";
 import { ReviewedContractorsList } from "../features/browse/ReviewedContractorsPreview";
 import { useReviewedContractors } from "../features/browse/useReviewedContractors";
-import { applyPublicMeta, resolvePublicMeta } from "../data/publicSeo";
-import { PublicReviewSection } from "../features/browse/PublicReviewSection";
 import { formatPublicRating, isUuid, publicAboutText } from "../lib/marketplace/publicDirectory";
 import { REVIEWED_PROS_INTRO, REVIEWED_PROS_PATH, REVIEWED_PROS_TITLE } from "../lib/marketplace/reviewedContractors";
 import { loadReviewedContractor, type ReviewedContractorCard } from "../lib/marketplace/reviewedContractorsApi";
 import { isSupabaseConfigured } from "../lib/supabase/config";
-import { PUBLIC_FETCH_TIMEOUT_MS, withTimeout } from "../lib/withTimeout";
 
 export function FindAProPage() {
   const { cards, failed, loading, retry } = useReviewedContractors();
@@ -55,23 +52,13 @@ export function PublicContractorPage() {
   const [loading, setLoading] = useState(configured && isUuid(contractorId));
 
   useEffect(() => {
-    const meta = resolvePublicMeta(`/find-a-pro/${contractorId || "contractor"}`);
-    applyPublicMeta({
-      ...meta,
-      title: card?.displayLabel ? `${card.displayLabel} | Priority Property Pros` : meta.title,
-      canonicalPath: `/find-a-pro/${contractorId}`,
-    });
-  }, [card, contractorId]);
-
-  useEffect(() => {
     if (!isUuid(contractorId) || !configured) {
       setLoading(false);
       setCard(null);
       return;
     }
     let cancelled = false;
-
-    void withTimeout(loadReviewedContractor(contractorId), PUBLIC_FETCH_TIMEOUT_MS)
+    void loadReviewedContractor(contractorId)
       .then((result) => {
         if (cancelled) return;
         setCard(result?.card ?? null);
@@ -133,17 +120,19 @@ export function PublicContractorPage() {
             {card.serviceArea}
             {card.categories.length ? ` · ${card.categories.join(" • ")}` : ""}
           </p>
-          {rating ? (
-            <p className="font-medium text-forest-800">
-              <a href="#reviews" className="underline">
-                {rating}
-              </a>
-            </p>
-          ) : (
-            <p>No reviews yet. New on Priority Property Pros.</p>
-          )}
+          {rating ? <p className="font-medium text-forest-800">{rating}</p> : null}
           <p>{publicAboutText(about, card.shortDescription)}</p>
-          <PublicReviewSection reviews={card.reviews} average={card.ratingAverage} count={card.ratingCount} />
+          <section>
+            <h2 className="font-display text-2xl text-forest-800">Reviews</h2>
+            <ul className="mt-3 space-y-3">
+              {card.reviews.map((review) => (
+                <li key={review.id} className="rounded-3xl bg-cream-100 px-4 py-3 text-sm">
+                  <p className="font-semibold text-forest-800">★ {review.rating.toFixed(1)}</p>
+                  <p className="mt-1">{review.body}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
           <p className="text-sm">{REVIEWED_PROS_INTRO}</p>
         </div>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">

@@ -16,7 +16,7 @@ export const IDENTITY_STAGES = [
       "General trade / categories",
       "General service area (e.g. Houston Area) — not a street address or ZIP list",
       "Aggregate PPP rating and verified review count only when real reviews exist",
-      "Approved Pro badge only. License and insurance badges are not shown",
+      "Earned approval / credential badges with generic labels (Approved Pro, License reviewed)",
       "Years of experience when provided",
       "Short non-identifying description (contact-stripped; generic fallback otherwise)",
       "Manually screened PUBLIC_SAFE portfolio captions only — original files and filenames stay private",

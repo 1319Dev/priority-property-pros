@@ -17,7 +17,6 @@ import {
 import { contactAccessAllowsReveal } from "./bookings";
 import {
   applyDirectoryFilters,
-  isHiddenPublicBadge,
   anonymizedProLabel,
   DEFAULT_PORTFOLIO_PRIVACY,
   formatGeneralServiceArea,
@@ -110,10 +109,6 @@ describe("public marketplace directory privacy", () => {
     expect(formatPublicRating(card.ratingAverage, card.ratingCount)).toBe("★ 4.9 · 18 verified PPP reviews");
     expect(card.badges.map((badge) => badge.label)).toContain("Approved Pro");
     expect(card.badges.map((badge) => badge.label).join(" ")).not.toMatch(/TDLR|999|SECRET/i);
-    expect(card.badges.map((badge) => badge.label).join(" ")).not.toMatch(/license reviewed|insurance reviewed/i);
-    expect(isHiddenPublicBadge({ kind: "LICENSE", label: "License reviewed" })).toBe(true);
-    expect(isHiddenPublicBadge({ kind: "INSURANCE", label: "Insurance reviewed" })).toBe(true);
-    expect(isHiddenPublicBadge({ kind: "APPROVED", label: "Approved Pro" })).toBe(false);
     expect(card.shortDescription).toBe("Local independent for gates and small remodels.");
     expect(JSON.stringify(card)).not.toMatch(/Joe's Fence|512-555|joesfence|TX-999|secret@/i);
   });

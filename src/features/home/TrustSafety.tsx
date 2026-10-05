@@ -1,30 +1,40 @@
 import { ButtonLink } from "../../components/ui/Button";
-import { Container } from "../../components/ui/Container";
-
-const points = [
-  "An approved platform profile means an admin approved the account. It is not a workmanship inspection.",
-  "Service area and trades are entered by the contractor.",
-  "Phone, email, and street stay hidden until that contractor unlocks the connection.",
-  "You choose who to hire.",
-  "An estimate does not obligate a hire.",
-  "Priority Property Pros does not verify licenses, insurance, or workmanship and does not guarantee the work.",
-];
+import { Container, SectionHeading } from "../../components/ui/Container";
+import { SIGNUP_FEE_NOT_MONTHLY } from "../../data/pricing";
 
 export function TrustSafety() {
   return (
     <section className="border-t border-forest-800/10 py-14 sm:py-16" aria-labelledby="trust-heading">
       <Container>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Trust</p>
-        <h2 id="trust-heading" className="mt-3 max-w-2xl font-display text-3xl font-semibold text-forest-800 sm:text-4xl">
-          Know who you&apos;re hiring
+        <SectionHeading
+          eyebrow="Trust & safety"
+          title="Clear words. No false badges."
+        />
+        <h2 id="trust-heading" className="sr-only">
+          Trust and safety
         </h2>
-        <ul className="mt-8 grid gap-4 sm:grid-cols-2">
-          {points.map((point) => (
-            <li key={point} className="rounded-3xl border border-forest-800/10 bg-cream-50 p-5 text-sm leading-relaxed text-ink-700">
-              {point}
-            </li>
-          ))}
-        </ul>
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div className="rounded-3xl border border-forest-800/10 bg-cream-50 p-6">
+            <h3 className="font-display text-2xl text-forest-800">What PPP is</h3>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink-700">
+              <li>A technology marketplace that connects homeowners, property owners, landlords, property managers, and businesses with independent local contractors.</li>
+              <li>Live posting and estimates. Contractors pay $4.99 only when they choose to connect. Project payment is between the customer and the pro.</li>
+              <li>{SIGNUP_FEE_NOT_MONTHLY}</li>
+            </ul>
+          </div>
+          <div className="rounded-3xl border border-forest-800/10 bg-cream-50 p-6">
+            <h3 className="font-display text-2xl text-forest-800">What PPP is not</h3>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink-700">
+              <li>PPP is not the contractor and does not employ the people who do the work.</li>
+              <li>We do not currently verify licenses, insurance, or workmanship. Admin approval is not a workmanship inspection.</li>
+              <li>We do not claim jobs are guaranteed, bonded, or code-inspected by PPP. PPP does not process project payments or take a percentage of the job.</li>
+            </ul>
+          </div>
+        </div>
+        <p className="mt-6 max-w-3xl text-sm leading-relaxed text-ink-500">
+          When you hire, ask for proof of insurance and any required local licenses yourself. Agree on scope and
+          price before work starts. If something feels wrong, pause.
+        </p>
         <div className="mt-6">
           <ButtonLink to="/trust" variant="ghost">
             Full trust notes
