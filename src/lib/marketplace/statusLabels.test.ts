@@ -7,6 +7,7 @@ import {
   accountTypeLabel,
   customerLifecycleLabel,
   customerNextActions,
+  customerVisibleProjects,
   opportunityNextActions,
   PROJECT_STATUS_LABELS,
 } from "./statusLabels";
@@ -39,7 +40,16 @@ describe("human project states", () => {
   });
 
   it("offers obvious next actions", () => {
-    expect(customerNextActions({ projectId: "p1", projectStatus: "DRAFT" })[0]?.label).toBe("Finish project");
+    expect(customerNextActions({ projectId: "p1", projectStatus: "DRAFT" })).toEqual([]);
+    expect(customerNextActions({ projectId: "p1", projectStatus: "DRAFT" }).map((item) => item.label)).not.toContain(
+      "Finish project",
+    );
+    expect(
+      customerVisibleProjects([
+        { status: "DRAFT" as const, id: "d1" },
+        { status: "MATCHING" as const, id: "p1" },
+      ]).map((row) => row.id),
+    ).toEqual(["p1"]);
     expect(customerNextActions({ projectId: "p1", projectStatus: "ESTIMATES_AVAILABLE" })[0]?.label).toBe(
       "Review estimates",
     );

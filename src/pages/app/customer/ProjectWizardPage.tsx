@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { CompletenessBadge } from "../../../components/marketplace/CompletenessBadge";
 import { ProjectTypePicker } from "../../../components/marketplace/ProjectTypePicker";
@@ -8,218 +8,209 @@ import { FormError } from "../../../lib/auth/AuthCard";
 import { PHOTO_UPLOAD_GUIDANCE } from "../../../lib/marketplace/photoSafety";
 import { useAuth } from "../../../lib/auth/useAuth";
 import {
-  createOrReuseDraftProject,
-  deleteProjectPhoto,
-  fetchPrivateLocation,
   fetchProject,
-  fetchProjectAnswers,
-  fetchProjectPhotos,
   fetchServiceCategories,
   fetchServiceQuestions,
-  postProject,
-  signedProjectPhotoUrl,
+  submitNewProject,
   TIMING_LABELS,
-  updateProject,
-  uploadProjectPhoto,
-  upsertPrivateLocation,
-  upsertProjectAnswer,
 } from "../../../lib/marketplace/api";
 import { PRE_HIRE_CONTACT_HINT } from "../../../lib/marketplace/antiCircumvention";
 import { canPostProject, computeCompleteness } from "../../../lib/marketplace/completeness";
-import { centsToDollarString, dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
+import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
+import { photoUploadError } from "../../../lib/marketplace/flows";
 import {
   TIMING_PREFERENCES,
   WIZARD_STEPS,
-  type Project,
   type ServiceCategory,
   type ServiceQuestion,
+  type TimingPreference,
 } from "../../../lib/marketplace/types";
+import {
+  clearWizardSession,
+  emptyWizardSession,
+  readWizardSession,
+  wizardSessionIsEmpty,
+  writeWizardSession,
+  type WizardSession,
+} from "../../../lib/marketplace/wizardSession";
+
+type LocalPhoto = { id: string; file: File; url: string };
 
 export function ProjectWizardPage() {
   const { projectId } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const [project, setProject] = useState<Project | null>(null);
+  const composing = !projectId || projectId === "new";
+  const [form, setForm] = useState<WizardSession>(() =>
+    composing ? (readWizardSession() ?? emptyWizardSession()) : emptyWizardSession(),
+  );
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [questions, setQuestions] = useState<ServiceQuestion[]>([]);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [photos, setPhotos] = useState<{ id: string; storage_path: string; url?: string }[]>([]);
-  const [street, setStreet] = useState("");
-  const [street2, setStreet2] = useState("");
-  const [budgetMin, setBudgetMin] = useState("");
-  const [budgetMax, setBudgetMax] = useState("");
+  const [photos, setPhotos] = useState<LocalPhoto[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+  const persistReady = useRef(false);
 
-  const step = project?.draft_step ?? 1;
+  const step = form.step;
+
+  useEffect(() => {
+    if (!composing) {
+      persistReady.current = false;
+      return;
+    }
+    if (!persistReady.current) {
+      const saved = readWizardSession();
+      if (saved && !wizardSessionIsEmpty(saved)) setForm(saved);
+      persistReady.current = true;
+      return;
+    }
+    if (wizardSessionIsEmpty(form)) {
+      const saved = readWizardSession();
+      if (saved && !wizardSessionIsEmpty(saved)) return;
+    }
+    writeWizardSession(form);
+  }, [composing, form]);
+
+  useEffect(() => {
+    return () => {
+      for (const photo of photosRef.current) URL.revokeObjectURL(photo.url);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     async function boot() {
       if (!user || !profile) return;
+      let redirected = false;
       try {
         const cats = await fetchServiceCategories();
         if (cancelled) return;
         setCategories(cats);
-        if (!projectId || projectId === "new") {
-          const created = await createOrReuseDraftProject(profile.id);
-          const preset = params.get("q") ?? params.get("service") ?? "";
-          const match = cats.find((c) => c.slug === preset || c.name.toLowerCase() === preset.toLowerCase());
-          if (preset) {
-            await updateProject(created.id, {
-              title: match ? "" : preset,
-              category_id: match?.id ?? null,
-            });
-          }
-          navigate(`/app/customer/projects/${created.id}/wizard`, { replace: true });
-          return;
-        }
-        const row = await fetchProject(projectId);
-        if (row.status !== "DRAFT") {
+        if (!composing && projectId) {
+          const row = await fetchProject(projectId);
+          if (cancelled) return;
+          redirected = true;
           navigate(
-            row.status === "CONTRACTOR_SELECTED" || row.status === "CANCELLED"
-              ? `/app/customer/projects/${row.id}`
-              : `/app/customer/projects/${row.id}/edit`,
+            row.status === "DRAFT"
+              ? "/app/customer/projects/new/wizard"
+              : row.status === "CONTRACTOR_SELECTED" || row.status === "CANCELLED"
+                ? `/app/customer/projects/${row.id}`
+                : `/app/customer/projects/${row.id}/edit`,
             { replace: true },
           );
           return;
         }
-        const [photoRows, answerRows, loc] = await Promise.all([
-          fetchProjectPhotos(projectId),
-          fetchProjectAnswers(projectId),
-          fetchPrivateLocation(projectId),
-        ]);
-        if (cancelled) return;
-        setProject(row);
-        setStreet(loc?.street_line1 ?? "");
-        setStreet2(loc?.street_line2 ?? "");
-        setBudgetMin(centsToDollarString(row.budget_min_cents));
-        setBudgetMax(centsToDollarString(row.budget_max_cents));
-        setAnswers(Object.fromEntries(answerRows.map((a) => [a.question_id, a.answer_text ?? ""])));
-        const withUrls = await Promise.all(
-          photoRows.map(async (photo) => ({
-            ...photo,
-            url: (await signedProjectPhotoUrl(photo.storage_path)) ?? undefined,
-          })),
-        );
-        setPhotos(withUrls);
+        const preset = params.get("q") ?? params.get("service") ?? "";
+        const match = cats.find((c) => c.slug === preset || c.name.toLowerCase() === preset.toLowerCase());
+        if (preset) {
+          setForm((current) => {
+            if (!wizardSessionIsEmpty(current)) return current;
+            return {
+              ...current,
+              title: match ? "" : preset,
+              categoryId: match?.id ?? null,
+            };
+          });
+        }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Could not load the wizard.");
+        if (!cancelled) setError(err instanceof Error ? err.message : "Could not load the form.");
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && !redirected) setLoading(false);
       }
     }
     void boot();
     return () => {
       cancelled = true;
     };
-  }, [projectId, user, profile, navigate, params]);
+  }, [composing, projectId, user, profile, navigate, params]);
 
   useEffect(() => {
-    if (!project?.category_id) {
+    if (!form.categoryId) {
       setQuestions([]);
       return;
     }
-    void fetchServiceQuestions(project.category_id).then(setQuestions).catch((err: Error) => setError(err.message));
-  }, [project?.category_id]);
+    void fetchServiceQuestions(form.categoryId).then(setQuestions).catch((err: Error) => setError(err.message));
+  }, [form.categoryId]);
 
   const completeness = useMemo(() => {
-    if (!project) return "MORE_INFO_NEEDED";
     return computeCompleteness({
-      title: project.title,
-      description: project.description,
-      category_id: project.category_id,
-      zip_code: project.zip_code,
-      city: project.city,
-      state: project.state,
-      timing: project.timing,
-      budget_min_cents: project.budget_min_cents,
-      budget_max_cents: project.budget_max_cents,
+      title: form.title,
+      description: form.description,
+      category_id: form.categoryId,
+      zip_code: form.zipCode,
+      city: form.city,
+      state: form.state,
+      timing: form.timing,
+      budget_min_cents: dollarsToCents(form.budgetMin),
+      budget_max_cents: dollarsToCents(form.budgetMax),
       photo_count: photos.length,
-      street_line1: street,
+      street_line1: form.street,
       required_questions: questions,
-      answers: Object.entries(answers).map(([question_id, answer_text]) => ({ question_id, answer_text })),
+      answers: Object.entries(form.answers).map(([question_id, answer_text]) => ({ question_id, answer_text })),
     });
-  }, [project, photos.length, street, questions, answers]);
+  }, [form, photos.length, questions]);
 
-  async function savePatch(patch: Parameters<typeof updateProject>[1], nextStep?: number) {
-    if (!project) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const updated = await updateProject(project.id, {
-        ...patch,
-        draft_step: nextStep ?? project.draft_step,
-      });
-      setProject(updated);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed.");
-    } finally {
-      setBusy(false);
-    }
+  function patch(next: Partial<WizardSession>) {
+    setForm((current) => ({ ...current, ...next }));
   }
 
-  async function persistStep(fromStep: number) {
-    if (!project) return;
-    if (fromStep === 1) {
-      await updateProject(project.id, { title: project.title, description: project.description });
-    }
-    if (fromStep === 4) {
-      await Promise.all(questions.map((q) => upsertProjectAnswer(project.id, q.id, answers[q.id] ?? "")));
-    }
-    if (fromStep === 5) {
-      await upsertPrivateLocation(project.id, {
-        street_line1: street,
-        street_line2: street2,
-        lat: null,
-        lng: null,
-      });
-      await updateProject(project.id, {
-        city: project.city,
-        state: project.state,
-        zip_code: project.zip_code,
-      });
-    }
-    if (fromStep === 7) {
-      await updateProject(project.id, {
-        budget_min_cents: dollarsToCents(budgetMin),
-        budget_max_cents: dollarsToCents(budgetMax),
-      });
-    }
+  function go(next: number) {
+    patch({ step: next });
   }
 
-  async function go(next: number) {
-    if (!project) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await persistStep(step);
-      const saved = await updateProject(project.id, { draft_step: next });
-      setProject(saved);
-      setBudgetMin(centsToDollarString(saved.budget_min_cents));
-      setBudgetMax(centsToDollarString(saved.budget_max_cents));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not continue.");
-    } finally {
-      setBusy(false);
+  function addPhoto(file: File) {
+    const message = photoUploadError(file.type, file.size);
+    if (message) {
+      setError(message);
+      return;
     }
+    setError(null);
+    setPhotos((current) => [
+      ...current,
+      { id: crypto.randomUUID(), file, url: URL.createObjectURL(file) },
+    ]);
+  }
+
+  function removePhoto(id: string) {
+    setPhotos((current) => {
+      const target = current.find((photo) => photo.id === id);
+      if (target) URL.revokeObjectURL(target.url);
+      return current.filter((photo) => photo.id !== id);
+    });
   }
 
   async function onPost() {
-    if (!project) return;
+    if (!user || !profile) return;
     setBusy(true);
     setError(null);
     try {
-      await upsertPrivateLocation(project.id, {
-        street_line1: street,
-        street_line2: street2,
-        lat: null,
-        lng: null,
+      const projectIdCreated = await submitNewProject({
+        customerId: profile.id,
+        userId: user.id,
+        title: form.title,
+        description: form.description,
+        categoryId: form.categoryId,
+        city: form.city,
+        state: form.state,
+        zipCode: form.zipCode,
+        timing: form.timing,
+        preferredDate: form.timing === "SPECIFIC_DATE" ? form.preferredDate : "",
+        budgetMinCents: dollarsToCents(form.budgetMin),
+        budgetMaxCents: dollarsToCents(form.budgetMax),
+        streetLine1: form.street,
+        streetLine2: form.street2,
+        answers: questions.map((question) => ({
+          questionId: question.id,
+          answerText: form.answers[question.id] ?? "",
+        })),
+        photos: photos.map((photo) => photo.file),
       });
-      await postProject(project.id);
-      navigate(`/app/customer/projects/${project.id}`);
+      clearWizardSession();
+      navigate(`/app/customer/projects/${projectIdCreated}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not post.");
     } finally {
@@ -227,22 +218,27 @@ export function ProjectWizardPage() {
     }
   }
 
-  if (loading || !project) {
-    return <p className="text-ink-500">{error ?? "Loading your draft…"}</p>;
+  if (loading) {
+    return <p className="text-ink-500">{error ?? "Loading…"}</p>;
   }
 
-  if (project.status !== "DRAFT") {
+  if (!composing) {
     return (
       <div className="space-y-4">
         <h1 className="font-display text-3xl text-forest-800">This project is already posted.</h1>
-        <Link className="font-semibold text-forest-800 underline" to={`/app/customer/projects/${project.id}`}>
-          Open project
-        </Link>
+        {projectId ? (
+          <Link className="font-semibold text-forest-800 underline" to={`/app/customer/projects/${projectId}`}>
+            Open project
+          </Link>
+        ) : null}
       </div>
     );
   }
 
-  const category = categories.find((c) => c.id === project.category_id);
+  const category = categories.find((c) => c.id === form.categoryId);
+  const budgetMinCents = dollarsToCents(form.budgetMin);
+  const budgetMaxCents = dollarsToCents(form.budgetMax);
+  const ready = canPostProject({ title: form.title, category_id: form.categoryId, zip_code: form.zipCode });
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
@@ -251,6 +247,7 @@ export function ProjectWizardPage() {
         <h1 className="font-display text-4xl font-semibold text-forest-800">
           {WIZARD_STEPS[step - 1]?.label ?? "Project"}
         </h1>
+        <p className="text-sm text-ink-500">Nothing is saved until you hit Post. You can leave this page and come back in this tab.</p>
         <CompletenessBadge value={completeness} />
         <ol className="flex gap-1 overflow-x-auto pb-1" aria-label="Steps">
           {WIZARD_STEPS.map((item) => (
@@ -260,7 +257,7 @@ export function ProjectWizardPage() {
                 className={`min-h-11 rounded-full px-3 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.12em] ${
                   item.id === step ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-ink-700"
                 }`}
-                onClick={() => void go(item.id)}
+                onClick={() => go(item.id)}
               >
                 {item.id}. {item.label}
               </button>
@@ -275,9 +272,8 @@ export function ProjectWizardPage() {
         <div className="space-y-4">
           <TextInput
             label="What do you need done?"
-            value={project.title}
-            onChange={(e) => setProject({ ...project, title: e.target.value })}
-            onBlur={() => void savePatch({ title: project.title })}
+            value={form.title}
+            onChange={(e) => patch({ title: e.target.value })}
             placeholder="Fence repaired before the weekend"
           />
           <label className="block" htmlFor="need-detail">
@@ -288,9 +284,8 @@ export function ProjectWizardPage() {
               id="need-detail"
               rows={4}
               className="w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4 py-3"
-              value={project.description}
-              onChange={(e) => setProject({ ...project, description: e.target.value })}
-              onBlur={() => void savePatch({ description: project.description })}
+              value={form.description}
+              onChange={(e) => patch({ description: e.target.value })}
             />
             <span className="mt-1.5 block text-sm text-ink-500">{PRE_HIRE_CONTACT_HINT}</span>
           </label>
@@ -300,17 +295,16 @@ export function ProjectWizardPage() {
       {step === 2 ? (
         <ProjectTypePicker
           categories={categories}
-          selectedId={project.category_id}
-          onSelect={(categoryId) => {
-            setProject({ ...project, category_id: categoryId });
-            void savePatch({ category_id: categoryId });
-          }}
+          selectedId={form.categoryId}
+          onSelect={(categoryId) => patch({ categoryId })}
         />
       ) : null}
 
       {step === 3 ? (
         <div className="space-y-4">
-          <p className="text-sm text-ink-700">Photos stay private before a paid connection. {PHOTO_UPLOAD_GUIDANCE}</p>
+          <p className="text-sm text-ink-700">
+            Photos stay on this page until you post. Leaving without posting does not upload them. {PHOTO_UPLOAD_GUIDANCE}
+          </p>
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp,image/heic"
@@ -318,55 +312,18 @@ export function ProjectWizardPage() {
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = "";
-              if (!file || !user) return;
-              setBusy(true);
-              void uploadProjectPhoto({
-                userId: user.id,
-                projectId: project.id,
-                file,
-                sortOrder: photos.length,
-              })
-                .then(() => fetchProjectPhotos(project.id))
-                .then(async (rows) => {
-                  const withUrls = await Promise.all(
-                    rows.map(async (photo) => ({
-                      ...photo,
-                      url: (await signedProjectPhotoUrl(photo.storage_path)) ?? undefined,
-                    })),
-                  );
-                  setPhotos(withUrls);
-                })
-                .catch((err: Error) => setError(err.message))
-                .finally(() => setBusy(false));
+              if (!file) return;
+              addPhoto(file);
             }}
           />
           <ul className="grid grid-cols-2 gap-3">
             {photos.map((photo) => (
               <li key={photo.id} className="overflow-hidden rounded-2xl bg-cream-100">
-                {photo.url ? (
-                  <img src={photo.url} alt="Project photo" className="h-28 w-full object-cover" />
-                ) : (
-                  <p className="p-4 text-sm">Photo attached</p>
-                )}
+                <img src={photo.url} alt="Project photo" className="h-28 w-full object-cover" />
                 <button
                   type="button"
                   className="w-full min-h-11 text-sm font-semibold text-danger-600"
-                  onClick={() => {
-                    setBusy(true);
-                    void deleteProjectPhoto(photo.id, photo.storage_path)
-                      .then(() => fetchProjectPhotos(project.id))
-                      .then(async (rows) => {
-                        const withUrls = await Promise.all(
-                          rows.map(async (row) => ({
-                            ...row,
-                            url: (await signedProjectPhotoUrl(row.storage_path)) ?? undefined,
-                          })),
-                        );
-                        setPhotos(withUrls);
-                      })
-                      .catch((err: Error) => setError(err.message))
-                      .finally(() => setBusy(false));
-                  }}
+                  onClick={() => removePhoto(photo.id)}
                 >
                   Remove
                 </button>
@@ -388,8 +345,13 @@ export function ProjectWizardPage() {
               {question.kind === "SINGLE_CHOICE" ? (
                 <select
                   className="min-h-14 w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4"
-                  value={answers[question.id] ?? ""}
-                  onChange={(e) => setAnswers((current) => ({ ...current, [question.id]: e.target.value }))}
+                  value={form.answers[question.id] ?? ""}
+                  onChange={(e) =>
+                    setForm((current) => ({
+                      ...current,
+                      answers: { ...current.answers, [question.id]: e.target.value },
+                    }))
+                  }
                 >
                   <option value="">Select</option>
                   {question.options.map((opt) => (
@@ -401,8 +363,13 @@ export function ProjectWizardPage() {
               ) : question.kind === "BOOLEAN" ? (
                 <select
                   className="min-h-14 w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4"
-                  value={answers[question.id] ?? ""}
-                  onChange={(e) => setAnswers((current) => ({ ...current, [question.id]: e.target.value }))}
+                  value={form.answers[question.id] ?? ""}
+                  onChange={(e) =>
+                    setForm((current) => ({
+                      ...current,
+                      answers: { ...current.answers, [question.id]: e.target.value },
+                    }))
+                  }
                 >
                   <option value="">Select</option>
                   <option value="Yes">Yes</option>
@@ -412,8 +379,13 @@ export function ProjectWizardPage() {
                 <textarea
                   rows={3}
                   className="w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4 py-3"
-                  value={answers[question.id] ?? ""}
-                  onChange={(e) => setAnswers((current) => ({ ...current, [question.id]: e.target.value }))}
+                  value={form.answers[question.id] ?? ""}
+                  onChange={(e) =>
+                    setForm((current) => ({
+                      ...current,
+                      answers: { ...current.answers, [question.id]: e.target.value },
+                    }))
+                  }
                 />
               )}
               {question.help_text ? <p className="mt-1 text-sm text-ink-500">{question.help_text}</p> : null}
@@ -427,25 +399,14 @@ export function ProjectWizardPage() {
           <p className="text-sm text-ink-700">
             Your exact street stays protected until a contractor has a paid $4.99 connection entitlement or an admin unlocks that record. Matched pros only see city and state before connecting.
           </p>
-          <TextInput label="Street address" value={street} onChange={(e) => setStreet(e.target.value)} autoComplete="street-address" />
-          <TextInput label="Apt / unit (optional)" value={street2} onChange={(e) => setStreet2(e.target.value)} />
-          <TextInput
-            label="City"
-            value={project.city ?? ""}
-            onChange={(e) => setProject({ ...project, city: e.target.value })}
-            onBlur={() => void savePatch({ city: project.city })}
-          />
-          <TextInput
-            label="State"
-            value={project.state ?? ""}
-            onChange={(e) => setProject({ ...project, state: e.target.value })}
-            onBlur={() => void savePatch({ state: project.state })}
-          />
+          <TextInput label="Street address" value={form.street} onChange={(e) => patch({ street: e.target.value })} autoComplete="street-address" />
+          <TextInput label="Apt / unit (optional)" value={form.street2} onChange={(e) => patch({ street2: e.target.value })} />
+          <TextInput label="City" value={form.city} onChange={(e) => patch({ city: e.target.value })} />
+          <TextInput label="State" value={form.state} onChange={(e) => patch({ state: e.target.value })} />
           <TextInput
             label="ZIP"
-            value={project.zip_code ?? ""}
-            onChange={(e) => setProject({ ...project, zip_code: e.target.value })}
-            onBlur={() => void savePatch({ zip_code: project.zip_code })}
+            value={form.zipCode}
+            onChange={(e) => patch({ zipCode: e.target.value })}
             inputMode="numeric"
           />
         </div>
@@ -459,24 +420,18 @@ export function ProjectWizardPage() {
                 type="radio"
                 name="timing"
                 className="mr-3"
-                checked={project.timing === timing}
-                onChange={() => {
-                  setProject({ ...project, timing });
-                  void savePatch({ timing });
-                }}
+                checked={form.timing === timing}
+                onChange={() => patch({ timing: timing as TimingPreference })}
               />
               {TIMING_LABELS[timing]}
             </label>
           ))}
-          {project.timing === "SPECIFIC_DATE" ? (
+          {form.timing === "SPECIFIC_DATE" ? (
             <TextInput
               label="Preferred date"
               type="date"
-              value={project.preferred_date ?? ""}
-              onChange={(e) => {
-                setProject({ ...project, preferred_date: e.target.value });
-                void savePatch({ preferred_date: e.target.value });
-              }}
+              value={form.preferredDate}
+              onChange={(e) => patch({ preferredDate: e.target.value })}
             />
           ) : null}
         </div>
@@ -487,16 +442,14 @@ export function ProjectWizardPage() {
           <TextInput
             label="Budget min (USD)"
             inputMode="decimal"
-            value={budgetMin}
-            onChange={(e) => setBudgetMin(e.target.value)}
-            onBlur={() => void savePatch({ budget_min_cents: dollarsToCents(budgetMin) })}
+            value={form.budgetMin}
+            onChange={(e) => patch({ budgetMin: e.target.value })}
           />
           <TextInput
             label="Budget max (USD)"
             inputMode="decimal"
-            value={budgetMax}
-            onChange={(e) => setBudgetMax(e.target.value)}
-            onBlur={() => void savePatch({ budget_max_cents: dollarsToCents(budgetMax) })}
+            value={form.budgetMax}
+            onChange={(e) => patch({ budgetMax: e.target.value })}
           />
         </div>
       ) : null}
@@ -504,25 +457,25 @@ export function ProjectWizardPage() {
       {step === 8 ? (
         <div className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm">
           <p>
-            <strong>Need:</strong> {project.title || "—"}
+            <strong>Need:</strong> {form.title || "—"}
           </p>
           <p>
             <strong>Project type:</strong> {category?.name ?? "—"}
           </p>
           <p>
-            <strong>Where (approximate):</strong> {[project.city, project.state, project.zip_code].filter(Boolean).join(", ") || "—"}
+            <strong>Where (approximate):</strong> {[form.city, form.state, form.zipCode].filter(Boolean).join(", ") || "—"}
           </p>
           <p>
-            <strong>Street (protected):</strong> {street || "—"}
+            <strong>Street (protected):</strong> {form.street || "—"}
           </p>
           <p>
-            <strong>When:</strong> {project.timing ? TIMING_LABELS[project.timing] : "—"}
+            <strong>When:</strong> {form.timing ? TIMING_LABELS[form.timing] : "—"}
           </p>
           <p>
             <strong>Budget:</strong>{" "}
-            {project.budget_min_cents != null || project.budget_max_cents != null
-              ? `${project.budget_min_cents != null ? formatUsdFromCents(project.budget_min_cents) : "—"} to ${
-                  project.budget_max_cents != null ? formatUsdFromCents(project.budget_max_cents) : "—"
+            {budgetMinCents != null || budgetMaxCents != null
+              ? `${budgetMinCents != null ? formatUsdFromCents(budgetMinCents) : "—"} to ${
+                  budgetMaxCents != null ? formatUsdFromCents(budgetMaxCents) : "—"
                 }`
               : "—"}
           </p>
@@ -535,21 +488,16 @@ export function ProjectWizardPage() {
 
       <div className="sticky bottom-24 z-20 flex gap-3 bg-cream-50/95 py-3 pb-safe lg:bottom-4">
         {step > 1 ? (
-          <Button type="button" variant="outline" className="min-h-14 flex-1" disabled={busy} onClick={() => void go(step - 1)}>
+          <Button type="button" variant="outline" className="min-h-14 flex-1" disabled={busy} onClick={() => go(step - 1)}>
             Back
           </Button>
         ) : null}
         {step < 8 ? (
-          <Button type="button" className="min-h-14 flex-1" disabled={busy} onClick={() => void go(step + 1)}>
+          <Button type="button" className="min-h-14 flex-1" disabled={busy} onClick={() => go(step + 1)}>
             Continue
           </Button>
         ) : (
-          <Button
-            type="button"
-            className="min-h-14 flex-1"
-            disabled={busy || !canPostProject(project)}
-            onClick={() => void onPost()}
-          >
+          <Button type="button" className="min-h-14 flex-1" disabled={busy || !ready} onClick={() => void onPost()}>
             {busy ? "Posting…" : "Post project"}
           </Button>
         )}

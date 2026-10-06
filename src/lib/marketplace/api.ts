@@ -3,8 +3,8 @@ import type { Database, Json } from "../supabase/database.types";
 import { assertNoPreHireContact } from "./antiCircumvention";
 import { looksLikeFilename } from "./publicDirectory";
 import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
-import { reusableEmptyDraft } from "./flows";
 import { detectContactLeak } from "./contactLeak";
+import { projectInsertForPost, runProjectSubmit } from "./projectPost";
 import { customerFacingConnectionCheckoutError, CONNECTION_RECONCILE_CUSTOMER_ERROR } from "./connectionCheckout";
 import {
   attachOpportunityProjects,
@@ -78,21 +78,8 @@ export async function fetchServiceQuestions(categoryId: string): Promise<Service
   }));
 }
 
-export async function createDraftProject(customerId: string): Promise<Project> {
-  const { data, error } = await client()
-    .from("projects")
-    .insert({ customer_id: customerId, title: "", description: "", status: "DRAFT" })
-    .select()
-    .single();
-  if (error || !data) throw new Error(asError(error, "Could not create a draft."));
-  return data as Project;
-}
-
-export async function createOrReuseDraftProject(customerId: string): Promise<Project> {
-  const existing = await fetchCustomerProjects(customerId);
-  const reusable = reusableEmptyDraft(existing);
-  if (reusable) return reusable;
-  return createDraftProject(customerId);
+function withoutUnpostedDrafts(rows: Project[]): Project[] {
+  return rows.filter((row) => row.status !== "DRAFT");
 }
 
 export async function fetchCustomerProjects(customerId?: string): Promise<Project[]> {
@@ -106,9 +93,9 @@ export async function fetchCustomerProjects(customerId?: string): Promise<Projec
       )
       .order("updated_at", { ascending: false });
     if (fallback.error) throw new Error(asError(error, "Could not load projects."));
-    return (fallback.data ?? []) as Project[];
+    return withoutUnpostedDrafts((fallback.data ?? []) as Project[]);
   }
-  return (Array.isArray(data) ? data : []) as Project[];
+  return withoutUnpostedDrafts((Array.isArray(data) ? data : []) as Project[]);
 }
 
 export async function fetchMyCustomerProject(id: string): Promise<Project> {
@@ -191,7 +178,7 @@ export async function uploadProjectPhoto(params: {
   projectId: string;
   file: File;
   sortOrder: number;
-}) {
+}): Promise<string> {
   if (!isAllowedImage(params.file.type)) throw new Error("Use a JPEG, PNG, or WebP photo.");
   if (params.file.size > 10 * 1024 * 1024) throw new Error("Photos must be 10 MB or smaller.");
   const path = `${params.userId}/${params.projectId}/${crypto.randomUUID()}-${sanitizeUploadName(params.file.name)}`;
@@ -206,7 +193,99 @@ export async function uploadProjectPhoto(params: {
     storage_path: path,
     sort_order: params.sortOrder,
   });
-  if (error) throw new Error(asError(error, "Could not attach the photo."));
+  if (error) {
+    await supabase.storage.from("project-photos").remove([path]);
+    throw new Error(asError(error, "Could not attach the photo."));
+  }
+  return path;
+}
+
+async function discardUnpostedProject(projectId: string, storagePaths: string[]): Promise<void> {
+  const supabase = client();
+  if (storagePaths.length > 0) {
+    await supabase.storage.from("project-photos").remove(storagePaths);
+  }
+  const { error } = await supabase.from("projects").delete().eq("id", projectId).eq("status", "DRAFT");
+  if (error) throw new Error(asError(error, "Could not discard the unposted project."));
+}
+
+export type NewProjectSubmission = {
+  customerId: string;
+  userId: string;
+  title: string;
+  description: string;
+  categoryId: string | null;
+  city: string;
+  state: string;
+  zipCode: string;
+  timing: TimingPreference | null;
+  preferredDate: string;
+  budgetMinCents: number | null;
+  budgetMaxCents: number | null;
+  streetLine1: string;
+  streetLine2: string;
+  answers: { questionId: string; answerText: string }[];
+  photos: File[];
+};
+
+/** Creates the project row and posts it. Called only from the Post button. */
+export async function submitNewProject(input: NewProjectSubmission): Promise<string> {
+  rejectContactLeak(input.title);
+  rejectContactLeak(input.description);
+  for (const answer of input.answers) rejectContactLeak(answer.answerText);
+
+  const uploaded: string[] = [];
+  const created = await runProjectSubmit({
+    insert: async () => {
+      const row = projectInsertForPost({
+        customerId: input.customerId,
+        title: input.title,
+        description: input.description,
+        categoryId: input.categoryId,
+        city: input.city,
+        state: input.state,
+        zipCode: input.zipCode,
+        timing: input.timing,
+        preferredDate: input.preferredDate,
+        budgetMinCents: input.budgetMinCents,
+        budgetMaxCents: input.budgetMaxCents,
+      });
+      const { data, error } = await client().from("projects").insert(row).select("id").single();
+      if (error || !data) throw new Error(asError(error, "Could not post the project."));
+      return data;
+    },
+    saveDetails: async (projectId) => {
+      await upsertPrivateLocation(projectId, {
+        street_line1: input.streetLine1.trim() || null,
+        street_line2: input.streetLine2.trim() || null,
+        lat: null,
+        lng: null,
+      });
+      for (const answer of input.answers) {
+        const text = answer.answerText.trim();
+        if (!text) continue;
+        await upsertProjectAnswer(projectId, answer.questionId, text);
+      }
+      for (let index = 0; index < input.photos.length; index += 1) {
+        const file = input.photos[index];
+        if (!file) continue;
+        const path = await uploadProjectPhoto({
+          userId: input.userId,
+          projectId,
+          file,
+          sortOrder: index,
+        });
+        uploaded.push(path);
+      }
+    },
+    post: async (projectId) => {
+      await postProject(projectId);
+    },
+    discard: async (projectId) => {
+      await discardUnpostedProject(projectId, uploaded);
+    },
+  });
+  return created.id;
 }
 
 export async function deleteProjectPhoto(id: string, storagePath: string) {

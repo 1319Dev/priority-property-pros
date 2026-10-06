@@ -16,9 +16,9 @@ describe("customer wizard and lists", () => {
     expect(WIZARD_STEPS[1]?.label).toBe("Type");
   });
 
-  it("sorts customer projects into Drafts / Active / Completed / Cancelled", () => {
-    expect(CUSTOMER_PROJECT_TABS.map((tab) => tab.key)).toEqual(["drafts", "active", "completed", "cancelled"]);
-    expect(customerTabForStatus("DRAFT")).toBe("drafts");
+  it("lists posted projects as Active / Completed / Cancelled and hides unposted drafts", () => {
+    expect(CUSTOMER_PROJECT_TABS.map((tab) => tab.key)).toEqual(["active", "completed", "cancelled"]);
+    expect(customerTabForStatus("DRAFT")).toBeNull();
     expect(customerTabForStatus("MATCHING")).toBe("active");
     expect(customerTabForStatus("ESTIMATES_AVAILABLE")).toBe("active");
     expect(customerTabForStatus("CONTRACTOR_SELECTED")).toBe("active");
