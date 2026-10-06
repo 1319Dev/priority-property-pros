@@ -161,8 +161,9 @@ export function ProjectEditPage() {
   if (project.status === "DRAFT") {
     return (
       <div className="space-y-4">
-        <p>This is still a draft.</p>
-        <ButtonLink to={`/app/customer/projects/${project.id}/wizard`}>Finish project</ButtonLink>
+        <h1 className="font-display text-3xl font-semibold text-forest-800">This project was never posted.</h1>
+        <p className="text-ink-700">Nothing is kept until you hit Post. Start again when you are ready.</p>
+        <ButtonLink to="/app/customer/projects/new/wizard">Post a project</ButtonLink>
       </div>
     );
   }

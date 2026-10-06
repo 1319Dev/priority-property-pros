@@ -46,6 +46,7 @@ import {
   customerLifecycleLabel,
   customerLifecycleState,
   customerNextActions,
+  customerVisibleProjects,
   type CustomerDashboardTab,
 } from "../../../lib/marketplace/statusLabels";
 import { estimateNeedsNewSubmission } from "../../../lib/marketplace/privacy";
@@ -84,7 +85,7 @@ export function CustomerHomePage() {
   }, [profile]);
 
   const map = bookingByProject(bookings);
-  const recent = projects.slice(0, 4);
+  const recent = customerVisibleProjects(projects).slice(0, 4);
 
   return (
     <div className="space-y-6">
@@ -105,7 +106,7 @@ export function CustomerHomePage() {
       {!loading && recent.length === 0 ? (
         <EmptyState
           title="No projects yet"
-          body="Start a draft when you know what needs doing. Only you will see it. Homeowners & Businesses pay $0/month and $0 Connection Fee."
+          body="Post a project when you know what needs doing. Nothing is saved until you hit Post. Homeowners & Businesses pay $0/month and $0 Connection Fee."
         />
       ) : null}
       <ul className="space-y-3">
@@ -122,7 +123,7 @@ export function CustomerHomePage() {
           return (
             <li key={project.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
               <HumanStatus label={customerLifecycleLabel(project.status, booking?.status ?? null)} />
-              <p className="mt-2 font-semibold text-forest-800">{project.title || "Untitled draft"}</p>
+              <p className="mt-2 font-semibold text-forest-800">{project.title || "Project"}</p>
               <div className="mt-3 flex min-w-0 flex-col gap-2 sm:flex-row">
                 {actions.slice(0, 2).map((action) => (
                   <ButtonLink key={action.label} to={action.to} variant={action.variant ?? "primary"} size="sm" className="w-full sm:w-auto">
@@ -158,10 +159,11 @@ export function CustomerProjectsPage() {
   }, [profile]);
 
   const map = bookingByProject(bookings);
+  const listed = customerVisibleProjects(projects);
 
   const classified = useMemo(
     () =>
-      projects.map((project) => {
+      listed.map((project) => {
         const booking = map.get(project.id);
         return {
           project,
@@ -169,11 +171,11 @@ export function CustomerProjectsPage() {
           state: customerLifecycleState(project.status, booking?.status ?? null),
         };
       }),
-    [projects, map],
+    [listed, map],
   );
 
   const counts = useMemo(() => {
-    const next: Record<CustomerDashboardTab, number> = { drafts: 0, active: 0, completed: 0, cancelled: 0 };
+    const next: Record<CustomerDashboardTab, number> = { active: 0, completed: 0, cancelled: 0 };
     for (const item of classified) {
       const match = CUSTOMER_DASHBOARD_TABS.find((tabItem) => (tabItem.states as readonly string[]).includes(item.state));
       if (match) next[match.key] += 1;
@@ -212,8 +214,8 @@ export function CustomerProjectsPage() {
       {loading ? <LoadingState /> : null}
       {!loading && filtered.length === 0 ? (
         <EmptyState
-          title={tab === "drafts" ? "No drafts" : tab === "cancelled" ? "No cancelled projects" : "Nothing here yet"}
-          body="Only your projects appear here. Drafts, active jobs, completed work, and cancelled history stay in this account."
+          title={tab === "cancelled" ? "No cancelled projects" : "Nothing here yet"}
+          body="Only projects you have posted appear here."
         />
       ) : (
         <ul className="space-y-3">
@@ -229,7 +231,7 @@ export function CustomerProjectsPage() {
             return (
               <li key={project.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
                 <HumanStatus label={customerLifecycleLabel(project.status, booking?.status ?? null)} />
-                <p className="mt-2 font-semibold text-forest-800">{project.title || "Untitled draft"}</p>
+                <p className="mt-2 font-semibold text-forest-800">{project.title || "Project"}</p>
                 {state === "cancelled" ? <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-ink-500">Cancelled</p> : null}
                 <div className="mt-2">
                   <CompletenessBadge value={project.completeness} />
@@ -300,7 +302,7 @@ export function CustomerProjectDetailPage() {
     <div className="space-y-6">
       <header>
         <HumanStatus label={customerLifecycleLabel(project.status)} />
-        <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{project.title || "Untitled draft"}</h1>
+        <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{project.title || "Project"}</h1>
         <div className="mt-3">
           <CompletenessBadge value={project.completeness} />
         </div>
@@ -328,12 +330,15 @@ export function CustomerProjectDetailPage() {
           body={HOMEOWNER_OFFER_QUEUE_COPY}
         />
       ) : null}
-      <div className="flex min-w-0 flex-col gap-2">
-        {project.status === "DRAFT" ? (
-          <ButtonLink to={`/app/customer/projects/${project.id}/wizard`} className="min-h-14 w-full">
-            Finish project
+      {project.status === "DRAFT" ? (
+        <div className="space-y-3">
+          <p className="text-ink-700">This project was never posted. Nothing is kept until you hit Post.</p>
+          <ButtonLink to="/app/customer/projects/new/wizard" className="min-h-14 w-full">
+            Post a project
           </ButtonLink>
-        ) : null}
+        </div>
+      ) : null}
+      <div className="flex min-w-0 flex-col gap-2">
         {canEdit ? (
           <ButtonLink to={`/app/customer/projects/${project.id}/edit`} className="min-h-14 w-full">
             Edit
@@ -388,7 +393,7 @@ export function CustomerProjectDetailPage() {
               setCancelOpen(true);
             }}
           >
-            {project.status === "DRAFT" ? "Delete draft" : "Cancel project"}
+            {project.status === "DRAFT" ? "Remove unfinished project" : "Cancel project"}
           </Button>
         ) : null}
       </div>

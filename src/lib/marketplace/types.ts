@@ -418,7 +418,6 @@ export const OPEN_PROJECT_STATUSES: ProjectStatus[] = [
 ];
 
 export const CUSTOMER_PROJECT_TABS = [
-  { key: "drafts", label: "Drafts", statuses: ["DRAFT"] as ProjectStatus[] },
   {
     key: "active",
     label: "Active",
@@ -428,8 +427,8 @@ export const CUSTOMER_PROJECT_TABS = [
   { key: "cancelled", label: "Cancelled", statuses: ["CANCELLED"] as ProjectStatus[] },
 ] as const;
 
-export function customerTabForStatus(status: ProjectStatus): (typeof CUSTOMER_PROJECT_TABS)[number]["key"] {
-  if (status === "DRAFT") return "drafts";
+export function customerTabForStatus(status: ProjectStatus): (typeof CUSTOMER_PROJECT_TABS)[number]["key"] | null {
+  if (status === "DRAFT") return null;
   if (status === "CANCELLED") return "cancelled";
   return "active";
 }

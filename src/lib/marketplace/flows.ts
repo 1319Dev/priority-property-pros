@@ -1,12 +1,4 @@
-import type { EstimateItemKind, EstimateStatus, OpportunityStatus, ProjectStatus } from "./types";
-
-export function reusableEmptyDraft<T extends { status: ProjectStatus; title: string; category_id: string | null }>(
-  projects: T[],
-): T | null {
-  return (
-    projects.find((project) => project.status === "DRAFT" && !project.title.trim() && !project.category_id) ?? null
-  );
-}
+import type { EstimateItemKind, EstimateStatus, OpportunityStatus } from "./types";
 
 /** Chronological display only. Never sort by price or invent a BEST badge. */
 export function comparisonDisplayOrder<T extends { submitted_at: string | null; created_at?: string | null }>(

@@ -6,27 +6,12 @@ import {
   canCustomerAnswerQuestion,
   comparisonDisplayOrder,
   photoUploadError,
-  reusableEmptyDraft,
 } from "./flows";
 import { canSelfApprove } from "../auth/rlsPolicy";
 import { canReadCustomerContact, canReadExactAddress, canSelfVerifyCredential } from "./privacy";
 import { claimSlotExclusive } from "./slots";
 import { assertValidTotals, lineTotalCents, totalsFromItems } from "./fees";
 import { ESTIMATE_ITEM_KINDS } from "./types";
-
-describe("project drafts", () => {
-  it("reuses an empty untitled draft instead of creating another", () => {
-    const empty = {
-      id: "draft-1",
-      status: "DRAFT" as const,
-      title: "   ",
-      category_id: null,
-    };
-    const posted = { id: "p2", status: "POSTED" as const, title: "Fence", category_id: "cat" };
-    expect(reusableEmptyDraft([posted, empty])?.id).toBe("draft-1");
-    expect(reusableEmptyDraft([{ ...empty, title: "Fence repair" }])).toBeNull();
-  });
-});
 
 describe("photos", () => {
   it("rejects HTML uploads and oversized files", () => {

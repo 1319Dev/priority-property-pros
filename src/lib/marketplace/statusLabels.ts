@@ -83,7 +83,6 @@ export function customerNextActions(input: {
 }): NextAction[] {
   const state = customerLifecycleState(input.projectStatus, input.bookingStatus ?? null);
   const detail = `/app/customer/projects/${input.projectId}`;
-  const wizard = `/app/customer/projects/${input.projectId}/wizard`;
   const edit = `/app/customer/projects/${input.projectId}/edit`;
   const compare = `/app/customer/projects/${input.projectId}/compare`;
   const booking = input.bookingId ? `/app/customer/bookings/${input.bookingId}` : null;
@@ -95,7 +94,7 @@ export function customerNextActions(input: {
 
   switch (state) {
     case "draft":
-      return [{ label: "Finish project", to: wizard }];
+      return [];
     case "posted":
     case "finding_pros":
       return [
@@ -183,8 +182,11 @@ export function accountStatusLabel(value: AccountStatus | null | undefined): str
   }
 }
 
+export function customerVisibleProjects<T extends { status: ProjectStatus }>(projects: T[]): T[] {
+  return projects.filter((project) => project.status !== "DRAFT");
+}
+
 export const CUSTOMER_DASHBOARD_TABS = [
-  { key: "drafts", label: "Drafts", states: ["draft"] as const },
   { key: "active", label: "Active", states: ["posted", "finding_pros", "estimates_received", "contractor_selected", "booking", "active"] as const },
   { key: "completed", label: "Completed", states: ["completed"] as const },
   { key: "cancelled", label: "Cancelled", states: ["cancelled"] as const },
