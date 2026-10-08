@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ContractorAvatar } from "../../../components/media/ContractorAvatar";
+import { ContactSharePanel } from "../../../components/marketplace/ContactSharePanel";
+import { CustomerEstimateHomeCards } from "../../../components/marketplace/CustomerEstimateHomeCards";
 import { HiredConfirmationCard } from "../../../components/marketplace/HiredConfirmation";
+import { ProjectPhotoGallery } from "../../../components/marketplace/ProjectPhotoGallery";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { Button, ButtonLink } from "../../../components/ui/Button";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
@@ -21,14 +24,19 @@ import {
   fetchEstimateQuestions,
   fetchMyBookings,
   fetchMyCustomerProject,
+  fetchMyProjectConnectionCards,
   fetchPrivateLocation,
+  fetchProjectAnswers,
   fetchProjectBooking,
   fetchProjectEstimates,
   fetchProjectNotices,
+  fetchProjectPhotos,
+  fetchServiceQuestions,
   fetchPublicContractor,
   fetchPublicContractorExtras,
   markEstimateViewed,
   selectEstimate,
+  signedProjectPhotoUrl,
   stopNewProjectConnections,
   TIMING_LABELS,
 } from "../../../lib/marketplace/api";
@@ -47,6 +55,12 @@ import {
   STOP_CONNECTIONS_TOAST,
   STREET_STAYS_PRIVATE,
 } from "../../../lib/marketplace/customerCopy";
+import {
+  customerBookingStatusLabel,
+  customerConnectionStatusLabel,
+  type ProjectConnectionCard,
+} from "../../../lib/marketplace/connectionCards";
+import { messageNotificationHref } from "../../../lib/marketplace/messaging";
 import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type EstimateItemKind, type EstimateStatus, type Project } from "../../../lib/marketplace/types";
 import { planDeleteOrCancel } from "../../../lib/marketplace/lifecycle";
 import {
@@ -114,6 +128,7 @@ export function CustomerHomePage() {
         </p>
       </header>
       <InboxHomeCards role="customer" />
+      <CustomerEstimateHomeCards />
       <ButtonLink to="/app/customer/projects/new/wizard" className="min-h-14">
         Post a project
       </ButtonLink>
@@ -282,13 +297,15 @@ export function CustomerProjectDetailPage() {
   const [street, setStreet] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Awaited<ReturnType<typeof fetchEstimateQuestions>>>([]);
   const [notices, setNotices] = useState<Awaited<ReturnType<typeof fetchProjectNotices>>>([]);
+  const [photos, setPhotos] = useState<{ id: string; url: string }[]>([]);
+  const [postedAnswers, setPostedAnswers] = useState<{ id: string; prompt: string; text: string }[]>([]);
+  const [connections, setConnections] = useState<ProjectConnectionCard[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [reply, setReply] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [stopOpen, setStopOpen] = useState(false);
   const [cancelBody, setCancelBody] = useState("");
-  const [cancelAction, setCancelAction] = useState<"delete" | "cancel">("cancel");
   const [busy, setBusy] = useState(false);
 
   async function reload() {
@@ -298,6 +315,28 @@ export function CustomerProjectDetailPage() {
     setBooking(selected);
     const loc = await fetchPrivateLocation(projectId).catch(() => null);
     setStreet(loc?.street_line1 ?? null);
+    const [photoRows, answerRows, cards, serviceQuestions] = await Promise.all([
+      fetchProjectPhotos(projectId).catch(() => []),
+      fetchProjectAnswers(projectId).catch(() => []),
+      fetchMyProjectConnectionCards(projectId).catch(() => []),
+      row.category_id ? fetchServiceQuestions(row.category_id).catch(() => []) : Promise.resolve([]),
+    ]);
+    const signed = await Promise.all(
+      photoRows.map(async (photo) => ({
+        id: photo.id,
+        url: await signedProjectPhotoUrl(photo.storage_path),
+      })),
+    );
+    setPhotos(signed.flatMap((photo) => (photo.url ? [{ id: photo.id, url: photo.url }] : [])));
+    const prompts = new Map(serviceQuestions.map((question) => [question.id, question.prompt]));
+    setPostedAnswers(
+      answerRows.flatMap((answer) => {
+        const text = (answer.answer_text ?? "").trim();
+        if (!text) return [];
+        return [{ id: answer.id, prompt: prompts.get(answer.question_id) ?? "Your answer", text }];
+      }),
+    );
+    setConnections(cards);
     setQuestions(await fetchEstimateQuestions(projectId));
     setNotices(await fetchProjectNotices(projectId).catch(() => []));
   }
@@ -314,7 +353,18 @@ export function CustomerProjectDetailPage() {
     return <NotFoundState title="Project not found" body="This project is not in your account. You can only open jobs you posted." />;
   }
 
-  const canEdit = project.status !== "DRAFT" && project.status !== "CANCELLED" && project.status !== "CONTRACTOR_SELECTED";
+  if (project.status === "DRAFT") {
+    return (
+      <div className="space-y-4">
+        <h1 className="font-display text-3xl font-semibold text-forest-800">This project is not available.</h1>
+        <ButtonLink to="/app/customer/projects/new/wizard" className="min-h-14 w-full">
+          Post a project
+        </ButtonLink>
+      </div>
+    );
+  }
+
+  const canEdit = project.status !== "CANCELLED" && project.status !== "CONTRACTOR_SELECTED";
   const canRemove = project.status !== "CANCELLED";
 
   return (
@@ -342,20 +392,53 @@ export function CustomerProjectDetailPage() {
           Budget: {formatBudgetRange(project.budget_min_cents, project.budget_max_cents, formatUsdFromCents)}
         </p>
       </section>
-      {project.status !== "DRAFT" && project.status !== "CANCELLED" && project.status !== "CONTRACTOR_SELECTED" ? (
+      <ProjectPhotoGallery photos={photos} />
+      <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm" aria-label="Your answers">
+        <h2 className="font-display text-2xl text-forest-800">Your answers</h2>
+        {postedAnswers.length === 0 ? <p className="mt-3 text-ink-500">No extra details yet.</p> : null}
+        <dl className="mt-3 space-y-3">
+          {postedAnswers.map((answer) => (
+            <div key={answer.id}>
+              <dt className="font-semibold text-forest-800">{answer.prompt}</dt>
+              <dd className="mt-1 whitespace-pre-wrap text-ink-700">{answer.text}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+      <section className="space-y-3" aria-label="Connected pros">
+        <h2 className="font-display text-2xl text-forest-800">Connected pros</h2>
+        {connections.length === 0 ? <p className="text-sm text-ink-500">No pros are connected to this project yet.</p> : null}
+        {connections.map((card) => {
+          const messageHref = messageNotificationHref("customer", {
+            project_id: project.id,
+            contractor_profile_id: card.contractor_profile_id,
+          });
+          const bookingLabel = customerBookingStatusLabel(card.booking_status);
+          return (
+            <article key={card.connection_id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
+              <h3 className="font-display text-2xl text-forest-800">{card.display_name}</h3>
+              <p className="mt-2 text-sm text-ink-700">Connection: {customerConnectionStatusLabel(card.connection_status)}</p>
+              <p className="text-sm text-ink-700">Booking: {bookingLabel ?? "No booking yet"}</p>
+              {card.can_message && messageHref ? (
+                <ButtonLink to={messageHref} className="mt-3 min-h-12 w-full">
+                  Message
+                </ButtonLink>
+              ) : null}
+              {card.can_message ? (
+                <div className="mt-3">
+                  <ContactSharePanel role="customer" projectId={project.id} contractorProfileId={card.contractor_profile_id} />
+                </div>
+              ) : null}
+            </article>
+          );
+        })}
+      </section>
+      {project.status !== "CANCELLED" && project.status !== "CONTRACTOR_SELECTED" ? (
         <StatusBanner
           tone="info"
           title="Finding local pros"
           body={project.status === "MATCHING" ? NO_PROS_YET : OFFER_QUEUE_PLAIN}
         />
-      ) : null}
-      {project.status === "DRAFT" ? (
-        <div className="space-y-3">
-          <p className="text-ink-700">This project was never posted. Nothing is kept until you hit Post.</p>
-          <ButtonLink to="/app/customer/projects/new/wizard" className="min-h-14 w-full">
-            Post a project
-          </ButtonLink>
-        </div>
       ) : null}
       <div className="flex min-w-0 flex-col gap-2">
         {canEdit ? (
@@ -400,14 +483,13 @@ export function CustomerProjectDetailPage() {
                 participation: {
                   acceptedOpportunityCount: 0,
                   submittedEstimateCount: project.status === "ESTIMATES_AVAILABLE" || project.status === "CONTRACTORS_RESPONDING" ? 1 : 0,
-                  opportunityCount: project.status === "DRAFT" ? 0 : 1,
+                  opportunityCount: 1,
                 },
               });
-              if (plan.action === "block") {
+              if (plan.action !== "cancel") {
                 setError(plan.message);
                 return;
               }
-              setCancelAction(plan.action);
               setCancelBody(plan.message);
               setCancelOpen(true);
             }}
@@ -493,16 +575,16 @@ export function CustomerProjectDetailPage() {
       />
       <ConfirmDialog
         open={cancelOpen}
-        title={cancelAction === "delete" ? "Delete this project?" : "Cancel this project?"}
+        title="Cancel this project?"
         body={cancelBody}
-        confirmLabel={cancelAction === "delete" ? "Delete permanently" : "Cancel project"}
+        confirmLabel="Cancel project"
         busy={busy}
         onClose={() => setCancelOpen(false)}
         onConfirm={() => {
           setBusy(true);
           void cancelCustomerProject(project.id, true)
-            .then((result) => {
-              toast.push(result.action === "deleted" ? "This project was never posted." : CANCEL_PROJECT_TOAST);
+            .then(() => {
+              toast.push(CANCEL_PROJECT_TOAST);
               navigate("/app/customer/projects");
             })
             .catch((err: Error) => setError(err.message))
@@ -776,6 +858,7 @@ export function CustomerEstimateDetailPage() {
         <ContractorAvatar size={72} />
         <h1 className="font-display text-4xl font-semibold text-forest-800">{contractor?.display_label || "Estimate"}</h1>
       </div>
+      <p className="text-sm text-ink-500">{customerEstimateStatusLabel(status)}</p>
       <p className="text-sm text-ink-500">{STREET_STAYS_PRIVATE}</p>
       <FormError message={error} />
       {badges.length > 0 ? (
@@ -837,7 +920,14 @@ export function CustomerEstimateDetailPage() {
           onClick={() => {
             setBusy(true);
             void declineEstimate(estimate.id)
-              .then(() => toast.push("Estimate declined."))
+              .then(async () => {
+                toast.push("Estimate declined.");
+                const proj = await fetchMyCustomerProject(projectId);
+                setProject(proj);
+                const est = await fetchEstimate(estimate.id);
+                if (est.project_id !== projectId) throw new Error("Estimate not on this project.");
+                setEstimate(est);
+              })
               .catch((err: Error) => setError(err.message))
               .finally(() => setBusy(false));
           }}

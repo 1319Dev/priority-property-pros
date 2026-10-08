@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   bookingIsProtected,
+  buildCustomerEditPatch,
   canOwnerEditProject,
   classifyProjectPatch,
   hasParticipation,
   planDeleteOrCancel,
   planMaterialEdit,
   selectionCreatesRelationship,
+  type CustomerEditSnapshot,
 } from "./lifecycle";
 
 const participationNone = { acceptedOpportunityCount: 0, submittedEstimateCount: 0, opportunityCount: 0 };
@@ -48,6 +50,57 @@ describe("material vs minor edits", () => {
   it("treats title, timing, and budget as minor", () => {
     expect(classifyProjectPatch({ title: "New title" })).toBe("minor");
     expect(classifyProjectPatch({ timing: "ASAP", budget_min_cents: 1000 })).toBe("minor");
+  });
+
+  it("omits unchanged answers, city, and state so a timing edit stays minor", () => {
+    const saved: CustomerEditSnapshot = {
+      title: "Fence",
+      description: "Replace the gate",
+      category_id: "cat-1",
+      city: "Nashville",
+      state: "TN",
+      zip_code: "37206",
+      timing: "FLEXIBLE",
+      preferred_date: null,
+      budget_min_cents: 10000,
+      budget_max_cents: 20000,
+      street_line1: "1 Main",
+      street_line2: "",
+      answers: { q1: "Wood" },
+    };
+    const patch = buildCustomerEditPatch(saved, {
+      ...saved,
+      city: " Nashville ",
+      state: "tennessee",
+      timing: "ASAP",
+      answers: { q1: "Wood" },
+    });
+    expect(patch.answers).toBeUndefined();
+    expect(patch.city).toBeUndefined();
+    expect(patch.state).toBeUndefined();
+    expect(patch.timing).toBe("ASAP");
+    expect(classifyProjectPatch(patch)).toBe("minor");
+  });
+
+  it("includes an answer only after the text changes", () => {
+    const saved: CustomerEditSnapshot = {
+      title: "Fence",
+      description: "Replace the gate",
+      category_id: "cat-1",
+      city: "Nashville",
+      state: "TN",
+      zip_code: "37206",
+      timing: "FLEXIBLE",
+      preferred_date: null,
+      budget_min_cents: null,
+      budget_max_cents: null,
+      street_line1: "",
+      street_line2: "",
+      answers: { q1: "Wood" },
+    };
+    const patch = buildCustomerEditPatch(saved, { ...saved, answers: { q1: "Vinyl" } });
+    expect(patch.answers).toEqual([{ question_id: "q1", answer_text: "Vinyl" }]);
+    expect(classifyProjectPatch(patch)).toBe("material");
   });
 
   it("treats description, category, answers, photos, and location as material", () => {

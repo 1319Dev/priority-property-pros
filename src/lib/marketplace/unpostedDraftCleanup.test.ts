@@ -61,6 +61,9 @@ describe("customer screens do not offer unfinished drafts", () => {
     expect(home).not.toMatch(/Finish project/);
     expect(home).not.toMatch(/Untitled draft/);
     expect(home).not.toMatch(/No drafts/);
+    expect(home).not.toMatch(/This project was never posted/);
+    expect(home).not.toMatch(/Delete permanently/);
+    expect(edit).not.toMatch(/This project was never posted/);
     expect(home).toMatch(/customerVisibleProjects/);
     expect(edit).not.toMatch(/Finish project/);
     expect(wizard).not.toMatch(/createOrReuseDraftProject|createDraftProject|updateProject\(/);

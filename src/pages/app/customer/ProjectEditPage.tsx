@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { EditableProjectPhotos, type EditablePhoto } from "../../../components/marketplace/EditableProjectPhotos";
+import { QuestionAnswerField } from "../../../components/marketplace/QuestionAnswerField";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { Button, ButtonLink } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/Input";
@@ -22,7 +24,7 @@ import {
 } from "../../../lib/marketplace/api";
 import { PRE_HIRE_CONTACT_HINT } from "../../../lib/marketplace/antiCircumvention";
 import { STREET_STAYS_PRIVATE } from "../../../lib/marketplace/customerCopy";
-import { classifyProjectPatch, planMaterialEdit } from "../../../lib/marketplace/lifecycle";
+import { buildCustomerEditPatch, classifyProjectPatch, planMaterialEdit, type CustomerEditSnapshot } from "../../../lib/marketplace/lifecycle";
 import { centsToDollarString, dollarsToCents } from "../../../lib/marketplace/fees";
 import { TIMING_PREFERENCES, type Project, type ServiceCategory, type ServiceQuestion } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
@@ -37,7 +39,9 @@ export function ProjectEditPage() {
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [questions, setQuestions] = useState<ServiceQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [photos, setPhotos] = useState<{ id: string; storage_path: string; url?: string }[]>([]);
+  const [photos, setPhotos] = useState<EditablePhoto[]>([]);
+  const [baseline, setBaseline] = useState<CustomerEditSnapshot | null>(null);
+  const [photoBusy, setPhotoBusy] = useState<null | "upload" | string>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -82,11 +86,40 @@ export function ProjectEditPage() {
     setCategories(cats);
     setStreet(loc?.street_line1 ?? "");
     setStreet2(loc?.street_line2 ?? "");
-    setAnswers(Object.fromEntries(answerRows.map((item) => [item.question_id, item.answer_text ?? ""])));
+    const answerMap = Object.fromEntries(answerRows.map((item) => [item.question_id, item.answer_text ?? ""]));
+    setAnswers(answerMap);
+    const nextPhotos = await Promise.all(
+      photoRows.map(async (photo) => ({
+        id: photo.id,
+        storage_path: photo.storage_path,
+        url: (await signedProjectPhotoUrl(photo.storage_path)) ?? undefined,
+      })),
+    );
+    setPhotos(nextPhotos);
+    setBaseline({
+      title: row.title,
+      description: row.description,
+      category_id: row.category_id,
+      city: row.city,
+      state: row.state,
+      zip_code: row.zip_code,
+      timing: row.timing,
+      preferred_date: row.preferred_date,
+      budget_min_cents: row.budget_min_cents,
+      budget_max_cents: row.budget_max_cents,
+      street_line1: loc?.street_line1 ?? "",
+      street_line2: loc?.street_line2 ?? "",
+      answers: answerMap,
+    });
+  }
+
+  async function refreshPhotos() {
+    const photoRows = await fetchProjectPhotos(projectId);
     setPhotos(
       await Promise.all(
         photoRows.map(async (photo) => ({
-          ...photo,
+          id: photo.id,
+          storage_path: photo.storage_path,
           url: (await signedProjectPhotoUrl(photo.storage_path)) ?? undefined,
         })),
       ),
@@ -106,7 +139,8 @@ export function ProjectEditPage() {
   }, [categoryId]);
 
   const patch = useMemo(() => {
-    const next: Record<string, unknown> = {
+    if (!baseline) return {};
+    const next: CustomerEditSnapshot = {
       title,
       description,
       category_id: categoryId || null,
@@ -119,10 +153,10 @@ export function ProjectEditPage() {
       budget_max_cents: dollarsToCents(budgetMax),
       street_line1: street,
       street_line2: street2,
-      answers: questions.map((question) => ({ question_id: question.id, answer_text: answers[question.id] ?? "" })),
+      answers,
     };
-    return next;
-  }, [title, description, categoryId, city, state, zip, timing, preferredDate, budgetMin, budgetMax, street, street2, questions, answers]);
+    return buildCustomerEditPatch(baseline, next);
+  }, [baseline, title, description, categoryId, city, state, zip, timing, preferredDate, budgetMin, budgetMax, street, street2, answers]);
 
   const materialPlan = project
     ? planMaterialEdit({
@@ -139,6 +173,11 @@ export function ProjectEditPage() {
     setBusy(true);
     setError(null);
     try {
+      if (Object.keys(patch).length === 0) {
+        toast.push("Project saved.");
+        navigate(`/app/customer/projects/${projectId}`);
+        return;
+      }
       const result = await updateCustomerProject(projectId, { ...patch, confirm_material: confirmMaterial });
       if (result.needs_confirmation) {
         setMaterialOpen(true);
@@ -159,13 +198,7 @@ export function ProjectEditPage() {
     return <NotFoundState title="Project not found" body="This project is not in your account." />;
   }
   if (project.status === "DRAFT") {
-    return (
-      <div className="space-y-4">
-        <h1 className="font-display text-3xl font-semibold text-forest-800">This project was never posted.</h1>
-        <p className="text-ink-700">Nothing is kept until you hit Post. Start again when you are ready.</p>
-        <ButtonLink to="/app/customer/projects/new/wizard">Post a project</ButtonLink>
-      </div>
-    );
+    return <Navigate to="/app/customer/projects/new/wizard" replace />;
   }
   if (project.status === "CANCELLED" || project.status === "CONTRACTOR_SELECTED") {
     return (
@@ -186,16 +219,7 @@ export function ProjectEditPage() {
     );
   }
 
-  const kind = classifyProjectPatch({
-    title,
-    description,
-    category_id: categoryId,
-    city,
-    state,
-    zip_code: zip,
-    timing,
-    answers,
-  });
+  const kind = classifyProjectPatch(patch);
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
@@ -226,14 +250,12 @@ export function ProjectEditPage() {
         </select>
       </label>
       {questions.map((question) => (
-        <label key={question.id} className="block">
-          <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">{question.prompt}</span>
-          <textarea
-            className="w-full rounded-2xl border border-forest-800/15 px-4 py-3"
-            value={answers[question.id] ?? ""}
-            onChange={(e) => setAnswers((current) => ({ ...current, [question.id]: e.target.value }))}
-          />
-        </label>
+        <QuestionAnswerField
+          key={question.id}
+          question={question}
+          value={answers[question.id] ?? ""}
+          onChange={(next) => setAnswers((current) => ({ ...current, [question.id]: next }))}
+        />
       ))}
       <TextInput label="City" value={city} onChange={(e) => setCity(e.target.value)} />
       <TextInput label="State" value={state} onChange={(e) => setState(e.target.value)} />
@@ -256,40 +278,30 @@ export function ProjectEditPage() {
       ) : null}
       <TextInput label="Budget min (USD)" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} />
       <TextInput label="Budget max (USD)" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} />
-      <section className="space-y-3">
-        <h2 className="font-display text-2xl text-forest-800">Photos</h2>
-        <div className="grid grid-cols-2 gap-2">
-          {photos.map((photo) => (
-            <div key={photo.id} className="relative">
-              <img src={photo.url} alt="" className="h-28 w-full rounded-2xl object-cover" />
-              <button
-                type="button"
-                className="absolute right-2 top-2 rounded-full bg-cream-50 px-2 py-1 text-xs font-semibold text-danger-600"
-                onClick={() => void deleteProjectPhoto(photo.id, photo.storage_path).then(load).catch((err: Error) => setError(err.message))}
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-        </div>
-        {user ? (
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            aria-label="Add a photo"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              if (!file) return;
-              void uploadProjectPhoto({ userId: user.id, projectId, file, sortOrder: photos.length })
-                .then(load)
-                .catch((err: Error) => setError(err.message));
-            }}
-          />
-        ) : null}
-      </section>
+      {user ? (
+        <EditableProjectPhotos
+          photos={photos}
+          busy={photoBusy}
+          onRemove={(photo) => {
+            setPhotoBusy(photo.id);
+            setError(null);
+            void deleteProjectPhoto(photo.id, photo.storage_path)
+              .then(refreshPhotos)
+              .catch((err: Error) => setError(err.message))
+              .finally(() => setPhotoBusy(null));
+          }}
+          onAdd={(file) => {
+            setPhotoBusy("upload");
+            setError(null);
+            void uploadProjectPhoto({ userId: user.id, projectId, file, sortOrder: photos.length })
+              .then(refreshPhotos)
+              .catch((err: Error) => setError(err.message))
+              .finally(() => setPhotoBusy(null));
+          }}
+        />
+      ) : null}
       <div className="sticky bottom-24 z-20 bg-cream-50/95 py-3 pb-safe lg:bottom-4">
-        <Button type="button" className="min-h-14 w-full" disabled={busy} onClick={() => void save(false)}>
+        <Button type="button" className="min-h-14 w-full" disabled={busy || photoBusy !== null} onClick={() => void save(false)}>
           Save changes
         </Button>
       </div>

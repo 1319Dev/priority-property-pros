@@ -1,3 +1,4 @@
+import { normalizeCity, normalizeState } from "./location";
 import type { BookingStatus, ProjectStatus } from "./types";
 
 export const MATERIAL_PROJECT_FIELDS = [
@@ -166,6 +167,62 @@ export function planDeleteOrCancel(input: {
     message:
       "This project will be cancelled and move to your Cancelled list. Pros can no longer respond. Estimates stay in your history and are marked cancelled.",
   };
+}
+
+export type CustomerEditSnapshot = {
+  title: string;
+  description: string;
+  category_id: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null;
+  timing: string | null;
+  preferred_date: string | null;
+  budget_min_cents: number | null;
+  budget_max_cents: number | null;
+  street_line1: string;
+  street_line2: string;
+  answers: Record<string, string | null | undefined>;
+};
+
+export type CustomerEditPatch = ProjectPatch & {
+  street_line1?: string;
+  street_line2?: string;
+};
+
+function sameText(left: string | null | undefined, right: string | null | undefined): boolean {
+  return (left ?? "").trim() === (right ?? "").trim();
+}
+
+/** Sends only fields that actually changed. Unchanged answers are omitted so the edit is not treated as material. */
+export function buildCustomerEditPatch(saved: CustomerEditSnapshot, next: CustomerEditSnapshot): CustomerEditPatch {
+  const patch: CustomerEditPatch = {};
+  if (!sameText(saved.title, next.title)) patch.title = (next.title ?? "").trim();
+  if (!sameText(saved.description, next.description)) patch.description = next.description ?? "";
+  if ((saved.category_id ?? "") !== (next.category_id ?? "")) patch.category_id = next.category_id || null;
+
+  const city = normalizeCity(next.city);
+  if (normalizeCity(saved.city) !== city) patch.city = city;
+  const state = normalizeState(next.state);
+  if (normalizeState(saved.state) !== state) patch.state = state;
+  const zip = (next.zip_code ?? "").trim();
+  if ((saved.zip_code ?? "").trim() !== zip) patch.zip_code = zip;
+
+  if ((saved.timing ?? "") !== (next.timing ?? "")) patch.timing = next.timing || null;
+  if ((saved.preferred_date ?? "") !== (next.preferred_date ?? "")) patch.preferred_date = next.preferred_date || null;
+  if ((saved.budget_min_cents ?? null) !== (next.budget_min_cents ?? null)) patch.budget_min_cents = next.budget_min_cents;
+  if ((saved.budget_max_cents ?? null) !== (next.budget_max_cents ?? null)) patch.budget_max_cents = next.budget_max_cents;
+  if (!sameText(saved.street_line1, next.street_line1)) patch.street_line1 = (next.street_line1 ?? "").trim();
+  if (!sameText(saved.street_line2, next.street_line2)) patch.street_line2 = (next.street_line2 ?? "").trim();
+
+  if (answersMateriallyChanged(saved.answers, next.answers)) {
+    const keys = new Set([...Object.keys(saved.answers), ...Object.keys(next.answers)]);
+    patch.answers = [...keys].map((question_id) => ({
+      question_id,
+      answer_text: (next.answers[question_id] ?? "").trim(),
+    }));
+  }
+  return patch;
 }
 
 export function answersMateriallyChanged(
