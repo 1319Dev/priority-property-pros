@@ -107,7 +107,7 @@ export function ProHomePage() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{name}</h1>
         <p className="mt-3 max-w-xl text-ink-700">
           Respond to nearby jobs and track estimates. You cannot approve or verify yourself. Browse anonymized
@@ -239,7 +239,7 @@ export function ProOnboardingPage() {
         onChange={(e) => setHeadline(e.target.value)}
       />
       <label className="block">
-        <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Bio</span>
+        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Bio</span>
         <textarea className="w-full rounded-2xl border border-forest-800/15 px-4 py-3" rows={4} value={bio} onChange={(e) => setBio(e.target.value)} />
         <span className="mt-1.5 block text-sm text-ink-500">{PRE_HIRE_CONTACT_HINT}</span>
       </label>
@@ -251,7 +251,7 @@ export function ProOnboardingPage() {
       <TextInput label="Min job size (USD)" value={minJob} onChange={(e) => setMinJob(e.target.value)} />
       <TextInput label="Max job size (USD)" value={maxJob} onChange={(e) => setMaxJob(e.target.value)} />
       <fieldset>
-        <legend className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Services</legend>
+        <legend className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Services</legend>
         <div className="grid gap-2">
           {categories.map((cat) => (
             <label key={cat.id} className="flex items-center gap-2 text-sm">
@@ -632,7 +632,7 @@ export function OpportunityDetailPage() {
             <img src={photo.url} alt="" className="h-28 w-full rounded-2xl object-cover" />
             <button
               type="button"
-              className="text-xs font-semibold text-forest-800"
+              className="inline-flex min-h-11 items-center text-xs font-semibold text-forest-800"
               onClick={() => {
                 void submitContentReport({
                   targetType: "project_photo",
@@ -860,8 +860,8 @@ export function EstimateBuilderPage() {
       <FormError message={error} />
       <ul className="space-y-2">
         {items.map((item) => (
-          <li key={item.id} className="flex items-center justify-between gap-3 rounded-2xl bg-cream-100 px-3 py-2 text-sm">
-            <span>
+          <li key={item.id} className="flex items-start justify-between gap-3 rounded-2xl bg-cream-100 px-3 py-2 text-sm">
+            <span className="min-w-0 break-words">
               {ESTIMATE_ITEM_KIND_LABELS[(item.kind as EstimateItemKind) ?? "CUSTOM"]}: {item.label} · {item.quantity}{" "}
               {item.unit_label || "each"} × {formatUsdFromCents(item.unit_cents)} = {formatUsdFromCents(item.line_total_cents)}
             </span>
@@ -876,7 +876,7 @@ export function EstimateBuilderPage() {
         ))}
       </ul>
       <label className="block">
-        <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
+        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
           Line type
         </span>
         <select
@@ -953,7 +953,7 @@ export function EstimateBuilderPage() {
         onBlur={() => saveDetails({ valid_until: validUntil || null })}
       />
       <label className="block">
-        <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Notes</span>
+        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Notes</span>
         <textarea
           className="w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4 py-3"
           rows={3}
@@ -963,7 +963,7 @@ export function EstimateBuilderPage() {
         />
         <span className="mt-1.5 block text-sm text-ink-500">{PRE_HIRE_CONTACT_HINT}</span>
       </label>
-      <div className="sticky bottom-24 z-20 flex gap-3 bg-cream-50/95 py-3 pb-safe lg:bottom-4">
+      <div className="sticky bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-20 flex flex-col gap-3 bg-cream-50/95 py-3 sm:flex-row lg:bottom-4">
         <Button
           type="button"
           className="min-h-14 flex-1"

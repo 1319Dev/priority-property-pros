@@ -72,7 +72,7 @@ export function HomeBrowsePreview() {
     <section className="border-y border-forest-800/10 bg-cream-100/70 py-12" aria-labelledby="browse-preview-heading">
       <Container className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Reviewed pros</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Reviewed pros</p>
           <h2 id="browse-preview-heading" className="mt-3 font-display text-3xl font-semibold text-forest-800">
             Contractors with reviews on the platform.
           </h2>

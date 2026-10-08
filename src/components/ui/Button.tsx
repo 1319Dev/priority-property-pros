@@ -15,14 +15,14 @@ const variants = {
 const sizes = {
   md: "min-h-12 px-5 text-[0.8rem] tracking-[0.12em]",
   lg: "min-h-14 px-6 text-[0.85rem] tracking-[0.14em]",
-  sm: "min-h-11 px-4 text-[0.72rem] tracking-[0.12em]",
+  sm: "min-h-11 px-4 text-xs tracking-[0.12em]",
 } as const;
 
 type Variant = keyof typeof variants;
 type Size = keyof typeof sizes;
 
 const shared =
-  "inline-flex items-center justify-center rounded-full font-semibold uppercase transition-colors duration-200 disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex max-w-full items-center justify-center whitespace-normal text-center rounded-full font-semibold uppercase transition-colors duration-200 disabled:pointer-events-none disabled:opacity-50";
 
 export function Button({
   className,

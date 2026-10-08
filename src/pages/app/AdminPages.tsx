@@ -26,7 +26,7 @@ export function AdminHomePage() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Admin</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Admin</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Operations shell</h1>
         <p className="mt-3 max-w-xl text-ink-700">
           There is no public Admin registration. The first admin is promoted in the Supabase SQL editor. This
@@ -82,12 +82,12 @@ export function AdminContactAccessPanel({
   return (
     <div className="space-y-3 text-sm">
       <p>
-        <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Contact Access</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Contact Access</span>
         <span className="mt-1 block font-semibold text-forest-800">{state}</span>
       </p>
       {access?.granted_by ? (
         <p>
-          Granted by <span className="font-mono text-xs">{access.granted_by}</span>
+          Granted by <span className="break-all font-mono text-xs">{access.granted_by}</span>
           {grantedAt ? ` at ${grantedAt}` : ""}
         </p>
       ) : null}
@@ -96,7 +96,7 @@ export function AdminContactAccessPanel({
       {revokedAt ? <p>Revoked at {revokedAt}</p> : null}
       {audit.length > 0 ? (
         <div>
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Audit</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Audit</p>
           <ul className="mt-2 space-y-2">
             {audit.map((row) => (
               <li key={row.id} className="rounded-2xl bg-cream-100 px-4 py-3">
@@ -160,7 +160,7 @@ export function AdminBookingsPage() {
       </p>
       <FormError message={error} />
       <label className="block">
-        <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
+        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
           Booking id
         </span>
         <input
@@ -209,7 +209,7 @@ export function AdminBookingsPage() {
         <h2 className="font-display text-2xl text-forest-800">Grant contact access</h2>
         <p className="text-sm text-ink-700">{privateContactLockedCopy()} This override is for one booking only and is audited.</p>
         <label className="block">
-          <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
             Reason (required)
           </span>
           <textarea

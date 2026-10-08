@@ -16,7 +16,7 @@ export function TextInput({
 
   return (
     <label className="block" htmlFor={inputId}>
-      <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
+      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
         {label}
       </span>
       <input

@@ -21,7 +21,7 @@ export function QuestionAnswerField({
   const selectClass = "min-h-14 w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4";
   return (
     <div>
-      <p className="mb-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
+      <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
         {question.prompt}
         {question.is_required ? " *" : ""}
       </p>

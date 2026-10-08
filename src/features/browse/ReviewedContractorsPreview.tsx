@@ -61,7 +61,7 @@ export function ReviewedContractorCardView({ card }: { card: ReviewedContractorC
       <p className="mt-3">
         <Link
           to={liveContractorPath(card.id)}
-          className="min-h-11 inline-flex items-center text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-forest-800"
+          className="min-h-11 inline-flex items-center text-xs font-semibold uppercase tracking-[0.14em] text-forest-800"
         >
           Read review
         </Link>

@@ -224,7 +224,7 @@ export function ProjectEditPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <header>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Edit project</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Edit project</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Update the job</h1>
         <p className="mt-3 text-sm text-ink-700">
           {kind === "material"
@@ -235,12 +235,12 @@ export function ProjectEditPage() {
       <FormError message={error} />
       <TextInput label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
       <label className="block">
-        <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Description</span>
+        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Description</span>
         <textarea className="min-h-32 w-full rounded-2xl border border-forest-800/15 px-4 py-3" value={description} onChange={(e) => setDescription(e.target.value)} />
         <span className="mt-1.5 block text-sm text-ink-500">{PRE_HIRE_CONTACT_HINT}</span>
       </label>
       <label className="block">
-        <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Category</span>
+        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Category</span>
         <select className="min-h-14 w-full rounded-2xl border border-forest-800/15 px-4" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
           {categories.map((cat) => (
             <option key={cat.id} value={cat.id}>
@@ -263,7 +263,7 @@ export function ProjectEditPage() {
       <TextInput label="Street" value={street} onChange={(e) => setStreet(e.target.value)} hint={STREET_STAYS_PRIVATE} />
       <TextInput label="Street line 2" value={street2} onChange={(e) => setStreet2(e.target.value)} />
       <label className="block">
-        <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Schedule</span>
+        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Schedule</span>
         <select className="min-h-14 w-full rounded-2xl border border-forest-800/15 px-4" value={timing} onChange={(e) => setTiming(e.target.value)}>
           <option value="">Choose timing</option>
           {TIMING_PREFERENCES.map((item) => (

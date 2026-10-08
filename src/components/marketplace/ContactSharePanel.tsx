@@ -29,20 +29,20 @@ function ContactLines({ view }: { view: SharedContactView }) {
   return (
     <dl className="mt-3 space-y-2">
       <div>
-        <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Name</dt>
-        <dd className="mt-1 font-semibold text-forest-800">{view.name || "Not on file"}</dd>
+        <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Name</dt>
+        <dd className="mt-1 break-words font-semibold text-forest-800">{view.name || "Not on file"}</dd>
       </div>
       <div>
-        <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Phone</dt>
-        <dd className="mt-1 font-semibold text-forest-800">{view.phone || "Not on file"}</dd>
+        <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Phone</dt>
+        <dd className="mt-1 break-words font-semibold text-forest-800">{view.phone || "Not on file"}</dd>
       </div>
       <div>
-        <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Email</dt>
-        <dd className="mt-1 font-semibold text-forest-800">{view.email || "Not on file"}</dd>
+        <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Email</dt>
+        <dd className="mt-1 break-words font-semibold text-forest-800">{view.email || "Not on file"}</dd>
       </div>
       <div>
-        <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Address</dt>
-        <dd className="mt-1 font-semibold text-forest-800">{address || "Not on file"}</dd>
+        <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Address</dt>
+        <dd className="mt-1 break-words font-semibold text-forest-800">{address || "Not on file"}</dd>
       </div>
     </dl>
   );

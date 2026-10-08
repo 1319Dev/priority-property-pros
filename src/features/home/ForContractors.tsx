@@ -14,7 +14,7 @@ export function ForContractors() {
       <Container>
         <div className="grid overflow-hidden rounded-[2rem] bg-forest-950 text-cream-50 lg:grid-cols-[minmax(0,1.15fr)_minmax(16rem,0.85fr)]">
           <div className="px-5 py-10 sm:px-10">
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-300">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-300">
             For contractors
           </p>
           <h2 id="pros-heading" className="mt-3 max-w-xl font-display text-3xl font-semibold sm:text-4xl">

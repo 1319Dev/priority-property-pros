@@ -699,7 +699,7 @@ export function CompareEstimatesPage() {
       <p className="text-ink-700">{COMPARE_INTRO} {CUSTOMER_PAYS_DIRECTLY}</p>
       <FormError message={error} />
       {rows.length === 0 ? <EmptyState title="No estimates yet" body="Submitted estimates will appear here in the order they arrived." /> : null}
-      <div className="grid gap-4">
+      <div className="grid gap-4 lg:grid-cols-2">
         {rows.map(({ estimate, items, contractor, extras }) => {
           const status = estimate.status as EstimateStatus;
           const outOfDate = estimateNeedsNewSubmission(status);
@@ -708,9 +708,9 @@ export function CompareEstimatesPage() {
           const declinable = canCustomerDeclineFrom(status) && openForChoice;
           return (
             <article key={estimate.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 p-5">
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 <ContractorAvatar size={56} />
-                <h2 className="font-display text-2xl text-forest-800">{contractor?.display_label || "Local pro"}</h2>
+                <h2 className="min-w-0 break-words font-display text-2xl text-forest-800">{contractor?.display_label || "Local pro"}</h2>
               </div>
               <p className="text-sm text-ink-500">
                 {outOfDate ? "Needs a new estimate" : customerEstimateStatusLabel(status)}
@@ -857,9 +857,9 @@ export function CustomerEstimateDetailPage() {
       <ButtonLink to={`/app/customer/projects/${projectId}/compare`} variant="ghost" size="sm">
         Back to comparison
       </ButtonLink>
-      <div className="flex items-center gap-4">
+      <div className="flex min-w-0 items-center gap-4">
         <ContractorAvatar size={72} />
-        <h1 className="font-display text-4xl font-semibold text-forest-800">{contractor?.display_label || "Estimate"}</h1>
+        <h1 className="min-w-0 break-words font-display text-4xl font-semibold text-forest-800">{contractor?.display_label || "Estimate"}</h1>
       </div>
       <p className="text-sm text-ink-500">{customerEstimateStatusLabel(status)}</p>
       <p className="text-sm text-ink-500">{STREET_STAYS_PRIVATE}</p>

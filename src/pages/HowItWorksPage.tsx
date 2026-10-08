@@ -52,7 +52,7 @@ export function HowItWorksPage() {
             sizes="(max-width: 768px) 100vw, 672px"
           />
         </div>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">How it works</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">How it works</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">
           The marketplace in four steps.
         </h1>

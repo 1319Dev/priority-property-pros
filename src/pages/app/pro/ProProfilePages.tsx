@@ -260,7 +260,7 @@ export function ManageProfileView() {
   return (
     <div className="mx-auto max-w-xl space-y-5">
       <header>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Your Pro Profile</h1>
         <p className="mt-2 text-sm text-ink-700">
           Update the public card customers see. Onboarding answers stay on file.
@@ -273,9 +273,9 @@ export function ManageProfileView() {
       <FormError message={error} />
       {approved ? (
         <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display text-2xl text-forest-800">Your Pro Profile</h2>
-            <span className="shrink-0 rounded-full bg-forest-800 px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-cream-50">
+            <span className="shrink-0 rounded-full bg-forest-800 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cream-50">
               ✓ Approved
             </span>
           </div>
@@ -291,7 +291,7 @@ export function ManageProfileView() {
       ) : null}
 
       <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-2xl text-forest-800">Accepting Work</h2>
             <p className="text-sm text-ink-700">{accepting ? "You are open to new jobs." : "New matching is paused. Historical estimates stay."}</p>
@@ -360,7 +360,7 @@ export function ManageProfileView() {
           <div className="space-y-3">
             <TextInput label="Headline" value={headline} onChange={(e) => setHeadline(e.target.value)} />
             <label className="block">
-              <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Bio</span>
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Bio</span>
               <textarea className="w-full rounded-2xl border border-forest-800/15 px-4 py-3" rows={4} value={bio} onChange={(e) => setBio(e.target.value)} />
             </label>
             <Button type="button" size="sm" disabled={busy} onClick={() => void saveAbout()}>

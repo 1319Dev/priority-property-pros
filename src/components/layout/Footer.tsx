@@ -33,7 +33,7 @@ export function Footer() {
   });
 
   return (
-    <footer className="mt-8 border-t border-forest-800/10 bg-forest-900 pb-32 text-cream-100 lg:pb-0">
+    <footer className="mt-8 border-t border-forest-800/10 bg-forest-900 pb-[calc(8rem+env(safe-area-inset-bottom))] text-cream-100 lg:pb-0">
       <Container className="grid gap-10 py-12 md:grid-cols-[1.4fr_1fr]">
         <div>
           <Logo inverted />
@@ -50,18 +50,18 @@ export function Footer() {
           </p>
         </div>
         <nav aria-label="Footer">
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-gold-300">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-300">
             Explore
           </p>
           <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
             <li>
-              <Link to={postTo} className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
+                <Link to={postTo} className="inline-flex min-h-11 min-w-11 items-center text-cream-50 hover:text-gold-300">
                 Post a project
               </Link>
             </li>
             {exploreLinks.map((link) => (
               <li key={`${link.to}-${link.label}`}>
-                <Link to={link.to} className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
+                <Link to={link.to} className="inline-flex min-h-11 min-w-11 items-center text-cream-50 hover:text-gold-300">
                   {link.label}
                 </Link>
               </li>
@@ -72,18 +72,18 @@ export function Footer() {
                   Become a pro
                 </span>
               ) : showProSignup ? (
-                <Link to="/become-a-pro" className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
+                <Link to="/become-a-pro" className="inline-flex min-h-11 min-w-11 items-center text-cream-50 hover:text-gold-300">
                   Become a pro
                 </Link>
               ) : (
-                <Link to={home} className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
+                <Link to={home} className="inline-flex min-h-11 min-w-11 items-center text-cream-50 hover:text-gold-300">
                   My dashboard
                 </Link>
               )}
             </li>
             {!loading && user && showProSignup ? (
               <li>
-                <Link to={home} className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
+                <Link to={home} className="inline-flex min-h-11 min-w-11 items-center text-cream-50 hover:text-gold-300">
                   My dashboard
                 </Link>
               </li>
@@ -92,7 +92,7 @@ export function Footer() {
               <li>
                 <button
                   type="button"
-                  className="min-h-11 text-cream-50 hover:text-gold-300"
+                  className="inline-flex min-h-11 min-w-11 items-center text-cream-50 hover:text-gold-300"
                   onClick={() => {
                     void signOut();
                   }}
@@ -103,14 +103,14 @@ export function Footer() {
             ) : null}
             {!loading && !user ? (
               <li>
-                <Link to="/sign-in" className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
+                <Link to="/sign-in" className="inline-flex min-h-11 min-w-11 items-center text-cream-50 hover:text-gold-300">
                   Sign in
                 </Link>
               </li>
             ) : null}
             {!loading && !user ? (
               <li>
-                <Link to="/sign-up" className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
+                <Link to="/sign-up" className="inline-flex min-h-11 min-w-11 items-center text-cream-50 hover:text-gold-300">
                   Create account
                 </Link>
               </li>

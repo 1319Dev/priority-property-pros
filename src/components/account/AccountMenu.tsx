@@ -52,7 +52,7 @@ export function AccountMenu() {
     <div className="relative shrink-0" ref={rootRef}>
       <button
         type="button"
-        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-forest-800 pl-2 pr-2 text-sm font-semibold text-cream-50 min-[360px]:pl-2.5 min-[360px]:pr-3"
+        className="inline-flex min-h-11 min-w-11 items-center gap-2 rounded-full bg-forest-800 pl-2 pr-2 text-sm font-semibold text-cream-50 min-[360px]:pl-2.5 min-[360px]:pr-3"
         aria-label="Account menu"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -76,7 +76,7 @@ export function AccountMenu() {
           id={menuId}
           role="menu"
           aria-label="Account"
-          className="absolute right-0 z-50 mt-2 w-64 rounded-3xl border border-forest-800/10 bg-cream-50 p-2 shadow-xl"
+          className="absolute right-0 z-50 mt-2 w-[min(16rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] rounded-3xl border border-forest-800/10 bg-cream-50 p-2 shadow-xl"
         >
           <p className="truncate px-3 py-2 text-sm text-ink-700">{name}</p>
           <Link

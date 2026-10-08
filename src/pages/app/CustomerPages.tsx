@@ -31,7 +31,7 @@ export function AccountPage() {
   return (
     <div className="max-w-lg space-y-6">
       <header>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Settings</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Settings</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Account settings</h1>
       </header>
       <form
@@ -152,9 +152,9 @@ export function AccountPage() {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-4">
+    <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
       <dt className="font-semibold uppercase tracking-[0.14em] text-gold-700">{label}</dt>
-      <dd className="text-ink-900">{value}</dd>
+      <dd className="min-w-0 break-words text-ink-900">{value}</dd>
     </div>
   );
 }

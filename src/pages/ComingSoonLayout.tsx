@@ -32,7 +32,7 @@ export function ComingSoonLayout({
             sizes="(max-width: 768px) 100vw, 672px"
           />
         ) : null}
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">{eyebrow}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">{eyebrow}</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">{title}</h1>
         <p className="mt-4 text-lg leading-relaxed text-ink-700">{body}</p>
         {extra}

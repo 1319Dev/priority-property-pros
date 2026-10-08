@@ -57,19 +57,19 @@ export function ProjectContactSection({
       {entitled && shared && contact ? (
         <dl className="mt-3 space-y-2">
           <div>
-            <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Name</dt>
+            <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Name</dt>
             <dd className="mt-1 font-semibold text-forest-800">{contact.name || "Not provided"}</dd>
           </div>
           <div>
-            <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Street</dt>
+            <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Street</dt>
             <dd className="mt-1 font-semibold text-forest-800">{contact.street || "Not provided"}</dd>
           </div>
           <div>
-            <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Phone</dt>
+            <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Phone</dt>
             <dd className="mt-1 font-semibold text-forest-800">{contact.phone || "Not provided"}</dd>
           </div>
           <div>
-            <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Email</dt>
+            <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Email</dt>
             <dd className="mt-1 font-semibold text-forest-800">{contact.email || "Not provided"}</dd>
           </div>
         </dl>

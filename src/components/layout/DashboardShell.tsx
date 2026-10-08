@@ -31,7 +31,7 @@ export function DashboardShell({
     <div className="paper-grain flex min-h-dvh flex-col">
       <header className="sticky top-0 z-40 border-b border-forest-800/10 bg-cream-50/90 pt-safe backdrop-blur-md">
         <div className="mx-auto flex min-h-16 w-full min-w-0 max-w-6xl items-center justify-between gap-2 px-4 py-2 sm:gap-4 sm:px-6">
-          <NavLink to="/" aria-label="Priority Property Pros home" className="min-w-0">
+          <NavLink to="/" aria-label="Priority Property Pros home" className="inline-flex min-h-11 min-w-0 shrink items-center">
             <Logo truncateWordmark />
           </NavLink>
           <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
@@ -49,10 +49,10 @@ export function DashboardShell({
           This account is pending review or email confirmation. You can look around; matching waits on an active, approved contractor.
         </div>
       ) : null}
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-40 sm:px-6 lg:pb-10">
+      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-[calc(10rem+env(safe-area-inset-bottom))] sm:px-6 lg:pb-10">
         {children ?? <Outlet />}
       </main>
-      <p className="mx-auto w-full max-w-6xl px-4 pb-36 text-sm text-ink-500 sm:px-6 lg:pb-6">
+      <p className="mx-auto w-full max-w-6xl break-words px-4 pb-[calc(9rem+env(safe-area-inset-bottom))] text-sm text-ink-500 sm:px-6 lg:pb-6">
         <a className="font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
           {SUPPORT_EMAIL}
         </a>
@@ -63,7 +63,7 @@ export function DashboardShell({
       >
         <ul
           className="mx-auto grid w-full max-w-lg px-1 pt-1 lg:hidden"
-          style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+          style={{ gridTemplateColumns: `repeat(${items.length > 5 ? 3 : items.length}, minmax(0, 1fr))` }}
         >
           {items.map((item) => (
             <li key={item.to} className="flex min-w-0 justify-center">
@@ -71,7 +71,7 @@ export function DashboardShell({
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
-                  `flex min-h-12 w-full flex-col items-center justify-center px-0.5 py-1 text-center text-[0.62rem] font-semibold leading-tight ${
+                  `flex min-h-12 w-full min-w-0 flex-col items-center justify-center px-0.5 py-1 text-center text-xs font-semibold leading-tight break-words ${
                     isActive ? "text-forest-800" : "text-ink-500"
                   }`
                 }
@@ -81,7 +81,7 @@ export function DashboardShell({
             </li>
           ))}
         </ul>
-        <ul className="mx-auto hidden max-w-6xl gap-2 px-6 py-3 lg:flex">
+        <ul className="mx-auto hidden max-w-6xl flex-wrap gap-2 px-6 py-3 lg:flex">
           {items.map((item) => (
             <li key={item.to}>
               <NavLink
@@ -111,7 +111,7 @@ function NavLabel({ item, compact = false }: { item: DashNavItem; compact?: bool
       <span>{item.label}</span>
       {showBadge ? (
         <span
-          className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-gold-500 px-1.5 text-[0.62rem] font-bold text-forest-950"
+          className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-gold-500 px-1.5 text-xs font-bold text-forest-950"
           aria-label={`${item.badge} pending`}
         >
           {badgeText}

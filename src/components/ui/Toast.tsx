@@ -23,13 +23,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       <div
-        className="pointer-events-none fixed inset-x-0 top-[max(0.75rem,env(safe-area-inset-top))] z-[60] flex flex-col items-center gap-2 px-4"
+        className="pointer-events-none fixed inset-x-0 top-[calc(4.75rem+env(safe-area-inset-top))] z-[60] flex flex-col items-center gap-2 px-4"
         aria-live="polite"
       >
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className="pointer-events-auto w-full max-w-md rounded-2xl border border-forest-800/10 bg-forest-900 px-4 py-3 text-sm text-cream-50 shadow-lg"
+            className="pointer-events-auto w-full max-w-md break-words rounded-2xl border border-forest-800/10 bg-forest-900 px-4 py-3 text-sm text-cream-50 shadow-lg"
           >
             {toast.message}
           </div>

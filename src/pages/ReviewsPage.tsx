@@ -98,7 +98,7 @@ export function ReviewsPage() {
   return (
     <section className="py-10 sm:py-16">
       <Container className="max-w-3xl">
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Reviews</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Reviews</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">
           Reviews of Priority Property Pros
         </h1>
@@ -141,7 +141,7 @@ export function ReviewsPage() {
           ) : (
             <form className="mt-5 space-y-4" onSubmit={(event) => void onSubmit(event)}>
               <fieldset>
-                <legend className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
+                <legend className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
                   Stars
                 </legend>
                 <div className="flex flex-wrap gap-2">
@@ -180,7 +180,7 @@ export function ReviewsPage() {
                 maxLength={80}
               />
               <label className="block" htmlFor="review-body">
-                <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
+                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
                   Your review
                 </span>
                 <textarea

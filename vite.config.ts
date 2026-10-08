@@ -92,6 +92,7 @@ export default defineConfig(({ mode }) => {
       globals: true,
       setupFiles: "./src/test/setup.ts",
       css: true,
+      exclude: ["**/node_modules/**", "**/dist/**", "e2e/**"],
     },
   };
 });
