@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build supabase/migrations/*_zip_centroids.sql from U.S. Census public-domain files.
+"""Build ZIP centroid schema, Texas migration parts, and the national CSV.
 
 Sources (U.S. government work, public domain, 17 U.S.C. § 105):
   - 2023 Gazetteer ZCTA national file (internal-point lat/lng)
@@ -19,6 +19,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import csv
 import re
 import urllib.request
 import zipfile
@@ -27,6 +28,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "supabase" / "migrations" / "20261012000001_zip_centroids.sql"
+DATA_CSV = ROOT / "supabase" / "data" / "zip_centroids_us.csv"
+MIGRATIONS = ROOT / "supabase" / "migrations"
+MAX_PART_BYTES = 35_000
 
 GAZ_URL = "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2023_Gazetteer/2023_Gaz_zcta_national.zip"
 PLACE_URL = "https://www2.census.gov/geo/docs/maps-data/data/rel2020/zcta520/tab20_zcta520_place20_natl.txt"
@@ -146,32 +150,8 @@ def main() -> None:
     places = best_overlap(place, name_index=10, geoid_index=9)
     counties = best_overlap(county, name_index=10, geoid_index=9)
 
-    missing_state = 0
-    missing_city = 0
-    values: list[str] = []
-    for zcta, lat, lng in gaz_rows:
-        place_row = places.get(zcta)
-        county_row = counties.get(zcta)
-        state_fips = ""
-        if county_row and county_row[2] in STATE_BY_FIPS:
-            state_fips = county_row[2]
-        elif place_row and place_row[2] in STATE_BY_FIPS:
-            state_fips = place_row[2]
-        state = STATE_BY_FIPS.get(state_fips)
-        city = clean_place(place_row[1]) if place_row else ""
-        if not city and county_row:
-            city = county_row[1].strip()
-        if not city:
-            missing_city += 1
-            city_sql = "NULL"
-        else:
-            city_sql = sql_text(city)
-        if not state:
-            missing_state += 1
-        values.append(f"({sql_text(zcta)},{lat},{lng},{city_sql},{sql_text(state)})")
-
     header = """-- ZIP / ZCTA centroids for radius service areas.
--- Do NOT apply to production from this PR. No payment, Stripe, or fee-flag changes.
+-- No payment, Stripe, or fee-flag changes.
 --
 -- Dataset (public domain, U.S. government work, 17 U.S.C. § 105 — no license key):
 --   Coordinates: U.S. Census Bureau 2023 Gazetteer Files, ZCTA national,
@@ -189,8 +169,9 @@ def main() -> None:
 -- ZCTAs approximate USPS ZIP Codes. PO Box-only and single-delivery ZIPs are
 -- often absent. Regenerate with scripts/build-zip-centroids.py.
 --
--- Row count is the INSERT volume below. ON CONFLICT DO NOTHING makes a manual
--- re-load a no-op. This file does not update contractor_service_areas.
+-- This migration creates the table, index, and policies only. Texas ZCTAs load
+-- in the following 20261012000001_*_zip_centroids_tx_part*.sql files. The full
+-- national set is supabase/data/zip_centroids_us.csv (not a migration).
 
 CREATE TABLE public.zip_centroids (
   zip text PRIMARY KEY,
@@ -225,22 +206,73 @@ CREATE POLICY zip_centroids_write_admin
   WITH CHECK (public.is_admin());
 
 """
-    chunks: list[str] = []
-    batch = 400
-    for start in range(0, len(values), batch):
-        body = ",\n".join(values[start : start + batch])
-        chunks.append(
-            "INSERT INTO public.zip_centroids (zip, lat, lng, city, state_code) VALUES\n"
-            + body
-            + "\nON CONFLICT (zip) DO NOTHING;\n"
-        )
+    args.out.write_text(header, encoding="utf-8")
 
-    footer = f"""
-COMMENT ON TABLE public.zip_centroids IS
-  'Public-domain Census 2023 ZCTA centroids ({len(values)} rows) plus 2020 place/county names. Readable by anon and authenticated. Writes require is_admin().';
-"""
-    args.out.write_text(header + "\n".join(chunks) + footer, encoding="utf-8")
-    print(f"wrote {args.out} rows={len(values)} missing_city={missing_city} missing_state={missing_state}")
+    missing_state = 0
+    missing_city = 0
+    parsed_rows: list[tuple[str, str, str, str, str]] = []
+    for zcta, lat, lng in gaz_rows:
+        place_row = places.get(zcta)
+        county_row = counties.get(zcta)
+        state_fips = ""
+        if county_row and county_row[2] in STATE_BY_FIPS:
+            state_fips = county_row[2]
+        elif place_row and place_row[2] in STATE_BY_FIPS:
+            state_fips = place_row[2]
+        state = STATE_BY_FIPS.get(state_fips) or ""
+        city = clean_place(place_row[1]) if place_row else ""
+        if not city and county_row:
+            city = county_row[1].strip()
+        if not city:
+            missing_city += 1
+        if not state:
+            missing_state += 1
+        parsed_rows.append((zcta, lat, lng, city, state))
+
+    DATA_CSV.parent.mkdir(parents=True, exist_ok=True)
+    with DATA_CSV.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow(["zip", "lat", "lng", "city", "state_code"])
+        writer.writerows(parsed_rows)
+
+    texas = [row for row in parsed_rows if row[4] == "TX"]
+
+    def render_part(part_rows: list[tuple[str, str, str, str, str]], index: int, total: int) -> str:
+        lines = [
+            f"-- Texas ZCTA centroids, part {index} of {total}.",
+            "-- Public-domain U.S. Census 2023 Gazetteer (17 U.S.C. § 105). Idempotent.",
+            "INSERT INTO public.zip_centroids (zip, lat, lng, city, state_code) VALUES",
+        ]
+        tuples = [
+            f"({sql_text(zcta)},{lat},{lng},{sql_text(city) if city else 'NULL'},{sql_text(state) if state else 'NULL'})"
+            for zcta, lat, lng, city, state in part_rows
+        ]
+        lines.append(",\n".join(tuples))
+        lines.append("ON CONFLICT (zip) DO NOTHING;")
+        return "\n".join(lines) + "\n"
+
+    packed: list[list[tuple[str, str, str, str, str]]] = []
+    current: list[tuple[str, str, str, str, str]] = []
+    for row in texas:
+        trial = current + [row]
+        if current and len(render_part(trial, 99, 99).encode("utf-8")) > MAX_PART_BYTES:
+            packed.append(current)
+            current = [row]
+        else:
+            current = trial
+    if current:
+        packed.append(current)
+
+    for old in MIGRATIONS.glob("20261012000001_*_zip_centroids_tx_part*.sql"):
+        old.unlink()
+    for index, part_rows in enumerate(packed, start=1):
+        path = MIGRATIONS / f"20261012000001_{index}_zip_centroids_tx_part{index}.sql"
+        path.write_text(render_part(part_rows, index, len(packed)), encoding="utf-8")
+
+    print(
+        f"wrote {args.out} national_rows={len(parsed_rows)} texas_rows={len(texas)} "
+        f"parts={len(packed)} missing_city={missing_city} missing_state={missing_state}"
+    )
 
 
 if __name__ == "__main__":

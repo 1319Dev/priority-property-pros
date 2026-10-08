@@ -1,6 +1,5 @@
 -- Radius service areas: ZIP-centroid distance, legacy ZIP-list fallback, and
 -- an idempotent inference for contractors who already typed ZIP lists.
--- Do NOT apply to production from this PR.
 -- Does not change Stripe, checkout, webhooks, prices, or fee flags
 -- (payments_live, charges_live, signup_fee_enabled, connection_fee_checkout_enabled).
 -- No Edge Function changes. Matching stays in existing SQL functions.
@@ -535,6 +534,60 @@ $infer$;
 -- Public directory phrase. Pending contractors stay hidden.
 -- ---------------------------------------------------------------------------
 
+-- Profile city/state come from contractor_profiles.service_area ("Willis, TX" or "Willis").
+-- Census may label the same ZIP differently (77318 is Conroe). Public labels prefer the profile.
+CREATE OR REPLACE FUNCTION public.contractor_profile_place(p_service_area text)
+RETURNS TABLE (city text, state_code text)
+LANGUAGE plpgsql
+IMMUTABLE
+SET search_path = public
+AS $$
+DECLARE
+  raw text := btrim(coalesce(p_service_area, ''));
+  city_part text;
+  state_part text;
+  parsed_city text;
+  parsed_state text;
+BEGIN
+  IF raw = '' THEN
+    RETURN;
+  END IF;
+  IF public.text_contains_pre_hire_contact(raw) THEN
+    RETURN;
+  END IF;
+  IF raw ~ '[0-9]' THEN
+    RETURN;
+  END IF;
+  IF raw ~* '\y(street|avenue|road|drive|lane|court|parkway|blvd|boulevard)\y' THEN
+    RETURN;
+  END IF;
+
+  IF position(',' IN raw) > 0 THEN
+    city_part := btrim(split_part(raw, ',', 1));
+    state_part := btrim(regexp_replace(split_part(raw, ',', 2), '\s.*$', ''));
+    parsed_city := public.normalize_city(city_part);
+    parsed_state := public.normalize_us_state(state_part);
+    IF parsed_city IS NOT NULL AND parsed_state ~ '^[A-Z]{2}$' THEN
+      city := parsed_city;
+      state_code := parsed_state;
+      RETURN NEXT;
+    END IF;
+    RETURN;
+  END IF;
+
+  IF length(raw) <= 40 AND raw ~ '^[A-Za-z][A-Za-z .''-]*$' THEN
+    parsed_city := public.normalize_city(raw);
+    IF parsed_city IS NOT NULL THEN
+      city := parsed_city;
+      state_code := NULL;
+      RETURN NEXT;
+    END IF;
+  END IF;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.contractor_profile_place(text) FROM PUBLIC, anon, authenticated;
+
 CREATE OR REPLACE FUNCTION public.contractor_public_service_label(p_contractor_profile_id uuid)
 RETURNS text
 LANGUAGE sql
@@ -542,9 +595,16 @@ STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT public.format_serves_within(a.radius_miles, c.city, c.state_code, a.center_zip)
+  SELECT public.format_serves_within(
+    a.radius_miles,
+    coalesce(place.city, c.city),
+    coalesce(place.state_code, c.state_code),
+    a.center_zip
+  )
   FROM public.contractor_service_areas a
+  JOIN public.contractor_profiles cp ON cp.id = a.contractor_profile_id
   LEFT JOIN public.zip_centroids c ON c.zip = public.normalize_zip(a.center_zip)
+  LEFT JOIN LATERAL public.contractor_profile_place(cp.service_area) AS place ON true
   WHERE a.contractor_profile_id = p_contractor_profile_id
     AND a.radius_miles IS NOT NULL
     AND public.contractor_is_directory_listed(p_contractor_profile_id)
@@ -553,7 +613,7 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION public.contractor_public_service_label(uuid) IS
-  'Public phrase Serves within N miles of City, ST. NULL for legacy ZIP-only rows and for contractors who are not directory-listed.';
+  'Public phrase Serves within N miles of City, ST. Prefers the contractor profile city and state when service_area has them, otherwise the ZIP centroid place. NULL for legacy ZIP-only rows and for contractors who are not directory-listed.';
 
 REVOKE ALL ON FUNCTION public.contractor_public_service_label(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.contractor_public_service_label(uuid) TO anon, authenticated;

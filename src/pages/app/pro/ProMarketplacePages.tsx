@@ -60,7 +60,7 @@ import { ServiceRadiusEditor } from "../../../components/marketplace/ServiceRadi
 import { prepareServiceAreaSave, previewServiceRadius } from "../../../lib/marketplace/serviceAreaApi";
 import { contractorAreaSummary } from "../../../lib/marketplace/serviceRadius";
 import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type Booking, type EstimateItemKind, type EstimateStatus, type ServiceCategory } from "../../../lib/marketplace/types";
-import { OPPORTUNITY_STATUS_LABELS, opportunityNextActions } from "../../../lib/marketplace/statusLabels";
+import { OPPORTUNITY_STATUS_LABELS } from "../../../lib/marketplace/statusLabels";
 import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import {
   CONNECT_PAYMENTS_OFF_COPY,
@@ -443,11 +443,6 @@ export function OpportunitiesPage() {
       ) : (
         <ul className="space-y-3">
           {live.map((row) => {
-            const actions = opportunityNextActions({
-              opportunityId: row.id,
-              status: row.status,
-              projectStatus: row.projects?.status ?? "POSTED",
-            });
             const showPass = canContractorEndJob({
               opportunityStatus: row.status,
               projectStatus: row.projects?.status,
@@ -459,21 +454,19 @@ export function OpportunitiesPage() {
                 <p className="text-sm text-ink-500">
                   {[row.projects?.city, row.projects?.state, row.projects?.zip_code].filter(Boolean).join(", ")}
                 </p>
-                <div className="mt-3 flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
-                  <Link to={actions[0]?.to ?? `/app/pro/opportunities/${row.id}`} className="inline-flex min-h-12 items-center font-semibold text-forest-800">
-                    {actions[0]?.label ?? "View opportunity"}
-                  </Link>
+                <div className="mt-4 flex flex-col items-stretch gap-1">
+                  <ButtonLink to={`/app/pro/opportunities/${row.id}`} className="min-h-14 w-full">
+                    View job
+                  </ButtonLink>
                   {showPass ? (
-                    <Button
+                    <button
                       type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full sm:w-auto"
+                      className="mx-auto block min-h-11 px-2 text-sm font-medium text-ink-500 underline decoration-ink-500/30 underline-offset-4 hover:text-forest-800"
                       disabled={busy}
                       onClick={() => setPassId(row.id)}
                     >
                       {declineJobButtonLabel(null)}
-                    </Button>
+                    </button>
                   ) : null}
                 </div>
               </li>
@@ -694,15 +687,14 @@ export function OpportunityDetailPage() {
         <ContractorConnectionCta state={connectionUiState} busy={busy} onConnect={() => setConnectOpen(true)} />
       ) : null}
       {showDecline ? (
-        <Button
+        <button
           type="button"
-          variant="outline"
-          className="min-h-14 w-full"
+          className="mx-auto block min-h-11 px-2 text-sm font-medium text-ink-500 underline decoration-ink-500/30 underline-offset-4 hover:text-forest-800"
           disabled={busy}
           onClick={() => setEndOpen(true)}
         >
           {declineJobButtonLabel(myConnection?.status ?? null)}
-        </Button>
+        </button>
       ) : null}
       {row.status === "ACCEPTED" && !cancelled ? (
         <section className="space-y-3">

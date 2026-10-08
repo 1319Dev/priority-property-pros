@@ -187,6 +187,45 @@ describe("matching eligibility", () => {
     expect(projectContractorFitScore(radiusPro, conroe, centroids)).toBeGreaterThan(0);
   });
 
+  it("matches an out-of-Texas customer ZIP through the legacy ZIP list when that ZIP is not loaded", () => {
+    const texasOnly = {
+      "77301": { lat: 30.309853, lng: -95.43128 },
+    };
+    const legacyAtlanta = pro({
+      areas: [
+        {
+          mode: "ZIPS",
+          center_zip: null,
+          center_lat: null,
+          center_lng: null,
+          radius_miles: null,
+          zip_codes: ["30318"],
+        },
+      ],
+    });
+    expect(
+      contractorEligibleForProject(
+        legacyAtlanta,
+        { ...project, zip_code: "30318", lat: 33.79, lng: -84.45 },
+        texasOnly,
+      ).ok,
+    ).toBe(true);
+
+    const radiusOnly = pro({
+      areas: [
+        {
+          mode: "RADIUS",
+          center_zip: "77301",
+          center_lat: 30.309853,
+          center_lng: -95.43128,
+          radius_miles: 25,
+          zip_codes: [],
+        },
+      ],
+    });
+    expect(contractorEligibleForProject(radiusOnly, { ...project, zip_code: "30318" }, texasOnly).ok).toBe(false);
+  });
+
   it("requires a verified credential only when the category says so", () => {
     expect(
       contractorEligibleForProject(pro({ has_verified_credential: false }), {

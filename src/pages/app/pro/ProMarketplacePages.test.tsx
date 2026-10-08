@@ -210,7 +210,14 @@ describe("Jobs page after passing a job", () => {
     });
     renderJobsPage();
     expect(await screen.findByText("Kitchen faucet")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: PASS_SKIP_LABEL }));
+    expect(screen.getByText(/You'll see the approximate location only/)).toBeInTheDocument();
+    const viewJob = screen.getByRole("link", { name: /view job/i });
+    expect(viewJob).toHaveClass("min-h-14", "w-full", "bg-forest-800");
+    expect(viewJob).toHaveAttribute("href", "/app/pro/opportunities/opp-open");
+    const pass = screen.getByRole("button", { name: PASS_SKIP_LABEL });
+    expect(pass).toHaveClass("min-h-11");
+    expect(pass.className).not.toMatch(/\bborder\b/);
+    await userEvent.click(pass);
     const dialog = await screen.findByRole("dialog");
     await userEvent.click(within(dialog).getByRole("button", { name: PASS_SKIP_CONFIRM }));
     await waitFor(() => {

@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -42,8 +42,8 @@ describe("ZIP radius schema, matching, and RLS", () => {
     expect(data).toMatch(/2023 Gazetteer/);
     expect(data).toMatch(/17 U\.S\.C\. § 105/);
     expect(data).toMatch(/CREATE TABLE public\.zip_centroids/);
-    expect(data).toMatch(/33791 rows/);
-    expect(data).toMatch(/\('77301',30\.309853,-95\.431280,'Conroe','TX'\)/);
+    expect(data).not.toMatch(/INSERT INTO/);
+    expect(data).not.toMatch(/Do NOT apply to production/);
     expect(data).toMatch(/CREATE INDEX zip_centroids_lat_lng_idx/);
     expect(data).toMatch(/ALTER TABLE public\.zip_centroids ENABLE ROW LEVEL SECURITY/);
     expect(data).toMatch(/GRANT SELECT ON TABLE public\.zip_centroids TO anon, authenticated/);
@@ -56,6 +56,36 @@ describe("ZIP radius schema, matching, and RLS", () => {
     expect(data).not.toMatch(/GRANT DELETE ON TABLE public\.zip_centroids TO anon/);
     expect(data).not.toMatch(/payments_live/);
     expect(data).not.toMatch(/charges_live/);
+
+    const dir = path.join(repoRoot, "supabase/migrations");
+    const parts = readdirSync(dir)
+      .filter((name) => /^20261012000001_\d+_zip_centroids_tx_part\d+\.sql$/.test(name))
+      .sort();
+    expect(parts.length).toBeGreaterThan(1);
+    let texasRows = 0;
+    const texasSql = parts
+      .map((name) => {
+        const file = path.join(dir, name);
+        const bytes = statSync(file).size;
+        expect(bytes).toBeLessThanOrEqual(35_000);
+        const body = readFileSync(file, "utf8");
+        expect(body).toMatch(/ON CONFLICT \(zip\) DO NOTHING/);
+        expect(body).not.toMatch(/Do NOT apply to production/);
+        expect(body).not.toMatch(/,'(?!TX')[A-Z]{2}'\)/);
+        texasRows += body.match(/\('(\d{5})'/g)?.length ?? 0;
+        return body;
+      })
+      .join("\n");
+    expect(texasRows).toBe(1989);
+    expect(texasSql).toMatch(/\('77301',30\.309853,-95\.431280,'Conroe','TX'\)/);
+    expect(texasSql).toMatch(/\('77318',30\.444908,-95\.551907,'Conroe','TX'\)/);
+
+    const csv = readFileSync(path.join(repoRoot, "supabase/data/zip_centroids_us.csv"), "utf8");
+    const csvLines = csv.trim().split("\n");
+    expect(csvLines[0]).toBe("zip,lat,lng,city,state_code");
+    expect(csvLines).toHaveLength(33792);
+    expect(csv).toMatch(/^30318,33\.792660,-84\.448010,Atlanta,GA$/m);
+    expect(csv).toMatch(/^10001,40\.750649,-73\.997298,New York,NY$/m);
   });
 
   it("matches centroid distance, falls back to legacy lists, and does not clear ZIP codes", () => {
@@ -79,6 +109,14 @@ describe("ZIP radius schema, matching, and RLS", () => {
     expect(preview).toMatch(/Covers about /);
     expect(logic).toMatch(/contractor_public_service_label/);
     expect(logic).toMatch(/Serves within /);
+    expect(logic).not.toMatch(/Do NOT apply to production/);
+    const place = functionBody(logic, "contractor_profile_place");
+    const label = functionBody(logic, "contractor_public_service_label");
+    expect(place).toMatch(/normalize_city/);
+    expect(place).toMatch(/normalize_us_state/);
+    expect(label).toMatch(/cp\.service_area/);
+    expect(label).toMatch(/coalesce\(place\.city, c\.city\)/);
+    expect(label).toMatch(/coalesce\(place\.state_code, c\.state_code\)/);
     expect(logic).not.toMatch(/payments_live',\s*1/);
     expect(logic).not.toMatch(/charges_live',\s*1/);
     expect(logic).not.toMatch(/signup_fee_enabled',\s*1/);

@@ -41,7 +41,7 @@ export const CONNECT_PAYMENTS_OFF_COPY =
 
 /** Jobs list helper. Contact stays locked until the $4.99 connection is verified. */
 export const JOBS_STREET_HELPER_COPY =
-  "Approximate location only. Exact street stays hidden until a paid $4.99 connection entitlement or an admin unlock. Tap Connect to take a job — one step. Pass on this job if it is not a fit; that opening can go to the next pro.";
+  "You'll see the approximate location only. The exact address stays hidden until you Connect for $4.99. Tap View job to see details and Connect, or pass if it's not a fit so the job can go to another pro.";
 
 export const OPPORTUNITY_CONTACT_LOCKED_COPY =
   "Exact street, phone, email, name, and precise coordinates stay hidden until a paid $4.99 connection entitlement or an admin unlock. Clicking Connect does not unlock contact.";
