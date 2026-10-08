@@ -13,6 +13,21 @@ export const FAQ_PAGE_TITLE = "Questions about Priority Property Pros";
 export const FAQ_INTRO =
   `PPP is a local home-services marketplace — not the crew on your driveway. Homeowners pay a one-time $9.99 account activation. Pros pay $4.99 only when they choose to connect. ${JOB_PAYMENT_PLAIN}`;
 
+const PLATFORM_FEE_FAQ_QUESTIONS = new Set([
+  "What do homeowners and businesses pay?",
+  "What do contractors pay?",
+]);
+
+export function visibleFaqIntro(hidePlatformFees: boolean): string {
+  if (!hidePlatformFees) return FAQ_INTRO;
+  return `PPP is a local home-services marketplace — not the crew on your driveway. ${JOB_PAYMENT_PLAIN}`;
+}
+
+export function visibleFaqItems(hidePlatformFees: boolean) {
+  if (!hidePlatformFees) return FAQ_ITEMS;
+  return FAQ_ITEMS.filter((item) => !PLATFORM_FEE_FAQ_QUESTIONS.has(item.question));
+}
+
 export const FAQ_ITEMS = [
   {
     question: "Is Priority Property Pros the contractor?",

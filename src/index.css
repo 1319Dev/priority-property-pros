@@ -98,20 +98,73 @@ html {
 
 .brand-loader-swing {
   transform-box: view-box;
-  transform-origin: 18px 16px;
-  animation: brand-loader-tap 0.9s ease-in-out infinite;
+  transform-origin: 56.25% 90%;
+  animation: brand-loader-tap 1.25s linear infinite;
+  will-change: transform;
+}
+
+.brand-loader-impact {
+  transform-box: view-box;
+  transform-origin: 82.3% 42.7%;
+  opacity: 0;
+  animation: brand-loader-spark 1.25s linear infinite;
+  will-change: transform, opacity;
 }
 
 @keyframes brand-loader-tap {
-  0%,
-  100% {
-    transform: rotate(-34deg);
+  0% {
+    transform: rotate(-16deg);
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 0.4);
   }
-  42% {
-    transform: rotate(8deg);
+  24% {
+    transform: rotate(-21deg);
+    animation-timing-function: cubic-bezier(0.45, 0.05, 0.85, 0.45);
+  }
+  40% {
+    transform: rotate(2.2deg);
+    animation-timing-function: cubic-bezier(0.2, 0.75, 0.3, 1);
+  }
+  49% {
+    transform: rotate(-6deg);
+    animation-timing-function: cubic-bezier(0.25, 0.7, 0.35, 1);
   }
   58% {
-    transform: rotate(8deg);
+    transform: rotate(-2deg);
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  100% {
+    transform: rotate(-16deg);
+  }
+}
+
+@keyframes brand-loader-spark {
+  0%,
+  34% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+    animation-timing-function: cubic-bezier(0.2, 0.6, 0.3, 1);
+  }
+  52% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+}
+
+@keyframes brand-loader-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.68;
   }
 }
 
@@ -119,6 +172,15 @@ html {
   .brand-loader-swing {
     animation: none;
     transform: rotate(-12deg);
+  }
+
+  .brand-loader-impact {
+    animation: none;
+    opacity: 0;
+  }
+
+  .brand-loader-mark {
+    animation: brand-loader-pulse 1.8s ease-in-out infinite;
   }
 }
 

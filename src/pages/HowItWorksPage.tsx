@@ -5,6 +5,13 @@ import { Container } from "../components/ui/Container";
 import { CUSTOMER_CTA, CONTRACTOR_CTA } from "../data/brand";
 import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
 import { JOB_PAYMENT_PLAIN } from "../data/pricing";
+import { useHidePlatformPricing } from "../lib/auth/platformPricing";
+
+const CONNECT_WITH_FEE =
+  "Up to three local independents can connect for $4.99 each. We invite the best-suited pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited. Connecting does not guarantee a hire. The $4.99 Connection Fee is non-refundable.";
+
+const CONNECT_WITHOUT_FEE =
+  "Up to three local independents can connect. We invite the best-suited pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited.";
 
 const steps = [
   {
@@ -15,7 +22,7 @@ const steps = [
   {
     n: "02",
     title: "Pros choose to connect",
-    body: "Up to three local independents can connect for $4.99 each. We invite the best-suited pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited. Connecting does not guarantee a hire. The $4.99 Connection Fee is non-refundable.",
+    body: CONNECT_WITH_FEE,
   },
   {
     n: "03",
@@ -30,6 +37,11 @@ const steps = [
 ];
 
 export function HowItWorksPage() {
+  const hidePricing = useHidePlatformPricing();
+  const visibleSteps = steps.map((step) =>
+    step.n === "02" && hidePricing ? { ...step, body: CONNECT_WITHOUT_FEE } : step,
+  );
+
   return (
     <section className="py-10 sm:py-16">
       <Container className="max-w-3xl">
@@ -50,7 +62,7 @@ export function HowItWorksPage() {
         </p>
         <p className="mt-4 text-lg font-semibold leading-relaxed text-forest-800">{JOB_PAYMENT_PLAIN}</p>
         <ol className="mt-8 grid gap-4">
-          {steps.map((step) => (
+          {visibleSteps.map((step) => (
             <li key={step.n} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-5">
               <p className="font-display text-3xl italic text-gold-600">{step.n}</p>
               <h2 className="mt-1 font-display text-2xl text-forest-800">{step.title}</h2>

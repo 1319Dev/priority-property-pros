@@ -1,6 +1,7 @@
 import { MarketingPhoto, MarketingPhotoFrame } from "../../components/media/MarketingPhoto";
 import { Container } from "../../components/ui/Container";
 import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
+import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 import { REVIEWED_PROS_INTRO } from "../../lib/marketplace/reviewedContractors";
 import { ReviewedContractorsList } from "./ReviewedContractorsPreview";
 import { useReviewedContractors } from "./useReviewedContractors";
@@ -60,8 +61,12 @@ export function BrowseIllustration({ kind, className = "" }: { kind: Illustratio
   );
 }
 
+const REVIEWED_PROS_INTRO_WITHOUT_PLATFORM_FEE =
+  "This preview shows contractors only after a customer reviews them on Priority Property Pros. It is not a directory. Customers do not browse contractors or message them from here. PPP does not take a cut of the job.";
+
 export function HomeBrowsePreview() {
   const { cards, failed, loading, retry } = useReviewedContractors();
+  const hidePricing = useHidePlatformPricing();
 
   return (
     <section className="border-y border-forest-800/10 bg-cream-100/70 py-12" aria-labelledby="browse-preview-heading">
@@ -71,7 +76,9 @@ export function HomeBrowsePreview() {
           <h2 id="browse-preview-heading" className="mt-3 font-display text-3xl font-semibold text-forest-800">
             Contractors with reviews on the platform.
           </h2>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-700">{REVIEWED_PROS_INTRO}</p>
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-700">
+            {hidePricing ? REVIEWED_PROS_INTRO_WITHOUT_PLATFORM_FEE : REVIEWED_PROS_INTRO}
+          </p>
           <div className="mt-6">
             <ReviewedContractorsList cards={cards} failed={failed} loading={loading} onRetry={retry} compactEmpty />
           </div>

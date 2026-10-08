@@ -7,6 +7,7 @@ import { Container } from "../components/ui/Container";
 import { CUSTOMER_CTA } from "../data/brand";
 import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
 import { PRICING_PATH } from "../data/pricing";
+import { useHidePlatformPricing } from "../lib/auth/platformPricing";
 import { ContractorStorefront } from "../features/findAPro/ContractorStorefront";
 import { FindAProDirectory } from "../features/findAPro/FindAProDirectory";
 import { useFindAProDirectory, useFindAProStorefront } from "../features/findAPro/useFindAProDirectory";
@@ -21,8 +22,12 @@ import {
 import { isUuid } from "../lib/marketplace/publicDirectory";
 import { usePageTitle } from "../lib/seo/usePageTitle";
 
+const FIND_A_PRO_INTRO_WITHOUT_PLATFORM_FEE =
+  "Approved, active contractors are listed here even when they have no reviews yet. New contractors do not show stars. PPP does not take a cut of the job.";
+
 export function FindAProPage() {
   const { cards, failed, loading, retry } = useFindAProDirectory();
+  const hidePricing = useHidePlatformPricing();
   usePageTitle(FIND_A_PRO_DOCUMENT_TITLE);
 
   return (
@@ -37,12 +42,16 @@ export function FindAProPage() {
         </div>
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">{FIND_A_PRO_TITLE}</h1>
-        <p className="mt-4 text-base leading-relaxed text-ink-700 sm:text-lg">{FIND_A_PRO_INTRO}</p>
+        <p className="mt-4 text-base leading-relaxed text-ink-700 sm:text-lg">
+          {hidePricing ? FIND_A_PRO_INTRO_WITHOUT_PLATFORM_FEE : FIND_A_PRO_INTRO}
+        </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <PostProjectLink to="/post-project">{CUSTOMER_CTA}</PostProjectLink>
-          <ButtonLink to={PRICING_PATH} variant="outline">
-            See pricing
-          </ButtonLink>
+          {hidePricing ? null : (
+            <ButtonLink to={PRICING_PATH} variant="outline">
+              See pricing
+            </ButtonLink>
+          )}
         </div>
         <div className="mt-10">
           <FindAProDirectory cards={cards} failed={failed} loading={loading} onRetry={retry} />

@@ -3,6 +3,7 @@ import { COMPANY_NAME, PRODUCT_NAME, SUPPORT_EMAIL } from "../../data/brand";
 import { FIND_A_PRO_NAV_LABEL, FIND_A_PRO_PATH } from "../../lib/marketplace/findAPro";
 import { SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
 import { authAwarePostPath, dashboardPath, showContractorSignup } from "../../lib/auth/publicEntry";
+import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 import { useAuth } from "../../lib/auth/useAuth";
 import { Logo } from "../brand/Logo";
 import { Container } from "../ui/Container";
@@ -22,6 +23,8 @@ export function Footer() {
   const { loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status, signOut } = useAuth();
   const postTo = authAwarePostPath("/post-project", { loading, accountType: account_type });
   const showProSignup = showContractorSignup({ loading, accountType: account_type });
+  const hidePricing = useHidePlatformPricing();
+  const exploreLinks = hidePricing ? footerLinks.filter((link) => link.to !== "/pricing") : footerLinks;
   const home = dashboardPath({
     accountType: account_type,
     accountStatus: account_status,
@@ -38,8 +41,7 @@ export function Footer() {
             {PRODUCT_NAME} is a local marketplace. Independent contractors do the work.
             {` `}
             {COMPANY_NAME} is not the contractor, not a franchise, and not affiliated with Angi or Thumbtack.
-            {` `}
-            {SIGNUP_FEE_PUBLIC_NOTE}
+            {hidePricing ? "" : ` ${SIGNUP_FEE_PUBLIC_NOTE}`}
           </p>
           <p className="mt-4">
             <a className="text-sm font-semibold text-gold-300 underline" href={`mailto:${SUPPORT_EMAIL}`}>
@@ -57,7 +59,7 @@ export function Footer() {
                 Post a project
               </Link>
             </li>
-            {footerLinks.map((link) => (
+            {exploreLinks.map((link) => (
               <li key={`${link.to}-${link.label}`}>
                 <Link to={link.to} className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
                   {link.label}

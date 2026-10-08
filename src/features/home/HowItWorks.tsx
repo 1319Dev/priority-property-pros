@@ -2,6 +2,13 @@ import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { Container, SectionHeading } from "../../components/ui/Container";
 import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
 import { JOB_PAYMENT_PLAIN } from "../../data/pricing";
+import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
+
+const CONNECT_STEP_WITH_FEE =
+  "Independent contractors browse anonymized opportunities. Up to three can connect for $4.99 each. Connecting does not guarantee a hire. The $4.99 Connection Fee is non-refundable.";
+
+const CONNECT_STEP_WITHOUT_FEE =
+  "Independent contractors browse anonymized opportunities. Up to three can connect. You choose who to hire.";
 
 const steps = [
   {
@@ -12,7 +19,7 @@ const steps = [
   {
     n: "02",
     title: "Local pros can connect",
-    body: "Independent contractors browse anonymized opportunities. Up to three can connect for $4.99 each. Connecting does not guarantee a hire. The $4.99 Connection Fee is non-refundable.",
+    body: CONNECT_STEP_WITH_FEE,
   },
   {
     n: "03",
@@ -27,6 +34,11 @@ const steps = [
 ];
 
 export function HowItWorks() {
+  const hidePricing = useHidePlatformPricing();
+  const visibleSteps = steps.map((step) =>
+    step.n === "02" && hidePricing ? { ...step, body: CONNECT_STEP_WITHOUT_FEE } : step,
+  );
+
   return (
     <section className="border-y border-forest-800/10 bg-cream-100/60 py-14 sm:py-16" aria-labelledby="how-heading">
       <Container>
@@ -45,7 +57,7 @@ export function HowItWorks() {
           />
         </div>
         <ol className="mt-10 grid gap-5 md:grid-cols-2">
-          {steps.map((step) => (
+          {visibleSteps.map((step) => (
             <li
               key={step.n}
               className="rounded-3xl border border-forest-800/10 bg-cream-50 p-5 sm:p-6"

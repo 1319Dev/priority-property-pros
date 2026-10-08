@@ -2,6 +2,7 @@ import { MarketingPhoto } from "../components/media/MarketingPhoto";
 import { BrandLoader } from "../components/brand/BrandLoader";
 import { ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
+import { useHidePlatformPricing } from "../lib/auth/platformPricing";
 import { dashboardPath } from "../lib/auth/publicEntry";
 import { useAuth } from "../lib/auth/useAuth";
 import { CONTRACTOR_CTA } from "../data/brand";
@@ -40,6 +41,7 @@ export function BecomeAProPage() {
     signupFeeStatus: signup_fee_status,
   });
   const contractor = !loading && account_type === "CONTRACTOR";
+  const hidePricing = useHidePlatformPricing();
 
   return (
     <section className="py-10 sm:py-16">
@@ -56,20 +58,25 @@ export function BecomeAProPage() {
           Real projects. Real customers. Fair competition.
         </h1>
         <p className="mt-4 text-lg leading-relaxed text-ink-700">
-          {CONTRACTOR_SIGNUP_HEADLINE} {CONTRACTOR_SIGNUP_SUPPORTING} Priority Property Pros is a marketplace, not a
-          lead mill and not a national dispatch desk. PPP will not sell the same job to five contractors.
+          {hidePricing ? "" : `${CONTRACTOR_SIGNUP_HEADLINE} ${CONTRACTOR_SIGNUP_SUPPORTING} `}
+          Priority Property Pros is a marketplace, not a lead mill and not a national dispatch desk. PPP will not sell
+          the same job to five contractors.
         </p>
         <ul className="mt-8 grid gap-3 sm:grid-cols-3">
-          <li className="rounded-3xl bg-forest-800 px-5 py-5 text-cream-50">
-            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-300">Activation</p>
-            <p className="mt-2 font-display text-2xl">$9.99 one time</p>
-            <p className="mt-2 text-sm text-cream-200">Then $0/month to keep the account.</p>
-          </li>
-          <li className="rounded-3xl border border-forest-800/15 bg-cream-50 px-5 py-5">
-            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Connect</p>
-            <p className="mt-2 font-display text-2xl text-forest-800">{CONNECTION_FEE_PER_LABEL}</p>
-            <p className="mt-2 text-sm text-ink-700">Only when you choose to connect. Not a bid fee.</p>
-          </li>
+          {hidePricing ? null : (
+            <li className="rounded-3xl bg-forest-800 px-5 py-5 text-cream-50">
+              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-300">Activation</p>
+              <p className="mt-2 font-display text-2xl">$9.99 one time</p>
+              <p className="mt-2 text-sm text-cream-200">Then $0/month to keep the account.</p>
+            </li>
+          )}
+          {hidePricing ? null : (
+            <li className="rounded-3xl border border-forest-800/15 bg-cream-50 px-5 py-5">
+              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Connect</p>
+              <p className="mt-2 font-display text-2xl text-forest-800">{CONNECTION_FEE_PER_LABEL}</p>
+              <p className="mt-2 text-sm text-ink-700">Only when you choose to connect. Not a bid fee.</p>
+            </li>
+          )}
           <li className="rounded-3xl border border-forest-800/15 bg-cream-50 px-5 py-5">
             <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">The job</p>
             <p className="mt-2 font-display text-2xl text-forest-800">You keep the work</p>
@@ -81,7 +88,13 @@ export function BecomeAProPage() {
             <li key={step.n} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-5">
               <p className="font-display text-2xl italic text-gold-600">{step.n}</p>
               <h2 className="mt-1 font-display text-2xl text-forest-800">{step.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-ink-700">{step.body}</p>
+              <p className="mt-2 text-sm leading-relaxed text-ink-700">
+                {hidePricing && step.n === "01"
+                  ? "Create your contractor account. You stay an independent business."
+                  : hidePricing && step.n === "03"
+                    ? "See the opportunity before you connect. No percentage of the job."
+                    : step.body}
+              </p>
             </li>
           ))}
         </ol>
@@ -100,7 +113,7 @@ export function BecomeAProPage() {
             </ButtonLink>
           ) : null}
         </div>
-        <p className="mt-4 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
+        {hidePricing ? null : <p className="mt-4 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>}
       </Container>
     </section>
   );
