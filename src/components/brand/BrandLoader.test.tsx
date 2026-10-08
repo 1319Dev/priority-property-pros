@@ -15,19 +15,20 @@ describe("BrandLoader", () => {
     expect(status).toHaveAccessibleName("Loading…");
     expect(status).toHaveTextContent("Loading…");
     expect(status.className).toContain("min-h-36");
-    expect(status.querySelector("svg")).toBeTruthy();
-    expect(status.querySelector(".brand-loader-swing")).toBeTruthy();
-    expect(status.querySelector(".brand-loader-impact")).toBeTruthy();
+    expect(status.querySelector(".brand-loader-arc")).toBeTruthy();
+    expect(status.querySelector(".brand-loader-swing")).toBeNull();
     expect(status.querySelector("p")?.className).toContain("text-ink-500");
   });
 
-  it("centers a large hammer on full-page loads and uses the house mark inline", () => {
+  it("uses the house tile on full-page and inline loaders", () => {
+    expect(FULL_PAGE_LOADER).toBe("logo");
+
     const { unmount } = render(<BrandLoader layout="page" />);
     const page = screen.getByRole("status");
     expect(page.className).toContain("min-h-[70vh]");
     expect(page.querySelector("svg")).toHaveAttribute("width", "96");
-    expect(FULL_PAGE_LOADER).toBe("hammer");
-    expect(page.querySelector(".brand-loader-swing")).toBeTruthy();
+    expect(page.querySelector(".brand-loader-arc circle")).toHaveAttribute("cx", "36");
+    expect(page.querySelector(".brand-loader-arc circle")).toHaveAttribute("cy", "36");
     expect(page.querySelector("p")?.className).toContain("font-sans");
     unmount();
 
@@ -36,7 +37,6 @@ describe("BrandLoader", () => {
     expect(inline.className).toContain("flex-row");
     expect(inline.querySelector("svg")).toHaveAttribute("width", "28");
     expect(inline.querySelector(".brand-loader-arc")).toBeTruthy();
-    expect(inline.querySelector(".brand-loader-swing")).toBeNull();
   });
 
   it("reserves header and nav space with a skeleton and no visible caption", () => {
@@ -52,13 +52,13 @@ describe("BrandLoader", () => {
     expect(screen.getByRole("status").className).toContain("max-w-16");
   });
 
-  it("holds the hammer still when motion is reduced", () => {
-    expect(css).toMatch(/@keyframes brand-loader-tap/);
-    expect(css).toMatch(/brand-loader-tap 1\.1s/);
-    expect(css).toMatch(/transform-origin:\s*59\.375% 88\.59%/);
+  it("holds the arc still when motion is reduced", () => {
+    expect(css).toMatch(/@keyframes brand-loader-arc-spin/);
+    expect(css).toMatch(/brand-loader-arc-spin 1\.2s linear infinite/);
+    expect(css).not.toMatch(/brand-loader-tap/);
+    expect(css).not.toMatch(/brand-loader-swing/);
     expect(css).toMatch(/prefers-reduced-motion:\s*reduce/);
     const reduced = css.slice(css.indexOf("prefers-reduced-motion"));
-    expect(reduced).toMatch(/\.brand-loader-swing\s*\{[^}]*animation:\s*none/);
-    expect(reduced).toMatch(/brand-loader-pulse/);
+    expect(reduced).toMatch(/\.brand-loader-arc\s*,[\s\S]*animation:\s*none/);
   });
 });
