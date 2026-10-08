@@ -131,6 +131,62 @@ describe("matching eligibility", () => {
     ).toBe(true);
   });
 
+  it("matches ZIP-centroid distance and keeps legacy lists until a radius is set", () => {
+    const centroids = {
+      "77301": { lat: 30.309853, lng: -95.43128 },
+      "77304": { lat: 30.32776, lng: -95.516045 },
+      "77002": { lat: 29.756845, lng: -95.365652 },
+    };
+    const conroe = { ...project, zip_code: "77304", lat: 47.6, lng: -122.33 };
+    const houston = { ...project, zip_code: "77002", lat: 30.309853, lng: -95.43128 };
+    const legacy = pro({
+      areas: [
+        {
+          mode: "ZIPS",
+          center_zip: null,
+          center_lat: null,
+          center_lng: null,
+          radius_miles: null,
+          zip_codes: ["77301"],
+        },
+      ],
+    });
+    expect(contractorEligibleForProject(legacy, { ...project, zip_code: "77301" }, centroids).ok).toBe(true);
+    expect(contractorEligibleForProject(legacy, conroe, centroids).ok).toBe(false);
+
+    const radiusPro = pro({
+      areas: [
+        {
+          mode: "RADIUS",
+          center_zip: "77301",
+          center_lat: null,
+          center_lng: null,
+          radius_miles: 25,
+          zip_codes: [],
+        },
+      ],
+    });
+    expect(haversineMiles(30.309853, -95.43128, 30.32776, -95.516045)!).toBeLessThan(10);
+    expect(haversineMiles(30.309853, -95.43128, 29.756845, -95.365652)!).toBeGreaterThan(25);
+    expect(contractorEligibleForProject(radiusPro, conroe, centroids).ok).toBe(true);
+    expect(contractorEligibleForProject(radiusPro, houston, centroids).ok).toBe(false);
+
+    const withOverride = pro({
+      areas: [
+        {
+          mode: "ZIPS_AND_RADIUS",
+          center_zip: "77301",
+          center_lat: null,
+          center_lng: null,
+          radius_miles: 10,
+          zip_codes: ["77002"],
+        },
+      ],
+    });
+    expect(contractorEligibleForProject(withOverride, houston, centroids).ok).toBe(true);
+    expect(projectContractorFitScore(radiusPro, conroe, centroids)).toBeGreaterThan(0);
+  });
+
   it("requires a verified credential only when the category says so", () => {
     expect(
       contractorEligibleForProject(pro({ has_verified_credential: false }), {

@@ -56,7 +56,10 @@ import {
 } from "../../../lib/marketplace/api";
 import { opportunityListTitle } from "../../../lib/marketplace/opportunityAttach";
 import { centsToDollarString, dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
-import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type Booking, type EstimateItemKind, type EstimateStatus, type ServiceAreaMode, type ServiceCategory } from "../../../lib/marketplace/types";
+import { ServiceRadiusEditor } from "../../../components/marketplace/ServiceRadiusEditor";
+import { prepareServiceAreaSave, previewServiceRadius } from "../../../lib/marketplace/serviceAreaApi";
+import { contractorAreaSummary } from "../../../lib/marketplace/serviceRadius";
+import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type Booking, type EstimateItemKind, type EstimateStatus, type ServiceCategory } from "../../../lib/marketplace/types";
 import { OPPORTUNITY_STATUS_LABELS, opportunityNextActions } from "../../../lib/marketplace/statusLabels";
 import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import {
@@ -145,7 +148,7 @@ export function ProOnboardingPage() {
   const [zips, setZips] = useState("");
   const [centerZip, setCenterZip] = useState("");
   const [radius, setRadius] = useState("");
-  const [mode, setMode] = useState<ServiceAreaMode>("ZIPS");
+  const [areaLabel, setAreaLabel] = useState<string | null>(null);
   const [areaId, setAreaId] = useState<string | undefined>();
   const [onboardingStatus, setOnboardingStatus] = useState<string>("NOT_STARTED");
   const [credLabel, setCredLabel] = useState("");
@@ -177,10 +180,10 @@ export function ProOnboardingPage() {
       const area = areas[0];
       if (area) {
         setAreaId(area.id);
-        setMode(area.mode);
         setZips((area.zip_codes ?? []).join(", "));
         setCenterZip(area.center_zip ?? "");
         setRadius(area.radius_miles?.toString() ?? "");
+        setAreaLabel(area.label);
       }
     }
     void load().catch((err: Error) => setError(err.message));
@@ -202,18 +205,13 @@ export function ProOnboardingPage() {
         ...(onboardingStatus === "COMPLETE" ? {} : { onboarding_status: "SUBMITTED" as const }),
       });
       await setContractorServices(contractorId, selected);
+      const area = await prepareServiceAreaSave({ centerZip, radiusMiles: radius, extraZips: zips });
       await upsertContractorArea({
         id: areaId,
         contractor_profile_id: contractorId,
-        mode,
-        zip_codes: zips
-          .split(/[\s,]+/)
-          .map((z) => z.trim())
-          .filter(Boolean),
-        center_zip: centerZip || null,
-        radius_miles: radius ? Number(radius) : null,
-        label: "Primary area",
+        ...area,
       });
+      setAreaLabel(area.label);
       toast.push("Onboarding saved. An admin still has to approve you before matching.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed.");
@@ -269,17 +267,23 @@ export function ProOnboardingPage() {
           ))}
         </div>
       </fieldset>
-      <fieldset className="space-y-3">
-        <legend className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Service area</legend>
-        <select className="min-h-14 w-full rounded-2xl border border-forest-800/15 px-4" value={mode} onChange={(e) => setMode(e.target.value as ServiceAreaMode)}>
-          <option value="ZIPS">ZIP list</option>
-          <option value="RADIUS">Radius from a center ZIP</option>
-          <option value="ZIPS_AND_RADIUS">ZIPs and radius</option>
-        </select>
-        <TextInput label="ZIPs (comma separated)" value={zips} onChange={(e) => setZips(e.target.value)} />
-        <TextInput label="Center ZIP" value={centerZip} onChange={(e) => setCenterZip(e.target.value)} />
-        <TextInput label="Radius (miles)" value={radius} onChange={(e) => setRadius(e.target.value)} />
-      </fieldset>
+      <ServiceRadiusEditor
+        centerZip={centerZip}
+        radiusMiles={radius}
+        extraZips={zips}
+        onCenterZipChange={setCenterZip}
+        onRadiusMilesChange={setRadius}
+        onExtraZipsChange={setZips}
+        loadPreview={previewServiceRadius}
+      />
+      <p className="text-sm text-ink-500">
+        {contractorAreaSummary({
+          label: areaLabel,
+          radiusMiles: radius ? Number(radius) : null,
+          centerZip,
+          extraZips: zips.split(/[\s,]+/).filter(Boolean),
+        })}
+      </p>
       <div className="space-y-3 rounded-3xl border border-forest-800/10 p-4">
         <h2 className="font-semibold">Credentials</h2>
         <TextInput label="Credential label" value={credLabel} onChange={(e) => setCredLabel(e.target.value)} />

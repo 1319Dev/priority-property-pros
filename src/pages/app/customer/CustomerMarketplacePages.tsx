@@ -40,7 +40,7 @@ import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type EstimateItemKind, type Es
 import { comparisonDisplayOrder } from "../../../lib/marketplace/flows";
 import { planDeleteOrCancel } from "../../../lib/marketplace/lifecycle";
 import { canCustomerDeclineFrom, canCustomerSelectFrom, customerEstimateStatusLabel } from "../../../lib/marketplace/estimateLifecycle";
-import { HOMEOWNER_OFFER_QUEUE_COPY } from "../../../lib/marketplace/matching";
+import { ProjectCoverageNotice } from "../../../components/marketplace/ProjectCoverageNotice";
 import {
   CUSTOMER_DASHBOARD_TABS,
   customerLifecycleLabel,
@@ -323,13 +323,12 @@ export function CustomerProjectDetailPage() {
         <p>Street (private until a paid $4.99 connection entitlement or an admin unlock): {street ?? "—"}</p>
         <p>{project.timing ? TIMING_LABELS[project.timing] : ""}</p>
       </section>
-      {project.status !== "DRAFT" && project.status !== "CANCELLED" && project.status !== "CONTRACTOR_SELECTED" ? (
-        <StatusBanner
-          tone="info"
-          title="Finding local pros"
-          body={HOMEOWNER_OFFER_QUEUE_COPY}
-        />
-      ) : null}
+      <ProjectCoverageNotice
+        status={project.status}
+        zip={project.zip_code}
+        city={project.city}
+        state={project.state}
+      />
       {project.status === "DRAFT" ? (
         <div className="space-y-3">
           <p className="text-ink-700">This project was never posted. Nothing is kept until you hit Post.</p>

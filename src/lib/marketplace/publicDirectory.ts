@@ -1,6 +1,7 @@
 import type { ApprovalStatus, AccountStatus } from "../auth/types";
 import { containsPreHireContact } from "./antiCircumvention";
 import { detectContactLeak } from "./contactLeak";
+import { isPublicRadiusLabel } from "./serviceRadius";
 
 /** Public directory fields returned to anon. Keep in sync with list_public_directory_contractors. */
 export const PUBLIC_CONTRACTOR_DIRECTORY_FIELDS = [
@@ -176,6 +177,7 @@ export function formatGeneralServiceArea(input: {
 }): string {
   const named = input.serviceArea?.trim();
   if (named) {
+    if (isPublicRadiusLabel(named)) return named;
     if (publicTextLooksUnsafe(named) || looksLikeStreetAddress(named) || /^\d{5}(-\d{4})?$/.test(named)) {
       return "Local service area";
     }
@@ -187,6 +189,7 @@ export function formatGeneralServiceArea(input: {
     .filter((label) => !publicTextLooksUnsafe(label) && !looksLikeStreetAddress(label) && !/^\d{5}(-\d{4})?$/.test(label));
   if (labels.length > 0) {
     const first = labels[0];
+    if (isPublicRadiusLabel(first)) return first;
     return /\barea\b/i.test(first) ? first : `${first} Area`;
   }
   return "Local service area";

@@ -283,6 +283,29 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      zip_centroids: {
+        Row: {
+          zip: string;
+          lat: number;
+          lng: number;
+          city: string | null;
+          state_code: string | null;
+        };
+        Insert: {
+          zip: string;
+          lat: number;
+          lng: number;
+          city?: string | null;
+          state_code?: string | null;
+        };
+        Update: {
+          lat?: number;
+          lng?: number;
+          city?: string | null;
+          state_code?: string | null;
+        };
+        Relationships: [];
+      };
       contractor_service_areas: {
         Row: {
           id: string;
@@ -904,6 +927,10 @@ export type Database = {
     };
     Functions: {
       is_admin: { Args: Record<string, never>; Returns: boolean };
+      zip_service_area_preview: {
+        Args: { p_zip: string; p_radius_miles: number };
+        Returns: Json;
+      };
       current_fee_bps: { Args: Record<string, never>; Returns: number };
       fee_preview: { Args: { p_total_cents: number }; Returns: Json };
       preview_marketplace_fee: { Args: { p_amount_cents: number; p_kind?: string }; Returns: Json };
