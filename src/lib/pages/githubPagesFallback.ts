@@ -26,6 +26,7 @@ export const GITHUB_PAGES_SPA_ROUTES = [
   "/account/activate",
   "/post-project",
   "/trust",
+  "/notifications",
   "/app/customer",
   "/app/pro",
   "/app/verifier",

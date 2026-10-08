@@ -8,6 +8,7 @@ import { dashboardPath, showContractorSignup } from "../../lib/auth/publicEntry"
 import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 import { useAuth } from "../../lib/auth/useAuth";
 import { AccountMenu } from "../account/AccountMenu";
+import { NotificationBell } from "../notifications/NotificationBell";
 import { PostProjectLink } from "./PostProjectLink";
 
 const links = [
@@ -86,7 +87,10 @@ export function Header() {
           {loading ? (
             <LoaderSlot />
           ) : user ? (
-            <AccountMenu />
+            <>
+              <NotificationBell />
+              <AccountMenu />
+            </>
           ) : (
             <NavLink
               to="/sign-in"

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { DeleteAccountDialog } from "../../components/account/DeleteAccountDialog";
 import { TextInput } from "../../components/ui/Input";
 import { useAuth } from "../../lib/auth/useAuth";
@@ -10,6 +10,7 @@ import { PRO_DASHBOARD_PRICING_NOTE } from "../../data/pricing";
 import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 import { ACCOUNT_ROLE_NOTE, CUSTOMER_ACTIVATION_NOTE, CUSTOMER_PAYS_DIRECTLY } from "../../lib/marketplace/customerCopy";
 import { accountStatusLabel, accountTypeLabel } from "../../lib/marketplace/statusLabels";
+import { accountSettingsPath } from "../../lib/auth/roles";
 
 export { CustomerHomePage, CustomerProjectsPage } from "./customer/CustomerMarketplacePages";
 export { CustomerMessagesPage } from "./messages/ProjectMessagesPage";
@@ -84,6 +85,16 @@ export function AccountPage() {
           : ""}
         {account_type === "CONTRACTOR" ? ` ${PRO_DASHBOARD_PRICING_NOTE}` : ""}
       </p>
+      <Link
+        to={
+          accountSettingsPath(account_type, account_status).startsWith("/app/")
+            ? `${accountSettingsPath(account_type, account_status)}/notifications`
+            : "/notifications"
+        }
+        className="inline-flex min-h-12 items-center justify-center rounded-full border border-gold-500/50 bg-cream-100 px-5 text-sm font-semibold text-forest-800"
+      >
+        Notification settings
+      </Link>
       <FormError message={error} />
       <button
         type="button"

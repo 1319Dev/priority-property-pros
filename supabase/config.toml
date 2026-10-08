@@ -32,3 +32,14 @@ verify_jwt = true
 
 [functions.signup-fee-webhook]
 verify_jwt = false
+
+# Notification delivery. verify_jwt is false because pg_net and email links
+# do not send a user JWT. send-notification requires the x-notify-secret header.
+# notification-unsubscribe requires a signed token. Secrets live in Vault
+# (see the notification migration). RESEND_API_KEY is the dashboard env secret.
+# Do not put secrets in this file.
+[functions.send-notification]
+verify_jwt = false
+
+[functions.notification-unsubscribe]
+verify_jwt = false
