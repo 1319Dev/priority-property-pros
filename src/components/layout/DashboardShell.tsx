@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { Logo } from "../brand/Logo";
 import { AccountMenu } from "../account/AccountMenu";
@@ -17,9 +18,11 @@ export type DashNavItem = {
 export function DashboardShell({
   items,
   eyebrow,
+  children,
 }: {
   items: DashNavItem[];
   eyebrow: string;
+  children?: ReactNode;
 }) {
   const { profile, account_status } = useAuth();
   const name = profile ? displayName(profile.first_name, profile.last_name, profile.email) : "";
@@ -27,12 +30,12 @@ export function DashboardShell({
   return (
     <div className="paper-grain flex min-h-dvh flex-col">
       <header className="sticky top-0 z-40 border-b border-forest-800/10 bg-cream-50/90 pt-safe backdrop-blur-md">
-        <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-4 px-4 py-2 sm:px-6">
-          <NavLink to="/" aria-label="Priority Property Pros home">
-            <Logo />
+        <div className="mx-auto flex min-h-16 w-full min-w-0 max-w-6xl items-center justify-between gap-2 px-4 py-2 sm:gap-4 sm:px-6">
+          <NavLink to="/" aria-label="Priority Property Pros home" className="min-w-0">
+            <Logo truncateWordmark />
           </NavLink>
-          <div className="flex items-center gap-3">
-            <p className="hidden text-sm text-ink-700 sm:block">
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
+            <p className="hidden min-w-0 truncate text-sm text-ink-700 sm:block">
               {eyebrow}
               {name ? ` · ${name}` : ""}
             </p>
@@ -47,7 +50,7 @@ export function DashboardShell({
         </div>
       ) : null}
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-40 sm:px-6 lg:pb-10">
-        <Outlet />
+        {children ?? <Outlet />}
       </main>
       <p className="mx-auto w-full max-w-6xl px-4 pb-36 text-sm text-ink-500 sm:px-6 lg:pb-6">
         <a className="font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
