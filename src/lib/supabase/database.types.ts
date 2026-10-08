@@ -924,6 +924,41 @@ export type Database = {
         };
         Relationships: [];
       };
+      notification_preferences: {
+        Row: {
+          user_id: string;
+          category: string;
+          in_app: boolean;
+          push: boolean;
+          email: boolean;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: {
+          in_app?: boolean;
+          push?: boolean;
+          email?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent: string | null;
+          created_at: string;
+          last_used_at: string;
+        };
+        Insert: never;
+        Update: {
+          last_used_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       is_admin: { Args: Record<string, never>; Returns: boolean };
@@ -1000,6 +1035,12 @@ export type Database = {
         Returns: boolean;
       };
       mark_notification_read: { Args: { p_notification_id: string }; Returns: Json };
+      ensure_my_notification_preferences: { Args: Record<string, never>; Returns: number };
+      save_my_push_subscription: {
+        Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent?: string | null };
+        Returns: string;
+      };
+      delete_my_push_subscription: { Args: { p_endpoint: string }; Returns: null };
       text_contains_contact_info: { Args: { p_text: string }; Returns: boolean };
       list_my_customer_projects: { Args: Record<string, never>; Returns: Json };
       get_my_customer_project: { Args: { p_project_id: string }; Returns: Json };

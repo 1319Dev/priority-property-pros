@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
 import { ScrollToTop } from "./components/layout/ScrollToTop";
@@ -21,6 +22,8 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import { AccountStatusPage } from "./pages/AccountStatusPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
+import { NotificationSettingsPage } from "./pages/app/NotificationSettingsPage";
 import { ActivateAccountPage } from "./pages/ActivateAccountPage";
 import { TrustPage } from "./pages/TrustPage";
 import { CustomerShell } from "./pages/app/CustomerShell";
@@ -58,6 +61,12 @@ import {
   AdminPeoplePage,
   AdminReviewsPage,
 } from "./pages/app/AdminPages";
+
+const DevNotificationPreview = import.meta.env.DEV
+  ? lazy(() =>
+      import("./pages/dev/NotificationPreviewPage").then((mod) => ({ default: mod.NotificationPreviewPage })),
+    )
+  : null;
 
 function StripTrailingSlash() {
   const location = useLocation();
@@ -101,7 +110,19 @@ export default function App() {
         <Route path="/account/activate" element={<ActivateAccountPage />} />
         <Route path="/post-project" element={<PostProjectPage />} />
         <Route path="/trust" element={<TrustPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
       </Route>
+
+      {DevNotificationPreview ? (
+        <Route
+          path={"/__preview/notifications"}
+          element={
+            <Suspense fallback={null}>
+              <DevNotificationPreview />
+            </Suspense>
+          }
+        />
+      ) : null}
 
       <Route element={<RequireAuth />}>
         <Route element={<RequireRole role="CUSTOMER" />}>
@@ -120,6 +141,7 @@ export default function App() {
             <Route path="messages" element={<CustomerMessagesPage />} />
             <Route path="messages/:projectId/:contractorProfileId" element={<CustomerMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="account/notifications" element={<NotificationSettingsPage />} />
           </Route>
         </Route>
         <Route element={<RequireRole role="CONTRACTOR" />}>
@@ -138,6 +160,7 @@ export default function App() {
             <Route path="messages" element={<ProMessagesPage />} />
             <Route path="messages/:projectId/:contractorProfileId" element={<ProMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="account/notifications" element={<NotificationSettingsPage />} />
           </Route>
         </Route>
         <Route element={<RequireRole role="VERIFIER" />}>
@@ -146,6 +169,7 @@ export default function App() {
             <Route path="visits" element={<VerifierVisitsPage />} />
             <Route path="messages" element={<VerifierMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="account/notifications" element={<NotificationSettingsPage />} />
           </Route>
         </Route>
         <Route element={<RequireAdmin />}>
@@ -158,6 +182,7 @@ export default function App() {
             <Route path="audit" element={<AdminAuditPage />} />
             <Route path="bookings" element={<AdminBookingsPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="account/notifications" element={<NotificationSettingsPage />} />
           </Route>
         </Route>
       </Route>

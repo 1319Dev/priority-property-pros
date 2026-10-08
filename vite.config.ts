@@ -34,17 +34,11 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         disable: mode === "test",
+        strategies: "injectManifest",
+        srcDir: "src",
+        filename: "sw.ts",
         registerType: "autoUpdate",
-        includeAssets: [
-          "favicon.svg",
-          "robots.txt",
-          "offline.html",
-          "apple-touch-icon.png",
-          "og-image.svg",
-          "icons/icon-192.png",
-          "icons/icon-512.png",
-          "icons/icon-512-maskable.png",
-        ],
+        injectRegister: null,
         manifest: {
           name: "Priority Property Pros",
           short_name: "PPP",
@@ -80,11 +74,11 @@ export default defineConfig(({ mode }) => {
             },
           ],
         },
-        workbox: {
+        injectManifest: {
           globPatterns: ["**/*.{js,css,html,svg,png,jpg,jpeg,webp,avif,ico,webmanifest,woff,woff2,txt}"],
-          navigateFallback: "index.html",
-          navigateFallbackDenylist: [/^\/offline\.html$/],
-          additionalManifestEntries: [{ url: "offline.html", revision: "phase1" }],
+          // The plugin already precaches the manifest and its icons. Ignoring them here
+          // keeps a single revision for each URL.
+          globIgnores: ["**/node_modules/**/*", "**/manifest.webmanifest", "**/icons/icon-*.png"],
         },
       }),
     ],

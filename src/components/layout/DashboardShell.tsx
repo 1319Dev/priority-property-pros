@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Logo } from "../brand/Logo";
 import { AccountMenu } from "../account/AccountMenu";
+import { NotificationBell } from "../notifications/NotificationBell";
 import { useAuth } from "../../lib/auth/useAuth";
 import { displayName } from "../../lib/auth/roles";
 import { SUPPORT_EMAIL } from "../../data/brand";
@@ -35,6 +36,7 @@ export function DashboardShell({
               {eyebrow}
               {name ? ` · ${name}` : ""}
             </p>
+            <NotificationBell />
             <AccountMenu />
           </div>
         </div>
