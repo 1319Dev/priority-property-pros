@@ -24,12 +24,12 @@ const labelClass = {
 
 type Layout = keyof typeof layoutClass;
 
-/**
- * The claw hammer reads at full-page and section sizes. At 24px the claw
- * collapses, so inline and nav use the house mark with a gold arc.
- */
+/** Full-page loader. Set to "logo" for the house tile with a gold arc. */
+export const FULL_PAGE_LOADER: "hammer" | "logo" = "hammer";
+
 function useHammer(layout: Layout) {
-  return layout === "page" || layout === "section";
+  if (layout === "page") return FULL_PAGE_LOADER === "hammer";
+  return layout === "section";
 }
 
 export function BrandLoader({
@@ -109,31 +109,35 @@ function HammerMark({ size }: { size: number }) {
       className="brand-loader-mark shrink-0 overflow-visible"
       aria-hidden="true"
     >
-      <rect x="74" y="62.6" width="20" height="1.6" rx="0.8" fill="var(--color-gold-600)" />
-      <rect x="85.9" y="46.3" width="1.45" height="17.8" rx="0.25" fill="var(--color-ink-500)" />
-      <rect x="82.2" y="44.4" width="8.8" height="2.2" rx="0.4" fill="var(--color-ink-700)" />
+      <rect x="64" y="67.2" width="30" height="2.4" rx="1.2" fill="var(--color-gold-600)" />
+      <rect x="75.4" y="53.2" width="3.4" height="16" rx="0.6" fill="var(--color-ink-500)" />
+      <rect x="69.2" y="49.2" width="15.6" height="4.6" rx="1" fill="var(--color-ink-700)" />
       <g className="brand-loader-impact">
         <path
-          d="M82.2 42.2 L79.4 39.6 M91.2 42.2 L94 39.6 M84.6 40.4 L82.8 37.2 M89.2 40.4 L91 37.2"
+          d="M71.5 47.4 L67.6 43.8 M82.6 47.4 L86.6 43.6 M74.4 45.2 L72 41.2 M80 45.2 L82.6 41"
           stroke="var(--color-gold-300)"
-          strokeWidth="1.5"
+          strokeWidth="1.7"
           strokeLinecap="round"
           fill="none"
         />
       </g>
       <g className="brand-loader-swing">
-        <path fill="var(--color-gold-500)" d="M50 81.4 C49.6 85.2 62.4 85.2 62 81.4 L60.5 36 L51.5 36 Z" />
-        <path fill="var(--color-gold-700)" d="M50.7 62.4 H61.3 L61.5 65.5 H50.5 Z" />
+        <path fill="var(--color-gold-500)" d="M50.2 81.6 C49.6 86.2 64.4 86.2 63.8 81.6 L61.2 38 L52.8 38 Z" />
+        <path fill="var(--color-gold-700)" d="M51.6 64.4 H62.2 L62.5 67.6 H51.3 Z" />
         <path
           fill="var(--color-forest-800)"
-          d="M48 28 C39 26 31 20 24.5 13.5 C22 10 25.5 7.6 28.2 10.6 C31.5 15.4 39 21.5 48 24.6 Z"
+          d="M38 46.5 C26 48 16 54 13 61 C11.2 66.5 17 70.5 22.5 67 C28 63.5 33 57 38 53 Z"
         />
-        <rect x="38" y="24" width="38" height="17" rx="2" fill="var(--color-forest-800)" />
         <path
-          fill="var(--color-forest-950)"
-          d="M72 25.4 H75.4 C76.9 25.4 77.8 26.3 77.8 27.6 V37.4 C77.8 38.7 76.9 39.6 75.4 39.6 H72 Z"
+          fill="var(--color-forest-800)"
+          d="M40 28 C28 31 18 38 15 46 C13 52 18 58 24 55.5 C30 53 35 47 40 43 Z"
         />
-        <rect x="49.2" y="38.2" width="13.6" height="7.2" rx="1.6" fill="var(--color-gold-500)" />
+        <rect x="34" y="28" width="44" height="18.5" rx="2.2" fill="var(--color-forest-800)" />
+        <path
+          fill="var(--color-forest-900)"
+          d="M67 26 H74 C81.6 26 86.2 30.8 86.2 38.2 C86.2 45.6 81.6 50.6 74 50.6 H67 Z"
+        />
+        <rect x="52.6" y="42.6" width="12.8" height="7" rx="1.8" fill="var(--color-gold-500)" />
       </g>
     </svg>
   );
