@@ -51,6 +51,6 @@ describe("Phase 5A security and pause constraints", () => {
     expect(customerUi).not.toMatch(/BEST estimate/i);
     expect(customerUi).not.toMatch(/Stripe test mode/i);
     expect(customerUi).not.toMatch(/Phase 4B/);
-    expect(customerUi).toMatch(/paymentsComingSoonCopy/);
+    expect(customerUi).toMatch(/CUSTOMER_PAYS_DIRECTLY|paymentsComingSoonCopy/);
   });
 });

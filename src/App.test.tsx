@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -53,25 +53,20 @@ describe("Priority Property Pros Phase 1 homepage (preserved)", () => {
     expect(svgText).not.toMatch(/a marketplace, not a crew/i);
   });
 
-  it("lists the Phase 1 services including Handyman and Other", () => {
+  it("shows one photo Popular services section and keeps the service catalog data", () => {
     renderApp("/");
-    expect(screen.getByRole("tab", { name: "All types" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("tab", { name: "Interior" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /handyman/i }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: /if it is a real local job/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /tv mounting/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/^Popular services$/i)).toHaveLength(1);
+    expect(screen.queryByText(/Local jobs\. Plain language/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Furniture Assembly/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "All types" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /handyman/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /kitchen remodeling/i })).toBeInTheDocument();
+    const grid = screen.getByRole("button", { name: /handyman/i }).closest("ul");
+    expect(grid?.className).toContain("grid-cols-2");
+    expect(grid?.className).toContain("lg:grid-cols-4");
+    expect(grid?.className).not.toContain("sm:grid-cols-3");
+    expect(document.getElementById("services")).toBeTruthy();
     expect(SERVICES).toHaveLength(21);
-  });
-
-  it("filters homepage services when a project-type tab is selected", async () => {
-    const user = userEvent.setup();
-    renderApp("/");
-    await user.click(screen.getByRole("tab", { name: "Exterior" }));
-    expect(screen.getByRole("tab", { name: "Exterior" })).toHaveAttribute("aria-selected", "true");
-    const services = within(screen.getByRole("tabpanel", { name: "Exterior" }));
-    expect(services.getByRole("button", { name: /fence repair/i })).toBeInTheDocument();
-    expect(services.queryByRole("button", { name: /handyman/i })).not.toBeInTheDocument();
-    expect(services.queryByRole("button", { name: /if it is a real local job/i })).not.toBeInTheDocument();
   });
 
   it("shows official marketing photos with live HTML copy", () => {

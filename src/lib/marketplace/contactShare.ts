@@ -14,7 +14,7 @@ export const SHARE_CONTACT_CONFIRM_BODY =
 export const SHARE_CONTACT_DONE_TITLE = "Shared with this contractor";
 
 export const SHARE_CONTACT_DONE_BODY =
-  "This contractor can see the name, phone, email, and address below. The message thread still blocks phone numbers, emails, and street addresses.";
+  "This pro can see the name, phone, email, and address below.";
 
 export const SHARE_CONTACT_WAITING_COPY =
   "This customer has not shared contact yet. Phone, email, and street stay hidden until they use Share my contact & address.";

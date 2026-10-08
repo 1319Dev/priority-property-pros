@@ -96,6 +96,7 @@ import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../hooks/useToast";
 import { PRO_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
 import { ProNotificationsList } from "./ProEstimatesPages";
+import { InboxHomeCards } from "../../../components/marketplace/InboxHomeCards";
 
 export function ProHomePage() {
   const { profile } = useAuth();
@@ -123,6 +124,7 @@ export function ProHomePage() {
           Opportunities
         </ButtonLink>
       </div>
+      <InboxHomeCards role="contractor" />
       <ProNotificationsList />
     </div>
   );

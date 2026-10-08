@@ -1,10 +1,11 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth/useAuth";
+import { dashboardPath } from "../../lib/auth/publicEntry";
 import { accountInitials, accountSettingsPath, displayName } from "../../lib/auth/roles";
 
 export function AccountMenu() {
-  const { user, profile, account_type, account_status, signOut } = useAuth();
+  const { user, profile, account_type, account_status, signup_fee_enabled, signup_fee_status, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -33,6 +34,13 @@ export function AccountMenu() {
     : (user.email ?? "Account");
   const initials = accountInitials(profile?.first_name, profile?.last_name, user.email ?? profile?.email);
   const settingsTo = accountSettingsPath(account_type, account_status);
+  const homeTo = dashboardPath({
+    accountType: account_type,
+    accountStatus: account_status,
+    signupFeeEnabled: signup_fee_enabled,
+    signupFeeStatus: signup_fee_status,
+  });
+  const shortName = profile?.first_name?.trim() || name.split(" ")[0] || "Account";
 
   async function handleSignOut() {
     setOpen(false);
@@ -61,7 +69,7 @@ export function AccountMenu() {
             {initials}
           </span>
         )}
-        Account
+        <span className="max-w-28 truncate">{shortName}</span>
       </button>
       {open ? (
         <div
@@ -71,6 +79,14 @@ export function AccountMenu() {
           className="absolute right-0 z-50 mt-2 w-64 rounded-3xl border border-forest-800/10 bg-cream-50 p-2 shadow-xl"
         >
           <p className="truncate px-3 py-2 text-sm text-ink-700">{name}</p>
+          <Link
+            role="menuitem"
+            to={homeTo}
+            className="flex min-h-12 items-center rounded-2xl px-3 text-sm font-semibold text-forest-800 hover:bg-cream-100"
+            onClick={() => setOpen(false)}
+          >
+            My dashboard
+          </Link>
           <Link
             role="menuitem"
             to={settingsTo}

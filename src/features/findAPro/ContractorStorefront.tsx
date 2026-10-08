@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { ContractorAvatar } from "../../components/media/ContractorAvatar";
-import { ButtonLink } from "../../components/ui/Button";
+import { PostProjectLink } from "../../components/layout/PostProjectLink";
 import { CUSTOMER_CTA } from "../../data/brand";
+import { postProjectPath } from "../../lib/marketplace/customerCopy";
 import {
   FIND_A_PRO_LAYOUT_CLASS,
   FIND_A_PRO_PATH,
@@ -47,9 +48,9 @@ export function ContractorStorefront({ profile }: { profile: FindAProProfile }) 
           <p className="mt-4 font-semibold text-forest-800">{profile.ratingLabel}</p>
         )}
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-          <ButtonLink to="/post-project" size="sm">
+          <PostProjectLink to={postProjectPath({ contractorId: profile.id, trade: profile.primaryService })} size="sm">
             {CUSTOMER_CTA}
-          </ButtonLink>
+          </PostProjectLink>
         </div>
       </header>
 

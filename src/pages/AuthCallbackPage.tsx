@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { BrandLoader } from "../components/brand/BrandLoader";
 import { getSupabaseClient } from "../lib/supabase/client";
 import { AuthCard } from "../lib/auth/AuthCard";
 import { postLoginPath } from "../lib/auth/roles";
@@ -58,9 +59,5 @@ export function AuthCallbackPage() {
     );
   }
 
-  return (
-    <AuthCard eyebrow="Auth" title="Finishing sign-in…">
-      <p className="text-ink-700">One moment while we confirm your session.</p>
-    </AuthCard>
-  );
+  return <BrandLoader layout="page" label="Finishing sign-in…" />;
 }

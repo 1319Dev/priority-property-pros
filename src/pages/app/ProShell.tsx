@@ -1,6 +1,7 @@
-import { DashboardShell } from "../../components/layout/DashboardShell";
+import { DashboardShell, type DashNavItem } from "../../components/layout/DashboardShell";
+import { useMessageUnreadCount } from "../../lib/marketplace/useMessageUnread";
 
-const items = [
+const baseItems: DashNavItem[] = [
   { to: "/app/pro", label: "Home", end: true },
   { to: "/app/pro/opportunities", label: "Jobs" },
   { to: "/app/pro/messages", label: "Messages" },
@@ -10,5 +11,9 @@ const items = [
 ];
 
 export function ProShell() {
+  const unread = useMessageUnreadCount();
+  const items = baseItems.map((item) =>
+    item.to === "/app/pro/messages" ? { ...item, badge: unread } : item,
+  );
   return <DashboardShell items={items} eyebrow="Priority Pro" />;
 }

@@ -31,8 +31,8 @@ describe("human project states", () => {
     expect(PROJECT_STATUS_LABELS.MATCHING).toBe("Finding Pros");
     expect(PROJECT_STATUS_LABELS.ESTIMATES_AVAILABLE).toBe("Estimates Received");
     expect(PROJECT_STATUS_LABELS.CANCELLED).toBe("Cancelled");
-    expect(customerLifecycleLabel("CONTRACTOR_SELECTED", "PENDING")).toBe("Booking");
-    expect(customerLifecycleLabel("CONTRACTOR_SELECTED", "CONFIRMED")).toBe("Active");
+    expect(customerLifecycleLabel("CONTRACTOR_SELECTED", "PENDING")).toBe("Selected");
+    expect(customerLifecycleLabel("CONTRACTOR_SELECTED", "CONFIRMED")).toBe("Hired");
     expect(customerLifecycleLabel("CONTRACTOR_SELECTED", "COMPLETED")).toBe("Completed");
     expect(customerLifecycleLabel("CANCELLED")).toBe("Cancelled");
     expect(accountTypeLabel("CUSTOMER")).toBe("Customer");
@@ -51,7 +51,7 @@ describe("human project states", () => {
       ]).map((row) => row.id),
     ).toEqual(["p1"]);
     expect(customerNextActions({ projectId: "p1", projectStatus: "ESTIMATES_AVAILABLE" })[0]?.label).toBe(
-      "Review estimates",
+      "Compare estimates",
     );
     expect(
       customerNextActions({

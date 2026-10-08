@@ -1,21 +1,50 @@
 import { NavLink } from "react-router-dom";
+import { BrandLoader } from "../brand/BrandLoader";
 import { useAuth } from "../../lib/auth/useAuth";
-import { postLoginPath } from "../../lib/auth/roles";
+import { authAwarePostPath, dashboardPath, showContractorSignup } from "../../lib/auth/publicEntry";
 import { FIND_A_PRO_PATH } from "../../lib/marketplace/findAPro";
 
 export function BottomNav() {
   const { loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status } = useAuth();
   const accountTo = user
-    ? postLoginPath(account_type, account_status, { enabled: signup_fee_enabled, status: signup_fee_status })
+    ? dashboardPath({
+        accountType: account_type,
+        accountStatus: account_status,
+        signupFeeEnabled: signup_fee_enabled,
+        signupFeeStatus: signup_fee_status,
+      })
     : "/sign-in";
-  const accountLabel = user ? "Account" : "Sign in";
+  const accountLabel = user ? "Dashboard" : "Sign in";
+  const postTo = authAwarePostPath("/post-project", { loading, accountType: account_type });
+  const showProSignup = showContractorSignup({ loading, accountType: account_type });
+  const home = dashboardPath({
+    accountType: account_type,
+    accountStatus: account_status,
+    signupFeeEnabled: signup_fee_enabled,
+    signupFeeStatus: signup_fee_status,
+  });
 
-  const items = [
-    { to: "/", label: "Home", icon: HomeIcon, end: true },
-    { to: FIND_A_PRO_PATH, label: "Find", icon: FindIcon, end: false },
-    { to: "/post-project", label: "Post", icon: PostIcon, end: false, prominent: true },
-    { to: "/become-a-pro", label: "Pros", icon: ProIcon, end: false },
-    { to: accountTo, label: loading ? "…" : accountLabel, icon: SignIcon, end: false },
+  const items: Array<{
+    key: string;
+    to: string;
+    label: string;
+    icon: typeof HomeIcon;
+    end: boolean;
+    prominent?: boolean;
+    placeholder?: boolean;
+    ariaLabel?: string;
+  }> = [
+    { key: "home", to: "/", label: "Home", icon: HomeIcon, end: true },
+    { key: "find", to: FIND_A_PRO_PATH, label: "Find", icon: FindIcon, end: false },
+    { key: "post", to: postTo, label: "Post", icon: PostIcon, end: false, prominent: true },
+    showProSignup
+      ? { key: "pros", to: "/become-a-pro", label: "Pros", icon: ProIcon, end: false }
+      : loading
+        ? { key: "pros", to: "/become-a-pro", label: "Pros", icon: ProIcon, end: false, placeholder: true }
+        : { key: "pros", to: home, label: "Dashboard", icon: ProIcon, end: false, ariaLabel: "My dashboard" },
+    loading
+      ? { key: "account", to: "/", label: "Loading…", icon: SignIcon, end: false, placeholder: true }
+      : { key: "account", to: accountTo, label: accountLabel, icon: SignIcon, end: false },
   ];
 
   return (
@@ -25,11 +54,18 @@ export function BottomNav() {
     >
       <ul className="mx-auto grid max-w-lg grid-cols-5 px-2 pt-1">
         {items.map((item) => (
-          <li key={item.label} className="flex justify-center">
+          <li key={item.key} className="flex justify-center">
+            {item.placeholder ? (
+              item.key === "account" ? (
+                <BrandLoader layout="nav" label="Loading…" />
+              ) : (
+                <span className="flex min-h-12 w-full" aria-hidden="true" />
+              )
+            ) : (
             <NavLink
               to={item.to}
               end={item.end}
-              aria-label={item.label}
+              aria-label={item.ariaLabel ?? item.label}
               className={({ isActive }) =>
                 `flex min-h-12 min-w-12 flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1 text-[0.65rem] font-semibold ${
                   item.prominent
@@ -55,6 +91,7 @@ export function BottomNav() {
                 </>
               )}
             </NavLink>
+            )}
           </li>
         ))}
       </ul>

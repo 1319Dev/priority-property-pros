@@ -42,6 +42,11 @@ export async function listProjectMessages(threadId: string): Promise<ProjectMess
   return (data ?? []).map(sanitizeProjectMessage).filter((row): row is ProjectMessage => row != null);
 }
 
+export async function markMessageThreadRead(threadId: string): Promise<void> {
+  const { error } = await client().rpc("mark_message_thread_read", { p_thread_id: threadId });
+  if (error) throw new Error("Could not update this conversation.");
+}
+
 export async function sendProjectMessage(threadId: string, senderProfileId: string, body: string): Promise<void> {
   const clean = assertMessageBodyAllowed(body);
   const { error } = await client().from("project_messages").insert({

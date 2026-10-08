@@ -66,14 +66,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let cancelled = false;
+    const sawSession = { current: false };
 
     void supabase.auth.getSession().then(async ({ data }) => {
       if (cancelled) return;
+      sawSession.current = true;
       await applySession(data.session);
       if (!cancelled) setLoading(false);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (!sawSession.current && !nextSession && event !== "SIGNED_OUT") return;
       void applySession(nextSession);
     });
 

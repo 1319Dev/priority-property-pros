@@ -9,9 +9,17 @@ import {
   canMessageProjectPair,
   connectionEntitlementUnlocksMessages,
   customerFacingMessageError,
+  deriveUnread,
+  desktopEnterSends,
+  formatInboxTime,
+  formatMessageDay,
+  inboxPreview,
+  layoutThreadMessages,
   messageNotificationHref,
+  newMessageFromLabel,
   sanitizeProjectMessage,
   sanitizeThreadSummary,
+  sortMessageThreads,
   type ConnectionEntitlement,
   type MessageActor,
 } from "./messaging";
@@ -146,10 +154,55 @@ describe("message privacy", () => {
     expect(messageNotificationHref("contractor", { project_id: "p1" })).toBeNull();
   });
 
-  it("tells people activation and Hired do not open a thread", () => {
-    expect(MESSAGES_EMPTY_BODY).toMatch(/\$4\.99/);
-    expect(MESSAGES_EMPTY_BODY).toMatch(/\$9\.99/);
-    expect(MESSAGES_EMPTY_BODY).toMatch(/Hired/);
-    expect(MESSAGES_EMPTY_BODY).toMatch(/job payment/i);
+  it("formats inbox time, unread, sort, and the You: preview", () => {
+    const now = new Date("2026-10-08T20:22:00");
+    expect(formatInboxTime("2026-10-08T20:20:00", now)).toBe("2m");
+    expect(formatInboxTime("2026-10-08T20:22:00", now)).toBe("now");
+    expect(formatInboxTime("2026-10-08T08:22:00", now)).toBe("8:22 AM");
+    expect(formatInboxTime("2026-10-07T15:00:00", now)).toBe("Yesterday");
+    expect(formatInboxTime("2026-10-05T15:00:00", now)).toBe("Oct 5");
+    expect(formatMessageDay("2026-10-08T08:00:00", now)).toBe("Today");
+    expect(formatMessageDay("2026-10-07T08:00:00", now)).toBe("Yesterday");
+    expect(formatMessageDay("2026-10-05T08:00:00", now)).toBe("Oct 5");
+    expect(inboxPreview("See you Monday.", true)).toBe("You: See you Monday.");
+    expect(inboxPreview("On my way.", false)).toBe("On my way.");
+    expect(deriveUnread({ lastMessageAt: "2026-10-08T12:00:00Z", lastSenderIsViewer: false, lastReadAt: null })).toBe(1);
+    expect(deriveUnread({ lastMessageAt: "2026-10-08T12:00:00Z", lastSenderIsViewer: true, lastReadAt: null })).toBe(0);
+    expect(
+      deriveUnread({
+        lastMessageAt: "2026-10-08T12:00:00Z",
+        lastSenderIsViewer: false,
+        lastReadAt: "2026-10-08T13:00:00Z",
+      }),
+    ).toBe(0);
+    const sorted = sortMessageThreads([
+      { last_message_at: "2026-10-01T00:00:00Z", project_title: "Older" },
+      { last_message_at: null, project_title: "Empty" },
+      { last_message_at: "2026-10-08T00:00:00Z", project_title: "Newer" },
+    ]);
+    expect(sorted.map((row) => row.project_title)).toEqual(["Newer", "Older", "Empty"]);
+    expect(desktopEnterSends(true, "Enter", false)).toBe(true);
+    expect(desktopEnterSends(true, "Enter", true)).toBe(false);
+    expect(desktopEnterSends(false, "Enter", false)).toBe(false);
+    expect(newMessageFromLabel("Cedar Fence Co")).toBe("New message from Cedar Fence Co");
+    const laid = layoutThreadMessages({
+      viewerId: "me",
+      otherLabel: "Pat",
+      now,
+      messages: [
+        { id: "a", sender_profile_id: "pat", body: "Hi", created_at: "2026-10-08T12:00:00" },
+        { id: "b", sender_profile_id: "pat", body: "Still here", created_at: "2026-10-08T12:01:00" },
+        { id: "c", sender_profile_id: "me", body: "Ok", created_at: "2026-10-08T12:02:00" },
+      ],
+    });
+    expect(laid.filter((item) => item.kind === "day").map((item) => item.label)).toEqual(["Today"]);
+    expect(laid.filter((item) => item.kind === "message").map((item) => item.showLabel)).toEqual([true, false, true]);
+  });
+
+  it("tells people a thread opens after a pro connects, not from activation or Hired", () => {
+    expect(MESSAGES_EMPTY_BODY).toMatch(/connects on your project/i);
+    expect(MESSAGES_EMPTY_BODY).not.toMatch(/\$9\.99/);
+    expect(MESSAGES_EMPTY_BODY).not.toMatch(/Hired/);
+    expect(MESSAGES_LOCKED_BODY).toMatch(/connects on the project/i);
   });
 });

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button, ButtonLink } from "../ui/Button";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
-import { TextInput } from "../ui/Input";
 import { StatusBanner } from "../ui/StatusBanner";
 import { liveContractorPath } from "../../lib/marketplace/publicDirectory";
 import type { BookingReview, BookingStatus } from "../../lib/marketplace/types";
@@ -50,8 +49,8 @@ export function HiredConfirmationCard({
 
   return (
     <section className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
-      <h2 className="font-display text-2xl text-forest-800">{state === "hired" ? "Hired" : "Hired confirmation"}</h2>
-      {state === "hired" ? <StatusBanner tone="success" title="Hired" body={HIRED_MUTUAL_COPY} /> : null}
+      <h2 className="font-display text-2xl text-forest-800">{state === "hired" ? "You're working together" : "Confirm hired"}</h2>
+      {state === "hired" ? <StatusBanner tone="success" title="Working together" body={HIRED_MUTUAL_COPY} /> : null}
       {waiting ? <StatusBanner tone="info" title={waiting} body="Profile reviews stay locked until both of you confirm Hired." /> : null}
       {state === "idle" ? <p className="text-sm leading-relaxed text-ink-700">{idleHiredCopy(role)}</p> : null}
       {canClick ? (
@@ -126,8 +125,30 @@ export function ProfileReviewForm({
     <section className="space-y-3">
       <h2 className="font-display text-2xl text-forest-800">Review {otherPartyLabel(role)}</h2>
       <p className="text-sm text-ink-700">This is a profile review of the other party after mutual Hired. It is not a review of the Priority Property Pros marketplace.</p>
-      <TextInput label="Rating (1–5)" inputMode="numeric" value={rating} onChange={(e) => onRatingChange(e.target.value)} />
-      <textarea className="w-full rounded-2xl border border-forest-800/15 px-4 py-3" value={body} onChange={(e) => onBodyChange(e.target.value)} />
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Rating">
+        {["1", "2", "3", "4", "5"].map((value) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={rating === value}
+            className={`min-h-11 min-w-11 rounded-full px-3 text-sm font-semibold ${
+              rating === value ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-forest-800"
+            }`}
+            onClick={() => onRatingChange(value)}
+          >
+            {value}
+          </button>
+        ))}
+      </div>
+      <label className="block">
+        <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Review</span>
+        <textarea
+          aria-label="Review"
+          className="w-full rounded-2xl border border-forest-800/15 px-4 py-3"
+          value={body}
+          onChange={(e) => onBodyChange(e.target.value)}
+        />
+      </label>
       <Button type="button" className="min-h-14 w-full" onClick={onSubmit}>
         Submit review
       </Button>

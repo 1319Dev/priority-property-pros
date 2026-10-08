@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { BrandLoader } from "../../components/brand/BrandLoader";
+import { PostProjectLink } from "../../components/layout/PostProjectLink";
+import { PostProjectTextLink } from "../../components/layout/PublicCtas";
 import { ContractorAvatar } from "../../components/media/ContractorAvatar";
-import { ButtonLink } from "../../components/ui/Button";
 import { TextInput } from "../../components/ui/Input";
 import { CUSTOMER_CTA } from "../../data/brand";
 import {
@@ -16,6 +18,7 @@ import {
   type FindAProReviewStatus,
 } from "../../lib/marketplace/findAPro";
 import { liveContractorPath } from "../../lib/marketplace/publicDirectory";
+import { postProjectPath } from "../../lib/marketplace/customerCopy";
 
 const selectClass =
   "min-h-14 w-full max-w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4 text-base text-ink-900";
@@ -73,9 +76,9 @@ export function FindAProCardView({ card }: { card: FindAProCard }) {
         >
           View Profile
         </Link>
-        <ButtonLink to="/post-project" variant="outline" size="sm">
+        <PostProjectLink to={postProjectPath({ contractorId: card.id, trade: card.primaryService })} variant="outline" size="sm">
           {CUSTOMER_CTA}
-        </ButtonLink>
+        </PostProjectLink>
       </div>
     </article>
   );
@@ -177,15 +180,15 @@ export function FindAProDirectory({
       </form>
 
       <div className="mt-6">
-        {loading ? <p className="text-sm text-ink-700">Loading contractors…</p> : null}
+        {loading ? <BrandLoader layout="section" label="Loading contractors…" /> : null}
         {showEmpty && !failed ? (
           <div className="rounded-3xl border border-dashed border-forest-800/20 bg-cream-100/70 px-5 py-6">
             <p className="font-display text-2xl text-forest-800">{FIND_A_PRO_EMPTY_TITLE}</p>
             <p className="mt-2 text-sm leading-relaxed text-ink-700">{FIND_A_PRO_EMPTY_BODY}</p>
             <p className="mt-4">
-              <Link to="/post-project" className="inline-flex min-h-11 items-center font-semibold text-forest-800 underline">
+              <PostProjectTextLink to="/post-project" className="inline-flex min-h-11 items-center font-semibold text-forest-800 underline">
                 Post a project
-              </Link>
+              </PostProjectTextLink>
             </p>
           </div>
         ) : null}

@@ -1,21 +1,29 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DeleteAccountDialog } from "../../components/account/DeleteAccountDialog";
+import { TextInput } from "../../components/ui/Input";
 import { useAuth } from "../../lib/auth/useAuth";
 import { deleteOwnAccount } from "../../lib/auth/deleteAccount";
-import { CUSTOMER_DASHBOARD_PRICING_NOTE, PRO_DASHBOARD_PRICING_NOTE } from "../../data/pricing";
-import { Button } from "../../components/ui/Button";
+import { FormError } from "../../lib/auth/AuthCard";
+import { getSupabaseClient } from "../../lib/supabase/client";
+import { PRO_DASHBOARD_PRICING_NOTE } from "../../data/pricing";
+import { ACCOUNT_ROLE_NOTE, CUSTOMER_ACTIVATION_NOTE, CUSTOMER_PAYS_DIRECTLY } from "../../lib/marketplace/customerCopy";
 import { accountStatusLabel, accountTypeLabel } from "../../lib/marketplace/statusLabels";
 
 export { CustomerHomePage, CustomerProjectsPage } from "./customer/CustomerMarketplacePages";
 export { CustomerMessagesPage } from "./messages/ProjectMessagesPage";
 
 export function AccountPage() {
-  const { profile, user, signOut, account_type, account_status } = useAuth();
+  const { profile, user, signOut, account_type, account_status, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState(profile?.first_name ?? "");
+  const [lastName, setLastName] = useState(profile?.last_name ?? "");
+  const [phone, setPhone] = useState(profile?.phone ?? "");
 
   return (
     <div className="max-w-lg space-y-6">
@@ -23,26 +31,65 @@ export function AccountPage() {
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Settings</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Account settings</h1>
       </header>
+      <form
+        className="space-y-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const client = getSupabaseClient();
+          if (!client || !profile) return;
+          setSaving(true);
+          setError(null);
+          setSaved(null);
+          void (async () => {
+            const { error: updateError } = await client
+              .from("profiles")
+              .update({
+                first_name: firstName.trim(),
+                last_name: lastName.trim(),
+                phone: phone.trim() || null,
+              })
+              .eq("id", profile.id);
+            if (updateError) {
+              setError(updateError.message);
+              return;
+            }
+            await refreshProfile();
+            setSaved("Name and phone saved.");
+          })().finally(() => setSaving(false));
+        }}
+      >
+        <TextInput label="First name" value={firstName} onChange={(event) => setFirstName(event.target.value)} />
+        <TextInput label="Last name" value={lastName} onChange={(event) => setLastName(event.target.value)} />
+        <TextInput label="Phone" value={phone} onChange={(event) => setPhone(event.target.value)} />
+        <button
+          type="submit"
+          className="inline-flex min-h-12 items-center justify-center rounded-full bg-forest-800 px-5 text-sm font-semibold text-cream-50 disabled:opacity-50"
+          disabled={saving}
+        >
+          {saving ? "Saving…" : "Save name and phone"}
+        </button>
+        {saved ? <p className="text-sm text-forest-800">{saved}</p> : null}
+      </form>
       <dl className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm">
-        <Row label="Name" value={`${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim() || "—"} />
         <Row label="Email" value={user?.email ?? profile?.email ?? "—"} />
         <Row label="Role" value={accountTypeLabel(account_type)} />
         <Row label="Status" value={accountStatusLabel(account_status)} />
       </dl>
       <p className="text-sm text-ink-500">
-        Role and status are stored in the database. This website cannot promote anyone to Admin.
-        {account_type === "CUSTOMER" ? ` ${CUSTOMER_DASHBOARD_PRICING_NOTE}` : ""}
+        {ACCOUNT_ROLE_NOTE}
+        {account_type === "CUSTOMER" ? ` ${CUSTOMER_ACTIVATION_NOTE} ${CUSTOMER_PAYS_DIRECTLY}` : ""}
         {account_type === "CONTRACTOR" ? ` ${PRO_DASHBOARD_PRICING_NOTE}` : ""}
       </p>
-      <Button
+      <FormError message={error} />
+      <button
         type="button"
-        variant="outline"
+        className="inline-flex min-h-12 items-center justify-center rounded-full border border-forest-800/20 bg-cream-50 px-5 text-sm font-semibold text-forest-800"
         onClick={() => {
           void signOut().then(() => navigate("/", { replace: true }));
         }}
       >
         Sign out
-      </Button>
+      </button>
       <section className="border-t border-forest-800/10 pt-8">
         <h2 className="text-sm font-semibold text-ink-500">Delete account</h2>
         <p className="mt-2 text-sm leading-relaxed text-ink-500">

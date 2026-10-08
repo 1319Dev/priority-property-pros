@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { MarketingPhotoFrame } from "../components/media/MarketingPhoto";
+import { PostProjectLink } from "../components/layout/PostProjectLink";
 import { ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
 import { CUSTOMER_CTA } from "../data/brand";
@@ -37,9 +38,9 @@ export function ComingSoonLayout({
         {extra}
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <ButtonLink to="/">Back home</ButtonLink>
-          <ButtonLink to="/post-project" variant="outline">
+          <PostProjectLink to="/post-project" variant="outline">
             {CUSTOMER_CTA}
-          </ButtonLink>
+          </PostProjectLink>
         </div>
       </Container>
     </section>

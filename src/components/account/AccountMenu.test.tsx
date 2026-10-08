@@ -62,9 +62,11 @@ describe("AccountMenu sign-out visibility", () => {
     const signOut = vi.fn().mockResolvedValue(undefined);
     renderWithAuth(<AccountMenu />, auth({ signOut }));
 
-    expect(screen.getByRole("button", { name: /account menu/i })).toHaveTextContent(/account/i);
+    expect(screen.getByRole("button", { name: /account menu/i })).toHaveTextContent("Pat");
+    expect(screen.getByRole("button", { name: /account menu/i })).toHaveTextContent("PL");
     expect(screen.queryByRole("menuitem", { name: /sign out/i })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /account menu/i }));
+    expect(screen.getByRole("menuitem", { name: /my dashboard/i })).toHaveAttribute("href", "/app/customer");
     expect(screen.getByRole("menuitem", { name: /^sign out$/i })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: /^settings$/i })).toHaveAttribute(
       "href",
@@ -93,6 +95,12 @@ describe("AccountMenu sign-out visibility", () => {
     expect(screen.getByRole("link", { name: /sign in/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /account menu/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /sign out/i })).not.toBeInTheDocument();
+  });
+
+  it("does not flash Sign In while the session is loading", () => {
+    renderWithAuth(<Header />, auth({ loading: true, user: null, profile: null, account_type: null, account_status: null }));
+    expect(screen.getByRole("status", { name: "Loading…" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /sign in/i })).not.toBeInTheDocument();
   });
 });
 

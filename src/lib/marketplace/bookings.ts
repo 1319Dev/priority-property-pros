@@ -32,10 +32,10 @@ export const ENTITLED_CONTACT_FIELDS = [
 export { BOOKING_STATUSES };
 
 export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
-  PENDING: "Pay the contractor directly",
-  AWAITING_PAYMENT: "Pay the contractor directly",
-  CONFIRMED: "Confirmed",
-  IN_PROGRESS: "In progress",
+  PENDING: "Selected",
+  AWAITING_PAYMENT: "Selected",
+  CONFIRMED: "Hired",
+  IN_PROGRESS: "Hired",
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
   DISPUTED: "Disputed",
@@ -71,8 +71,17 @@ export function canCustomerCancelPending(status: BookingStatus): boolean {
   return status === "PENDING" || status === "AWAITING_PAYMENT";
 }
 
+export function canCustomerCancelPendingBooking(input: {
+  status: BookingStatus;
+  customerHiredAt?: string | null;
+  contractorHiredAt?: string | null;
+}): boolean {
+  if (input.customerHiredAt && input.contractorHiredAt) return false;
+  return canCustomerCancelPending(input.status);
+}
+
 export function canStartBooking(actor: BookingActorRole | null, status: BookingStatus): boolean {
-  return (actor === "CONTRACTOR" || actor === "ADMIN") && status === "CONFIRMED";
+  return (actor === "CONTRACTOR" || actor === "CUSTOMER" || actor === "ADMIN") && status === "CONFIRMED";
 }
 
 export function canCompleteBooking(actor: BookingActorRole | null, status: BookingStatus): boolean {

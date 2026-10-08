@@ -1,6 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
+import { AuthContext } from "../../lib/auth/AuthContext";
+import { authValue } from "../../lib/auth/authFixture";
 import { describe, expect, it } from "vitest";
 import {
   FIND_A_PRO_LAYOUT_CLASS,
@@ -30,6 +33,14 @@ function card(overrides: Partial<Parameters<typeof toFindAProCard>[0]> = {}) {
   });
 }
 
+function renderCard(ui: ReactNode) {
+  return render(
+    <AuthContext.Provider value={authValue()}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </AuthContext.Provider>,
+  );
+}
+
 const reviewed = card({
   id: "22222222-2222-4222-8222-222222222222",
   displayLabel: "Approved Handyman Pro",
@@ -42,12 +53,10 @@ const reviewed = card({
 
 describe("Find a Pro cards", () => {
   it("shows a zero-review contractor without stars", () => {
-    render(
-      <MemoryRouter>
-        <div className="mx-auto w-[390px] max-w-[390px]">
-          <FindAProCardView card={card()} />
-        </div>
-      </MemoryRouter>,
+    renderCard(
+      <div className="mx-auto w-[390px] max-w-[390px]">
+        <FindAProCardView card={card()} />
+      </div>,
     );
     expect(screen.getByRole("heading", { name: "Approved Fence Pro" })).toBeInTheDocument();
     expect(screen.getByText("Fence Repair")).toBeInTheDocument();
@@ -62,17 +71,16 @@ describe("Find a Pro cards", () => {
       "href",
       "/find-a-pro/11111111-1111-4111-8111-111111111111",
     );
-    expect(screen.getByRole("link", { name: /post a project/i })).toHaveAttribute("href", "/post-project");
+    expect(screen.getByRole("link", { name: /post a project/i })).toHaveAttribute(
+      "href",
+      "/post-project?pro=11111111-1111-4111-8111-111111111111&trade=Fence+Repair",
+    );
     expect(screen.queryByText(/★|0\.0/)).not.toBeInTheDocument();
     expect(document.body.innerHTML).not.toMatch(/tel:|mailto:|512-555|@example/i);
   });
 
   it("shows a reviewed contractor rating, count, and real portfolio caption", () => {
-    render(
-      <MemoryRouter>
-        <FindAProCardView card={reviewed} />
-      </MemoryRouter>,
-    );
+    renderCard(<FindAProCardView card={reviewed} />);
     expect(screen.getByText("5.0 ★ · 1 review")).toBeInTheDocument();
     expect(screen.getByText("Reset a cedar panel")).toBeInTheDocument();
     expect(screen.queryByText(NEW_ON_PPP)).not.toBeInTheDocument();
@@ -80,12 +88,10 @@ describe("Find a Pro cards", () => {
   });
 
   it("keeps the directory from using a horizontal overflow layout at 390px", () => {
-    const { container } = render(
-      <MemoryRouter>
-        <div className="w-[390px] max-w-[390px]">
-          <FindAProDirectory cards={[card(), reviewed]} loading={false} />
-        </div>
-      </MemoryRouter>,
+    const { container } = renderCard(
+      <div className="w-[390px] max-w-[390px]">
+        <FindAProDirectory cards={[card(), reviewed]} loading={false} />
+      </div>,
     );
     const layout = container.querySelector("article");
     expect(layout?.className).toMatch(/min-w-0/);
@@ -97,34 +103,31 @@ describe("Find a Pro cards", () => {
 
 describe("Contractor storefront", () => {
   it("shows an empty portfolio and empty reviews without Verified Project", () => {
-    render(
-      <MemoryRouter>
-        <ContractorStorefront profile={{ ...card(), about: "Independent local fence contractor." }} />
-      </MemoryRouter>,
-    );
+    renderCard(<ContractorStorefront profile={{ ...card(), about: "Independent local fence contractor." }} />);
     expect(screen.getByRole("heading", { name: "Approved Fence Pro" })).toBeInTheDocument();
     expect(screen.getByText(PORTFOLIO_EMPTY)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Reviews" }).parentElement).toHaveTextContent(NO_REVIEWS_YET);
     expect(screen.queryByText(VERIFIED_PROJECT_LABEL)).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /invite|request estimate|call|email/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /post a project/i })).toHaveAttribute("href", "/post-project");
+    expect(screen.getByRole("link", { name: /post a project/i })).toHaveAttribute(
+      "href",
+      "/post-project?pro=11111111-1111-4111-8111-111111111111&trade=Fence+Repair",
+    );
   });
 
   it("shows Verified Project only on a qualifying review and a real portfolio caption", () => {
     const qualifying = reviewed.reviews[0];
-    render(
-      <MemoryRouter>
-        <ContractorStorefront
-          profile={{
-            ...reviewed,
-            about: "Indoor repairs for property owners.",
-            reviews: [
-              { ...qualifying, verifiedProject: true },
-              { id: "plain", rating: 4, body: "Helpful, but this row has no qualifying relationship.", verifiedProject: false },
-            ],
-          }}
-        />
-      </MemoryRouter>,
+    renderCard(
+      <ContractorStorefront
+        profile={{
+          ...reviewed,
+          about: "Indoor repairs for property owners.",
+          reviews: [
+            { ...qualifying, verifiedProject: true },
+            { id: "plain", rating: 4, body: "Helpful, but this row has no qualifying relationship.", verifiedProject: false },
+          ],
+        }}
+      />,
     );
     expect(screen.getByText("Reset a cedar panel")).toBeInTheDocument();
     expect(screen.getAllByText(VERIFIED_PROJECT_LABEL)).toHaveLength(1);
@@ -133,11 +136,7 @@ describe("Contractor storefront", () => {
 
   it("filters the directory down to new contractors", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <FindAProDirectory cards={[card(), reviewed]} loading={false} />
-      </MemoryRouter>,
-    );
+    renderCard(<FindAProDirectory cards={[card(), reviewed]} loading={false} />);
     await user.selectOptions(screen.getByRole("combobox", { name: "Reviews" }), "new");
     expect(screen.getByRole("heading", { name: "Approved Fence Pro" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Approved Handyman Pro" })).not.toBeInTheDocument();

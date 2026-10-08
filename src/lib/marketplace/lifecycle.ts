@@ -1,3 +1,4 @@
+import { normalizeCity, normalizeState } from "./location";
 import type { BookingStatus, ProjectStatus } from "./types";
 
 export const MATERIAL_PROJECT_FIELDS = [
@@ -44,6 +45,18 @@ const PROTECTED_BOOKING: readonly BookingStatus[] = ["CONFIRMED", "IN_PROGRESS",
 
 export function bookingIsProtected(status: BookingStatus | null | undefined): status is ProtectedBookingStatus {
   return Boolean(status && PROTECTED_BOOKING.includes(status));
+}
+
+export function canCancelCustomerProject(input: {
+  projectStatus: ProjectStatus;
+  bookingStatus: BookingStatus | null;
+  customerHiredAt?: string | null;
+  contractorHiredAt?: string | null;
+}): boolean {
+  if (input.projectStatus === "CANCELLED") return false;
+  if (bookingIsProtected(input.bookingStatus)) return false;
+  if (input.customerHiredAt && input.contractorHiredAt) return false;
+  return true;
 }
 
 export function hasParticipation(state: ParticipationState): boolean {
@@ -148,13 +161,7 @@ export function planDeleteOrCancel(input: {
   if (input.projectStatus === "DRAFT" && !hasParticipation(input.participation) && input.participation.opportunityCount === 0) {
     return {
       action: "delete",
-      message: "This draft will be permanently removed. This cannot be undone.",
-    };
-  }
-  if (!hasParticipation(input.participation) && input.participation.opportunityCount === 0 && input.projectStatus !== "CONTRACTOR_SELECTED") {
-    return {
-      action: "delete",
-      message: "This project has no contractor activity yet. It will be permanently removed.",
+      message: "This unfinished project was never posted.",
     };
   }
   if (input.projectStatus === "CANCELLED") {
@@ -164,14 +171,81 @@ export function planDeleteOrCancel(input: {
     return {
       action: "cancel",
       message:
-        "This will cancel the pending booking and withdraw the project. Your exact address was never shared, and selecting a pro did not hire them.",
+        "This will cancel the project and the booking that is still waiting. It moves to your Cancelled list. Your street address stays private.",
     };
   }
   return {
     action: "cancel",
     message:
-      "This project will be cancelled. It leaves the marketplace and contractors can no longer participate. Estimates are kept for your records and labeled cancelled.",
+      "This project will be cancelled and move to your Cancelled list. Pros can no longer respond. Estimates stay in your history and are marked cancelled.",
   };
+}
+
+export type CustomerEditSnapshot = {
+  title: string;
+  description: string;
+  category_id: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null;
+  timing: string | null;
+  preferred_date: string | null;
+  budget_min_cents: number | null;
+  budget_max_cents: number | null;
+  street_line1: string;
+  street_line2: string;
+  answers: Record<string, string | null | undefined>;
+};
+
+export type CustomerEditPatch = ProjectPatch & {
+  street_line1?: string;
+  street_line2?: string;
+};
+
+function sameText(left: string | null | undefined, right: string | null | undefined): boolean {
+  return (left ?? "").trim() === (right ?? "").trim();
+}
+
+/** Sends only fields that actually changed. Unchanged answers are omitted so the edit is not treated as material. */
+export function buildCustomerEditPatch(saved: CustomerEditSnapshot, next: CustomerEditSnapshot): CustomerEditPatch {
+  const patch: CustomerEditPatch = {};
+  if (!sameText(saved.title, next.title)) patch.title = (next.title ?? "").trim();
+  if (!sameText(saved.description, next.description)) patch.description = next.description ?? "";
+  if ((saved.category_id ?? "") !== (next.category_id ?? "")) patch.category_id = next.category_id || null;
+
+  const city = normalizeCity(next.city);
+  if (normalizeCity(saved.city) !== city) patch.city = city;
+  const state = normalizeState(next.state);
+  if (normalizeState(saved.state) !== state) patch.state = state;
+  const zip = (next.zip_code ?? "").trim();
+  if ((saved.zip_code ?? "").trim() !== zip) patch.zip_code = zip;
+
+  if ((saved.timing ?? "") !== (next.timing ?? "")) patch.timing = next.timing || null;
+  if ((saved.preferred_date ?? "") !== (next.preferred_date ?? "")) patch.preferred_date = next.preferred_date || null;
+  if ((saved.budget_min_cents ?? null) !== (next.budget_min_cents ?? null)) patch.budget_min_cents = next.budget_min_cents;
+  if ((saved.budget_max_cents ?? null) !== (next.budget_max_cents ?? null)) patch.budget_max_cents = next.budget_max_cents;
+  if (!sameText(saved.street_line1, next.street_line1)) patch.street_line1 = (next.street_line1 ?? "").trim();
+  if (!sameText(saved.street_line2, next.street_line2)) patch.street_line2 = (next.street_line2 ?? "").trim();
+
+  if (answersMateriallyChanged(saved.answers, next.answers)) {
+    const keys = new Set([...Object.keys(saved.answers), ...Object.keys(next.answers)]);
+    patch.answers = [...keys].map((question_id) => ({
+      question_id,
+      answer_text: (next.answers[question_id] ?? "").trim(),
+    }));
+  }
+  return patch;
+}
+
+export function answersMateriallyChanged(
+  before: Record<string, string | null | undefined>,
+  after: Record<string, string | null | undefined>,
+): boolean {
+  const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+  for (const key of keys) {
+    if ((before[key] ?? "").trim() !== (after[key] ?? "").trim()) return true;
+  }
+  return false;
 }
 
 export function ownerCanDeletePermanently(plan: CancelPlan): boolean {
@@ -179,7 +253,7 @@ export function ownerCanDeletePermanently(plan: CancelPlan): boolean {
 }
 
 export function cancelledProjectsLeaveActiveOpportunities(): boolean {
-  return true;
+  return false;
 }
 
 export function selectionCreatesRelationship(): boolean {

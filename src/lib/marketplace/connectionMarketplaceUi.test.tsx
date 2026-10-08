@@ -1,5 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { AuthContext } from "../auth/AuthContext";
+import { authValue } from "../auth/authFixture";
 import { describe, expect, it } from "vitest";
 import { ConnectConfirmDialog } from "../../components/marketplace/ConnectConfirm";
 import { ContractorConnectionCta } from "../../components/marketplace/ContractorConnectionCta";
@@ -17,11 +19,13 @@ import { CHECKOUT_PENDING_COPY, CONNECTED_BODY, CONNECTED_LABEL } from "./connec
 describe("Connection marketplace mobile UI", () => {
   it("20. pricing and connect confirm are stacked and obvious at ~390px", () => {
     const { container } = render(
-      <MemoryRouter>
-        <div className="mx-auto w-[390px] max-w-[390px]">
-          <PricingPage />
-        </div>
-      </MemoryRouter>,
+      <AuthContext.Provider value={authValue()}>
+        <MemoryRouter>
+          <div className="mx-auto w-[390px] max-w-[390px]">
+            <PricingPage />
+          </div>
+        </MemoryRouter>
+      </AuthContext.Provider>,
     );
     expect(screen.getByRole("heading", { name: PRICING_PAGE_TITLE })).toBeInTheDocument();
     expect(screen.getAllByText(SIGNUP_FEE_ONE_TIME_LABEL).length).toBeGreaterThan(0);

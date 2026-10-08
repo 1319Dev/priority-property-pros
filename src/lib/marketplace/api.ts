@@ -11,6 +11,7 @@ import {
   OPPORTUNITY_COLUMNS,
   OPPORTUNITY_WITH_PROJECTS_SELECT,
 } from "./opportunityAttach";
+import { sanitizeConnectionCards, type ProjectConnectionCard } from "./connectionCards";
 import type {
   Booking,
   BookingContactAccess,
@@ -1180,6 +1181,14 @@ export async function stopNewProjectConnections(projectId: string): Promise<RpcJ
   });
   if (error) throw new Error(asError(error, "Could not stop new connections."));
   return (data ?? {}) as RpcJson;
+}
+
+export async function fetchMyProjectConnectionCards(projectId: string): Promise<ProjectConnectionCard[]> {
+  const { data, error } = await client().rpc("list_my_project_connection_cards", {
+    p_project_id: projectId,
+  });
+  if (error) throw new Error(asError(error, "Could not load connections."));
+  return sanitizeConnectionCards(data);
 }
 
 export async function fetchMyProjectConnections(projectId?: string): Promise<ProjectConnection[]> {

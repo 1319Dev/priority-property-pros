@@ -43,11 +43,11 @@ export type CustomerLifecycleState =
 export const CUSTOMER_LIFECYCLE_LABELS: Record<CustomerLifecycleState, string> = {
   draft: "Draft",
   posted: "Posted",
-  finding_pros: "Finding Pros",
-  estimates_received: "Estimates Received",
-  contractor_selected: "Contractor Selected",
-  booking: "Booking",
-  active: "Active",
+  finding_pros: "Finding pros",
+  estimates_received: "Estimates ready",
+  contractor_selected: "Selected",
+  booking: "Selected",
+  active: "Hired",
   completed: "Completed",
   cancelled: "Cancelled",
 };
@@ -98,34 +98,33 @@ export function customerNextActions(input: {
     case "posted":
     case "finding_pros":
       return [
-        { label: "View", to: detail },
-        { label: "Edit", to: edit, variant: "outline" },
+        { label: "View project", to: detail },
+        { label: "Edit project", to: edit, variant: "outline" },
       ];
     case "estimates_received":
       return [
-        { label: "Review estimates", to: compare },
-        { label: "Compare", to: compare, variant: "outline" },
-        { label: "Edit", to: edit, variant: "ghost" },
+        { label: "Compare estimates", to: compare },
+        { label: "Edit project", to: edit, variant: "ghost" },
       ];
     case "contractor_selected":
     case "booking":
       return [
         ...(awaitingHire && booking ? [{ label: "Confirm hired", to: booking }] : []),
         ...(booking ? [{ label: "View booking", to: booking, variant: awaitingHire ? "outline" as const : undefined }] : []),
-        { label: "View", to: detail, variant: "outline" },
+        { label: "View project", to: detail, variant: "outline" },
       ];
     case "active":
       return [
         ...(awaitingHire && booking ? [{ label: "Confirm hired", to: booking }] : []),
-        ...(booking ? [{ label: "View booking", to: booking, variant: awaitingHire ? "outline" as const : undefined }] : [{ label: "View", to: detail }]),
+        ...(booking ? [{ label: "View booking", to: booking, variant: awaitingHire ? "outline" as const : undefined }] : [{ label: "View project", to: detail }]),
       ];
     case "completed":
       return [
         { label: "Hire again", to: "/app/customer/hire-again" },
-        { label: "View", to: detail, variant: "outline" },
+        { label: "View project", to: detail, variant: "outline" },
       ];
     case "cancelled":
-      return [{ label: "View", to: detail, variant: "outline" }];
+      return [{ label: "View project", to: detail, variant: "outline" }];
   }
 }
 

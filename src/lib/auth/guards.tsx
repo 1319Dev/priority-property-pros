@@ -1,17 +1,13 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { Skeleton } from "../../components/ui/Skeleton";
+import { BrandLoader } from "../../components/brand/BrandLoader";
 import { BLOCKED_STATUSES, ROLE_HOME, postLoginPath } from "./roles";
 import { useAuth } from "./useAuth";
 import type { AccountType } from "./types";
 
 function AuthLoadingScreen() {
   return (
-    <div className="paper-grain flex min-h-dvh flex-col items-center justify-center gap-4 px-6">
-      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">
-        Priority Property Pros
-      </p>
-      <Skeleton className="h-10 w-56" />
-      <Skeleton className="h-4 w-40" />
+    <div className="paper-grain flex min-h-dvh items-center justify-center">
+      <BrandLoader layout="page" label="Loading…" />
     </div>
   );
 }

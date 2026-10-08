@@ -1,5 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { MarketingPhoto } from "../components/media/MarketingPhoto";
+import { BrandLoader } from "../components/brand/BrandLoader";
+import { PostProjectLink } from "../components/layout/PostProjectLink";
 import { ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
 import { CUSTOMER_CTA } from "../data/brand";
@@ -37,7 +39,7 @@ export function FindAProPage() {
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">{FIND_A_PRO_TITLE}</h1>
         <p className="mt-4 text-base leading-relaxed text-ink-700 sm:text-lg">{FIND_A_PRO_INTRO}</p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <ButtonLink to="/post-project">{CUSTOMER_CTA}</ButtonLink>
+          <PostProjectLink to="/post-project">{CUSTOMER_CTA}</PostProjectLink>
           <ButtonLink to={PRICING_PATH} variant="outline">
             See pricing
           </ButtonLink>
@@ -60,7 +62,7 @@ export function PublicContractorPage() {
     return (
       <section className={`py-8 sm:py-12 ${FIND_A_PRO_LAYOUT_CLASS}`}>
         <Container className="max-w-3xl">
-          <p className="text-sm text-ink-700">Loading contractor…</p>
+          <BrandLoader layout="section" label="Loading contractor…" />
         </Container>
       </section>
     );

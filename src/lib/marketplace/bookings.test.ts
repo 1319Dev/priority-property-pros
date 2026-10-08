@@ -34,8 +34,9 @@ describe("booking state machine", () => {
     expect(clientCannotSpoofConfirmed()).toBe(true);
     expect(paymentsComingSoonCopy()).toMatch(/pays the contractor directly/i);
     expect(paymentsComingSoonCopy()).not.toMatch(/coming soon/i);
-    expect(BOOKING_STATUS_LABELS.PENDING).toBe("Pay the contractor directly");
-    expect(BOOKING_STATUS_LABELS.AWAITING_PAYMENT).toBe("Pay the contractor directly");
+    expect(BOOKING_STATUS_LABELS.PENDING).toBe("Selected");
+    expect(BOOKING_STATUS_LABELS.AWAITING_PAYMENT).toBe("Selected");
+    expect(BOOKING_STATUS_LABELS.CONFIRMED).toBe("Hired");
     expect(BOOKING_STATUS_LABELS.PENDING).not.toMatch(/waiting for payment/i);
   });
 
@@ -61,7 +62,7 @@ describe("booking state machine", () => {
 
   it("gates start / complete / dispute by role and status", () => {
     expect(canStartBooking("CONTRACTOR", "CONFIRMED")).toBe(true);
-    expect(canStartBooking("CUSTOMER", "CONFIRMED")).toBe(false);
+    expect(canStartBooking("CUSTOMER", "CONFIRMED")).toBe(true);
     expect(canCompleteBooking("CUSTOMER", "IN_PROGRESS")).toBe(true);
     expect(canCompleteBooking("CONTRACTOR", "PENDING")).toBe(false);
     expect(canDisputeBooking("CUSTOMER", "COMPLETED")).toBe(true);

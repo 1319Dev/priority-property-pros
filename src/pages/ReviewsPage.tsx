@@ -1,7 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { BrandLoader } from "../components/brand/BrandLoader";
 import { MarketingPhoto } from "../components/media/MarketingPhoto";
 import { Button, ButtonLink } from "../components/ui/Button";
+import { showCustomerSignup } from "../lib/auth/publicEntry";
 import { Container } from "../components/ui/Container";
 import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
 import { TextInput } from "../components/ui/Input";
@@ -24,7 +26,7 @@ import { PlatformReviewCard, ReviewsEmptyState, StarRating } from "../features/r
 
 export function ReviewsPage() {
   const configured = isSupabaseConfigured();
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const [reviews, setReviews] = useState<PublicPlatformReview[]>([]);
   const [alreadyReviewed, setAlreadyReviewed] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,7 +117,9 @@ export function ReviewsPage() {
 
         <div className="mt-8 rounded-[1.75rem] border border-forest-800/10 bg-cream-50 px-5 py-6">
           <h2 className="font-display text-2xl text-forest-800">Leave a review</h2>
-          {!user ? (
+          {authLoading ? (
+            <BrandLoader layout="section" label="Loading…" />
+          ) : !user ? (
             <div className="mt-4 space-y-3">
               <p className="text-sm leading-relaxed text-ink-700">{PLATFORM_REVIEWS_AUTH_REQUIRED}</p>
               {!configured ? (
@@ -123,9 +127,11 @@ export function ReviewsPage() {
               ) : null}
               <div className="flex flex-col gap-3 sm:flex-row">
                 <ButtonLink to="/sign-in">Sign in</ButtonLink>
-                <ButtonLink to="/sign-up" variant="outline">
-                  Create account
-                </ButtonLink>
+                {showCustomerSignup({ loading: authLoading, accountType: null, signedIn: false }) ? (
+                  <ButtonLink to="/sign-up" variant="outline">
+                    Create account
+                  </ButtonLink>
+                ) : null}
               </div>
             </div>
           ) : alreadyReviewed ? (
