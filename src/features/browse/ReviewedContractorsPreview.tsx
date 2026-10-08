@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { BrandLoader } from "../../components/brand/BrandLoader";
+import { PostProjectTextLink } from "../../components/layout/PublicCtas";
 import { ContractorAvatar } from "../../components/media/ContractorAvatar";
 import { formatPublicRating, liveContractorPath } from "../../lib/marketplace/publicDirectory";
 import {
@@ -16,9 +18,9 @@ export function ReviewedContractorsEmpty({ compact = false }: { compact?: boolea
         {compact ? REVIEWED_PROS_EMPTY_COMPACT : REVIEWED_PROS_EMPTY_BODY}
       </p>
       <p className="mt-4">
-        <Link to="/post-project" className="min-h-11 inline-flex items-center font-semibold text-forest-800 underline">
+        <PostProjectTextLink to="/post-project" className="min-h-11 inline-flex items-center font-semibold text-forest-800 underline">
           Post a project
-        </Link>
+        </PostProjectTextLink>
       </p>
     </div>
   );
@@ -75,7 +77,7 @@ export function ReviewedContractorsList({
   const showEmpty = !loading && cards.length === 0;
   return (
     <div>
-      {loading ? <p className="text-sm text-ink-700">Loading reviewed contractors…</p> : null}
+      {loading ? <BrandLoader layout="section" label="Loading reviewed contractors…" /> : null}
       {showEmpty ? <ReviewedContractorsEmpty compact={compactEmpty} /> : null}
       {showEmpty && failed && onRetry ? (
         <p className="mt-3">

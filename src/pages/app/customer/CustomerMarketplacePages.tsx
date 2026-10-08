@@ -62,7 +62,7 @@ import {
 } from "../../../lib/marketplace/connectionCards";
 import { messageNotificationHref } from "../../../lib/marketplace/messaging";
 import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type EstimateItemKind, type EstimateStatus, type Project } from "../../../lib/marketplace/types";
-import { planDeleteOrCancel } from "../../../lib/marketplace/lifecycle";
+import { canCancelCustomerProject, planDeleteOrCancel } from "../../../lib/marketplace/lifecycle";
 import {
   canCustomerDeclineFrom,
   canCustomerSelectFrom,
@@ -365,7 +365,12 @@ export function CustomerProjectDetailPage() {
   }
 
   const canEdit = project.status !== "CANCELLED" && project.status !== "CONTRACTOR_SELECTED";
-  const canRemove = project.status !== "CANCELLED";
+  const canRemove = canCancelCustomerProject({
+    projectStatus: project.status,
+    bookingStatus: booking?.status ?? null,
+    customerHiredAt: booking?.customer_hired_at,
+    contractorHiredAt: booking?.contractor_hired_at,
+  });
 
   return (
     <div className="space-y-6">

@@ -13,14 +13,16 @@ IMMUTABLE
 SET search_path = public
 AS $$
   SELECT nullif(
-    regexp_replace(
+    initcap(
       regexp_replace(
-        regexp_replace(btrim(coalesce(p_city, '')), '\s+', ' ', 'g'),
-        '\s+,', ',',
-        'g'
-      ),
-      ',+$',
-      ''
+        regexp_replace(
+          regexp_replace(btrim(coalesce(p_city, '')), '\s+', ' ', 'g'),
+          '\s+,', ',',
+          'g'
+        ),
+        ',+$',
+        ''
+      )
     ),
     ''
   );
@@ -203,6 +205,32 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.close_open_contractor_work(uuid) FROM PUBLIC, anon, authenticated;
+
+-- Withdrawing estimates while cancelling a project or rejecting a contractor
+-- must not fail when that contractor has not paid the signup fee.
+CREATE OR REPLACE FUNCTION public.enforce_signup_fee_on_estimates()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_profile_id uuid;
+BEGIN
+  IF public.ppp_rpc_is('cancel_customer_project')
+     OR public.ppp_rpc_is('admin_reject_contractor') THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT profile_id INTO v_profile_id
+  FROM public.contractor_profiles
+  WHERE id = NEW.contractor_profile_id;
+  PERFORM public.assert_signup_fee_paid(v_profile_id);
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.enforce_signup_fee_on_estimates() FROM PUBLIC, anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.select_estimate(p_project_id uuid, p_estimate_id uuid)
 RETURNS jsonb
@@ -778,7 +806,7 @@ BEGIN
     RAISE EXCEPTION 'not the project owner';
   END IF;
   IF public.project_protected_booking_exists(p.id) THEN
-    RAISE EXCEPTION 'confirmed or in-progress jobs cannot be deleted';
+    RAISE EXCEPTION 'confirmed or in-progress jobs cannot be cancelled';
   END IF;
   IF p.status = 'CANCELLED' THEN
     RAISE EXCEPTION 'this project is already cancelled';
@@ -1207,4 +1235,8 @@ UPDATE public.projects
 SET
   city = public.normalize_city(city),
   state = public.normalize_us_state(state)
-WHERE city IS NOT NULL OR state IS NOT NULL;
+WHERE (city IS NOT NULL OR state IS NOT NULL)
+  AND (
+    city IS DISTINCT FROM public.normalize_city(city)
+    OR state IS DISTINCT FROM public.normalize_us_state(state)
+  );

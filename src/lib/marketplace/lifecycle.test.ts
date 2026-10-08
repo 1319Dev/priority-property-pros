@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   bookingIsProtected,
   buildCustomerEditPatch,
+  canCancelCustomerProject,
   canOwnerEditProject,
   classifyProjectPatch,
   hasParticipation,
@@ -239,6 +240,37 @@ describe("delete vs cancel lifecycle", () => {
         participation: participationNone,
       }).action,
     ).toBe("block");
+  });
+
+  it("hides cancel once the job is mutually hired or already underway", () => {
+    expect(
+      canCancelCustomerProject({
+        projectStatus: "ESTIMATES_AVAILABLE",
+        bookingStatus: null,
+      }),
+    ).toBe(true);
+    expect(
+      canCancelCustomerProject({
+        projectStatus: "CANCELLED",
+        bookingStatus: null,
+      }),
+    ).toBe(false);
+    for (const status of ["CONFIRMED", "IN_PROGRESS", "COMPLETED", "DISPUTED"] as const) {
+      expect(
+        canCancelCustomerProject({
+          projectStatus: "CONTRACTOR_SELECTED",
+          bookingStatus: status,
+        }),
+      ).toBe(false);
+    }
+    expect(
+      canCancelCustomerProject({
+        projectStatus: "CONTRACTOR_SELECTED",
+        bookingStatus: "PENDING",
+        customerHiredAt: "2026-10-01T00:00:00Z",
+        contractorHiredAt: "2026-10-02T00:00:00Z",
+      }),
+    ).toBe(false);
   });
 
   it("treats matching activity as participation for invalidation, not for stranger edits", () => {

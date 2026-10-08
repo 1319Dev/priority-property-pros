@@ -1,15 +1,15 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState, type FormEvent } from "react";
+import { Link, Navigate, useLocation } from "react-router-dom";
+import { BrandLoader } from "../components/brand/BrandLoader";
 import { Button } from "../components/ui/Button";
 import { TextInput } from "../components/ui/Input";
-import { postLoginPath } from "../lib/auth/roles";
+import { dashboardPath } from "../lib/auth/publicEntry";
 import { AuthCard, FormError } from "../lib/auth/AuthCard";
 import { useAuth } from "../lib/auth/useAuth";
 import { SIGN_IN_CREATE_ACCOUNT_NOTE } from "../data/pricing";
 
 export function SignInPage() {
   const { signIn, configured, refreshProfile, account_type, account_status, signup_fee_enabled, signup_fee_status, user, loading } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from;
   const [email, setEmail] = useState("");
@@ -17,11 +17,16 @@ export function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (!loading && user && account_type) {
-      navigate(from || postLoginPath(account_type, account_status, { enabled: signup_fee_enabled, status: signup_fee_status }), { replace: true });
-    }
-  }, [loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status, from, navigate]);
+  if (loading) return <BrandLoader layout="page" label="Loading…" />;
+  if (user && account_type) {
+    const next = from || dashboardPath({
+      accountType: account_type,
+      accountStatus: account_status,
+      signupFeeEnabled: signup_fee_enabled,
+      signupFeeStatus: signup_fee_status,
+    });
+    return <Navigate to={next} replace />;
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();

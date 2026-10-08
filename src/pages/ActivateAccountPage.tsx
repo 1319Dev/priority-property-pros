@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
+import { BrandLoader } from "../components/brand/BrandLoader";
 import { Button } from "../components/ui/Button";
 import { AuthCard, FormError } from "../lib/auth/AuthCard";
 import { postLoginPath } from "../lib/auth/roles";
@@ -56,11 +57,7 @@ export function ActivateAccountPage() {
   }, [state, sessionId, refreshProfile]);
 
   if (loading) {
-    return (
-      <AuthCard eyebrow="Activate account" title="Checking your account…">
-        <p className="text-ink-700">One moment.</p>
-      </AuthCard>
-    );
+    return <BrandLoader layout="page" label="Checking your account…" />;
   }
 
   if (!user) {

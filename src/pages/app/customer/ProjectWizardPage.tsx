@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { ProjectTypePicker } from "../../../components/marketplace/ProjectTypePicker";
 import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/Input";
@@ -206,7 +207,7 @@ export function ProjectWizardPage() {
   }
 
   if (loading) {
-    return <p className="text-ink-500">{error ?? "Loading…"}</p>;
+    return error ? <p className="text-ink-500">{error}</p> : <BrandLoader layout="section" />;
   }
 
   if (!composing) {

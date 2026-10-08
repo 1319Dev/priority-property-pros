@@ -1,6 +1,9 @@
 import { MarketingPhoto } from "../components/media/MarketingPhoto";
+import { BrandLoader } from "../components/brand/BrandLoader";
 import { ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
+import { dashboardPath } from "../lib/auth/publicEntry";
+import { useAuth } from "../lib/auth/useAuth";
 import { CONTRACTOR_CTA } from "../data/brand";
 import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
 import {
@@ -29,6 +32,15 @@ const steps = [
 ];
 
 export function BecomeAProPage() {
+  const { loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status } = useAuth();
+  const home = dashboardPath({
+    accountType: account_type,
+    accountStatus: account_status,
+    signupFeeEnabled: signup_fee_enabled,
+    signupFeeStatus: signup_fee_status,
+  });
+  const contractor = !loading && account_type === "CONTRACTOR";
+
   return (
     <section className="py-10 sm:py-16">
       <Container className="max-w-3xl">
@@ -74,10 +86,19 @@ export function BecomeAProPage() {
           ))}
         </ol>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <ButtonLink to="/sign-up/contractor">{CONTRACTOR_CTA}</ButtonLink>
-          <ButtonLink to="/sign-in" variant="outline">
-            Sign in
-          </ButtonLink>
+          {loading ? <BrandLoader layout="inline" label="Loading…" /> : null}
+          {!loading && contractor ? <ButtonLink to={home}>My dashboard</ButtonLink> : null}
+          {!loading && !contractor ? <ButtonLink to="/sign-up/contractor">{CONTRACTOR_CTA}</ButtonLink> : null}
+          {!loading && !contractor && user ? (
+            <ButtonLink to={home} variant="outline">
+              My dashboard
+            </ButtonLink>
+          ) : null}
+          {!loading && !user ? (
+            <ButtonLink to="/sign-in" variant="outline">
+              Sign in
+            </ButtonLink>
+          ) : null}
         </div>
         <p className="mt-4 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
       </Container>

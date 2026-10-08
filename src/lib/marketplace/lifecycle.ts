@@ -47,6 +47,18 @@ export function bookingIsProtected(status: BookingStatus | null | undefined): st
   return Boolean(status && PROTECTED_BOOKING.includes(status));
 }
 
+export function canCancelCustomerProject(input: {
+  projectStatus: ProjectStatus;
+  bookingStatus: BookingStatus | null;
+  customerHiredAt?: string | null;
+  contractorHiredAt?: string | null;
+}): boolean {
+  if (input.projectStatus === "CANCELLED") return false;
+  if (bookingIsProtected(input.bookingStatus)) return false;
+  if (input.customerHiredAt && input.contractorHiredAt) return false;
+  return true;
+}
+
 export function hasParticipation(state: ParticipationState): boolean {
   return state.acceptedOpportunityCount > 0 || state.submittedEstimateCount > 0;
 }

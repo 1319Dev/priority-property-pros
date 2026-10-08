@@ -4,13 +4,17 @@ import { CUSTOMER_CTA, CUSTOMER_TAGLINE, CONTRACTOR_CTA, MARKETPLACE_NEED_LINE }
 import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING, SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
 import { PROJECT_PLACEHOLDERS } from "../../data/services";
 import { TrustMarkList } from "../../components/brand/TrustMarks";
-import { ButtonLink } from "../../components/ui/Button";
+import { ContractorEntryLink } from "../../components/layout/PublicCtas";
+import { PostProjectLink } from "../../components/layout/PostProjectLink";
 import { Container } from "../../components/ui/Container";
+import { authAwarePostPath } from "../../lib/auth/publicEntry";
+import { useAuth } from "../../lib/auth/useAuth";
 import { HERO_TAGLINE } from "../../lib/marketplace/heroLayout";
 import { HeroBanner } from "./HeroBanner";
 
 export function Hero() {
   const navigate = useNavigate();
+  const { loading, account_type } = useAuth();
   const [query, setQuery] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
@@ -44,12 +48,12 @@ export function Hero() {
             {HOMEPAGE_SIGNUP_HEADLINE} {HOMEPAGE_SIGNUP_SUPPORTING}
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <ButtonLink to="/post-project" size="lg">
+            <PostProjectLink to="/post-project" size="lg">
               {CUSTOMER_CTA}
-            </ButtonLink>
-            <ButtonLink to="/become-a-pro" variant="outline" size="lg">
+            </PostProjectLink>
+            <ContractorEntryLink to="/become-a-pro" variant="outline" size="lg">
               {CONTRACTOR_CTA}
-            </ButtonLink>
+            </ContractorEntryLink>
           </div>
           <p className="mt-3 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
           <div className="mt-6 max-w-3xl">
@@ -61,7 +65,8 @@ export function Hero() {
               event.preventDefault();
               const params = new URLSearchParams();
               if (query.trim()) params.set("q", query.trim());
-              navigate({ pathname: "/post-project", search: params.toString() });
+              const search = params.toString();
+              navigate(authAwarePostPath(search ? `/post-project?${search}` : "/post-project", { loading, accountType: account_type }));
             }}
           >
             <label htmlFor="need-done" className="px-2 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-gold-700">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { Button, ButtonLink } from "../../../components/ui/Button";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
@@ -128,7 +129,7 @@ export function CustomerBookingDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId]);
 
-  if (!booking) return <p className="text-ink-500">{error ?? "Loading…"}</p>;
+  if (!booking) return error ? <p className="text-ink-500">{error}</p> : <BrandLoader layout="section" />;
 
   const canCancel = canCustomerCancelPendingBooking({
     status: booking.status,

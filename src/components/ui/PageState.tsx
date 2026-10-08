@@ -1,14 +1,8 @@
+import { BrandLoader } from "../brand/BrandLoader";
 import { EmptyState } from "../layout/DashboardShell";
-import { Skeleton } from "./Skeleton";
 
 export function LoadingState({ label = "Loading…" }: { label?: string }) {
-  return (
-    <div className="space-y-3" role="status" aria-live="polite" aria-label={label}>
-      <Skeleton className="h-8 w-40" />
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-24 w-full" />
-    </div>
-  );
+  return <BrandLoader label={label} layout="section" />;
 }
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {

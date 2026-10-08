@@ -104,12 +104,14 @@ const STATE_NAMES: Record<string, string> = {
 };
 
 export function normalizeCity(value: string | null | undefined): string {
-  return (value ?? "")
+  const trimmed = (value ?? "")
     .replace(/\s+,/g, ",")
     .replace(/,+/g, ",")
     .replace(/\s+/g, " ")
     .replace(/,\s*$/g, "")
     .trim();
+  if (!trimmed) return "";
+  return trimmed.toLowerCase().replace(/[a-z0-9]+/g, (word) => word.charAt(0).toUpperCase() + word.slice(1));
 }
 
 export function normalizeState(value: string | null | undefined): string {

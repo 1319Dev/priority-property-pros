@@ -96,6 +96,32 @@ html {
   background-repeat: repeat, no-repeat;
 }
 
+.brand-loader-swing {
+  transform-box: view-box;
+  transform-origin: 18px 16px;
+  animation: brand-loader-tap 0.9s ease-in-out infinite;
+}
+
+@keyframes brand-loader-tap {
+  0%,
+  100% {
+    transform: rotate(-34deg);
+  }
+  42% {
+    transform: rotate(8deg);
+  }
+  58% {
+    transform: rotate(8deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-loader-swing {
+    animation: none;
+    transform: rotate(-12deg);
+  }
+}
+
 .gold-rule {
   height: 1px;
   background: linear-gradient(

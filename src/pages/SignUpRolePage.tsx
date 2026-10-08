@@ -1,6 +1,9 @@
 import { Link, Navigate, useSearchParams } from "react-router-dom";
+import { BrandLoader } from "../components/brand/BrandLoader";
 import { AuthCard } from "../lib/auth/AuthCard";
+import { dashboardPath } from "../lib/auth/publicEntry";
 import { requestsVerifierSignup } from "../lib/auth/roles";
+import { useAuth } from "../lib/auth/useAuth";
 import { SIGNUP_ROLE_LEDE } from "../data/pricing";
 
 const options = [
@@ -19,7 +22,22 @@ const options = [
 ];
 
 export function SignUpRolePage() {
+  const { loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status } = useAuth();
   const [params] = useSearchParams();
+  if (loading) return <BrandLoader layout="page" label="Loading…" />;
+  if (user && account_type) {
+    return (
+      <Navigate
+        to={dashboardPath({
+          accountType: account_type,
+          accountStatus: account_status,
+          signupFeeEnabled: signup_fee_enabled,
+          signupFeeStatus: signup_fee_status,
+        })}
+        replace
+      />
+    );
+  }
   if (requestsVerifierSignup([params.get("role"), params.get("account_type"), params.get("accountType"), params.get("type")])) {
     return <Navigate to="/sign-up" replace />;
   }

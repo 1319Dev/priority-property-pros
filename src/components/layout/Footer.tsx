@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { COMPANY_NAME, PRODUCT_NAME, SUPPORT_EMAIL } from "../../data/brand";
 import { FIND_A_PRO_NAV_LABEL, FIND_A_PRO_PATH } from "../../lib/marketplace/findAPro";
 import { SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
+import { authAwarePostPath, dashboardPath, showContractorSignup } from "../../lib/auth/publicEntry";
+import { useAuth } from "../../lib/auth/useAuth";
 import { Logo } from "../brand/Logo";
 import { Container } from "../ui/Container";
 
@@ -9,18 +11,24 @@ const footerLinks = [
   { to: "/how-it-works", label: "How it works" },
   { to: FIND_A_PRO_PATH, label: FIND_A_PRO_NAV_LABEL },
   { to: "/pricing", label: "Pricing" },
-  { to: "/become-a-pro", label: "Become a pro" },
-  { to: "/post-project", label: "Post a project" },
   { to: "/faq", label: "FAQ" },
   { to: "/contact", label: "Contact" },
   { to: "/reviews", label: "Reviews" },
   { to: "/reviews", label: "Leave a review" },
   { to: "/trust", label: "Trust & safety" },
-  { to: "/sign-in", label: "Sign in" },
-  { to: "/sign-up", label: "Create account" },
 ];
 
 export function Footer() {
+  const { loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status, signOut } = useAuth();
+  const postTo = authAwarePostPath("/post-project", { loading, accountType: account_type });
+  const showProSignup = showContractorSignup({ loading, accountType: account_type });
+  const home = dashboardPath({
+    accountType: account_type,
+    accountStatus: account_status,
+    signupFeeEnabled: signup_fee_enabled,
+    signupFeeStatus: signup_fee_status,
+  });
+
   return (
     <footer className="mt-8 border-t border-forest-800/10 bg-forest-900 pb-32 text-cream-100 lg:pb-0">
       <Container className="grid gap-10 py-12 md:grid-cols-[1.4fr_1fr]">
@@ -44,6 +52,11 @@ export function Footer() {
             Explore
           </p>
           <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <li>
+              <Link to={postTo} className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
+                Post a project
+              </Link>
+            </li>
             {footerLinks.map((link) => (
               <li key={`${link.to}-${link.label}`}>
                 <Link to={link.to} className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
@@ -51,6 +64,55 @@ export function Footer() {
                 </Link>
               </li>
             ))}
+            <li>
+              {loading ? (
+                <span className="invisible inline-flex min-h-11 items-center" aria-hidden="true">
+                  Become a pro
+                </span>
+              ) : showProSignup ? (
+                <Link to="/become-a-pro" className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
+                  Become a pro
+                </Link>
+              ) : (
+                <Link to={home} className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
+                  My dashboard
+                </Link>
+              )}
+            </li>
+            {!loading && user && showProSignup ? (
+              <li>
+                <Link to={home} className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
+                  My dashboard
+                </Link>
+              </li>
+            ) : null}
+            {!loading && user ? (
+              <li>
+                <button
+                  type="button"
+                  className="min-h-11 text-cream-50 hover:text-gold-300"
+                  onClick={() => {
+                    void signOut();
+                  }}
+                >
+                  Sign out
+                </button>
+              </li>
+            ) : null}
+            {!loading && !user ? (
+              <li>
+                <Link to="/sign-in" className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
+                  Sign in
+                </Link>
+              </li>
+            ) : null}
+            {!loading && !user ? (
+              <li>
+                <Link to="/sign-up" className="min-h-11 inline-flex items-center text-cream-50 hover:text-gold-300">
+                  Create account
+                </Link>
+              </li>
+            ) : null}
           </ul>
         </nav>
       </Container>

@@ -69,7 +69,7 @@ describe("protected routes", () => {
   it("does not flash protected content while auth is loading", () => {
     renderGuard("/app/customer", auth({ loading: true, user: null }));
     expect(screen.queryByText("customer-home")).not.toBeInTheDocument();
-    expect(screen.getByText(/priority property pros/i)).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Loading…" })).toBeInTheDocument();
   });
 
   it("redirects signed-out users to sign-in", () => {

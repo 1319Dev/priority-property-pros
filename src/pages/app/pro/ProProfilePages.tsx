@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { ContractorAvatar } from "../../../components/media/ContractorAvatar";
 import { PortfolioExample } from "../../../components/media/PortfolioExample";
 import { Button, ButtonLink } from "../../../components/ui/Button";
@@ -47,7 +48,7 @@ export function ProProfilePage() {
   }, [user]);
 
   if (error) return <p className="text-sm text-danger-600">{error}</p>;
-  if (mode === "loading") return <p className="text-sm text-ink-500">Loading profile…</p>;
+  if (mode === "loading") return <BrandLoader layout="section" label="Loading profile…" />;
   if (mode === "onboarding") return <ProOnboardingPage />;
   return <ManageProfileView />;
 }

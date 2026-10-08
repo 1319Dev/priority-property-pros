@@ -1,8 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { BrandLoader } from "../components/brand/BrandLoader";
 import { Button } from "../components/ui/Button";
 import { TextInput } from "../components/ui/Input";
 import { AuthCard, FormError } from "../lib/auth/AuthCard";
+import { dashboardPath } from "../lib/auth/publicEntry";
 import { isPublicSignupType, requestsVerifierSignup } from "../lib/auth/roles";
 import type { PublicSignupType } from "../lib/auth/types";
 import { useAuth } from "../lib/auth/useAuth";
@@ -41,7 +43,7 @@ export function SignUpPage() {
 }
 
 function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
-  const { signUp, configured } = useAuth();
+  const { signUp, configured, loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -58,10 +60,6 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
     serviceArea: "",
   });
 
-  function set(name: keyof typeof values, value: string) {
-    setValues((current) => ({ ...current, [name]: value }));
-  }
-
   useEffect(() => {
     if (!configured) return;
     let cancelled = false;
@@ -72,6 +70,26 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
       cancelled = true;
     };
   }, [configured]);
+
+  if (loading) return <BrandLoader layout="page" label="Loading…" />;
+  const customerBecomingPro = account_type === "CUSTOMER" && accountType === "CONTRACTOR";
+  if (user && account_type && !customerBecomingPro) {
+    return (
+      <Navigate
+        to={dashboardPath({
+          accountType: account_type,
+          accountStatus: account_status,
+          signupFeeEnabled: signup_fee_enabled,
+          signupFeeStatus: signup_fee_status,
+        })}
+        replace
+      />
+    );
+  }
+
+  function set(name: keyof typeof values, value: string) {
+    setValues((current) => ({ ...current, [name]: value }));
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();

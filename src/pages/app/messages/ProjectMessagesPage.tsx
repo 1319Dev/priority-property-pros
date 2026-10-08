@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { ContactSharePanel } from "../../../components/marketplace/ContactSharePanel";
 import { Button } from "../../../components/ui/Button";
@@ -242,7 +243,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Messages</p>
           <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Messages</h1>
         </header>
-        {loading ? <p className="text-sm text-ink-500">Loading conversations…</p> : null}
+        {loading ? <BrandLoader layout="section" label="Loading conversations…" /> : null}
         {!loading && ordered.length === 0 ? (
           <EmptyState title={MESSAGES_EMPTY_TITLE} body={MESSAGES_EMPTY_BODY} />
         ) : null}
