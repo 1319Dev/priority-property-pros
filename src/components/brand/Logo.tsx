@@ -46,16 +46,19 @@ type LogoProps = {
   className?: string;
   markClassName?: string;
   inverted?: boolean;
+  /** Ellipsize the wordmark when the header row is narrower than the logo. */
+  truncateWordmark?: boolean;
 };
 
-export function Logo({ className, markClassName, inverted = false }: LogoProps) {
+export function Logo({ className, markClassName, inverted = false, truncateWordmark = false }: LogoProps) {
   return (
-    <span className={cn("inline-flex items-center gap-2.5", className)}>
+    <span className={cn("inline-flex items-center gap-2.5", truncateWordmark && "max-w-full min-w-0", className)}>
       <BrandMark className={cn("h-9 w-9 shrink-0", markClassName)} />
-      <span className="flex min-w-0 flex-col leading-none">
+      <span className={cn("flex flex-col leading-none", truncateWordmark && "min-w-0")}>
         <span
           className={cn(
             "font-display text-[0.62rem] font-semibold tracking-[0.22em]",
+            truncateWordmark && "truncate",
             inverted ? "text-gold-300" : "text-gold-600",
           )}
         >
@@ -64,6 +67,7 @@ export function Logo({ className, markClassName, inverted = false }: LogoProps) 
         <span
           className={cn(
             "font-display text-[1.05rem] font-semibold tracking-tight",
+            truncateWordmark && "truncate",
             inverted ? "text-cream-50" : "text-forest-800",
           )}
         >

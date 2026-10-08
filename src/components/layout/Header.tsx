@@ -38,11 +38,11 @@ export function Header() {
       >
         Skip to content
       </a>
-      <Container className="flex min-h-16 items-center justify-between gap-4 py-2">
-        <NavLink to="/" aria-label="Priority Property Pros home" className="shrink-0">
-          <Logo />
+      <Container className="flex min-h-16 min-w-0 items-center justify-between gap-2 py-2 sm:gap-4">
+        <NavLink to="/" aria-label="Priority Property Pros home" className="min-w-0">
+          <Logo truncateWordmark />
         </NavLink>
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
             {navLinks.map((link) => (
               <NavLink

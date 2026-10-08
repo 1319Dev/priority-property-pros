@@ -49,10 +49,10 @@ export function AccountMenu() {
   }
 
   return (
-    <div className="relative" ref={rootRef}>
+    <div className="relative shrink-0" ref={rootRef}>
       <button
         type="button"
-        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-forest-800 px-2.5 pr-3 text-sm font-semibold text-cream-50"
+        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-forest-800 pl-2 pr-2 text-sm font-semibold text-cream-50 min-[360px]:pl-2.5 min-[360px]:pr-3"
         aria-label="Account menu"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -69,7 +69,7 @@ export function AccountMenu() {
             {initials}
           </span>
         )}
-        <span className="max-w-28 truncate">{shortName}</span>
+        <span className="hidden max-w-28 truncate min-[360px]:inline">{shortName}</span>
       </button>
       {open ? (
         <div
