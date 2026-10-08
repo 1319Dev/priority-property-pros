@@ -8,8 +8,12 @@ import {
   SEE_PRICING_LABEL,
   SIGNUP_FEE_NOT_MONTHLY,
 } from "../../data/pricing";
+import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 
 export function SimplePricing() {
+  const hidePricing = useHidePlatformPricing();
+  if (hidePricing) return null;
+
   return (
     <section className="py-10 sm:py-12" aria-labelledby="pricing-heading">
       <Container>

@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { BrandLoader } from "../brand/BrandLoader";
+import { LoaderSlot } from "../brand/BrandLoader";
 import { useAuth } from "../../lib/auth/useAuth";
 import { authAwarePostPath, dashboardPath, showContractorSignup } from "../../lib/auth/publicEntry";
 import { FIND_A_PRO_PATH } from "../../lib/marketplace/findAPro";
@@ -57,7 +57,7 @@ export function BottomNav() {
           <li key={item.key} className="flex justify-center">
             {item.placeholder ? (
               item.key === "account" ? (
-                <BrandLoader layout="nav" label="Loading…" />
+                <LoaderSlot compact />
               ) : (
                 <span className="flex min-h-12 w-full" aria-hidden="true" />
               )

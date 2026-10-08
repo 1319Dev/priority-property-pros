@@ -1,6 +1,10 @@
+import { Navigate } from "react-router-dom";
 import { ContractorEntryLink } from "../components/layout/PublicCtas";
 import { PostProjectLink } from "../components/layout/PostProjectLink";
 import { Container } from "../components/ui/Container";
+import { useHidePlatformPricing } from "../lib/auth/platformPricing";
+import { dashboardPath } from "../lib/auth/publicEntry";
+import { useAuth } from "../lib/auth/useAuth";
 import { CONTRACTOR_CTA, CUSTOMER_CTA } from "../data/brand";
 import {
   CONNECTION_FEE,
@@ -26,6 +30,22 @@ import {
 } from "../data/pricing";
 
 export function PricingPage() {
+  const { loading, account_type, account_status, signup_fee_enabled, signup_fee_status } = useAuth();
+  const hidePricing = useHidePlatformPricing();
+  if (!loading && hidePricing) {
+    return (
+      <Navigate
+        to={dashboardPath({
+          accountType: account_type,
+          accountStatus: account_status,
+          signupFeeEnabled: signup_fee_enabled,
+          signupFeeStatus: signup_fee_status,
+        })}
+        replace
+      />
+    );
+  }
+
   return (
     <section className="py-10 sm:py-16">
       <Container className="max-w-3xl">

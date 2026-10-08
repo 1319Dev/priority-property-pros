@@ -1,10 +1,11 @@
 import { NavLink } from "react-router-dom";
 import { Logo } from "../brand/Logo";
-import { BrandLoader } from "../brand/BrandLoader";
+import { LoaderSlot } from "../brand/BrandLoader";
 import { Container } from "../ui/Container";
 import { CUSTOMER_CTA } from "../../data/brand";
 import { FIND_A_PRO_NAV_LABEL, FIND_A_PRO_PATH } from "../../lib/marketplace/findAPro";
 import { dashboardPath, showContractorSignup } from "../../lib/auth/publicEntry";
+import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 import { useAuth } from "../../lib/auth/useAuth";
 import { AccountMenu } from "../account/AccountMenu";
 import { PostProjectLink } from "./PostProjectLink";
@@ -19,6 +20,8 @@ const links = [
 export function Header() {
   const { loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status } = useAuth();
   const showProSignup = showContractorSignup({ loading, accountType: account_type });
+  const hidePricing = useHidePlatformPricing();
+  const navLinks = hidePricing ? links.filter((link) => link.to !== "/pricing") : links;
   const home = dashboardPath({
     accountType: account_type,
     accountStatus: account_status,
@@ -40,7 +43,7 @@ export function Header() {
         </NavLink>
         <div className="flex items-center gap-2 sm:gap-3">
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
-            {links.map((link) => (
+            {navLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
@@ -81,7 +84,7 @@ export function Header() {
             </PostProjectLink>
           </nav>
           {loading ? (
-            <BrandLoader layout="inline" label="Loading…" />
+            <LoaderSlot />
           ) : user ? (
             <AccountMenu />
           ) : (

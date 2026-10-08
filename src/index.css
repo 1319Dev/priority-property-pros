@@ -96,29 +96,37 @@ html {
   background-repeat: repeat, no-repeat;
 }
 
-.brand-loader-swing {
-  transform-box: view-box;
-  transform-origin: 18px 16px;
-  animation: brand-loader-tap 0.9s ease-in-out infinite;
+.brand-loader-arc {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: brand-loader-arc-spin 1.2s linear infinite;
 }
 
-@keyframes brand-loader-tap {
+.brand-loader-skeleton {
+  background: color-mix(in srgb, var(--color-forest-800) 10%, transparent);
+  animation: brand-loader-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes brand-loader-arc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes brand-loader-pulse {
   0%,
   100% {
-    transform: rotate(-34deg);
+    opacity: 1;
   }
-  42% {
-    transform: rotate(8deg);
-  }
-  58% {
-    transform: rotate(8deg);
+  50% {
+    opacity: 0.55;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .brand-loader-swing {
+  .brand-loader-arc,
+  .brand-loader-skeleton {
     animation: none;
-    transform: rotate(-12deg);
   }
 }
 

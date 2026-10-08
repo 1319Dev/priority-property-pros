@@ -7,6 +7,7 @@ import { deleteOwnAccount } from "../../lib/auth/deleteAccount";
 import { FormError } from "../../lib/auth/AuthCard";
 import { getSupabaseClient } from "../../lib/supabase/client";
 import { PRO_DASHBOARD_PRICING_NOTE } from "../../data/pricing";
+import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 import { ACCOUNT_ROLE_NOTE, CUSTOMER_ACTIVATION_NOTE, CUSTOMER_PAYS_DIRECTLY } from "../../lib/marketplace/customerCopy";
 import { accountStatusLabel, accountTypeLabel } from "../../lib/marketplace/statusLabels";
 
@@ -24,6 +25,7 @@ export function AccountPage() {
   const [firstName, setFirstName] = useState(profile?.first_name ?? "");
   const [lastName, setLastName] = useState(profile?.last_name ?? "");
   const [phone, setPhone] = useState(profile?.phone ?? "");
+  const hidePricing = useHidePlatformPricing();
 
   return (
     <div className="max-w-lg space-y-6">
@@ -77,7 +79,9 @@ export function AccountPage() {
       </dl>
       <p className="text-sm text-ink-500">
         {ACCOUNT_ROLE_NOTE}
-        {account_type === "CUSTOMER" ? ` ${CUSTOMER_ACTIVATION_NOTE} ${CUSTOMER_PAYS_DIRECTLY}` : ""}
+        {account_type === "CUSTOMER"
+          ? `${hidePricing ? "" : ` ${CUSTOMER_ACTIVATION_NOTE}`} ${CUSTOMER_PAYS_DIRECTLY}`
+          : ""}
         {account_type === "CONTRACTOR" ? ` ${PRO_DASHBOARD_PRICING_NOTE}` : ""}
       </p>
       <FormError message={error} />

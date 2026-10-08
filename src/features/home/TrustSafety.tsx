@@ -4,8 +4,11 @@ import { ButtonLink } from "../../components/ui/Button";
 import { Container, SectionHeading } from "../../components/ui/Container";
 import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
 import { SIGNUP_FEE_NOT_MONTHLY } from "../../data/pricing";
+import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 
 export function TrustSafety() {
+  const hidePricing = useHidePlatformPricing();
+
   return (
     <section className="border-t border-forest-800/10 py-14 sm:py-16" aria-labelledby="trust-heading">
       <Container>
@@ -36,8 +39,14 @@ export function TrustSafety() {
             <h3 className="font-display text-2xl text-forest-800">What PPP is</h3>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink-700">
               <li>A technology marketplace that connects homeowners, property owners, landlords, property managers, and businesses with independent local contractors.</li>
-              <li>Live posting and estimates. Contractors pay $4.99 only when they choose to connect. Project payment is between the customer and the pro.</li>
-              <li>{SIGNUP_FEE_NOT_MONTHLY}</li>
+              {hidePricing ? (
+                <li>Live posting and estimates. Project payment is between the customer and the pro.</li>
+              ) : (
+                <>
+                  <li>Live posting and estimates. Contractors pay $4.99 only when they choose to connect. Project payment is between the customer and the pro.</li>
+                  <li>{SIGNUP_FEE_NOT_MONTHLY}</li>
+                </>
+              )}
             </ul>
           </div>
           <div className="rounded-3xl border border-forest-800/10 bg-cream-50 p-6">

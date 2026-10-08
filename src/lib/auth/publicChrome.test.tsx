@@ -8,7 +8,6 @@ import { ForContractors } from "../../features/home/ForContractors";
 import { Hero } from "../../features/home/Hero";
 import { BecomeAProPage } from "../../pages/BecomeAProPage";
 import { PostProjectPage } from "../../pages/PostProjectPage";
-import { PricingPage } from "../../pages/PricingPage";
 import { SignInPage } from "../../pages/SignInPage";
 import { SignUpPage } from "../../pages/SignUpPage";
 import { SignUpRolePage } from "../../pages/SignUpRolePage";
@@ -22,7 +21,6 @@ function renderChrome(value: AuthContextValue, path = "/") {
         <Header />
         <Hero />
         <ForContractors />
-        <PricingPage />
         <BecomeAProPage />
         <Footer />
         <BottomNav />

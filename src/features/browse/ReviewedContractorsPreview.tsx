@@ -3,6 +3,7 @@ import { BrandLoader } from "../../components/brand/BrandLoader";
 import { PostProjectTextLink } from "../../components/layout/PublicCtas";
 import { ContractorAvatar } from "../../components/media/ContractorAvatar";
 import { formatPublicRating, liveContractorPath } from "../../lib/marketplace/publicDirectory";
+import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 import {
   REVIEWED_PROS_EMPTY_BODY,
   REVIEWED_PROS_EMPTY_COMPACT,
@@ -10,12 +11,20 @@ import {
 } from "../../lib/marketplace/reviewedContractors";
 import type { ReviewedContractorCard } from "../../lib/marketplace/reviewedContractorsApi";
 
+const REVIEWED_PROS_EMPTY_BODY_WITHOUT_PLATFORM_FEE =
+  "No contractor has a customer review on the platform yet. This page stays empty until that happens. It will not fill in sample people. Post a project when you are ready to hire. PPP does not take a cut of the job.";
+
 export function ReviewedContractorsEmpty({ compact = false }: { compact?: boolean }) {
+  const hidePricing = useHidePlatformPricing();
   return (
     <div className="rounded-3xl border border-dashed border-forest-800/20 bg-cream-100/70 px-5 py-6">
       <p className="font-display text-2xl text-forest-800">{REVIEWED_PROS_EMPTY_TITLE}</p>
       <p className="mt-2 text-sm leading-relaxed text-ink-700">
-        {compact ? REVIEWED_PROS_EMPTY_COMPACT : REVIEWED_PROS_EMPTY_BODY}
+        {compact
+          ? REVIEWED_PROS_EMPTY_COMPACT
+          : hidePricing
+            ? REVIEWED_PROS_EMPTY_BODY_WITHOUT_PLATFORM_FEE
+            : REVIEWED_PROS_EMPTY_BODY}
       </p>
       <p className="mt-4">
         <PostProjectTextLink to="/post-project" className="min-h-11 inline-flex items-center font-semibold text-forest-800 underline">

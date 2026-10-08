@@ -1,19 +1,24 @@
 import { Link } from "react-router-dom";
-import { FAQ_INTRO, FAQ_ITEMS, FAQ_PAGE_TITLE } from "../data/faq";
+import { FAQ_PAGE_TITLE, visibleFaqIntro, visibleFaqItems } from "../data/faq";
+import { useHidePlatformPricing } from "../lib/auth/platformPricing";
 import { ContractorEntryLink } from "../components/layout/PublicCtas";
 import { PostProjectLink } from "../components/layout/PostProjectLink";
 import { Container } from "../components/ui/Container";
 import { CUSTOMER_CTA, CONTRACTOR_CTA } from "../data/brand";
 
 export function FaqPage() {
+  const hidePricing = useHidePlatformPricing();
+  const intro = visibleFaqIntro(hidePricing);
+  const items = visibleFaqItems(hidePricing);
+
   return (
     <section className="py-10 sm:py-16">
       <Container className="max-w-3xl">
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">FAQ</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">{FAQ_PAGE_TITLE}</h1>
-        <p className="mt-4 text-lg leading-relaxed text-ink-700">{FAQ_INTRO}</p>
+        <p className="mt-4 text-lg leading-relaxed text-ink-700">{intro}</p>
         <dl className="mt-8 space-y-4">
-          {FAQ_ITEMS.map((item) => (
+          {items.map((item) => (
             <div key={item.question} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-5">
               <dt className="font-semibold text-forest-800">{item.question}</dt>
               <dd className="mt-2 text-sm leading-relaxed text-ink-700">{item.answer}</dd>

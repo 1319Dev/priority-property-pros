@@ -1,5 +1,6 @@
 import { Container, SectionHeading } from "../../components/ui/Container";
 import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING } from "../../data/pricing";
+import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 
 const points = [
   {
@@ -25,6 +26,9 @@ const points = [
 ];
 
 export function WhyHomeowners() {
+  const hidePricing = useHidePlatformPricing();
+  const visible = hidePricing ? points.filter((point) => point.title !== "One-time signup") : points;
+
   return (
     <section className="py-14 sm:py-16" aria-labelledby="why-heading">
       <Container>
@@ -36,7 +40,7 @@ export function WhyHomeowners() {
           Why homeowners use PPP
         </h2>
         <ul className="mt-8 grid gap-4 sm:grid-cols-2">
-          {points.map((point) => (
+          {visible.map((point) => (
             <li key={point.title} className="rounded-3xl bg-forest-800 px-5 py-6 text-cream-50">
               <h3 className="font-display text-2xl">{point.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-cream-200">{point.body}</p>

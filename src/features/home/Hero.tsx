@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CUSTOMER_CTA, CUSTOMER_TAGLINE, CONTRACTOR_CTA, MARKETPLACE_NEED_LINE } from "../../data/brand";
-import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING, SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
+import { HOMEPAGE_SIGNUP_HEADLINE, HOMEPAGE_SIGNUP_SUPPORTING, JOB_PAYMENT_PLAIN, SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
+import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 import { PROJECT_PLACEHOLDERS } from "../../data/services";
 import { TrustMarkList } from "../../components/brand/TrustMarks";
 import { ContractorEntryLink } from "../../components/layout/PublicCtas";
@@ -15,6 +16,7 @@ import { HeroBanner } from "./HeroBanner";
 export function Hero() {
   const navigate = useNavigate();
   const { loading, account_type } = useAuth();
+  const hidePricing = useHidePlatformPricing();
   const [query, setQuery] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
@@ -44,9 +46,13 @@ export function Hero() {
             {MARKETPLACE_NEED_LINE} Independent local contractors compete fairly. You hire. They perform. Priority
             Property Pros is the place — not the crew.
           </p>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-700">
-            {HOMEPAGE_SIGNUP_HEADLINE} {HOMEPAGE_SIGNUP_SUPPORTING}
-          </p>
+          {hidePricing ? (
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-700">{JOB_PAYMENT_PLAIN}</p>
+          ) : (
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-700">
+              {HOMEPAGE_SIGNUP_HEADLINE} {HOMEPAGE_SIGNUP_SUPPORTING}
+            </p>
+          )}
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <PostProjectLink to="/post-project" size="lg">
               {CUSTOMER_CTA}
@@ -55,7 +61,7 @@ export function Hero() {
               {CONTRACTOR_CTA}
             </ContractorEntryLink>
           </div>
-          <p className="mt-3 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
+          {hidePricing ? null : <p className="mt-3 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>}
           <div className="mt-6 max-w-3xl">
             <TrustMarkList />
           </div>
