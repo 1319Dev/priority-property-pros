@@ -4,30 +4,57 @@
 -- payment columns. The connection alert only READS project_connections.status.
 -- Notification failures are swallowed so a customer's or contractor's action still commits.
 --
--- OWNER SETUP (run after this migration and after the Edge Functions are deployed).
--- Do not commit the secret. Generate one with: openssl rand -base64 32
+-- PROVISIONING (one SQL statement, after this migration and the Edge Functions
+-- are deployed). Placeholders only. Do not commit real values. This migration
+-- does not call vault.create_secret.
 --
--- 1. Edge Function secrets on project bersftkjpbzpgtahbqwd:
---      NOTIFY_WEBHOOK_SECRET     same value inserted below
---      VAPID_PUBLIC_KEY          public key committed in src/lib/notifications/vapid.ts
---      VAPID_PRIVATE_KEY         from the owner's secret file, never git
---      VAPID_SUBJECT             mailto:prioritypropertypros@gmail.com
---      RESEND_API_KEY            from Resend, after the sending domain is verified
---      NOTIFICATION_FROM         Priority Property Pros <notifications@prioritypropertypros.com>
---      NOTIFICATION_SITE_URL     https://prioritypropertypros.com
+-- Generate two random strings with: openssl rand -base64 32
+-- <NOTIFY_WEBHOOK_SECRET>       first random string
+-- <UNSUBSCRIBE_TOKEN_SECRET>    second random string
+-- <VAPID_PUBLIC_KEY>            COMMITTED_VAPID_PUBLIC_KEY in src/lib/notifications/vapid.ts
+-- <VAPID_PRIVATE_KEY>           owner's private key file, never git
+-- <VAPID_SUBJECT>               mailto:prioritypropertypros@gmail.com
+-- <NOTIFICATION_FROM>           Priority Property Pros <notifications@prioritypropertypros.com>
+-- <NOTIFICATION_SITE_URL>       https://prioritypropertypros.com
+-- <NOTIFICATION_FUNCTION_URL>   https://<project-ref>.supabase.co/functions/v1/send-notification
 --
--- 2. Private delivery config (SQL editor, not a public table):
---      UPDATE private.notification_delivery_config
---      SET function_url = 'https://bersftkjpbzpgtahbqwd.supabase.co/functions/v1/send-notification',
---          webhook_secret = '<same value as NOTIFY_WEBHOOK_SECRET>',
---          updated_at = now()
---      WHERE singleton;
+-- DO $vault$
+-- BEGIN
+--   IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'notify_webhook_secret') THEN
+--     PERFORM vault.create_secret('<NOTIFY_WEBHOOK_SECRET>', 'notify_webhook_secret', 'Header secret for send-notification');
+--   END IF;
+--   IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'unsubscribe_token_secret') THEN
+--     PERFORM vault.create_secret('<UNSUBSCRIBE_TOKEN_SECRET>', 'unsubscribe_token_secret', 'Signs one-click unsubscribe links');
+--   END IF;
+--   IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'vapid_public_key') THEN
+--     PERFORM vault.create_secret('<VAPID_PUBLIC_KEY>', 'vapid_public_key', 'Web Push public key');
+--   END IF;
+--   IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'vapid_private_key') THEN
+--     PERFORM vault.create_secret('<VAPID_PRIVATE_KEY>', 'vapid_private_key', 'Web Push private key');
+--   END IF;
+--   IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'vapid_subject') THEN
+--     PERFORM vault.create_secret('<VAPID_SUBJECT>', 'vapid_subject', 'Web Push subject');
+--   END IF;
+--   IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'notification_from') THEN
+--     PERFORM vault.create_secret('<NOTIFICATION_FROM>', 'notification_from', 'From address for alert email');
+--   END IF;
+--   IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'notification_site_url') THEN
+--     PERFORM vault.create_secret('<NOTIFICATION_SITE_URL>', 'notification_site_url', 'Public site origin for alert links');
+--   END IF;
+--   IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'notification_function_url') THEN
+--     PERFORM vault.create_secret('<NOTIFICATION_FUNCTION_URL>', 'notification_function_url', 'send-notification URL for pg_net');
+--   END IF;
+-- END
+-- $vault$;
 --
--- Until function_url and webhook_secret are set, in-site alerts still save and
--- push/email are skipped. If RESEND_API_KEY or the VAPID secrets are missing,
--- send-notification logs that and continues.
+-- The owner pastes only RESEND_API_KEY in Dashboard → Edge Functions → Secrets.
+-- Optional fallback, not required: vault.create_secret('<RESEND_API_KEY>', 'resend_api_key', 'Resend').
+-- Functions read Vault first and fall back to the matching Deno env var.
+-- RESEND_API_KEY is read from the environment first, then Vault name resend_api_key.
+-- Until the function URL and webhook secret exist, in-site alerts still save.
 
 CREATE EXTENSION IF NOT EXISTS pg_net;
+CREATE EXTENSION IF NOT EXISTS supabase_vault;
 
 CREATE SCHEMA IF NOT EXISTS private;
 
@@ -49,7 +76,7 @@ VALUES (true)
 ON CONFLICT (singleton) DO NOTHING;
 
 COMMENT ON TABLE private.notification_delivery_config IS
-  'Private send-notification URL and shared secret. Not granted to anon or authenticated. Owner fills function_url and webhook_secret in the SQL editor. This migration stores no secret.';
+  'Optional fallback for the send-notification URL and shared secret when Vault names notification_function_url and notify_webhook_secret are empty. Not granted to anon or authenticated. This migration stores no secret.';
 
 -- ---------------------------------------------------------------------------
 -- Preferences. One row per user and category. Users only see and edit their own.
@@ -779,7 +806,58 @@ CREATE TRIGGER booking_reviews_notify
 REVOKE ALL ON FUNCTION public.notify_booking_review() FROM PUBLIC, anon, authenticated;
 
 -- ---------------------------------------------------------------------------
+-- Vault reads for Edge Functions. Whitelisted names only. service_role only.
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION private.get_notification_channel_secrets()
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT coalesce(
+    jsonb_object_agg(s.name, s.decrypted_secret)
+      FILTER (WHERE s.decrypted_secret IS NOT NULL AND btrim(s.decrypted_secret) <> ''),
+    '{}'::jsonb
+  )
+  FROM vault.decrypted_secrets s
+  WHERE s.name IN (
+    'notify_webhook_secret',
+    'vapid_public_key',
+    'vapid_private_key',
+    'vapid_subject',
+    'notification_from',
+    'notification_site_url',
+    'unsubscribe_token_secret',
+    'notification_function_url',
+    'resend_api_key'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_notification_channel_secrets()
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  PERFORM public.require_service_role();
+  RETURN private.get_notification_channel_secrets();
+END;
+$$;
+
+REVOKE ALL ON FUNCTION private.get_notification_channel_secrets() FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.get_notification_channel_secrets() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_notification_channel_secrets() TO service_role;
+
+COMMENT ON FUNCTION public.get_notification_channel_secrets() IS
+  'Returns whitelisted notification Vault secrets for the service role. Edge Functions fall back to Deno env when a name is missing.';
+
+-- ---------------------------------------------------------------------------
 -- After a notification row is saved, ask send-notification to deliver push/email.
+-- Vault names win. private.notification_delivery_config fills any blank.
 -- Missing config or a network error must not roll back the user's action.
 -- ---------------------------------------------------------------------------
 
@@ -792,13 +870,41 @@ AS $$
 DECLARE
   v_url text;
   v_secret text;
+  v_cfg_url text;
+  v_cfg_secret text;
 BEGIN
   BEGIN
-    SELECT c.function_url, c.webhook_secret
-      INTO v_url, v_secret
-    FROM private.notification_delivery_config c
-    WHERE c.singleton
-    LIMIT 1;
+    BEGIN
+      SELECT s.decrypted_secret INTO v_url
+      FROM vault.decrypted_secrets s
+      WHERE s.name = 'notification_function_url'
+      LIMIT 1;
+      SELECT s.decrypted_secret INTO v_secret
+      FROM vault.decrypted_secrets s
+      WHERE s.name = 'notify_webhook_secret'
+      LIMIT 1;
+    EXCEPTION WHEN OTHERS THEN
+      v_url := NULL;
+      v_secret := NULL;
+    END;
+
+    BEGIN
+      SELECT c.function_url, c.webhook_secret
+        INTO v_cfg_url, v_cfg_secret
+      FROM private.notification_delivery_config c
+      WHERE c.singleton
+      LIMIT 1;
+    EXCEPTION WHEN OTHERS THEN
+      v_cfg_url := NULL;
+      v_cfg_secret := NULL;
+    END;
+
+    IF v_url IS NULL OR btrim(v_url) = '' THEN
+      v_url := v_cfg_url;
+    END IF;
+    IF v_secret IS NULL OR btrim(v_secret) = '' THEN
+      v_secret := v_cfg_secret;
+    END IF;
 
     IF v_url IS NULL OR btrim(v_url) = '' OR v_secret IS NULL OR btrim(v_secret) = '' THEN
       RETURN NEW;
@@ -829,7 +935,7 @@ CREATE TRIGGER notifications_dispatch_channels
 REVOKE ALL ON FUNCTION public.dispatch_notification_channels() FROM PUBLIC, anon, authenticated;
 
 COMMENT ON FUNCTION public.dispatch_notification_channels() IS
-  'Queues send-notification via pg_net using private.notification_delivery_config. Skips when the URL or secret is blank. Never raises to the caller.';
+  'Queues send-notification via pg_net. Reads notification_function_url and notify_webhook_secret from Vault, then private.notification_delivery_config. Skips when either value is blank. Never raises to the caller.';
 
 ALTER TABLE public.notifications REPLICA IDENTITY FULL;
 

@@ -26,11 +26,36 @@ describe("notification channel migration", () => {
     expect(migrationName > "20261008023700").toBe(true);
     expect(migrationName > "20261012000002").toBe(true);
     expect(sql).toMatch(/CREATE EXTENSION IF NOT EXISTS pg_net/);
+    expect(sql).toMatch(/CREATE EXTENSION IF NOT EXISTS supabase_vault/);
     expect(sql).toMatch(/private\.notification_delivery_config/);
     expect(sql).toMatch(/REVOKE ALL ON TABLE private\.notification_delivery_config FROM anon, authenticated/);
     expect(sql).not.toMatch(/webhook_secret text NOT NULL DEFAULT/);
     expect(sql).not.toMatch(/sk_live_/);
     expect(sql).not.toMatch(/VAPID_PRIVATE_KEY\s*=\s*'/);
+    const executable = sql
+      .split("\n")
+      .filter((line) => !line.trim().startsWith("--"))
+      .join("\n");
+    expect(executable).not.toMatch(/vault\.create_secret/);
+    expect(executable).not.toMatch(/UPDATE\s+public\.project_connections/i);
+    expect(executable).not.toMatch(/INSERT\s+INTO\s+public\.project_connections/i);
+    expect(executable).not.toMatch(/UPDATE\s+public\.bookings/i);
+    expect(executable).not.toMatch(/stripe_/i);
+  });
+
+  it("reads delivery settings from Vault and keeps them off the public API", () => {
+    expect(sql).toMatch(/vault\.create_secret\('<NOTIFY_WEBHOOK_SECRET>', 'notify_webhook_secret'/);
+    expect(sql).toMatch(/vault\.create_secret\('<VAPID_PRIVATE_KEY>', 'vapid_private_key'/);
+    expect(sql).toMatch(/vault\.create_secret\('<NOTIFICATION_FUNCTION_URL>', 'notification_function_url'/);
+    expect(sql).toMatch(/private\.get_notification_channel_secrets/);
+    expect(sql).toMatch(/PERFORM public\.require_service_role\(\)/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION private\.get_notification_channel_secrets\(\) FROM PUBLIC, anon, authenticated, service_role/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.get_notification_channel_secrets\(\) TO service_role/);
+    const dispatch = functionBody(sql, "dispatch_notification_channels");
+    expect(dispatch).toMatch(/vault\.decrypted_secrets/);
+    expect(dispatch).toMatch(/notification_function_url/);
+    expect(dispatch).toMatch(/notify_webhook_secret/);
+    expect(dispatch).toMatch(/private\.notification_delivery_config/);
   });
 
   it("locks preferences and push subscriptions to the signed-in user", () => {
@@ -41,6 +66,8 @@ describe("notification channel migration", () => {
     expect(sql).toMatch(/endpoint text NOT NULL/);
     expect(sql).toMatch(/p256dh text NOT NULL/);
     expect(sql).toMatch(/GRANT SELECT, DELETE ON TABLE public\.push_subscriptions TO authenticated/);
+    expect(sql).toMatch(/CREATE POLICY push_subscriptions_select_own/);
+    expect(sql).toMatch(/CREATE POLICY notification_preferences_update_own/);
     expect(sql).not.toMatch(/GRANT INSERT ON TABLE public\.push_subscriptions/);
     expect(sql).toMatch(/ALTER TABLE public\.notification_email_log ENABLE ROW LEVEL SECURITY/);
     expect(sql).toMatch(/REVOKE ALL ON TABLE public\.notification_email_log FROM PUBLIC, anon, authenticated/);

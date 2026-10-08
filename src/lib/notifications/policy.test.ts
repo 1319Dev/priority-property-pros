@@ -10,6 +10,8 @@ import {
   isSafeAppPath,
   messageEmailDecision,
   notificationPath,
+  resolveSecret,
+  resolveUnsubscribeSecret,
   signUnsubscribeToken,
   verifyUnsubscribeToken,
   winningEmailClaim,
@@ -91,6 +93,45 @@ describe("message email throttling", () => {
       ),
     ).toBe(true);
     expect(winningEmailClaim([], "a")).toBe(false);
+  });
+});
+
+describe("secret resolution", () => {
+  it("prefers Vault and falls back to the environment", () => {
+    expect(resolveSecret({ vaultValue: "from-vault", envValue: "from-env" })).toBe("from-vault");
+    expect(resolveSecret({ vaultValue: "  ", envValue: "from-env" })).toBe("from-env");
+    expect(resolveSecret({ vaultValue: null, envValue: "" })).toBe("");
+  });
+
+  it("keeps the Resend key in the environment unless only Vault has it", () => {
+    expect(resolveSecret({ vaultValue: "vault-key", envValue: "env-key", preferEnv: true })).toBe("env-key");
+    expect(resolveSecret({ vaultValue: "vault-key", envValue: " ", preferEnv: true })).toBe("vault-key");
+  });
+
+  it("signs unsubscribe links with the dedicated secret, then the webhook secret", () => {
+    expect(
+      resolveUnsubscribeSecret({
+        vaultUnsubscribe: "unsub",
+        envUnsubscribe: "env-unsub",
+        vaultWebhook: "hook",
+        envWebhook: "env-hook",
+      }),
+    ).toBe("unsub");
+    expect(
+      resolveUnsubscribeSecret({
+        vaultUnsubscribe: "",
+        envUnsubscribe: "env-unsub",
+        vaultWebhook: "hook",
+        envWebhook: "env-hook",
+      }),
+    ).toBe("env-unsub");
+    expect(
+      resolveUnsubscribeSecret({
+        vaultWebhook: "hook",
+        envWebhook: "env-hook",
+      }),
+    ).toBe("hook");
+    expect(resolveUnsubscribeSecret({ envWebhook: "env-hook" })).toBe("env-hook");
   });
 });
 

@@ -109,6 +109,39 @@ export function channelEnabled(
   return resolvePreference(category, row)[channel];
 }
 
+/** Vault wins unless preferEnv is set. Blank strings count as missing. */
+export function resolveSecret(input: {
+  vaultValue?: string | null;
+  envValue?: string | null;
+  preferEnv?: boolean;
+}): string {
+  const vault = (input.vaultValue ?? "").trim();
+  const env = (input.envValue ?? "").trim();
+  if (input.preferEnv) return env || vault;
+  return vault || env;
+}
+
+/**
+ * Unsubscribe links use their own secret when one is set.
+ * Otherwise they use the same shared webhook secret.
+ */
+export function resolveUnsubscribeSecret(input: {
+  vaultUnsubscribe?: string | null;
+  envUnsubscribe?: string | null;
+  vaultWebhook?: string | null;
+  envWebhook?: string | null;
+}): string {
+  const dedicated = resolveSecret({
+    vaultValue: input.vaultUnsubscribe,
+    envValue: input.envUnsubscribe,
+  });
+  if (dedicated) return dedicated;
+  return resolveSecret({
+    vaultValue: input.vaultWebhook,
+    envValue: input.envWebhook,
+  });
+}
+
 export function categoryForKind(kind: string): NotificationCategory {
   if (kind === "opportunity.offered" || kind === "job.offered" || kind.startsWith("opportunity.")) {
     return "new_job";

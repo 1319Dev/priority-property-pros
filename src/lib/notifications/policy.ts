@@ -13,6 +13,8 @@ export {
   messageEmailDecision,
   notificationPath,
   resolvePreference,
+  resolveSecret,
+  resolveUnsubscribeSecret,
   signUnsubscribeToken,
   usesMinimalEmail,
   verifyUnsubscribeToken,

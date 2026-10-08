@@ -5,9 +5,10 @@ import {
   verifyUnsubscribeToken,
   type NotificationCategory,
 } from "../_shared/notificationPolicy.ts";
+import { loadNotificationRuntimeSecrets } from "../_shared/notificationSecrets.ts";
 
-function page(title: string, message: string, status = 200): Response {
-  const site = (Deno.env.get("NOTIFICATION_SITE_URL") ?? "https://prioritypropertypros.com").replace(/\/$/, "");
+function page(title: string, message: string, siteUrl: string, status = 200): Response {
+  const site = siteUrl.replace(/\/$/, "");
   const manage = absoluteUrl(site, "/notifications");
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -81,8 +82,9 @@ async function turnEmailOff(userId: string, category: NotificationCategory): Pro
 }
 
 Deno.serve(async (req) => {
+  const secrets = await loadNotificationRuntimeSecrets(service());
   if (req.method !== "GET" && req.method !== "POST") {
-    return page("Unsubscribe", "Open the unsubscribe link from your email.", 405);
+    return page("Unsubscribe", "Open the unsubscribe link from your email.", secrets.notificationSiteUrl, 405);
   }
   const url = new URL(req.url);
   let token = url.searchParams.get("token") ?? "";
@@ -97,18 +99,17 @@ Deno.serve(async (req) => {
       }
     }
   }
-  const secret = Deno.env.get("NOTIFY_WEBHOOK_SECRET") ?? "";
-  const verified = await verifyUnsubscribeToken(token, secret);
+  const verified = await verifyUnsubscribeToken(token, secrets.unsubscribeTokenSecret);
   if (!verified.ok) {
     const message = verified.reason === "expired"
       ? "This unsubscribe link has expired. You can turn email off from notification settings."
       : "This unsubscribe link is not valid.";
-    return page("Unsubscribe", message, 400);
+    return page("Unsubscribe", message, secrets.notificationSiteUrl, 400);
   }
   const label = NOTIFICATION_CATEGORY_COPY[verified.category].label;
   const saved = await turnEmailOff(verified.userId, verified.category);
   if (!saved) {
-    return page("Unsubscribe", "Email could not be turned off just now. Use notification settings instead.", 500);
+    return page("Unsubscribe", "Email could not be turned off just now. Use notification settings instead.", secrets.notificationSiteUrl, 500);
   }
-  return page("Email off", `Email alerts for ${label} are off. In-site and push alerts are unchanged.`);
+  return page("Email off", `Email alerts for ${label} are off. In-site and push alerts are unchanged.`, secrets.notificationSiteUrl);
 });

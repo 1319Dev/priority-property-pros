@@ -16,6 +16,10 @@ import {
   type NotificationCategory,
   type PreferenceFlags,
 } from "../_shared/notificationPolicy.ts";
+import {
+  loadNotificationRuntimeSecrets,
+  type NotificationRuntimeSecrets,
+} from "../_shared/notificationSecrets.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -93,10 +97,6 @@ function asPayload(value: unknown): Record<string, unknown> {
   return {};
 }
 
-function siteUrl(): string {
-  return (Deno.env.get("NOTIFICATION_SITE_URL") ?? "https://prioritypropertypros.com").replace(/\/$/, "");
-}
-
 async function loadNotification(id: string): Promise<NotificationRow | null> {
   const result = await rest<NotificationRow[]>(
     `notifications?id=eq.${id}&select=id,recipient_profile_id,kind,title,body,entity_type,entity_id,payload,read_at&limit=1`,
@@ -148,10 +148,10 @@ async function deleteEmailLog(notificationId: string): Promise<void> {
 async function sendEmail(input: {
   notification: NotificationRow;
   category: NotificationCategory;
-  secret: string;
+  secrets: NotificationRuntimeSecrets;
   profile: ProfileRow;
 }): Promise<"sent" | "skipped"> {
-  const apiKey = Deno.env.get("RESEND_API_KEY") ?? "";
+  const apiKey = input.secrets.resendApiKey;
   if (!apiKey) {
     console.warn("email skipped: RESEND_API_KEY is not set");
     return "skipped";
@@ -225,13 +225,13 @@ async function sendEmail(input: {
     payload: asPayload(input.notification.payload),
     accountType: input.profile.account_type,
   });
-  const origin = siteUrl();
+  const origin = input.secrets.notificationSiteUrl;
   const itemUrl = absoluteUrl(origin, path);
   const manageUrl = absoluteUrl(origin, "/notifications");
   const token = await signUnsubscribeToken({
     userId: input.notification.recipient_profile_id,
     category: input.category,
-    secret: input.secret,
+    secret: input.secrets.unsubscribeTokenSecret,
   });
   const supabaseUrl = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
   const unsubscribeUrl = `${supabaseUrl}/functions/v1/notification-unsubscribe?token=${encodeURIComponent(token)}`;
@@ -243,7 +243,7 @@ async function sendEmail(input: {
     manageUrl,
     unsubscribeUrl,
   });
-  const from = Deno.env.get("NOTIFICATION_FROM") ?? "Priority Property Pros <notifications@prioritypropertypros.com>";
+  const from = input.secrets.notificationFrom;
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -271,10 +271,14 @@ async function sendEmail(input: {
   return "sent";
 }
 
-async function sendPush(input: { notification: NotificationRow; profile: ProfileRow }): Promise<"sent" | "skipped"> {
-  const privateKey = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
-  const publicKey = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
-  const subject = Deno.env.get("VAPID_SUBJECT") ?? "mailto:prioritypropertypros@gmail.com";
+async function sendPush(input: {
+  notification: NotificationRow;
+  profile: ProfileRow;
+  secrets: NotificationRuntimeSecrets;
+}): Promise<"sent" | "skipped"> {
+  const privateKey = input.secrets.vapidPrivateKey;
+  const publicKey = input.secrets.vapidPublicKey;
+  const subject = input.secrets.vapidSubject;
   if (!privateKey || !publicKey) {
     console.warn("push skipped: VAPID secrets are not set");
     return "skipped";
@@ -352,7 +356,7 @@ async function sendPush(input: { notification: NotificationRow; profile: Profile
   return sent > 0 ? "sent" : "skipped";
 }
 
-async function deliver(id: string, secret: string): Promise<Record<string, unknown>> {
+async function deliver(id: string, secrets: NotificationRuntimeSecrets): Promise<Record<string, unknown>> {
   if (!service()) {
     console.warn("notification skipped: service role is not available");
     return { ok: true, skipped: "service" };
@@ -372,10 +376,10 @@ async function deliver(id: string, secret: string): Promise<Record<string, unkno
   let email: "sent" | "skipped" | "off" = "off";
   let push: "sent" | "skipped" | "off" = "off";
   if (channelEnabled(category, preference, "email")) {
-    email = await sendEmail({ notification, category, secret, profile });
+    email = await sendEmail({ notification, category, secrets, profile });
   }
   if (channelEnabled(category, preference, "push")) {
-    push = await sendPush({ notification, profile });
+    push = await sendPush({ notification, profile, secrets });
   }
   return {
     ok: true,
@@ -389,9 +393,9 @@ async function deliver(id: string, secret: string): Promise<Record<string, unkno
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
   if (req.method !== "POST") return json({ error: "POST required" }, 405);
-  const expected = Deno.env.get("NOTIFY_WEBHOOK_SECRET") ?? "";
+  const secrets = await loadNotificationRuntimeSecrets(service());
   const provided = req.headers.get("x-notify-secret") ?? "";
-  if (!secretsMatch(provided, expected)) return json({ error: "unauthorized" }, 401);
+  if (!secretsMatch(provided, secrets.notifyWebhookSecret)) return json({ error: "unauthorized" }, 401);
 
   let notificationId = "";
   try {
@@ -403,7 +407,7 @@ Deno.serve(async (req) => {
   if (!UUID.test(notificationId)) return json({ error: "notification_id required" }, 400);
 
   try {
-    return json(await deliver(notificationId, expected));
+    return json(await deliver(notificationId, secrets));
   } catch {
     console.warn("notification delivery failed");
     return json({ ok: false, delivered: false });
