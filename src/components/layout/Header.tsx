@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { Logo } from "../brand/Logo";
-import { BrandLoader } from "../brand/BrandLoader";
+import { LoaderSlot } from "../brand/BrandLoader";
 import { Container } from "../ui/Container";
 import { CUSTOMER_CTA } from "../../data/brand";
 import { FIND_A_PRO_NAV_LABEL, FIND_A_PRO_PATH } from "../../lib/marketplace/findAPro";
@@ -84,7 +84,7 @@ export function Header() {
             </PostProjectLink>
           </nav>
           {loading ? (
-            <BrandLoader layout="inline" label="Loading…" />
+            <LoaderSlot />
           ) : user ? (
             <AccountMenu />
           ) : (
