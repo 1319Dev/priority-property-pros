@@ -1,5 +1,6 @@
 import type { EstimateStatus, ProjectStatus } from "./types";
 import { unauthorizedPayloadLeaksPrivateContact } from "./bookings";
+import { comparisonDisplayOrder } from "./flows";
 
 /** Product "Sent" is stored as SENT (new) or SUBMITTED (legacy Phase 3). */
 export const SENT_EQUIVALENT: EstimateStatus[] = ["SENT", "SUBMITTED"];
@@ -200,6 +201,16 @@ export function customerEstimateStatusLabel(status: EstimateStatus): string {
 
 export function canCustomerSelectFrom(status: EstimateStatus): boolean {
   return isSentEquivalent(status) || status === "REVISED" || status === "VIEWED";
+}
+
+export function liveCustomerEstimates<
+  T extends { status: string; submitted_at: string | null; created_at?: string | null },
+>(rows: T[]): T[] {
+  const live = rows.filter((row) => {
+    const status = row.status as EstimateStatus;
+    return ACTIVE_CUSTOMER_ESTIMATE_STATUSES.includes(status) || status === "ACCEPTED";
+  });
+  return comparisonDisplayOrder(live);
 }
 
 export function canCustomerDeclineFrom(status: EstimateStatus): boolean {

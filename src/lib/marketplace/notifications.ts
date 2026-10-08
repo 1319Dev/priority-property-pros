@@ -137,3 +137,26 @@ export type InAppNotification = {
 export function notificationChannel(): "in_app" {
   return "in_app";
 }
+
+export function customerNotificationHref(input: {
+  kind: string;
+  entityId?: string | null;
+  payload?: Record<string, unknown> | null;
+}): string | null {
+  const payload = input.payload ?? {};
+  const projectId = typeof payload.project_id === "string" ? payload.project_id : null;
+  const contractorId = typeof payload.contractor_profile_id === "string" ? payload.contractor_profile_id : null;
+  const estimateId =
+    (typeof payload.estimate_id === "string" ? payload.estimate_id : null) ??
+    (input.kind.startsWith("estimate.") ? input.entityId ?? null : null);
+  if (input.kind === "message.received" && projectId && contractorId) {
+    return `/app/customer/messages/${projectId}/${contractorId}`;
+  }
+  if (input.kind.startsWith("estimate.") && projectId && estimateId) {
+    return `/app/customer/projects/${projectId}/estimates/${estimateId}`;
+  }
+  if (input.kind.startsWith("estimate.") && projectId) {
+    return `/app/customer/projects/${projectId}/compare`;
+  }
+  return null;
+}

@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { AuthContext } from "../../lib/auth/AuthContext";
+import { authValue } from "../../lib/auth/authFixture";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { REVIEWED_PROS_EMPTY_COMPACT, REVIEWED_PROS_EMPTY_TITLE } from "../../lib/marketplace/reviewedContractors";
 import { loadReviewedContractors } from "../../lib/marketplace/reviewedContractorsApi";
@@ -19,9 +21,11 @@ const loadReviewed = vi.mocked(loadReviewedContractors);
 
 function renderPreview() {
   return render(
-    <MemoryRouter>
-      <HomeBrowsePreview />
-    </MemoryRouter>,
+    <AuthContext.Provider value={authValue()}>
+      <MemoryRouter>
+        <HomeBrowsePreview />
+      </MemoryRouter>
+    </AuthContext.Provider>,
   );
 }
 
@@ -72,15 +76,17 @@ describe("Reviewed contractors preview", () => {
 
   it("does not print a caller-supplied failure string", () => {
     render(
-      <MemoryRouter>
-        <ReviewedContractorsList
-          cards={[]}
-          failed
-          loading={false}
-          compactEmpty
-          onRetry={() => undefined}
-        />
-      </MemoryRouter>,
+      <AuthContext.Provider value={authValue()}>
+        <MemoryRouter>
+          <ReviewedContractorsList
+            cards={[]}
+            failed
+            loading={false}
+            compactEmpty
+            onRetry={() => undefined}
+          />
+        </MemoryRouter>
+      </AuthContext.Provider>,
     );
 
     expect(screen.getByText(REVIEWED_PROS_EMPTY_TITLE)).toBeInTheDocument();

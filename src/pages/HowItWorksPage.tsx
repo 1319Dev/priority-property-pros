@@ -1,5 +1,6 @@
 import { MarketingPhoto } from "../components/media/MarketingPhoto";
-import { ButtonLink } from "../components/ui/Button";
+import { ContractorEntryLink } from "../components/layout/PublicCtas";
+import { PostProjectLink } from "../components/layout/PostProjectLink";
 import { Container } from "../components/ui/Container";
 import { CUSTOMER_CTA, CONTRACTOR_CTA } from "../data/brand";
 import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
@@ -58,10 +59,10 @@ export function HowItWorksPage() {
           ))}
         </ol>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <ButtonLink to="/post-project">{CUSTOMER_CTA}</ButtonLink>
-          <ButtonLink to="/become-a-pro" variant="outline">
+          <PostProjectLink to="/post-project">{CUSTOMER_CTA}</PostProjectLink>
+          <ContractorEntryLink to="/become-a-pro" variant="outline">
             {CONTRACTOR_CTA}
-          </ButtonLink>
+          </ContractorEntryLink>
         </div>
       </Container>
     </section>

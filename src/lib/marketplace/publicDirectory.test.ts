@@ -106,7 +106,7 @@ describe("public marketplace directory privacy", () => {
     expect(card.displayLabel).toBe("Approved Handyman Pro");
     expect(card.serviceArea).toBe("Houston Area");
     expect(formatPublicRating(card.ratingAverage, card.ratingCount)).toBe("★ 4.9 · 18 verified PPP reviews");
-    expect(card.badges.map((badge) => badge.label)).toContain("Approved Pro");
+    expect(card.badges.map((badge) => badge.label)).toContain("Approved platform profile");
     expect(card.badges.map((badge) => badge.label).join(" ")).not.toMatch(/TDLR|999|SECRET/i);
     expect(card.shortDescription).toBe("Local independent for gates and small remodels.");
     expect(JSON.stringify(card)).not.toMatch(/Joe's Fence|512-555|joesfence|TX-999|secret@/i);

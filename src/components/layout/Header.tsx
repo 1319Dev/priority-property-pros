@@ -1,23 +1,30 @@
 import { NavLink } from "react-router-dom";
 import { Logo } from "../brand/Logo";
-import { ButtonLink } from "../ui/Button";
+import { BrandLoader } from "../brand/BrandLoader";
 import { Container } from "../ui/Container";
 import { CUSTOMER_CTA } from "../../data/brand";
 import { FIND_A_PRO_NAV_LABEL, FIND_A_PRO_PATH } from "../../lib/marketplace/findAPro";
+import { dashboardPath, showContractorSignup } from "../../lib/auth/publicEntry";
 import { useAuth } from "../../lib/auth/useAuth";
 import { AccountMenu } from "../account/AccountMenu";
-import { Skeleton } from "../ui/Skeleton";
+import { PostProjectLink } from "./PostProjectLink";
 
 const links = [
   { to: FIND_A_PRO_PATH, label: FIND_A_PRO_NAV_LABEL },
   { to: "/how-it-works", label: "How It Works" },
   { to: "/pricing", label: "Pricing" },
-  { to: "/become-a-pro", label: "Become a Pro" },
   { to: "/faq", label: "FAQ" },
 ];
 
 export function Header() {
-  const { loading, user } = useAuth();
+  const { loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status } = useAuth();
+  const showProSignup = showContractorSignup({ loading, accountType: account_type });
+  const home = dashboardPath({
+    accountType: account_type,
+    accountStatus: account_status,
+    signupFeeEnabled: signup_fee_enabled,
+    signupFeeStatus: signup_fee_status,
+  });
 
   return (
     <header className="sticky top-0 z-40 border-b border-forest-800/10 bg-cream-50/90 pt-safe backdrop-blur-md">
@@ -46,12 +53,35 @@ export function Header() {
                 {link.label}
               </NavLink>
             ))}
-            <ButtonLink to="/post-project" size="sm" className="ml-2">
+            {loading ? (
+              <span className="invisible rounded-full px-3 py-2 text-sm font-medium" aria-hidden="true">
+                Become a Pro
+              </span>
+            ) : showProSignup ? (
+              <NavLink
+                to="/become-a-pro"
+                className={({ isActive }) =>
+                  `rounded-full px-3 py-2 text-sm font-medium ${
+                    isActive ? "text-forest-800" : "text-ink-700 hover:text-forest-800"
+                  }`
+                }
+              >
+                Become a Pro
+              </NavLink>
+            ) : (
+              <NavLink
+                to={home}
+                className="rounded-full px-3 py-2 text-sm font-medium text-ink-700 hover:text-forest-800"
+              >
+                My dashboard
+              </NavLink>
+            )}
+            <PostProjectLink to="/post-project" size="sm" className="ml-2">
               {CUSTOMER_CTA}
-            </ButtonLink>
+            </PostProjectLink>
           </nav>
           {loading ? (
-            <Skeleton className="h-11 w-11 rounded-full" />
+            <BrandLoader layout="inline" label="Loading…" />
           ) : user ? (
             <AccountMenu />
           ) : (

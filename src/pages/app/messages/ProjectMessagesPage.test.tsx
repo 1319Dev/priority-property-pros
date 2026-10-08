@@ -15,6 +15,7 @@ const listMyMessageThreads = vi.fn();
 const ensureMessageThread = vi.fn();
 const listProjectMessages = vi.fn();
 const sendProjectMessage = vi.fn();
+const markMessageThreadRead = vi.fn();
 const subscribeToProjectMessages = vi.fn(() => () => undefined);
 const getSharedProjectContact = vi.fn();
 const shareProjectContact = vi.fn();
@@ -28,6 +29,7 @@ vi.mock("../../../lib/marketplace/messagingApi", () => ({
   ensureMessageThread: (...args: unknown[]) => pass(ensureMessageThread, args),
   listProjectMessages: (...args: unknown[]) => pass(listProjectMessages, args),
   sendProjectMessage: (...args: unknown[]) => pass(sendProjectMessage, args),
+  markMessageThreadRead: (...args: unknown[]) => pass(markMessageThreadRead, args),
   subscribeToProjectMessages: (...args: unknown[]) => pass(subscribeToProjectMessages, args),
 }));
 
@@ -99,6 +101,8 @@ describe("project messages UI", () => {
     ensureMessageThread.mockReset();
     listProjectMessages.mockReset();
     sendProjectMessage.mockReset();
+    markMessageThreadRead.mockReset();
+    markMessageThreadRead.mockResolvedValue(undefined);
     subscribeToProjectMessages.mockClear();
     listMyMessageThreads.mockResolvedValue([]);
     listProjectMessages.mockResolvedValue([]);
@@ -176,6 +180,7 @@ describe("project messages UI", () => {
     await user.click(screen.getByRole("button", { name: "Send" }));
     expect(sendProjectMessage).not.toHaveBeenCalled();
     expect(await screen.findByText(PRE_HIRE_CONTACT_MESSAGE)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/write about the work/i)).toHaveValue("Email pat@example.com");
   });
 
   it("stays locked when the connection entitlement is missing", async () => {

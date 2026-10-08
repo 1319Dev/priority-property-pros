@@ -3,7 +3,6 @@ import { ForContractors } from "../features/home/ForContractors";
 import { Hero } from "../features/home/Hero";
 import { HowItWorks } from "../features/home/HowItWorks";
 import { HomePlatformReviews } from "../features/home/PlatformReviews";
-import { PopularServices } from "../features/home/PopularServices";
 import { ServiceVisuals } from "../features/home/ServiceVisuals";
 import { SimplePricing } from "../features/home/SimplePricing";
 import { TrustSafety } from "../features/home/TrustSafety";
@@ -15,7 +14,6 @@ export function HomePage() {
       <Hero />
       <ServiceVisuals />
       <HomeBrowsePreview />
-      <PopularServices />
       <HowItWorks />
       <SimplePricing />
       <WhyHomeowners />

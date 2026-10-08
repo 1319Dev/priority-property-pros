@@ -2,7 +2,7 @@ import { CONTRACTOR_CTA, CONTRACTOR_TAGLINE } from "../../data/brand";
 import { CONTRACTOR_SIGNUP_HEADLINE, CONTRACTOR_SIGNUP_SUPPORTING, SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
 import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
 import { MarketingPhoto } from "../../components/media/MarketingPhoto";
-import { ButtonLink } from "../../components/ui/Button";
+import { ContractorEntryLink } from "../../components/layout/PublicCtas";
 import { Container } from "../../components/ui/Container";
 
 export function ForContractors() {
@@ -30,9 +30,9 @@ export function ForContractors() {
             <li className="rounded-2xl border border-cream-50/15 px-4 py-3">$4.99 only when you connect — no percentage of the job</li>
           </ul>
           <div className="mt-8">
-            <ButtonLink to="/become-a-pro" variant="gold" size="lg">
+            <ContractorEntryLink to="/become-a-pro" variant="gold" size="lg">
               {CONTRACTOR_CTA}
-            </ButtonLink>
+            </ContractorEntryLink>
             <p className="mt-3 text-sm text-cream-200">{SIGNUP_FEE_PUBLIC_NOTE}</p>
           </div>
           </div>

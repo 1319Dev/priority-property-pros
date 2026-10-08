@@ -1,4 +1,5 @@
 import { FormEvent, useState } from "react";
+import { PostProjectLink } from "../components/layout/PostProjectLink";
 import { Button, ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
 import { TextInput } from "../components/ui/Input";
@@ -62,9 +63,9 @@ export function ContactPage() {
           <ButtonLink to="/faq" variant="outline">
             Read the FAQ
           </ButtonLink>
-          <ButtonLink to="/post-project" variant="ghost">
+          <PostProjectLink to="/post-project" variant="ghost">
             {CUSTOMER_CTA}
-          </ButtonLink>
+          </PostProjectLink>
         </div>
       </Container>
     </section>

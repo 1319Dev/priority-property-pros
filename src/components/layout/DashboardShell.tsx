@@ -3,6 +3,7 @@ import { Logo } from "../brand/Logo";
 import { AccountMenu } from "../account/AccountMenu";
 import { useAuth } from "../../lib/auth/useAuth";
 import { displayName } from "../../lib/auth/roles";
+import { SUPPORT_EMAIL } from "../../data/brand";
 
 export type DashNavItem = {
   to: string;
@@ -43,9 +44,14 @@ export function DashboardShell({
           This account is pending review or email confirmation. You can look around; matching waits on an active, approved contractor.
         </div>
       ) : null}
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-32 sm:px-6 lg:pb-10">
+      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-40 sm:px-6 lg:pb-10">
         <Outlet />
       </main>
+      <p className="mx-auto w-full max-w-6xl px-4 pb-36 text-sm text-ink-500 sm:px-6 lg:pb-6">
+        <a className="font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
+          {SUPPORT_EMAIL}
+        </a>
+      </p>
       <nav
         aria-label="Dashboard"
         className="fixed inset-x-0 bottom-0 z-40 border-t border-forest-800/10 bg-cream-50/95 pb-safe backdrop-blur-md lg:static lg:border-t-0"

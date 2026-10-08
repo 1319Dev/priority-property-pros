@@ -10,7 +10,7 @@ export const HIRED_CONFIRM_LABEL = "Confirm hired";
 export const HIRED_CONFIRM_CANCEL = "Not yet";
 export const HIRED_CONFIRM_BODY =
   "Confirm that you are working together on this job. Both the homeowner and the pro must click Hired. After both confirm, you can review each other’s profiles. This cannot be undone from here.";
-export const HIRED_MUTUAL_COPY = "Hired. You can now review each other’s profiles.";
+export const HIRED_MUTUAL_COPY = "You can now review each other’s profiles.";
 export const HIRED_WAITING_HOMEOWNER = "Waiting for homeowner to confirm Hired";
 export const HIRED_WAITING_PRO = "Waiting for pro to confirm Hired";
 export const HIRED_IDLE_CUSTOMER_COPY =

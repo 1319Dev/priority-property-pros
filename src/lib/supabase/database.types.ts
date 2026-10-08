@@ -978,6 +978,7 @@ export type Database = {
       list_my_estimates: { Args: Record<string, never>; Returns: Json };
       list_my_notifications: { Args: Record<string, never>; Returns: Json };
       list_my_message_threads: { Args: Record<string, never>; Returns: Json };
+      mark_message_thread_read: { Args: { p_thread_id: string }; Returns: Json };
       ensure_message_thread: {
         Args: { p_project_id: string; p_contractor_profile_id: string };
         Returns: Json;
@@ -1074,6 +1075,7 @@ export type Database = {
       signup_fee_is_satisfied: { Args: { p_profile_id: string }; Returns: boolean };
       stop_new_project_connections: { Args: { p_project_id: string }; Returns: Json };
       list_my_project_connections: { Args: { p_project_id?: string | null }; Returns: Json };
+      list_my_project_connection_cards: { Args: { p_project_id: string }; Returns: Json };
       submit_content_report: {
         Args: { p_target_type: string; p_target_id?: string | null; p_reason: string; p_notes?: string | null };
         Returns: Json;

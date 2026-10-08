@@ -241,18 +241,22 @@ export function genericCredentialBadges(badges: PublicContractorBadge[]): Public
     if (kind === "APPROVED") {
       if (!seen.has("APPROVED")) {
         seen.add("APPROVED");
-        next.push({ kind: "APPROVED", label: "Approved Pro" });
+        next.push({ kind: "APPROVED", label: "Approved platform profile" });
       }
       continue;
     }
     const label =
-      kind === "LICENSE" ? "License reviewed" : kind === "INSURANCE" ? "Insurance reviewed" : "Credential reviewed";
+      kind === "LICENSE"
+        ? "Contractor-provided license"
+        : kind === "INSURANCE"
+          ? "Contractor-provided insurance"
+          : "Contractor-provided credential";
     const key = `${kind}:${label}`;
     if (seen.has(key)) continue;
     seen.add(key);
     next.push({ kind, label });
   }
-  if (!seen.has("APPROVED")) next.unshift({ kind: "APPROVED", label: "Approved Pro" });
+  if (!seen.has("APPROVED")) next.unshift({ kind: "APPROVED", label: "Approved platform profile" });
   return next;
 }
 
