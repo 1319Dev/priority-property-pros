@@ -62,7 +62,10 @@ describe("Find a Pro cards", () => {
       "href",
       "/find-a-pro/11111111-1111-4111-8111-111111111111",
     );
-    expect(screen.getByRole("link", { name: /post a project/i })).toHaveAttribute("href", "/post-project");
+    expect(screen.getByRole("link", { name: /post a project/i })).toHaveAttribute(
+      "href",
+      "/post-project?pro=11111111-1111-4111-8111-111111111111&trade=Fence+Repair",
+    );
     expect(screen.queryByText(/★|0\.0/)).not.toBeInTheDocument();
     expect(document.body.innerHTML).not.toMatch(/tel:|mailto:|512-555|@example/i);
   });
@@ -107,7 +110,10 @@ describe("Contractor storefront", () => {
     expect(screen.getByRole("heading", { name: "Reviews" }).parentElement).toHaveTextContent(NO_REVIEWS_YET);
     expect(screen.queryByText(VERIFIED_PROJECT_LABEL)).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /invite|request estimate|call|email/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /post a project/i })).toHaveAttribute("href", "/post-project");
+    expect(screen.getByRole("link", { name: /post a project/i })).toHaveAttribute(
+      "href",
+      "/post-project?pro=11111111-1111-4111-8111-111111111111&trade=Fence+Repair",
+    );
   });
 
   it("shows Verified Project only on a qualifying review and a real portfolio caption", () => {

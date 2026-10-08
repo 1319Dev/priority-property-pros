@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { Button, ButtonLink } from "../../../components/ui/Button";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { TextInput } from "../../../components/ui/Input";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
@@ -14,17 +15,19 @@ import {
   fetchBooking,
   fetchBookingReviews,
   fetchChangeOrders,
+  fetchCustomerProjects,
   fetchHireAgainContractors,
   fetchMyBookings,
   fetchProject,
-  fetchProtectionMonths,
   fetchPublicContractor,
   proposeChangeOrder,
   respondChangeOrder,
+  startBooking,
   submitBookingReview,
   type RpcJson,
 } from "../../../lib/marketplace/api";
-import { BOOKING_STATUS_LABELS, paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
+import { BOOKING_STATUS_LABELS, canCustomerCancelPendingBooking, canStartBooking } from "../../../lib/marketplace/bookings";
+import { CUSTOMER_PAYS_DIRECTLY, HIRE_AGAIN_EMPTY, HIRE_AGAIN_INTRO, customerWizardPath } from "../../../lib/marketplace/customerCopy";
 import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { isMutuallyHired, bookingListHiredLabel } from "../../../lib/marketplace/hired";
 import type { Booking, BookingReview, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
@@ -39,20 +42,29 @@ function statusLabel(status: string) {
 export function CustomerBookingsPage() {
   const { profile } = useAuth();
   const [rows, setRows] = useState<Booking[]>([]);
+  const [titles, setTitles] = useState<Record<string, string>>({});
+  const [names, setNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile) return;
     void expireStalePendingBookings()
-      .then(() => fetchMyBookings("customer", profile.id))
-      .then((data) => setRows(data as Booking[]))
+      .then(() => Promise.all([fetchMyBookings("customer", profile.id), fetchCustomerProjects(profile.id)]))
+      .then(async ([data, projects]) => {
+        const bookings = data as Booking[];
+        setRows(bookings);
+        setTitles(Object.fromEntries(projects.map((project) => [project.id, project.title || "Project"])));
+        const ids = [...new Set(bookings.map((row) => row.contractor_profile_id))];
+        const pros = await Promise.all(ids.map((id) => fetchPublicContractor(id).catch(() => null)));
+        setNames(Object.fromEntries(ids.map((id, index) => [id, pros[index]?.display_label || "Local pro"])));
+      })
       .catch((err: Error) => setError(err.message));
   }, [profile]);
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
-        <p className="text-ink-700">Selecting a pro starts a booking. PPP does not take a percentage of the job. {paymentsComingSoonCopy()}</p>
+        <p className="text-ink-700">Selecting a pro starts a booking. {CUSTOMER_PAYS_DIRECTLY}</p>
       <FormError message={error} />
       {rows.length === 0 ? (
         <EmptyState title="No bookings yet" body="When you select a contractor, the booking will wait here. Nothing is marked paid." />
@@ -65,13 +77,15 @@ export function CustomerBookingsPage() {
               contractorHiredAt: row.contractor_hired_at,
             });
             return (
-            <li key={row.id}>
-              <Link to={`/app/customer/bookings/${row.id}`} className="block rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
-                <p className="font-semibold text-forest-800">{hiredLabel ?? statusLabel(row.status)}</p>
-                {hiredLabel ? <p className="text-sm text-ink-500">{statusLabel(row.status)}</p> : null}
-                <p className="mt-1 text-sm text-ink-500">
-                  Job {formatUsdFromCents(row.billable_amount_cents || row.amount_cents)}
-                </p>
+            <li key={row.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
+              <p className="font-semibold text-forest-800">{titles[row.project_id] || "Project"}</p>
+              <p className="text-sm text-ink-700">{names[row.contractor_profile_id] || "Local pro"}</p>
+              <p className="mt-1 text-sm text-ink-500">{hiredLabel ?? statusLabel(row.status)}</p>
+              <p className="mt-1 text-sm text-ink-500">
+                Job {formatUsdFromCents(row.billable_amount_cents || row.amount_cents)}
+              </p>
+              <Link to={`/app/customer/bookings/${row.id}`} className="mt-3 inline-flex min-h-11 items-center font-semibold text-forest-800 underline">
+                View booking
               </Link>
             </li>
             );
@@ -96,6 +110,7 @@ export function CustomerBookingDetailPage() {
   const [rating, setRating] = useState("5");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const [disputeOpen, setDisputeOpen] = useState(false);
 
   async function reload() {
     const row = (await fetchBooking(bookingId)) as Booking;
@@ -115,7 +130,12 @@ export function CustomerBookingDetailPage() {
 
   if (!booking) return <p className="text-ink-500">{error ?? "Loading…"}</p>;
 
-  const pending = booking.status === "PENDING" || booking.status === "AWAITING_PAYMENT";
+  const canCancel = canCustomerCancelPendingBooking({
+    status: booking.status,
+    customerHiredAt: booking.customer_hired_at,
+    contractorHiredAt: booking.contractor_hired_at,
+  });
+  const canStart = canStartBooking("CUSTOMER", booking.status);
 
   return (
     <div className="space-y-6">
@@ -125,9 +145,6 @@ export function CustomerBookingDetailPage() {
         <p className="mt-2 text-ink-700">{contractor}</p>
       </header>
       <FormError message={error} />
-      {pending ? (
-        <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm font-semibold text-forest-800">{paymentsComingSoonCopy()}</p>
-      ) : null}
       <HiredConfirmationCard
         role="customer"
         bookingStatus={booking.status}
@@ -148,17 +165,14 @@ export function CustomerBookingDetailPage() {
       />
       <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm">
         <p>Job total {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
-        <p className="mt-2 text-ink-500">
-          PPP does not take a percentage of this job. Project payment is between you and the contractor.{" "}
-          {paymentsComingSoonCopy()}
-        </p>
+        <p className="mt-2 text-ink-500">{CUSTOMER_PAYS_DIRECTLY}</p>
       </section>
       <ContactSharePanel
         role="customer"
         projectId={booking.project_id}
         contractorProfileId={booking.contractor_profile_id}
       />
-      {pending ? (
+      {canCancel ? (
         <Button
           type="button"
           variant="outline"
@@ -168,7 +182,7 @@ export function CustomerBookingDetailPage() {
             setBusy(true);
             void cancelPendingBooking(booking.id)
               .then(() => {
-                toast.push("Booking cancelled. The exact address was never shared.");
+                toast.push("Booking cancelled. Your street address was not shared.");
                 return reload();
               })
               .catch((err: Error) => setError(err.message))
@@ -176,6 +190,25 @@ export function CustomerBookingDetailPage() {
           }}
         >
           Cancel this booking
+        </Button>
+      ) : null}
+      {canStart ? (
+        <Button
+          type="button"
+          className="min-h-14 w-full"
+          disabled={busy}
+          onClick={() => {
+            setBusy(true);
+            void startBooking(booking.id)
+              .then(() => {
+                toast.push("Job started.");
+                return reload();
+              })
+              .catch((err: Error) => setError(err.message))
+              .finally(() => setBusy(false));
+          }}
+        >
+          Start job
         </Button>
       ) : null}
       {booking.status === "IN_PROGRESS" ? (
@@ -199,13 +232,30 @@ export function CustomerBookingDetailPage() {
           type="button"
           variant="ghost"
           className="min-h-12 w-full"
-          onClick={() => {
-            void disputeBooking(booking.id).then(() => reload()).catch((err: Error) => setError(err.message));
-          }}
+          disabled={busy}
+          onClick={() => setDisputeOpen(true)}
         >
           Open a dispute
         </Button>
       ) : null}
+      <ConfirmDialog
+        open={disputeOpen}
+        title="Open a dispute?"
+        body="This flags the booking so both sides can pause and sort it out. It does not charge anyone."
+        confirmLabel="Open a dispute"
+        busy={busy}
+        onClose={() => setDisputeOpen(false)}
+        onConfirm={() => {
+          setBusy(true);
+          void disputeBooking(booking.id)
+            .then(() => {
+              setDisputeOpen(false);
+              return reload();
+            })
+            .catch((err: Error) => setError(err.message))
+            .finally(() => setBusy(false));
+        }}
+      />
 
       {(booking.status === "CONFIRMED" || booking.status === "IN_PROGRESS") && (
         <section className="space-y-3">
@@ -220,10 +270,33 @@ export function CustomerBookingDetailPage() {
                 <p>{order.description}</p>
                 {order.status === "PROPOSED" ? (
                   <div className="mt-2 flex gap-2">
-                    <Button type="button" size="sm" onClick={() => void respondChangeOrder(order.id, true).then(reload)}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => {
+                        setBusy(true);
+                        void respondChangeOrder(order.id, true)
+                          .then(reload)
+                          .catch((err: Error) => setError(err.message))
+                          .finally(() => setBusy(false));
+                      }}
+                    >
                       Approve
                     </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={() => void respondChangeOrder(order.id, false).then(reload)}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => {
+                        setBusy(true);
+                        void respondChangeOrder(order.id, false)
+                          .then(reload)
+                          .catch((err: Error) => setError(err.message))
+                          .finally(() => setBusy(false));
+                      }}
+                    >
                       Decline
                     </Button>
                   </div>
@@ -282,38 +355,36 @@ export function CustomerBookingDetailPage() {
 
 export function HireAgainPage() {
   const [rows, setRows] = useState<RpcJson[]>([]);
-  const [months, setMonths] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void Promise.all([fetchHireAgainContractors(), fetchProtectionMonths()])
-      .then(([pros, protection]) => {
-        setRows(pros);
-        setMonths(protection);
-      })
+    void fetchHireAgainContractors()
+      .then(setRows)
       .catch((err: Error) => setError(err.message));
   }, []);
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Hire again</h1>
-      <p className="text-ink-700">
-        Pros you already finished a job with. Repeat pricing is applied automatically. You cannot pick original vs repeat
-        yourself. The introduction window is {months ?? "—"} months.
-      </p>
+      <p className="text-ink-700">{HIRE_AGAIN_INTRO}</p>
       <FormError message={error} />
       {rows.length === 0 ? (
         <EmptyState
           title="No Hire Again pros yet"
-          body="After a confirmed booking is completed, that contractor will show up here with repeat pricing."
+          body={HIRE_AGAIN_EMPTY}
         />
       ) : (
         <ul className="space-y-3">
           {rows.map((row) => (
             <li key={String(row.relationship_id)} className="rounded-3xl border border-forest-800/10 px-5 py-4">
               <p className="font-semibold text-forest-800">{String(row.business_name)}</p>
-                  <p className="text-sm text-ink-500">Repeat pricing · {paymentsComingSoonCopy()}</p>
-              <ButtonLink to="/app/customer/projects/new/wizard" className="mt-3 min-h-14 w-full">
+              <ButtonLink
+                to={customerWizardPath({
+                  contractorId: typeof row.contractor_profile_id === "string" ? row.contractor_profile_id : null,
+                  trade: typeof row.primary_trade === "string" ? row.primary_trade : null,
+                })}
+                className="mt-3 min-h-14 w-full"
+              >
                 Post a new project
               </ButtonLink>
             </li>

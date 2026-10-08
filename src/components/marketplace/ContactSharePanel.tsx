@@ -84,6 +84,14 @@ export function ContactSharePanel({
     };
   }, [load]);
 
+  if (error && !view) {
+    return (
+      <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4" aria-label="Share contact">
+        <FormError message={error} />
+      </section>
+    );
+  }
+
   if (!view?.eligible) return null;
 
   const showButton = role === "customer" && shareButtonVisible(view);

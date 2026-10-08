@@ -83,12 +83,17 @@
   padding-right: max(1rem, env(safe-area-inset-right));
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 .paper-grain {
   background-color: var(--color-cream-50);
   background-image:
     radial-gradient(rgba(26, 24, 20, 0.035) 0.6px, transparent 0.7px),
     linear-gradient(180deg, rgba(26, 60, 46, 0.03), transparent 28%);
   background-size: 7px 7px, 100% 320px;
+  background-repeat: repeat, no-repeat;
 }
 
 .gold-rule {

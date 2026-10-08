@@ -16,6 +16,7 @@ import {
   type FindAProReviewStatus,
 } from "../../lib/marketplace/findAPro";
 import { liveContractorPath } from "../../lib/marketplace/publicDirectory";
+import { postProjectPath } from "../../lib/marketplace/customerCopy";
 
 const selectClass =
   "min-h-14 w-full max-w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4 text-base text-ink-900";
@@ -73,7 +74,7 @@ export function FindAProCardView({ card }: { card: FindAProCard }) {
         >
           View Profile
         </Link>
-        <ButtonLink to="/post-project" variant="outline" size="sm">
+        <ButtonLink to={postProjectPath({ contractorId: card.id, trade: card.primaryService })} variant="outline" size="sm">
           {CUSTOMER_CTA}
         </ButtonLink>
       </div>

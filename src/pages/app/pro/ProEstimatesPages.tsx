@@ -179,12 +179,13 @@ export function ProNotificationsList() {
       .catch(() => setRows([]));
   }, [user]);
 
-  if (rows.length === 0) return null;
+  const visible = rows.filter((row) => row.kind !== "message.received");
+  if (visible.length === 0) return null;
   return (
     <section className="space-y-3">
       <h2 className="font-display text-2xl text-forest-800">Updates</h2>
       <ul className="space-y-2">
-        {rows.slice(0, 5).map((row) => {
+        {visible.slice(0, 5).map((row) => {
           const messageHref =
             row.kind === "message.received" || row.kind === "contact.shared"
               ? messageNotificationHref("contractor", row.payload)

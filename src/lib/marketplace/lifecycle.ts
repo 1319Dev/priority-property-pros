@@ -148,13 +148,7 @@ export function planDeleteOrCancel(input: {
   if (input.projectStatus === "DRAFT" && !hasParticipation(input.participation) && input.participation.opportunityCount === 0) {
     return {
       action: "delete",
-      message: "This draft will be permanently removed. This cannot be undone.",
-    };
-  }
-  if (!hasParticipation(input.participation) && input.participation.opportunityCount === 0 && input.projectStatus !== "CONTRACTOR_SELECTED") {
-    return {
-      action: "delete",
-      message: "This project has no contractor activity yet. It will be permanently removed.",
+      message: "This unfinished project was never posted.",
     };
   }
   if (input.projectStatus === "CANCELLED") {
@@ -164,14 +158,25 @@ export function planDeleteOrCancel(input: {
     return {
       action: "cancel",
       message:
-        "This will cancel the pending booking and withdraw the project. Your exact address was never shared, and selecting a pro did not hire them.",
+        "This will cancel the project and the booking that is still waiting. It moves to your Cancelled list. Your street address stays private.",
     };
   }
   return {
     action: "cancel",
     message:
-      "This project will be cancelled. It leaves the marketplace and contractors can no longer participate. Estimates are kept for your records and labeled cancelled.",
+      "This project will be cancelled and move to your Cancelled list. Pros can no longer respond. Estimates stay in your history and are marked cancelled.",
   };
+}
+
+export function answersMateriallyChanged(
+  before: Record<string, string | null | undefined>,
+  after: Record<string, string | null | undefined>,
+): boolean {
+  const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+  for (const key of keys) {
+    if ((before[key] ?? "").trim() !== (after[key] ?? "").trim()) return true;
+  }
+  return false;
 }
 
 export function ownerCanDeletePermanently(plan: CancelPlan): boolean {
@@ -179,7 +184,7 @@ export function ownerCanDeletePermanently(plan: CancelPlan): boolean {
 }
 
 export function cancelledProjectsLeaveActiveOpportunities(): boolean {
-  return true;
+  return false;
 }
 
 export function selectionCreatesRelationship(): boolean {

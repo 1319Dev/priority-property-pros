@@ -17,7 +17,9 @@ async function deleteAuthUser(userId: string): Promise<void> {
   }
 }
 
-async function removeStoragePrefix(bucket: string, prefix: string): Promise<void> {
+type StorageListItem = { name?: string; id?: string | null };
+
+async function listStoragePage(bucket: string, prefix: string, offset: number): Promise<StorageListItem[]> {
   const url = Deno.env.get("SUPABASE_URL") ?? "";
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const list = await fetch(`${url}/storage/v1/object/list/${bucket}`, {
@@ -27,15 +29,17 @@ async function removeStoragePrefix(bucket: string, prefix: string): Promise<void
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ prefix, limit: 100 }),
+    body: JSON.stringify({ prefix, limit: 100, offset, sortBy: { column: "name", order: "asc" } }),
   });
-  if (!list.ok) return;
-  const items = (await list.json()) as Array<{ name?: string }>;
-  const paths = items
-    .map((item) => item.name)
-    .filter((name): name is string => Boolean(name))
-    .map((name) => `${prefix.replace(/\/$/, "")}/${name}`);
+  if (!list.ok) return [];
+  const items = (await list.json()) as StorageListItem[];
+  return Array.isArray(items) ? items : [];
+}
+
+async function deleteStoragePaths(bucket: string, paths: string[]): Promise<void> {
   if (!paths.length) return;
+  const url = Deno.env.get("SUPABASE_URL") ?? "";
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   await fetch(`${url}/storage/v1/object/${bucket}`, {
     method: "DELETE",
     headers: {
@@ -45,6 +49,29 @@ async function removeStoragePrefix(bucket: string, prefix: string): Promise<void
     },
     body: JSON.stringify({ prefixes: paths }),
   });
+}
+
+async function removeStoragePrefix(bucket: string, prefix: string): Promise<void> {
+  const clean = prefix.replace(/\/$/, "");
+  let offset = 0;
+  const files: string[] = [];
+  const folders: string[] = [];
+  for (;;) {
+    const items = await listStoragePage(bucket, clean, offset);
+    if (!items.length) break;
+    for (const item of items) {
+      if (!item.name) continue;
+      const path = `${clean}/${item.name}`;
+      if (item.id == null) folders.push(path);
+      else files.push(path);
+    }
+    if (items.length < 100) break;
+    offset += items.length;
+  }
+  await deleteStoragePaths(bucket, files);
+  for (const folder of folders) {
+    await removeStoragePrefix(bucket, folder);
+  }
 }
 
 Deno.serve(async (req) => {

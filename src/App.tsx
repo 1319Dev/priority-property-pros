@@ -109,7 +109,7 @@ export default function App() {
             <Route index element={<CustomerHomePage />} />
             <Route path="projects" element={<CustomerProjectsPage />} />
             <Route path="projects/new/wizard" element={<ProjectWizardPage />} />
-            <Route path="projects/:projectId/wizard" element={<ProjectWizardPage />} />
+            <Route path="projects/:projectId/wizard" element={<Navigate to="/app/customer/projects/new/wizard" replace />} />
             <Route path="projects/:projectId/edit" element={<ProjectEditPage />} />
             <Route path="projects/:projectId/compare" element={<CompareEstimatesPage />} />
             <Route path="projects/:projectId/estimates/:estimateId" element={<CustomerEstimateDetailPage />} />

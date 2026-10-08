@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ContractorAvatar } from "../../../components/media/ContractorAvatar";
-import { CompletenessBadge } from "../../../components/marketplace/CompletenessBadge";
 import { HiredConfirmationCard } from "../../../components/marketplace/HiredConfirmation";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { Button, ButtonLink } from "../../../components/ui/Button";
@@ -34,13 +33,30 @@ import {
   TIMING_LABELS,
 } from "../../../lib/marketplace/api";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
-import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
-import { CUSTOMER_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
+import {
+  CANCEL_PROJECT_TOAST,
+  COMPARE_INTRO,
+  CUSTOMER_HOME_EMPTY,
+  CUSTOMER_HOME_INTRO,
+  CUSTOMER_PAYS_DIRECTLY,
+  NO_PROS_YET,
+  OFFER_QUEUE_PLAIN,
+  SELECT_CONFIRM_BODY,
+  SELECTED_BOOKING_COPY,
+  STOP_CONNECTIONS_BODY,
+  STOP_CONNECTIONS_TOAST,
+  STREET_STAYS_PRIVATE,
+} from "../../../lib/marketplace/customerCopy";
 import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type EstimateItemKind, type EstimateStatus, type Project } from "../../../lib/marketplace/types";
-import { comparisonDisplayOrder } from "../../../lib/marketplace/flows";
 import { planDeleteOrCancel } from "../../../lib/marketplace/lifecycle";
-import { canCustomerDeclineFrom, canCustomerSelectFrom, customerEstimateStatusLabel } from "../../../lib/marketplace/estimateLifecycle";
-import { HOMEOWNER_OFFER_QUEUE_COPY } from "../../../lib/marketplace/matching";
+import {
+  canCustomerDeclineFrom,
+  canCustomerSelectFrom,
+  customerEstimateStatusLabel,
+  liveCustomerEstimates,
+} from "../../../lib/marketplace/estimateLifecycle";
+import { formatCityStateZip } from "../../../lib/marketplace/location";
+import { formatBudgetRange } from "../../../lib/marketplace/wizardValidation";
 import {
   CUSTOMER_DASHBOARD_TABS,
   customerLifecycleLabel,
@@ -51,6 +67,7 @@ import {
 } from "../../../lib/marketplace/statusLabels";
 import { estimateNeedsNewSubmission } from "../../../lib/marketplace/privacy";
 import { useToast } from "../../../hooks/useToast";
+import { InboxHomeCards } from "../../../components/marketplace/InboxHomeCards";
 
 function bookingByProject(bookings: Booking[]) {
   const map = new Map<string, Booking>();
@@ -93,11 +110,10 @@ export function CustomerHomePage() {
         <HumanStatus label="Customer" />
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Hello, {name}.</h1>
         <p className="mt-3 max-w-xl text-ink-700">
-          Post a project, review connections, and choose a local pro. PPP does not take a percentage of the job.
-          {` ${CUSTOMER_DASHBOARD_PRICING_NOTE}`}
-          {` ${paymentsComingSoonCopy()}`}
+          {CUSTOMER_HOME_INTRO} {CUSTOMER_PAYS_DIRECTLY}
         </p>
       </header>
+      <InboxHomeCards role="customer" />
       <ButtonLink to="/app/customer/projects/new/wizard" className="min-h-14">
         Post a project
       </ButtonLink>
@@ -106,7 +122,7 @@ export function CustomerHomePage() {
       {!loading && recent.length === 0 ? (
         <EmptyState
           title="No projects yet"
-          body="Post a project when you know what needs doing. Nothing is saved until you hit Post. Homeowners & Businesses pay $0/month and $0 Connection Fee."
+          body={CUSTOMER_HOME_EMPTY}
         />
       ) : null}
       <ul className="space-y-3">
@@ -214,8 +230,14 @@ export function CustomerProjectsPage() {
       {loading ? <LoadingState /> : null}
       {!loading && filtered.length === 0 ? (
         <EmptyState
-          title={tab === "cancelled" ? "No cancelled projects" : "Nothing here yet"}
-          body="Only projects you have posted appear here."
+          title={tab === "cancelled" ? "No cancelled projects" : tab === "completed" ? "No completed projects" : "No active projects"}
+          body={
+            tab === "cancelled"
+              ? "Cancelled projects stay on this list."
+              : tab === "completed"
+                ? "Jobs you mark complete show up here."
+                : "Posted projects show up here."
+          }
         />
       ) : (
         <ul className="space-y-3">
@@ -232,10 +254,7 @@ export function CustomerProjectsPage() {
               <li key={project.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
                 <HumanStatus label={customerLifecycleLabel(project.status, booking?.status ?? null)} />
                 <p className="mt-2 font-semibold text-forest-800">{project.title || "Project"}</p>
-                {state === "cancelled" ? <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-ink-500">Cancelled</p> : null}
-                <div className="mt-2">
-                  <CompletenessBadge value={project.completeness} />
-                </div>
+                {state === "cancelled" ? <p className="mt-1 text-sm text-ink-500">Cancelled</p> : null}
                 <div className="mt-3 flex min-w-0 flex-col gap-2">
                   {actions.map((action) => (
                     <ButtonLink key={action.label} to={action.to} variant={action.variant ?? "primary"} className="min-h-12 w-full">
@@ -301,11 +320,9 @@ export function CustomerProjectDetailPage() {
   return (
     <div className="space-y-6">
       <header>
-        <HumanStatus label={customerLifecycleLabel(project.status)} />
+        <HumanStatus label={customerLifecycleLabel(project.status, booking?.status ?? null)} />
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{project.title || "Project"}</h1>
-        <div className="mt-3">
-          <CompletenessBadge value={project.completeness} />
-        </div>
+        <p className="mt-3 text-sm text-ink-700">{CUSTOMER_PAYS_DIRECTLY}</p>
       </header>
       {project.status === "CANCELLED" ? (
         <StatusBanner tone="warning" title="Cancelled" body="This project left the marketplace. Estimates are kept in your history." />
@@ -317,17 +334,19 @@ export function CustomerProjectDetailPage() {
       <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm">
         <h2 className="font-display text-2xl text-forest-800">Job details</h2>
         <p className="mt-3 whitespace-pre-wrap">{project.description || "No description yet."}</p>
-        <p className="mt-3">
-          {project.city}, {project.state} {project.zip_code}
-        </p>
-        <p>Street (private until a paid $4.99 connection entitlement or an admin unlock): {street ?? "—"}</p>
+        <p className="mt-3">{formatCityStateZip(project.city, project.state, project.zip_code)}</p>
+        <p>{STREET_STAYS_PRIVATE}{street ? ` On file: ${street}` : ""}</p>
         <p>{project.timing ? TIMING_LABELS[project.timing] : ""}</p>
+        {project.preferred_date ? <p>Preferred date: {project.preferred_date}</p> : null}
+        <p>
+          Budget: {formatBudgetRange(project.budget_min_cents, project.budget_max_cents, formatUsdFromCents)}
+        </p>
       </section>
       {project.status !== "DRAFT" && project.status !== "CANCELLED" && project.status !== "CONTRACTOR_SELECTED" ? (
         <StatusBanner
           tone="info"
           title="Finding local pros"
-          body={HOMEOWNER_OFFER_QUEUE_COPY}
+          body={project.status === "MATCHING" ? NO_PROS_YET : OFFER_QUEUE_PLAIN}
         />
       ) : null}
       {project.status === "DRAFT" ? (
@@ -359,7 +378,7 @@ export function CustomerProjectDetailPage() {
         ) : null}
         {project.status === "ESTIMATES_AVAILABLE" || project.status === "CONTRACTOR_SELECTED" ? (
           <ButtonLink to={`/app/customer/projects/${project.id}/compare`} variant="outline" className="min-h-14 w-full">
-            Review estimates
+            Compare estimates
           </ButtonLink>
         ) : null}
         {project.selected_booking_id ? (
@@ -393,7 +412,7 @@ export function CustomerProjectDetailPage() {
               setCancelOpen(true);
             }}
           >
-            {project.status === "DRAFT" ? "Remove unfinished project" : "Cancel project"}
+            Cancel project
           </Button>
         ) : null}
       </div>
@@ -425,6 +444,10 @@ export function CustomerProjectDetailPage() {
             <p className="font-semibold">{item.prompt}</p>
             {item.answer_text ? (
               <p className="mt-2 text-sm text-ink-700">{item.answer_text}</p>
+            ) : project.status === "CANCELLED" ||
+              project.status === "CONTRACTOR_SELECTED" ||
+              Boolean(booking?.customer_hired_at && booking?.contractor_hired_at) ? (
+              <p className="mt-2 text-sm text-ink-500">This question is closed.</p>
             ) : (
               <form
                 className="mt-2 space-y-2"
@@ -451,7 +474,7 @@ export function CustomerProjectDetailPage() {
       <ConfirmDialog
         open={stopOpen}
         title="Stop new connections?"
-        body="New contractors will not be able to purchase a connection. Existing unlocked connections stay. Nothing is deleted."
+        body={STOP_CONNECTIONS_BODY}
         confirmLabel="Stop New Connections"
         cancelLabel="Keep connections open"
         busy={busy}
@@ -460,7 +483,7 @@ export function CustomerProjectDetailPage() {
           setBusy(true);
           void stopNewProjectConnections(project.id)
             .then(() => {
-              toast.push("New connections are closed. Existing unlocked connections were kept.");
+              toast.push(STOP_CONNECTIONS_TOAST);
               setStopOpen(false);
               return reload();
             })
@@ -479,7 +502,7 @@ export function CustomerProjectDetailPage() {
           setBusy(true);
           void cancelCustomerProject(project.id, true)
             .then((result) => {
-              toast.push(result.action === "deleted" ? "Draft deleted." : "Project cancelled.");
+              toast.push(result.action === "deleted" ? "This project was never posted." : CANCEL_PROJECT_TOAST);
               navigate("/app/customer/projects");
             })
             .catch((err: Error) => setError(err.message))
@@ -515,7 +538,7 @@ export function CompareEstimatesPage() {
     async function load() {
       const proj = await fetchMyCustomerProject(projectId);
       setProject(proj);
-      const estimates = comparisonDisplayOrder(await fetchProjectEstimates(projectId)).slice(0, 3);
+      const estimates = liveCustomerEstimates(await fetchProjectEstimates(projectId)).slice(0, 3);
       const detailed = await Promise.all(
         estimates.map(async (estimate) => ({
           estimate,
@@ -541,7 +564,7 @@ export function CompareEstimatesPage() {
     setError(null);
     try {
       await selectEstimate(projectId, estimateId);
-      toast.push(paymentsComingSoonCopy());
+      toast.push("Pro selected.");
       setConfirmId(null);
       const proj = await fetchMyCustomerProject(projectId);
       setProject(proj);
@@ -558,7 +581,7 @@ export function CompareEstimatesPage() {
     try {
       await declineEstimate(estimateId);
       toast.push("Estimate declined.");
-      const estimates = comparisonDisplayOrder(await fetchProjectEstimates(projectId)).slice(0, 3);
+      const estimates = liveCustomerEstimates(await fetchProjectEstimates(projectId)).slice(0, 3);
       const detailed = await Promise.all(
         estimates.map(async (estimate) => ({
           estimate,
@@ -588,18 +611,16 @@ export function CompareEstimatesPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Compare estimates</h1>
-      <p className="text-ink-700">
-        Factual comparison only. PPP does not rank a “best” estimate. Up to three local independents can price the job.
-        Selecting a pro starts a pending booking. It does not charge a card and does not share your exact address yet.
-      </p>
+      <p className="text-ink-700">{COMPARE_INTRO} {CUSTOMER_PAYS_DIRECTLY}</p>
       <FormError message={error} />
       {rows.length === 0 ? <EmptyState title="No estimates yet" body="Submitted estimates will appear here in the order they arrived." /> : null}
       <div className="grid gap-4">
         {rows.map(({ estimate, items, contractor, extras }) => {
           const status = estimate.status as EstimateStatus;
           const outOfDate = estimateNeedsNewSubmission(status);
-          const selectable = canCustomerSelectFrom(status) && project?.status !== "CONTRACTOR_SELECTED";
-          const declinable = canCustomerDeclineFrom(status) && project?.status !== "CONTRACTOR_SELECTED";
+          const openForChoice = project?.status !== "CONTRACTOR_SELECTED" && project?.status !== "CANCELLED";
+          const selectable = canCustomerSelectFrom(status) && openForChoice;
+          const declinable = canCustomerDeclineFrom(status) && openForChoice;
           return (
             <article key={estimate.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 p-5">
               <div className="flex items-center gap-3">
@@ -614,13 +635,8 @@ export function CompareEstimatesPage() {
                 <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">
                   {extras.badges.map((badge) => badge.label).join(" · ")}
                 </p>
-              ) : (
-                <p className="mt-1 text-xs text-ink-500">Verification badges appear only after PPP verifies credentials.</p>
-              )}
-              <p className="mt-1 text-xs text-ink-500">
-                Phone, email, and street stay hidden until a hire is entitled. Full business identity is shared after
-                you hire through Priority Property Pros.
-              </p>
+              ) : null}
+              <p className="mt-1 text-xs text-ink-500">{STREET_STAYS_PRIVATE}</p>
               {outOfDate ? (
                 <StatusBanner
                   tone="warning"
@@ -654,8 +670,7 @@ export function CompareEstimatesPage() {
               {estimate.notes ? <p className="mt-3 text-sm">{estimate.notes}</p> : null}
               {project?.status === "CONTRACTOR_SELECTED" && project.selected_estimate_id === estimate.id ? (
                 <div className="mt-4 space-y-2">
-                  <p className="font-semibold text-forest-800">Selected — booking is waiting</p>
-                  <p className="text-sm">{paymentsComingSoonCopy()}</p>
+                  <p className="font-semibold text-forest-800">{SELECTED_BOOKING_COPY}</p>
                   {project.selected_booking_id ? (
                     <ButtonLink to={`/app/customer/bookings/${project.selected_booking_id}`} className="min-h-14 w-full">
                       View booking
@@ -673,13 +688,12 @@ export function CompareEstimatesPage() {
                     variant="outline"
                     className="min-h-14 w-full"
                   >
-                    View
+                    View estimate
                   </ButtonLink>
                   {selectable && confirmId === estimate.id ? (
                     <>
                       <p className="text-sm">
-                        Confirm this independent contractor? This starts a pending booking. No payment is taken and your exact
-                        address stays private.
+                        {SELECT_CONFIRM_BODY}
                       </p>
                       <Button type="button" className="min-h-14 w-full" disabled={busy} onClick={() => void confirm(estimate.id)}>
                         Confirm this pro
@@ -726,7 +740,7 @@ export function CustomerEstimateDetailPage() {
     async function load() {
       const proj = await fetchMyCustomerProject(projectId);
       setProject(proj);
-      await markEstimateViewed(estimateId, projectId);
+      await markEstimateViewed(estimateId, projectId).catch(() => undefined);
       const est = await fetchEstimate(estimateId);
       if (est.project_id !== projectId) throw new Error("Estimate not on this project.");
       setEstimate(est);
@@ -762,12 +776,12 @@ export function CustomerEstimateDetailPage() {
         <ContractorAvatar size={72} />
         <h1 className="font-display text-4xl font-semibold text-forest-800">{contractor?.display_label || "Estimate"}</h1>
       </div>
-      <p className="text-sm text-ink-500">Opening this page marks the estimate viewed. Phone, email, and street stay hidden.</p>
+      <p className="text-sm text-ink-500">{STREET_STAYS_PRIVATE}</p>
       <FormError message={error} />
       {badges.length > 0 ? (
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">{badges.map((b) => b.label).join(" · ")}</p>
       ) : (
-        <p className="text-xs text-ink-500">Only PPP-verified badges are shown.</p>
+        <p className="text-xs text-ink-500">No contractor-provided credentials are listed yet.</p>
       )}
       <p className="text-lg font-semibold">{formatUsdFromCents(estimate.total_cents)}</p>
       <ul className="space-y-1 text-sm">
@@ -791,7 +805,13 @@ export function CustomerEstimateDetailPage() {
               onClick={() => {
                 setBusy(true);
                 void selectEstimate(projectId, estimate.id)
-                  .then(() => toast.push(paymentsComingSoonCopy()))
+                  .then(async () => {
+                    toast.push("Pro selected.");
+                    const proj = await fetchMyCustomerProject(projectId);
+                    setProject(proj);
+                    const est = await fetchEstimate(estimate.id);
+                    setEstimate(est);
+                  })
                   .catch((err: Error) => setError(err.message))
                   .finally(() => setBusy(false));
               }}

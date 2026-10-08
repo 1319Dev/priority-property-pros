@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { CompletenessBadge } from "../../../components/marketplace/CompletenessBadge";
 import { ProjectTypePicker } from "../../../components/marketplace/ProjectTypePicker";
 import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/Input";
@@ -15,7 +14,9 @@ import {
   TIMING_LABELS,
 } from "../../../lib/marketplace/api";
 import { PRE_HIRE_CONTACT_HINT } from "../../../lib/marketplace/antiCircumvention";
-import { canPostProject, computeCompleteness } from "../../../lib/marketplace/completeness";
+import { canPostProject } from "../../../lib/marketplace/completeness";
+import { POST_BLOCKED_REASON, STREET_STAYS_PRIVATE, TARGETED_PRO_NOTE, WIZARD_PERSIST_NOTE } from "../../../lib/marketplace/customerCopy";
+import { formatBudgetRange, normalizedWizardPlace, todayIsoDate, wizardStepError } from "../../../lib/marketplace/wizardValidation";
 import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { photoUploadError } from "../../../lib/marketplace/flows";
 import {
@@ -104,7 +105,7 @@ export function ProjectWizardPage() {
           );
           return;
         }
-        const preset = params.get("q") ?? params.get("service") ?? "";
+        const preset = params.get("q") ?? params.get("service") ?? params.get("trade") ?? "";
         const match = cats.find((c) => c.slug === preset || c.name.toLowerCase() === preset.toLowerCase());
         if (preset) {
           setForm((current) => {
@@ -136,23 +137,9 @@ export function ProjectWizardPage() {
     void fetchServiceQuestions(form.categoryId).then(setQuestions).catch((err: Error) => setError(err.message));
   }, [form.categoryId]);
 
-  const completeness = useMemo(() => {
-    return computeCompleteness({
-      title: form.title,
-      description: form.description,
-      category_id: form.categoryId,
-      zip_code: form.zipCode,
-      city: form.city,
-      state: form.state,
-      timing: form.timing,
-      budget_min_cents: dollarsToCents(form.budgetMin),
-      budget_max_cents: dollarsToCents(form.budgetMax),
-      photo_count: photos.length,
-      street_line1: form.street,
-      required_questions: questions,
-      answers: Object.entries(form.answers).map(([question_id, answer_text]) => ({ question_id, answer_text })),
-    });
-  }, [form, photos.length, questions]);
+  useEffect(() => {
+    document.querySelector<HTMLElement>("[data-current='true']")?.scrollIntoView?.({ inline: "nearest", block: "nearest" });
+  }, [step]);
 
   function patch(next: Partial<WizardSession>) {
     setForm((current) => ({ ...current, ...next }));
@@ -194,8 +181,8 @@ export function ProjectWizardPage() {
         title: form.title,
         description: form.description,
         categoryId: form.categoryId,
-        city: form.city,
-        state: form.state,
+        city: normalizedWizardPlace(form).city,
+        state: normalizedWizardPlace(form).state,
         zipCode: form.zipCode,
         timing: form.timing,
         preferredDate: form.timing === "SPECIFIC_DATE" ? form.preferredDate : "",
@@ -247,13 +234,14 @@ export function ProjectWizardPage() {
         <h1 className="font-display text-4xl font-semibold text-forest-800">
           {WIZARD_STEPS[step - 1]?.label ?? "Project"}
         </h1>
-        <p className="text-sm text-ink-500">Nothing is saved until you hit Post. You can leave this page and come back in this tab.</p>
-        <CompletenessBadge value={completeness} />
-        <ol className="flex gap-1 overflow-x-auto pb-1" aria-label="Steps">
+        <p className="text-sm text-ink-500">{WIZARD_PERSIST_NOTE}</p>
+        {params.get("pro") ? <p className="text-sm text-ink-700">{TARGETED_PRO_NOTE}</p> : null}
+        <ol className="flex flex-wrap gap-1 pb-1" aria-label="Steps">
           {WIZARD_STEPS.map((item) => (
             <li key={item.id}>
               <button
                 type="button"
+                data-current={item.id === step ? "true" : undefined}
                 className={`min-h-11 rounded-full px-3 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.12em] ${
                   item.id === step ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-ink-700"
                 }`}
@@ -397,7 +385,7 @@ export function ProjectWizardPage() {
       {step === 5 ? (
         <div className="space-y-4">
           <p className="text-sm text-ink-700">
-            Your exact street stays protected until a contractor has a paid $4.99 connection entitlement or an admin unlocks that record. Matched pros only see city and state before connecting.
+            {STREET_STAYS_PRIVATE} Matched pros see city and state.
           </p>
           <TextInput label="Street address" value={form.street} onChange={(e) => patch({ street: e.target.value })} autoComplete="street-address" />
           <TextInput label="Apt / unit (optional)" value={form.street2} onChange={(e) => patch({ street2: e.target.value })} />
@@ -430,6 +418,7 @@ export function ProjectWizardPage() {
             <TextInput
               label="Preferred date"
               type="date"
+              min={todayIsoDate()}
               value={form.preferredDate}
               onChange={(e) => patch({ preferredDate: e.target.value })}
             />
@@ -472,12 +461,7 @@ export function ProjectWizardPage() {
             <strong>When:</strong> {form.timing ? TIMING_LABELS[form.timing] : "—"}
           </p>
           <p>
-            <strong>Budget:</strong>{" "}
-            {budgetMinCents != null || budgetMaxCents != null
-              ? `${budgetMinCents != null ? formatUsdFromCents(budgetMinCents) : "—"} to ${
-                  budgetMaxCents != null ? formatUsdFromCents(budgetMaxCents) : "—"
-                }`
-              : "—"}
+            <strong>Budget:</strong> {formatBudgetRange(budgetMinCents, budgetMaxCents, formatUsdFromCents)}
           </p>
           <p>
             <strong>Photos:</strong> {photos.length}
@@ -493,13 +477,29 @@ export function ProjectWizardPage() {
           </Button>
         ) : null}
         {step < 8 ? (
-          <Button type="button" className="min-h-14 flex-1" disabled={busy} onClick={() => go(step + 1)}>
+          <Button
+            type="button"
+            className="min-h-14 flex-1"
+            disabled={busy}
+            onClick={() => {
+              const message = wizardStepError(step, form, questions);
+              if (message) {
+                setError(message);
+                return;
+              }
+              setError(null);
+              go(step + 1);
+            }}
+          >
             Continue
           </Button>
         ) : (
-          <Button type="button" className="min-h-14 flex-1" disabled={busy || !ready} onClick={() => void onPost()}>
-            {busy ? "Posting…" : "Post project"}
-          </Button>
+          <div className="flex-1 space-y-2">
+            {!ready ? <p className="text-sm text-ink-700">{POST_BLOCKED_REASON}</p> : null}
+            <Button type="button" className="min-h-14 w-full" disabled={busy || !ready} onClick={() => void onPost()}>
+              {busy ? "Posting…" : "Post project"}
+            </Button>
+          </div>
         )}
       </div>
     </div>
