@@ -1203,12 +1203,18 @@ $$;
 
 -- Idempotent data repair. Does not touch payments, fees, or connection 9106a50b.
 -- Closes live estimates from rejected contractors (includes 5466be8a on project 6443d3e4).
+-- Mark the same RPC admin rejection uses so the contractor signup-fee trigger
+-- cannot abort this cleanup when that contractor has not paid.
+SELECT public.ppp_set_rpc('admin_reject_contractor');
+
 UPDATE public.estimates e
 SET status = 'WITHDRAWN', withdrawn_at = coalesce(e.withdrawn_at, now())
 FROM public.contractor_profiles cp
 WHERE e.contractor_profile_id = cp.id
   AND cp.approval_status = 'REJECTED'
   AND e.status IN ('DRAFT', 'SUBMITTED', 'SENT', 'REVISED', 'VIEWED');
+
+SELECT public.ppp_set_rpc('');
 
 UPDATE public.opportunities o
 SET status = 'CLOSED'

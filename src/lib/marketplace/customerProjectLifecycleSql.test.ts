@@ -45,5 +45,10 @@ describe("customer project lifecycle migration", () => {
     const skip = fee.slice(0, fee.indexOf("assert_signup_fee_paid"));
     expect(skip).toMatch(/cancel_customer_project/);
     expect(skip).toMatch(/admin_reject_contractor/);
+    const repair = migration.slice(migration.indexOf("Idempotent data repair"));
+    const marked = repair.indexOf("ppp_set_rpc('admin_reject_contractor')");
+    const closed = repair.indexOf("UPDATE public.estimates");
+    expect(marked).toBeGreaterThan(-1);
+    expect(closed).toBeGreaterThan(marked);
   });
 });
