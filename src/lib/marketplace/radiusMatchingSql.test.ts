@@ -58,10 +58,18 @@ describe("ZIP radius schema, matching, and RLS", () => {
     expect(data).not.toMatch(/charges_live/);
 
     const dir = path.join(repoRoot, "supabase/migrations");
-    const parts = readdirSync(dir)
-      .filter((name) => /^20261012000001_\d+_zip_centroids_tx_part\d+\.sql$/.test(name))
-      .sort();
+    const names = readdirSync(dir).filter((name) => name.endsWith(".sql")).sort();
+    const parts = names.filter((name) => /^20261012000001_zip_centroids_tx_part\d+\.sql$/.test(name));
     expect(parts.length).toBeGreaterThan(1);
+    const schemaAt = names.indexOf(dataMigration);
+    const logicAt = names.indexOf(logicMigration);
+    expect(schemaAt).toBeGreaterThanOrEqual(0);
+    expect(logicAt).toBeGreaterThan(schemaAt);
+    for (const name of parts) {
+      const at = names.indexOf(name);
+      expect(at).toBeGreaterThan(schemaAt);
+      expect(at).toBeLessThan(logicAt);
+    }
     let texasRows = 0;
     const texasSql = parts
       .map((name) => {

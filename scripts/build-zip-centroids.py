@@ -266,7 +266,7 @@ CREATE POLICY zip_centroids_write_admin
     for old in MIGRATIONS.glob("20261012000001_*_zip_centroids_tx_part*.sql"):
         old.unlink()
     for index, part_rows in enumerate(packed, start=1):
-        path = MIGRATIONS / f"20261012000001_{index}_zip_centroids_tx_part{index}.sql"
+        path = MIGRATIONS / f"20261012000001_zip_centroids_tx_part{index}.sql"
         path.write_text(render_part(part_rows, index, len(packed)), encoding="utf-8")
 
     print(
