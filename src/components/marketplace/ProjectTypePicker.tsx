@@ -55,7 +55,7 @@ export function ProjectTypeTabBar({
   }, [idPrefix, value]);
 
   return (
-    <div className="max-w-full overflow-x-auto overscroll-x-contain">
+    <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
       <div className="flex w-max min-w-full gap-2 pb-1" role="tablist" aria-label="Project type groups">
         {tabs.map((item) => {
           const selectedTab = value === item.id;
@@ -114,7 +114,7 @@ export function ProjectTypePicker({
 
   return (
     <fieldset className="min-w-0 space-y-3">
-      <legend className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">{legend}</legend>
+      <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">{legend}</legend>
       {selected ? (
         <p className="text-sm text-ink-700">
           Selected: <span className="font-semibold text-forest-800">{selected.name}</span>
@@ -151,10 +151,10 @@ export function ProjectTypePicker({
                     onChange={() => onSelect(category.id)}
                   />
                   {isSelected ? (
-                    <span className="mb-1 inline-flex items-center gap-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-gold-700">
+                    <span className="mb-1 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">
                       <span
                         aria-hidden
-                        className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-forest-800 font-sans text-[0.6rem] leading-none text-cream-50"
+                        className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-forest-800 font-sans text-xs leading-none text-cream-50"
                       >
                         ✓
                       </span>

@@ -231,7 +231,7 @@ export function ProjectWizardPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <header className="space-y-3">
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Post a project</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Post a project</p>
         <h1 className="font-display text-4xl font-semibold text-forest-800">
           {WIZARD_STEPS[step - 1]?.label ?? "Project"}
         </h1>
@@ -243,7 +243,7 @@ export function ProjectWizardPage() {
               <button
                 type="button"
                 data-current={item.id === step ? "true" : undefined}
-                className={`min-h-11 rounded-full px-3 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.12em] ${
+                className={`min-h-11 rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] ${
                   item.id === step ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-ink-700"
                 }`}
                 onClick={() => go(item.id)}
@@ -266,7 +266,7 @@ export function ProjectWizardPage() {
             placeholder="Fence repaired before the weekend"
           />
           <label className="block" htmlFor="need-detail">
-            <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
               A little more detail
             </span>
             <textarea
@@ -327,7 +327,7 @@ export function ProjectWizardPage() {
           {questions.length === 0 ? <p className="text-ink-500">Pick a category first.</p> : null}
           {questions.map((question) => (
             <div key={question.id}>
-              <p className="mb-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
                 {question.prompt}
                 {question.is_required ? " *" : ""}
               </p>
@@ -471,7 +471,7 @@ export function ProjectWizardPage() {
         </div>
       ) : null}
 
-      <div className="sticky bottom-24 z-20 flex gap-3 bg-cream-50/95 py-3 pb-safe lg:bottom-4">
+      <div className="sticky bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-20 flex flex-col gap-3 bg-cream-50/95 py-3 sm:flex-row lg:bottom-4">
         {step > 1 ? (
           <Button type="button" variant="outline" className="min-h-14 flex-1" disabled={busy} onClick={() => go(step - 1)}>
             Back

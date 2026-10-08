@@ -53,6 +53,17 @@
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
     overflow-x: hidden;
+    overflow-wrap: break-word;
+  }
+
+  /* Let long emails, URLs, and labels shrink inside grids instead of widening the page. */
+  .grid > * {
+    min-width: 0;
+  }
+
+  img,
+  video {
+    max-width: 100%;
   }
 
   #root {
@@ -85,6 +96,33 @@
 
 html {
   scrollbar-gutter: stable;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+select,
+textarea {
+  font-size: 1rem;
+}
+
+input[type="file"] {
+  max-width: 100%;
+  font-size: 1rem;
+}
+
+input[type="checkbox"],
+input[type="radio"]:not(.sr-only) {
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  accent-color: var(--color-forest-800);
+}
+
+p a,
+dd a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
 }
 
 .paper-grain {

@@ -113,7 +113,7 @@ export function ChangeOrderPanel({
       />
       {amountError ? <p className="text-sm text-danger-600">{amountError}</p> : null}
       <label className="block">
-        <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">What changed</span>
+        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">What changed</span>
         <textarea
           aria-label="What changed"
           className="w-full rounded-2xl border border-forest-800/15 px-4 py-3"

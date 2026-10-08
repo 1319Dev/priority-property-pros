@@ -53,7 +53,7 @@ export function BecomeAProPage() {
             sizes="(max-width: 768px) 100vw, 672px"
           />
         </div>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Become a Pro</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Become a Pro</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">
           Real projects. Real customers. Fair competition.
         </h1>
@@ -65,20 +65,20 @@ export function BecomeAProPage() {
         <ul className="mt-8 grid gap-3 sm:grid-cols-3">
           {hidePricing ? null : (
             <li className="rounded-3xl bg-forest-800 px-5 py-5 text-cream-50">
-              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-300">Activation</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-300">Activation</p>
               <p className="mt-2 font-display text-2xl">$9.99 one time</p>
               <p className="mt-2 text-sm text-cream-200">Then $0/month to keep the account.</p>
             </li>
           )}
           {hidePricing ? null : (
             <li className="rounded-3xl border border-forest-800/15 bg-cream-50 px-5 py-5">
-              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Connect</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Connect</p>
               <p className="mt-2 font-display text-2xl text-forest-800">{CONNECTION_FEE_PER_LABEL}</p>
               <p className="mt-2 text-sm text-ink-700">Only when you choose to connect. Not a bid fee.</p>
             </li>
           )}
           <li className="rounded-3xl border border-forest-800/15 bg-cream-50 px-5 py-5">
-            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">The job</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">The job</p>
             <p className="mt-2 font-display text-2xl text-forest-800">You keep the work</p>
             <p className="mt-2 text-sm text-ink-700">Project pay is between you and the customer.</p>
           </li>

@@ -72,7 +72,7 @@ export function ServiceRadiusEditor({
 
   return (
     <fieldset className="space-y-3">
-      <legend className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Service area</legend>
+      <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Service area</legend>
       <TextInput
         label="Base ZIP"
         inputMode="numeric"
@@ -83,7 +83,7 @@ export function ServiceRadiusEditor({
         onBlur={showLocalValidation}
       />
       <div>
-        <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Radius</p>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Radius</p>
         <div className="flex flex-wrap gap-2" role="group" aria-label="Service radius">
           {RADIUS_PRESETS.map((miles) => {
             const selected = radiusNumber === miles;

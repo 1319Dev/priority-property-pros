@@ -38,7 +38,7 @@ export function ProjectPhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
           role="dialog"
           aria-modal="true"
           aria-label="Enlarged project photo"
-          className="fixed inset-0 z-50 flex flex-col bg-forest-950/90 p-4"
+          className="fixed inset-0 z-50 flex max-h-[100dvh] flex-col overflow-y-auto bg-forest-950/90 p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]"
         >
           <button
             type="button"
@@ -48,7 +48,7 @@ export function ProjectPhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
           >
             Close
           </button>
-          <img src={open.url} alt="Project photo" className="max-h-[80vh] w-full object-contain" />
+          <img src={open.url} alt="Project photo" className="max-h-[calc(100dvh-6rem)] w-full object-contain" />
         </div>
       ) : null}
     </section>

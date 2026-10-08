@@ -139,7 +139,7 @@ export function CustomerBookingDetailPage() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">{statusLabel(booking.status)}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">{statusLabel(booking.status)}</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{title}</h1>
         <p className="mt-2 text-ink-700">{contractor}</p>
       </header>

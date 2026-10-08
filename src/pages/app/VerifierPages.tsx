@@ -8,7 +8,7 @@ export function VerifierHomePage() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Verifier</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Verifier</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{name}</h1>
         <p className="mt-3 max-w-xl text-ink-700">
           This dashboard is a shell so verifier accounts can sign in. Accounts use a one-time $9.99 account

@@ -31,3 +31,6 @@ pnpm-debug.log*
 .cache/
 .turbo/
 *.tsbuildinfo
+test-results/
+playwright-report/
+blob-report/

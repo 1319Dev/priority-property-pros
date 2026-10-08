@@ -163,7 +163,7 @@ export function NotificationSettings({
   return (
     <div className="max-w-2xl space-y-6">
       <header>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Settings</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Settings</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Notification settings</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-500">
           Choose in-site, push, and email separately for each alert. In-site alerts show in the bell. Push stays off until you enable it.

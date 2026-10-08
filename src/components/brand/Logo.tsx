@@ -57,7 +57,7 @@ export function Logo({ className, markClassName, inverted = false, truncateWordm
       <span className={cn("flex flex-col leading-none", truncateWordmark && "min-w-0")}>
         <span
           className={cn(
-            "font-display text-[0.62rem] font-semibold tracking-[0.22em]",
+            "font-display text-xs font-semibold tracking-[0.12em] sm:tracking-[0.22em]",
             truncateWordmark && "truncate",
             inverted ? "text-gold-300" : "text-gold-600",
           )}
@@ -66,7 +66,7 @@ export function Logo({ className, markClassName, inverted = false, truncateWordm
         </span>
         <span
           className={cn(
-            "font-display text-[1.05rem] font-semibold tracking-tight",
+            "font-display text-base font-semibold tracking-tight sm:text-[1.05rem]",
             truncateWordmark && "truncate",
             inverted ? "text-cream-50" : "text-forest-800",
           )}
@@ -83,7 +83,7 @@ export function Wordmark({ inverted = false, className }: { inverted?: boolean; 
     <span className={cn("flex flex-col leading-none", className)}>
       <span
         className={cn(
-          "font-display text-[0.7rem] font-semibold tracking-[0.28em]",
+          "font-display text-xs font-semibold tracking-[0.28em]",
           inverted ? "text-gold-300" : "text-gold-600",
         )}
       >

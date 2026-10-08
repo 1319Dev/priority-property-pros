@@ -32,7 +32,7 @@ export function Hero() {
       <HeroBanner />
       <Container className="py-8 sm:py-12 lg:py-14">
         <div className="min-w-0">
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">{HERO_TAGLINE}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">{HERO_TAGLINE}</p>
           <h1 className="mt-4 max-w-full text-balance font-display text-[2.1rem] leading-[1.12] font-semibold tracking-tight break-words text-forest-800 sm:text-4xl lg:text-5xl">
             {CUSTOMER_TAGLINE.split(". ").map((part, index, all) => (
               <span key={part} className="block">
@@ -75,7 +75,7 @@ export function Hero() {
               navigate(authAwarePostPath(search ? `/post-project?${search}` : "/post-project", { loading, accountType: account_type }));
             }}
           >
-            <label htmlFor="need-done" className="px-2 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-gold-700">
+            <label htmlFor="need-done" className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-gold-700">
               What do you need done?
             </label>
             <div className="mt-2 flex min-w-0 flex-col gap-2 sm:flex-row">

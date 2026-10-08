@@ -240,7 +240,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
     <div className="space-y-4 lg:grid lg:min-h-[70vh] lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-stretch lg:gap-6 lg:space-y-0">
       <section className={threadRoute ? "hidden lg:block" : "block"} aria-label="Conversations">
         <header className="mb-4">
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Messages</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Messages</p>
           <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Messages</h1>
         </header>
         {loading ? <BrandLoader layout="section" label="Loading conversations…" /> : null}
@@ -280,7 +280,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
                     </span>
                     {unread ? (
                       <span
-                        className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-gold-500 px-1.5 text-[0.65rem] font-bold text-forest-950"
+                        className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-gold-500 px-1.5 text-xs font-bold text-forest-950"
                         aria-label={`${thread.unread_count} unread`}
                       >
                         {thread.unread_count}
@@ -333,13 +333,13 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
                           <p className="mb-1 text-xs font-semibold text-ink-500">{item.senderLabel}</p>
                         ) : null}
                         <p
-                          className={`rounded-3xl px-4 py-3 text-sm leading-relaxed ${
+                          className={`break-words rounded-3xl px-4 py-3 text-sm leading-relaxed ${
                             item.mine ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-ink-900"
                           }`}
                         >
                           {item.body}
                         </p>
-                        <p className="mt-1 text-[0.7rem] text-ink-500">{formatInboxTime(item.createdAt)}</p>
+                        <p className="mt-1 text-xs text-ink-500">{formatInboxTime(item.createdAt)}</p>
                         {item.id.startsWith("pending-") && pending.find((row) => row.id === item.id)?.failed ? (
                           <button
                             type="button"
@@ -359,7 +359,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
             {!locked && threadId ? (
               <form
                 onSubmit={(event) => void onSend(event)}
-                className="sticky bottom-24 z-30 mt-auto space-y-2 border-t border-forest-800/10 bg-cream-50/95 pt-3 pb-2 lg:bottom-0"
+                className="sticky bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-30 mt-auto space-y-2 border-t border-forest-800/10 bg-cream-50/95 pt-3 pb-2 lg:bottom-0"
               >
                 <label className="block">
                   <span className="sr-only">Message</span>

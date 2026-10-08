@@ -14,7 +14,7 @@ export function FaqPage() {
   return (
     <section className="py-10 sm:py-16">
       <Container className="max-w-3xl">
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">FAQ</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">FAQ</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">{FAQ_PAGE_TITLE}</h1>
         <p className="mt-4 text-lg leading-relaxed text-ink-700">{intro}</p>
         <dl className="mt-8 space-y-4">

@@ -72,7 +72,7 @@ export function FindAProCardView({ card }: { card: FindAProCard }) {
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Link
           to={liveContractorPath(card.id)}
-          className="inline-flex min-h-11 items-center justify-center rounded-full bg-forest-800 px-4 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-cream-50"
+          className="inline-flex min-h-11 items-center justify-center rounded-full bg-forest-800 px-4 text-xs font-semibold uppercase tracking-[0.12em] text-cream-50"
         >
           View Profile
         </Link>
@@ -152,7 +152,7 @@ export function FindAProDirectory({
           Accepting work
         </label>
         <label className="block text-sm">
-          <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Reviews</span>
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Reviews</span>
           <select
             className={selectClass}
             value={reviewStatus}
@@ -165,7 +165,7 @@ export function FindAProDirectory({
           </select>
         </label>
         <label className="block text-sm sm:col-span-2">
-          <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Minimum rating</span>
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Minimum rating</span>
           <select
             className={selectClass}
             aria-label="Minimum rating"

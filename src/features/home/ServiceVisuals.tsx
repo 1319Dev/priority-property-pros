@@ -14,7 +14,7 @@ export function ServiceVisuals() {
   return (
     <section id="services" className="border-b border-forest-800/10 py-12 sm:py-16" aria-labelledby="services-heading">
       <Container>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">
           Popular services
         </p>
         <h2

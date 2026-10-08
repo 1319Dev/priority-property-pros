@@ -78,7 +78,7 @@ export function AdminApprovalsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Admin</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Admin</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Contractor approvals</h1>
         <p className="mt-3 max-w-2xl text-ink-700">
           Review real applications. Approve and reject only from this queue. Paying a signup fee never approves a
@@ -281,7 +281,7 @@ export function AdminApprovalDetailPage() {
           The account stays in the database. They will not receive opportunities. This cannot be done by the contractor.
         </p>
         <label className="mt-4 block">
-          <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
             Reason (optional)
           </span>
           <textarea
@@ -315,7 +315,7 @@ export function AdminApprovalDetailPage() {
           The application stays pending. Your message is stored for this contractor and written to the audit log.
         </p>
         <label className="mt-4 block">
-          <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
             Message
           </span>
           <textarea
@@ -376,7 +376,7 @@ export function ApprovalDetailView({
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Contractor</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Contractor</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">
           {item.business_name.trim() || "Unnamed business"}
         </h1>
@@ -486,15 +486,15 @@ export function ApprovalDetailView({
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">{label}</dt>
-      <dd className="mt-1 text-ink-900">{value}</dd>
+      <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">{label}</dt>
+      <dd className="mt-1 min-w-0 break-words text-ink-900">{value}</dd>
     </div>
   );
 }
 
 function StatusChip({ label }: { label: string }) {
   return (
-    <span className="inline-flex min-h-8 items-center rounded-full bg-forest-800/8 px-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-forest-800">
+    <span className="inline-flex min-h-8 items-center rounded-full bg-forest-800/8 px-3 text-xs font-semibold uppercase tracking-[0.14em] text-forest-800">
       {label}
     </span>
   );

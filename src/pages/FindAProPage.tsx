@@ -40,7 +40,7 @@ export function FindAProPage() {
             sizes="(max-width: 768px) 100vw, 672px"
           />
         </div>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">{FIND_A_PRO_TITLE}</h1>
         <p className="mt-4 text-base leading-relaxed text-ink-700 sm:text-lg">
           {hidePricing ? FIND_A_PRO_INTRO_WITHOUT_PLATFORM_FEE : FIND_A_PRO_INTRO}
@@ -81,7 +81,7 @@ export function PublicContractorPage() {
     return (
       <section className={`py-8 sm:py-12 ${FIND_A_PRO_LAYOUT_CLASS}`}>
         <Container className="max-w-xl">
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
           <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">Profile not loaded</h1>
           <p className="mt-4 text-base leading-relaxed text-ink-700">
             This profile could not be loaded. You can try again in a moment.
@@ -100,7 +100,7 @@ export function PublicContractorPage() {
     return (
       <section className={`py-8 sm:py-12 ${FIND_A_PRO_LAYOUT_CLASS}`}>
         <Container className="max-w-xl">
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
           <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">Profile not listed</h1>
           <p className="mt-4 text-base leading-relaxed text-ink-700">
             This contractor is not on the public directory. Only approved, active contractors are listed. Phone, email,

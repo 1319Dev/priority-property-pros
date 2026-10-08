@@ -44,15 +44,15 @@ export function BottomSheet({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "absolute inset-x-0 bottom-0 rounded-t-[1.75rem] border border-cream-200 bg-cream-50 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl transition-transform duration-200",
+          "absolute inset-x-0 bottom-0 flex max-h-[100dvh] flex-col overflow-hidden rounded-t-[1.75rem] border border-cream-200 bg-cream-50 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-200",
           open ? "translate-y-0" : "translate-y-full",
         )}
       >
-        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-ink-300/60" />
-        <h2 id={titleId} className="font-display text-2xl text-forest-800">
+        <div className="mx-auto mb-3 h-1.5 w-12 shrink-0 rounded-full bg-ink-300/60" />
+        <h2 id={titleId} className="shrink-0 font-display text-2xl text-forest-800">
           {title}
         </h2>
-        <div className="mt-3">{children}</div>
+        <div className="mt-3 min-h-0 flex-1 overflow-y-auto">{children}</div>
       </div>
     </div>
   );

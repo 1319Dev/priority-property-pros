@@ -18,7 +18,7 @@ const iconSize = {
 const labelClass = {
   page: "font-sans text-sm font-medium tracking-wide text-ink-500",
   section: "font-sans text-sm font-medium text-ink-500",
-  inline: "font-sans text-[0.65rem] font-medium leading-none text-ink-500",
+  inline: "font-sans text-xs font-medium leading-none text-ink-500",
   nav: "sr-only",
 } as const;
 

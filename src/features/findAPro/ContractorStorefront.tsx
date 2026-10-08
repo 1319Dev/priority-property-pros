@@ -23,7 +23,7 @@ export function ContractorStorefront({ profile }: { profile: FindAProProfile }) 
         <div className="flex min-w-0 items-start gap-3">
           <ContractorAvatar size={64} />
           <div className="min-w-0">
-            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
             <h1 className="mt-2 font-display text-3xl font-semibold text-forest-800 sm:text-4xl">{profile.displayLabel}</h1>
           </div>
         </div>
