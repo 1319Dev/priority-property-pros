@@ -1,10 +1,11 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const migrationName = "20261013000001_notification_channels.sql";
+const migrationName = "20261008114317_notification_channels.sql";
+const cascadeName = "20261008115245_allow_notification_cascade_delete.sql";
 
 function migrationSql(): string {
   return readFileSync(path.join(repoRoot, "supabase/migrations", migrationName), "utf8");
@@ -22,9 +23,9 @@ function functionBody(sql: string, name: string): string {
 describe("notification channel migration", () => {
   const sql = migrationSql();
 
-  it("sorts after the current migrations and enables pg_net without storing a secret", () => {
+  it("uses the production version and enables pg_net without storing a secret", () => {
     expect(migrationName > "20261008023700").toBe(true);
-    expect(migrationName > "20261012000002").toBe(true);
+    expect(migrationName < "20261009000001").toBe(true);
     expect(sql).toMatch(/CREATE EXTENSION IF NOT EXISTS pg_net/);
     expect(sql).toMatch(/CREATE EXTENSION IF NOT EXISTS supabase_vault/);
     expect(sql).toMatch(/private\.notification_delivery_config/);
@@ -94,5 +95,24 @@ describe("notification channel migration", () => {
     expect(questions).not.toMatch(/NEW\.prompt/);
     expect(questions).not.toMatch(/'answer_text'/);
     expect(questions).not.toMatch(/'prompt'/);
+  });
+});
+
+describe("notification cascade delete", () => {
+  it("is the last protect_notification_row definition so account deletion can cascade", () => {
+    const dir = path.join(repoRoot, "supabase/migrations");
+    const definers = readdirSync(dir)
+      .filter((name) => name.endsWith(".sql"))
+      .sort()
+      .filter((name) =>
+        readFileSync(path.join(dir, name), "utf8").includes(
+          "CREATE OR REPLACE FUNCTION public.protect_notification_row",
+        ),
+      );
+    expect(definers.at(-1)).toBe(cascadeName);
+    expect(cascadeName > migrationName).toBe(true);
+    const sql = readFileSync(path.join(dir, cascadeName), "utf8");
+    expect(sql).toMatch(/pg_trigger_depth\(\) <= 1 AND NOT public\.is_admin\(\)/);
+    expect(sql).toMatch(/RETURN OLD/);
   });
 });
