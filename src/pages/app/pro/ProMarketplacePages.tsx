@@ -56,8 +56,11 @@ import {
 } from "../../../lib/marketplace/api";
 import { opportunityListTitle } from "../../../lib/marketplace/opportunityAttach";
 import { centsToDollarString, dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
-import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type Booking, type EstimateItemKind, type EstimateStatus, type ServiceAreaMode, type ServiceCategory } from "../../../lib/marketplace/types";
-import { OPPORTUNITY_STATUS_LABELS, opportunityNextActions } from "../../../lib/marketplace/statusLabels";
+import { ServiceRadiusEditor } from "../../../components/marketplace/ServiceRadiusEditor";
+import { prepareServiceAreaSave, previewServiceRadius } from "../../../lib/marketplace/serviceAreaApi";
+import { contractorAreaSummary } from "../../../lib/marketplace/serviceRadius";
+import { ESTIMATE_ITEM_KIND_LABELS, ESTIMATE_ITEM_KINDS, type Booking, type EstimateItemKind, type EstimateStatus, type ServiceCategory } from "../../../lib/marketplace/types";
+import { OPPORTUNITY_STATUS_LABELS } from "../../../lib/marketplace/statusLabels";
 import { paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
 import {
   CONNECT_PAYMENTS_OFF_COPY,
@@ -147,7 +150,7 @@ export function ProOnboardingPage() {
   const [zips, setZips] = useState("");
   const [centerZip, setCenterZip] = useState("");
   const [radius, setRadius] = useState("");
-  const [mode, setMode] = useState<ServiceAreaMode>("ZIPS");
+  const [areaLabel, setAreaLabel] = useState<string | null>(null);
   const [areaId, setAreaId] = useState<string | undefined>();
   const [onboardingStatus, setOnboardingStatus] = useState<string>("NOT_STARTED");
   const [credLabel, setCredLabel] = useState("");
@@ -179,10 +182,10 @@ export function ProOnboardingPage() {
       const area = areas[0];
       if (area) {
         setAreaId(area.id);
-        setMode(area.mode);
         setZips((area.zip_codes ?? []).join(", "));
         setCenterZip(area.center_zip ?? "");
         setRadius(area.radius_miles?.toString() ?? "");
+        setAreaLabel(area.label);
       }
     }
     void load().catch((err: Error) => setError(err.message));
@@ -204,18 +207,13 @@ export function ProOnboardingPage() {
         ...(onboardingStatus === "COMPLETE" ? {} : { onboarding_status: "SUBMITTED" as const }),
       });
       await setContractorServices(contractorId, selected);
+      const area = await prepareServiceAreaSave({ centerZip, radiusMiles: radius, extraZips: zips });
       await upsertContractorArea({
         id: areaId,
         contractor_profile_id: contractorId,
-        mode,
-        zip_codes: zips
-          .split(/[\s,]+/)
-          .map((z) => z.trim())
-          .filter(Boolean),
-        center_zip: centerZip || null,
-        radius_miles: radius ? Number(radius) : null,
-        label: "Primary area",
+        ...area,
       });
+      setAreaLabel(area.label);
       toast.push("Onboarding saved. An admin still has to approve you before matching.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed.");
@@ -271,17 +269,23 @@ export function ProOnboardingPage() {
           ))}
         </div>
       </fieldset>
-      <fieldset className="space-y-3">
-        <legend className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">Service area</legend>
-        <select className="min-h-14 w-full rounded-2xl border border-forest-800/15 px-4" value={mode} onChange={(e) => setMode(e.target.value as ServiceAreaMode)}>
-          <option value="ZIPS">ZIP list</option>
-          <option value="RADIUS">Radius from a center ZIP</option>
-          <option value="ZIPS_AND_RADIUS">ZIPs and radius</option>
-        </select>
-        <TextInput label="ZIPs (comma separated)" value={zips} onChange={(e) => setZips(e.target.value)} />
-        <TextInput label="Center ZIP" value={centerZip} onChange={(e) => setCenterZip(e.target.value)} />
-        <TextInput label="Radius (miles)" value={radius} onChange={(e) => setRadius(e.target.value)} />
-      </fieldset>
+      <ServiceRadiusEditor
+        centerZip={centerZip}
+        radiusMiles={radius}
+        extraZips={zips}
+        onCenterZipChange={setCenterZip}
+        onRadiusMilesChange={setRadius}
+        onExtraZipsChange={setZips}
+        loadPreview={previewServiceRadius}
+      />
+      <p className="text-sm text-ink-500">
+        {contractorAreaSummary({
+          label: areaLabel,
+          radiusMiles: radius ? Number(radius) : null,
+          centerZip,
+          extraZips: zips.split(/[\s,]+/).filter(Boolean),
+        })}
+      </p>
       <div className="space-y-3 rounded-3xl border border-forest-800/10 p-4">
         <h2 className="font-semibold">Credentials</h2>
         <TextInput label="Credential label" value={credLabel} onChange={(e) => setCredLabel(e.target.value)} />
@@ -439,11 +443,6 @@ export function OpportunitiesPage() {
       ) : (
         <ul className="space-y-3">
           {live.map((row) => {
-            const actions = opportunityNextActions({
-              opportunityId: row.id,
-              status: row.status,
-              projectStatus: row.projects?.status ?? "POSTED",
-            });
             const showPass = canContractorEndJob({
               opportunityStatus: row.status,
               projectStatus: row.projects?.status,
@@ -455,21 +454,19 @@ export function OpportunitiesPage() {
                 <p className="text-sm text-ink-500">
                   {[row.projects?.city, row.projects?.state, row.projects?.zip_code].filter(Boolean).join(", ")}
                 </p>
-                <div className="mt-3 flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
-                  <Link to={actions[0]?.to ?? `/app/pro/opportunities/${row.id}`} className="inline-flex min-h-12 items-center font-semibold text-forest-800">
-                    {actions[0]?.label ?? "View opportunity"}
-                  </Link>
+                <div className="mt-4 flex flex-col items-stretch gap-1">
+                  <ButtonLink to={`/app/pro/opportunities/${row.id}`} className="min-h-14 w-full">
+                    View job
+                  </ButtonLink>
                   {showPass ? (
-                    <Button
+                    <button
                       type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full sm:w-auto"
+                      className="mx-auto block min-h-11 px-2 text-sm font-medium text-ink-500 underline decoration-ink-500/30 underline-offset-4 hover:text-forest-800"
                       disabled={busy}
                       onClick={() => setPassId(row.id)}
                     >
                       {declineJobButtonLabel(null)}
-                    </Button>
+                    </button>
                   ) : null}
                 </div>
               </li>
@@ -690,15 +687,14 @@ export function OpportunityDetailPage() {
         <ContractorConnectionCta state={connectionUiState} busy={busy} onConnect={() => setConnectOpen(true)} />
       ) : null}
       {showDecline ? (
-        <Button
+        <button
           type="button"
-          variant="outline"
-          className="min-h-14 w-full"
+          className="mx-auto block min-h-11 px-2 text-sm font-medium text-ink-500 underline decoration-ink-500/30 underline-offset-4 hover:text-forest-800"
           disabled={busy}
           onClick={() => setEndOpen(true)}
         >
           {declineJobButtonLabel(myConnection?.status ?? null)}
-        </Button>
+        </button>
       ) : null}
       {row.status === "ACCEPTED" && !cancelled ? (
         <section className="space-y-3">

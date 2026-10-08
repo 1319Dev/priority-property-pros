@@ -1,6 +1,7 @@
 import type { AccountStatus, ApprovalStatus, OnboardingStatus } from "../auth/types";
 import { displayName } from "../auth/roles";
 import { contractorEligibleForProject, type MatchingContractor, type MatchingProject } from "../marketplace/matching";
+import { contractorAreaSummary, isPublicRadiusLabel } from "../marketplace/serviceRadius";
 
 export const APPROVAL_TABS = ["PENDING", "APPROVED", "REJECTED", "IDENTITY_REVIEW", "ALL"] as const;
 export type ApprovalTab = (typeof APPROVAL_TABS)[number];
@@ -18,6 +19,8 @@ export type ApprovalServiceArea = {
   radius_miles: number | null;
   zip_codes: string[];
   label: string | null;
+  place_city?: string | null;
+  place_state?: string | null;
 };
 
 export type ApprovalCredential = {
@@ -108,12 +111,19 @@ export function formatServiceAreaSummary(
   const parts: string[] = [];
   for (const area of item.service_areas ?? []) {
     const zips = (area.zip_codes ?? []).map((zip) => zip.trim()).filter(Boolean);
-    if (zips.length) parts.push(zips.join(", "));
-    if (area.radius_miles != null && area.center_zip) {
-      parts.push(`${area.radius_miles} mi from ${area.center_zip}`);
-    } else if (area.radius_miles != null) {
-      parts.push(`${area.radius_miles} mile radius`);
-    } else if (area.center_zip && !zips.includes(area.center_zip)) {
+    if (area.radius_miles != null) {
+      parts.push(
+        contractorAreaSummary({
+          label: area.label && isPublicRadiusLabel(area.label) ? area.label : null,
+          radiusMiles: area.radius_miles,
+          centerZip: area.center_zip,
+          city: area.place_city,
+          state: area.place_state,
+        }),
+      );
+    } else if (zips.length) {
+      parts.push(zips.join(", "));
+    } else if (area.center_zip) {
       parts.push(area.center_zip);
     } else if (area.label) {
       parts.push(area.label);

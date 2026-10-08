@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { EmptyState } from "../../../components/layout/DashboardShell";
+import { ChangeOrderPanel } from "../../../components/marketplace/ChangeOrderPanel";
 import { Button } from "../../../components/ui/Button";
-import { TextInput } from "../../../components/ui/Input";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
 import {
@@ -25,7 +25,7 @@ import {
 } from "../../../lib/marketplace/api";
 import { BOOKING_STATUS_LABELS, contactAccessRowAllowsReveal, paymentsComingSoonCopy, privateContactLockedCopy } from "../../../lib/marketplace/bookings";
 import { SHARE_CONTACT_WAITING_COPY, jobContactWasShared } from "../../../lib/marketplace/contactShare";
-import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
+import { formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { isMutuallyHired, bookingListHiredLabel } from "../../../lib/marketplace/hired";
 import type { Booking, BookingContactAccess, BookingReview, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
@@ -144,8 +144,6 @@ export function ProBookingDetailPage() {
   const [orders, setOrders] = useState<ChangeOrder[]>([]);
   const [reviews, setReviews] = useState<BookingReview[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [delta, setDelta] = useState("");
-  const [note, setNote] = useState("");
   const [rating, setRating] = useState("5");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
@@ -252,45 +250,18 @@ export function ProBookingDetailPage() {
       ) : null}
 
       {(booking.status === "CONFIRMED" || booking.status === "IN_PROGRESS") && (
-        <section className="space-y-3">
-          <h2 className="font-display text-2xl">Change orders</h2>
-          <p className="text-sm text-ink-700">You cannot raise the price by yourself. The customer has to approve.</p>
-          <ul className="space-y-2 text-sm">
-            {orders.map((order) => (
-              <li key={order.id} className="rounded-2xl bg-cream-100 px-4 py-3">
-                <p className="font-semibold">
-                  {formatUsdFromCents(order.amount_delta_cents)} · {order.status.replaceAll("_", " ")}
-                </p>
-                <p>{order.description}</p>
-                {order.status === "CUSTOMER_APPROVED" && !order.contractor_acked_at ? (
-                  <Button type="button" size="sm" className="mt-2" onClick={() => void respondChangeOrder(order.id, true).then(reload)}>
-                    Acknowledge
-                  </Button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-          <TextInput label="Change amount (USD, + or −)" value={delta} onChange={(e) => setDelta(e.target.value)} />
-          <textarea className="w-full rounded-2xl border px-4 py-3" value={note} onChange={(e) => setNote(e.target.value)} />
-          <Button
-            type="button"
-            variant="outline"
-            className="min-h-14 w-full"
-            onClick={() => {
-              const cents = dollarsToCents(delta.replace("-", "")) ?? 0;
-              const signed = delta.trim().startsWith("-") ? -cents : cents;
-              void proposeChangeOrder(booking.id, note, signed)
-                .then(() => {
-                  setDelta("");
-                  setNote("");
-                  return reload();
-                })
-                .catch((err: Error) => setError(err.message));
-            }}
-          >
-            Propose a change
-          </Button>
-        </section>
+        <ChangeOrderPanel
+          role="contractor"
+          orders={orders}
+          onPropose={async (description, cents) => {
+            await proposeChangeOrder(booking.id, description, cents);
+            await reload();
+          }}
+          onRespond={async (id, approve) => {
+            await respondChangeOrder(id, approve);
+            await reload();
+          }}
+        />
       )}
       <ProfileReviewForm
         role="contractor"

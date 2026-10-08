@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { EmptyState } from "../../../components/layout/DashboardShell";
+import { ChangeOrderPanel } from "../../../components/marketplace/ChangeOrderPanel";
 import { Button, ButtonLink } from "../../../components/ui/Button";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
-import { TextInput } from "../../../components/ui/Input";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
 import {
@@ -29,7 +29,7 @@ import {
 } from "../../../lib/marketplace/api";
 import { BOOKING_STATUS_LABELS, canCustomerCancelPendingBooking, canStartBooking } from "../../../lib/marketplace/bookings";
 import { CUSTOMER_PAYS_DIRECTLY, HIRE_AGAIN_EMPTY, HIRE_AGAIN_INTRO, customerWizardPath } from "../../../lib/marketplace/customerCopy";
-import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
+import { formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { isMutuallyHired, bookingListHiredLabel } from "../../../lib/marketplace/hired";
 import type { Booking, BookingReview, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
@@ -106,8 +106,6 @@ export function CustomerBookingDetailPage() {
   const [orders, setOrders] = useState<ChangeOrder[]>([]);
   const [reviews, setReviews] = useState<BookingReview[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [delta, setDelta] = useState("");
-  const [note, setNote] = useState("");
   const [rating, setRating] = useState("5");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
@@ -259,74 +257,18 @@ export function CustomerBookingDetailPage() {
       />
 
       {(booking.status === "CONFIRMED" || booking.status === "IN_PROGRESS") && (
-        <section className="space-y-3">
-          <h2 className="font-display text-2xl text-forest-800">Change orders</h2>
-          <p className="text-sm text-ink-700">The pro cannot raise the price alone. You both have to agree.</p>
-          <ul className="space-y-2 text-sm">
-            {orders.map((order) => (
-              <li key={order.id} className="rounded-2xl border border-forest-800/10 px-4 py-3">
-                <p className="font-semibold">
-                  {formatUsdFromCents(order.amount_delta_cents)} · {order.status.replaceAll("_", " ")}
-                </p>
-                <p>{order.description}</p>
-                {order.status === "PROPOSED" ? (
-                  <div className="mt-2 flex gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={busy}
-                      onClick={() => {
-                        setBusy(true);
-                        void respondChangeOrder(order.id, true)
-                          .then(reload)
-                          .catch((err: Error) => setError(err.message))
-                          .finally(() => setBusy(false));
-                      }}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() => {
-                        setBusy(true);
-                        void respondChangeOrder(order.id, false)
-                          .then(reload)
-                          .catch((err: Error) => setError(err.message))
-                          .finally(() => setBusy(false));
-                      }}
-                    >
-                      Decline
-                    </Button>
-                  </div>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-          <TextInput label="Change amount (USD, + or −)" value={delta} onChange={(e) => setDelta(e.target.value)} />
-          <label className="block">
-            <span className="mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-gold-700">What changed</span>
-            <textarea className="w-full rounded-2xl border border-forest-800/15 px-4 py-3" value={note} onChange={(e) => setNote(e.target.value)} />
-          </label>
-          <Button
-            type="button"
-            variant="outline"
-            className="min-h-14 w-full"
-            onClick={() => {
-              const cents = dollarsToCents(delta.replace("-", "")) ?? 0;
-              const signed = delta.trim().startsWith("-") ? -cents : cents;
-              void proposeChangeOrder(booking.id, note, signed).then(() => {
-                setDelta("");
-                setNote("");
-                return reload();
-              }).catch((err: Error) => setError(err.message));
-            }}
-          >
-            Propose a change
-          </Button>
-        </section>
+        <ChangeOrderPanel
+          role="customer"
+          orders={orders}
+          onPropose={async (description, cents) => {
+            await proposeChangeOrder(booking.id, description, cents);
+            await reload();
+          }}
+          onRespond={async (id, approve) => {
+            await respondChangeOrder(id, approve);
+            await reload();
+          }}
+        />
       )}
 
       <ProfileReviewForm

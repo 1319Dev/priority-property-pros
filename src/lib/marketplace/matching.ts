@@ -32,6 +32,13 @@ export type MatchingProject = {
   requires_verified_credential: boolean;
 };
 
+export type ZipPoint = { lat: number; lng: number };
+
+/**
+ * When `centroids` is provided, radius checks use those ZIP points and ignore
+ * project.lat/lng (the street pin). When it is omitted, stored center lat/lng
+ * and project lat/lng remain the fallback used by older tests.
+ */
 export function haversineMiles(
   lat1: number | null,
   lng1: number | null,
@@ -48,24 +55,50 @@ export function haversineMiles(
   return Math.round(3958.8 * 2 * Math.asin(Math.min(1, Math.sqrt(a))) * 100) / 100;
 }
 
+function centroidPoint(
+  zip: string | null,
+  centroids: Readonly<Record<string, ZipPoint>> | null | undefined,
+): ZipPoint | null {
+  if (!zip || !centroids) return null;
+  return centroids[zip] ?? null;
+}
+
 export function locationMatches(
   project: Pick<MatchingProject, "zip_code" | "lat" | "lng">,
   area: MatchingContractor["areas"][number],
+  centroids?: Readonly<Record<string, ZipPoint>> | null,
 ): boolean {
   const zip = normalizeZip(project.zip_code);
+  const center = normalizeZip(area.center_zip);
   const areaZips = area.zip_codes.map((z) => normalizeZip(z)).filter((z): z is string => Boolean(z));
-  if (zip && areaZips.includes(zip)) return true;
-  if (zip && normalizeZip(area.center_zip) === zip) return true;
-  if (area.mode === "RADIUS" || area.mode === "ZIPS_AND_RADIUS") {
-    const miles = haversineMiles(project.lat, project.lng, area.center_lat, area.center_lng);
+  const radiusOn = area.radius_miles != null && center != null;
+
+  if (radiusOn) {
+    const base = centroids
+      ? centroidPoint(center, centroids)
+      : area.center_lat != null && area.center_lng != null
+        ? { lat: area.center_lat, lng: area.center_lng }
+        : null;
+    const proj = centroids
+      ? centroidPoint(zip, centroids)
+      : project.lat != null && project.lng != null
+        ? { lat: project.lat, lng: project.lng }
+        : null;
+    const miles = haversineMiles(proj?.lat ?? null, proj?.lng ?? null, base?.lat ?? null, base?.lng ?? null);
     if (miles != null && area.radius_miles != null && miles <= area.radius_miles) return true;
+    if (zip && areaZips.includes(zip)) return true;
+    return false;
   }
+
+  if (zip && areaZips.includes(zip)) return true;
+  if (zip && center && zip === center) return true;
   return false;
 }
 
 export function contractorEligibleForProject(
   contractor: MatchingContractor,
   project: MatchingProject,
+  centroids?: Readonly<Record<string, ZipPoint>> | null,
 ): { ok: boolean; reasons: string[] } {
   const reasons: string[] = [];
   if (contractor.account_type !== "CONTRACTOR") return { ok: false, reasons: ["role"] };
@@ -77,7 +110,7 @@ export function contractorEligibleForProject(
   }
   reasons.push("category", "account", "approval", "availability");
 
-  if (!contractor.areas.some((area) => locationMatches(project, area))) {
+  if (!contractor.areas.some((area) => locationMatches(project, area, centroids))) {
     return { ok: false, reasons: ["location"] };
   }
   reasons.push("location");
@@ -106,8 +139,12 @@ export function contractorEligibleForProject(
   return { ok: true, reasons };
 }
 
-export function matchContractors(project: MatchingProject, contractors: MatchingContractor[]): MatchingContractor[] {
-  return contractors.filter((c) => contractorEligibleForProject(c, project).ok);
+export function matchContractors(
+  project: MatchingProject,
+  contractors: MatchingContractor[],
+  centroids?: Readonly<Record<string, ZipPoint>> | null,
+): MatchingContractor[] {
+  return contractors.filter((c) => contractorEligibleForProject(c, project, centroids).ok);
 }
 
 /** Live AVAILABLE offers + participating accepts cannot exceed this. */
@@ -128,18 +165,30 @@ export type OfferLoad = {
 export function locationFitScore(
   project: Pick<MatchingProject, "zip_code" | "lat" | "lng">,
   contractor: MatchingContractor,
+  centroids?: Readonly<Record<string, ZipPoint>> | null,
 ): number {
   let best = 0;
   const zip = normalizeZip(project.zip_code);
   for (const area of contractor.areas) {
     const areaZips = area.zip_codes.map((z) => normalizeZip(z)).filter((z): z is string => Boolean(z));
-    if (zip && (areaZips.includes(zip) || normalizeZip(area.center_zip) === zip)) {
+    const center = normalizeZip(area.center_zip);
+    if (zip && (areaZips.includes(zip) || center === zip)) {
       best = Math.max(best, 20);
       continue;
     }
-    if (area.mode === "RADIUS" || area.mode === "ZIPS_AND_RADIUS") {
-      const miles = haversineMiles(project.lat, project.lng, area.center_lat, area.center_lng);
-      if (miles != null && area.radius_miles != null && miles <= area.radius_miles) {
+    if (area.radius_miles != null && center) {
+      const base = centroids
+        ? centroidPoint(center, centroids)
+        : area.center_lat != null && area.center_lng != null
+          ? { lat: area.center_lat, lng: area.center_lng }
+          : null;
+      const proj = centroids
+        ? centroidPoint(zip, centroids)
+        : project.lat != null && project.lng != null
+          ? { lat: project.lat, lng: project.lng }
+          : null;
+      const miles = haversineMiles(proj?.lat ?? null, proj?.lng ?? null, base?.lat ?? null, base?.lng ?? null);
+      if (miles != null && miles <= area.radius_miles) {
         best = Math.max(best, miles <= area.radius_miles / 2 ? 12 : 8);
       }
     }
@@ -148,10 +197,14 @@ export function locationFitScore(
 }
 
 /** Mirrors project_contractor_fit_score. Ineligible contractors score 0. */
-export function projectContractorFitScore(contractor: MatchingContractor, project: MatchingProject): number {
-  if (!contractorEligibleForProject(contractor, project).ok) return 0;
+export function projectContractorFitScore(
+  contractor: MatchingContractor,
+  project: MatchingProject,
+  centroids?: Readonly<Record<string, ZipPoint>> | null,
+): number {
+  if (!contractorEligibleForProject(contractor, project, centroids).ok) return 0;
   let score = 30 + 15 + 15;
-  score += locationFitScore(project, contractor);
+  score += locationFitScore(project, contractor, centroids);
   if (contractor.has_verified_credential) score += 10;
   score += Math.min(Math.max(contractor.years_experience ?? 0, 0), 10);
   if (contractor.min_job_cents != null || contractor.max_job_cents != null) score += 5;
@@ -210,8 +263,9 @@ export function rankEligibleContractorsForOffers(
   project: MatchingProject,
   contractors: MatchingContractor[],
   loadByContractorId: Record<string, OfferLoad | undefined>,
+  centroids?: Readonly<Record<string, ZipPoint>> | null,
 ): string[] {
-  return matchContractors(project, contractors)
+  return matchContractors(project, contractors, centroids)
     .map((contractor) => {
       const load = loadByContractorId[contractor.id] ?? {
         sameCategoryRecentOffers: 0,
@@ -221,7 +275,7 @@ export function rankEligibleContractorsForOffers(
       };
       return {
         contractorId: contractor.id,
-        effectiveScore: effectiveOfferScore(projectContractorFitScore(contractor, project), load),
+        effectiveScore: effectiveOfferScore(projectContractorFitScore(contractor, project, centroids), load),
         lastOfferedAt: load.lastOfferedAt,
       };
     })

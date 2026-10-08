@@ -150,6 +150,23 @@ describe("admin contractor approval decisions", () => {
     expect(formatCategoryNames(baseItem)).toBe("TV Mounting");
     expect(formatServiceAreaSummary(baseItem)).toContain("30318");
     expect(formatServiceAreaSummary({ service_area: "Decatur", service_areas: [] })).toBe("Decatur");
+    expect(
+      formatServiceAreaSummary({
+        service_area: "Atlanta",
+        service_areas: [
+          {
+            id: "area-2",
+            mode: "RADIUS",
+            center_zip: "77301",
+            radius_miles: 25,
+            zip_codes: ["77301", "77302", "77304", "77385"],
+            label: "Serves within 25 miles of Conroe, TX",
+            place_city: "Conroe",
+            place_state: "TX",
+          },
+        ],
+      }),
+    ).toBe("Serves within 25 miles of Conroe, TX");
   });
 
   it("surfaces identity re-verification without unapproving", () => {

@@ -47,8 +47,6 @@ import {
   CUSTOMER_HOME_EMPTY,
   CUSTOMER_HOME_INTRO,
   CUSTOMER_PAYS_DIRECTLY,
-  NO_PROS_YET,
-  OFFER_QUEUE_PLAIN,
   SELECT_CONFIRM_BODY,
   SELECTED_BOOKING_COPY,
   STOP_CONNECTIONS_BODY,
@@ -62,6 +60,7 @@ import {
 } from "../../../lib/marketplace/connectionCards";
 import { messageNotificationHref } from "../../../lib/marketplace/messaging";
 import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type EstimateItemKind, type EstimateStatus, type Project } from "../../../lib/marketplace/types";
+import { ProjectCoverageNotice } from "../../../components/marketplace/ProjectCoverageNotice";
 import { canCancelCustomerProject, planDeleteOrCancel } from "../../../lib/marketplace/lifecycle";
 import {
   canCustomerDeclineFrom,
@@ -438,13 +437,12 @@ export function CustomerProjectDetailPage() {
           );
         })}
       </section>
-      {project.status !== "CANCELLED" && project.status !== "CONTRACTOR_SELECTED" ? (
-        <StatusBanner
-          tone="info"
-          title="Finding local pros"
-          body={project.status === "MATCHING" ? NO_PROS_YET : OFFER_QUEUE_PLAIN}
-        />
-      ) : null}
+      <ProjectCoverageNotice
+        status={project.status}
+        zip={project.zip_code}
+        city={project.city}
+        state={project.state}
+      />
       <div className="flex min-w-0 flex-col gap-2">
         {canEdit ? (
           <ButtonLink to={`/app/customer/projects/${project.id}/edit`} className="min-h-14 w-full">

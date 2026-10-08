@@ -94,7 +94,7 @@ describe("Flat $4.99 Connection Marketplace", () => {
     expect(canReadExactAddress(pro, project, null)).toBe(false);
     expect(preConnectionPayloadLeaksPrivate({ title: "Fence", city: "Atlanta", state: "GA" })).toBe(false);
     expect(preConnectionPayloadLeaksPrivate({ phone: "404-555-0100" })).toBe(true);
-    expect(JOBS_STREET_HELPER_COPY).toMatch(/Approximate location only/);
+    expect(JOBS_STREET_HELPER_COPY).toMatch(/approximate location only/i);
     expect(ui).toMatch(/JOBS_STREET_HELPER_COPY/);
     expect(ui).toMatch(/Connect — \$4\.99/);
   });
