@@ -1,7 +1,7 @@
 -- Permanent job reference numbers.
 -- Assigned when a project row is created. Existing rows are backfilled in
 -- created_at order starting at 1001. The app displays PPP-<n>.
--- Does not change fees, Stripe, checkout, or approval RPCs.
+-- Does not change fees, checkout, or approval RPCs.
 -- SELECT policies on projects already expose every column of a visible row,
 -- including this one. list_my_customer_projects and get_my_customer_project
 -- return SETOF projects via SELECT *, so they expose it without a rewrite.

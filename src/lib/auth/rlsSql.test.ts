@@ -355,8 +355,8 @@ describe("Public contractor directory SQL", () => {
 
   it("returns an anonymized projection without identifying fields", () => {
     const start = sql.lastIndexOf("CREATE OR REPLACE FUNCTION public.list_public_directory_contractors()");
-    const end = sql.indexOf("CREATE OR REPLACE FUNCTION public.get_public_directory_contractor", start);
-    const rpc = sql.slice(start, end === -1 ? start + 8000 : end);
+    const end = sql.indexOf("$$;", start);
+    const rpc = sql.slice(start, end === -1 ? start : end);
     expect(rpc).toMatch(/display_label text/);
     expect(rpc).not.toMatch(/business_name/);
     expect(rpc).not.toMatch(/website_url/);

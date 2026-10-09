@@ -45,7 +45,10 @@ describe("JobReference", () => {
   it("shows the muted label and copies it", async () => {
     const user = userEvent.setup();
     const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, { clipboard: { writeText } });
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
     render(<JobReference value={1042} />);
     expect(screen.getByText("PPP-1042")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Copy PPP-1042" }));
