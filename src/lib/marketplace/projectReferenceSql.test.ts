@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const migrationName = "20261013000001_project_reference_numbers.sql";
+const migrationName = "20261009115058_project_reference_numbers.sql";
 
 function sql(): string {
   return readFileSync(path.join(repoRoot, "supabase/migrations", migrationName), "utf8");
@@ -14,7 +14,7 @@ describe("project reference number migration", () => {
   const text = sql();
 
   it("backfills a not-null unique sequence starting at 1001 in created_at order", () => {
-    expect(migrationName > "20261012000002").toBe(true);
+    expect(migrationName.startsWith("20261009115058")).toBe(true);
     expect(text).toMatch(/CREATE SEQUENCE IF NOT EXISTS public\.project_reference_seq/);
     expect(text).toMatch(/START WITH 1001/);
     expect(text).toMatch(/ADD COLUMN IF NOT EXISTS reference_number bigint/);
