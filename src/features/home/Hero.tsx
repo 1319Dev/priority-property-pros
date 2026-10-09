@@ -28,43 +28,52 @@ export function Hero() {
   }, []);
 
   return (
-    <section className="relative border-b border-forest-800/10 bg-cream-50">
-      <HeroBanner />
-      <Container className="py-8 sm:py-12 lg:py-14">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">{HERO_TAGLINE}</p>
-          <h1 className="mt-4 max-w-full text-balance font-display text-[2.1rem] leading-[1.12] font-semibold tracking-tight break-words text-forest-800 sm:text-4xl lg:text-5xl">
-            {CUSTOMER_TAGLINE.split(". ").map((part, index, all) => (
-              <span key={part} className="block">
-                {index === all.length - 1 ? part : `${part}.`}
-              </span>
-            ))}
-          </h1>
+    <section className="relative border-b border-forest-800/10 bg-cream-50" aria-labelledby="home-hero-heading">
+      <div className="lg:mx-auto lg:grid lg:max-w-6xl lg:grid-cols-[minmax(0,1.15fr)_minmax(17rem,0.85fr)] lg:items-center lg:gap-x-10 lg:px-6 lg:pt-8 xl:gap-x-12 xl:pt-10">
+        <div className="min-w-0 lg:order-2">
+          <HeroBanner />
         </div>
-        <div className="mt-5 min-w-0 max-w-3xl">
-          <p className="max-w-xl text-lg leading-relaxed text-ink-700">
-            {MARKETPLACE_NEED_LINE} Independent local contractors compete fairly. You hire. They perform. Priority
-            Property Pros is the place — not the crew.
-          </p>
-          {hidePricing ? (
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-700">{JOB_PAYMENT_PLAIN}</p>
-          ) : (
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-700">
-              {HOMEPAGE_SIGNUP_HEADLINE} {HOMEPAGE_SIGNUP_SUPPORTING}
+        <Container className="py-8 sm:py-10 lg:order-1 lg:max-w-none lg:px-0 lg:py-0">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">{HERO_TAGLINE}</p>
+            <h1
+              id="home-hero-heading"
+              className="mt-3 max-w-full text-balance font-display text-[2.1rem] leading-[1.08] font-semibold tracking-tight break-words text-forest-800 sm:mt-4 sm:text-4xl sm:leading-[1.12] lg:text-[2.55rem] lg:leading-[1.05] xl:text-[2.8rem]"
+            >
+              {CUSTOMER_TAGLINE.split(". ").map((part, index, all) => (
+                <span key={part} className="block">
+                  {index === all.length - 1 ? part : `${part}.`}
+                </span>
+              ))}
+            </h1>
+          </div>
+          <div className="mt-4 min-w-0 max-w-xl lg:mt-5">
+            <p className="text-lg leading-relaxed text-ink-700">
+              {MARKETPLACE_NEED_LINE} Independent local contractors compete fairly. You hire. They perform. Priority
+              Property Pros is the place — not the crew.
             </p>
-          )}
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <PostProjectLink to="/post-project" size="lg">
-              {CUSTOMER_CTA}
-            </PostProjectLink>
-            <ContractorEntryLink to="/become-a-pro" variant="outline" size="lg">
-              {CONTRACTOR_CTA}
-            </ContractorEntryLink>
+            {hidePricing ? (
+              <p className="mt-3 text-base leading-relaxed text-ink-700">{JOB_PAYMENT_PLAIN}</p>
+            ) : (
+              <p className="mt-3 text-base leading-relaxed text-ink-700">
+                {HOMEPAGE_SIGNUP_HEADLINE} {HOMEPAGE_SIGNUP_SUPPORTING}
+              </p>
+            )}
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <PostProjectLink to="/post-project" size="lg">
+                {CUSTOMER_CTA}
+              </PostProjectLink>
+              <ContractorEntryLink to="/become-a-pro" variant="outline" size="lg">
+                {CONTRACTOR_CTA}
+              </ContractorEntryLink>
+            </div>
+            {hidePricing ? null : <p className="mt-3 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>}
           </div>
-          {hidePricing ? null : <p className="mt-3 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>}
-          <div className="mt-6 max-w-3xl">
-            <TrustMarkList />
-          </div>
+        </Container>
+      </div>
+      <Container className="pb-8 sm:pb-12 lg:pt-8">
+        <div className="max-w-3xl">
+          <TrustMarkList />
           <form
             className="mt-8 rounded-3xl border border-forest-800/10 bg-cream-100/80 p-3 shadow-[0_18px_50px_-28px_rgba(16,36,28,0.45)]"
             onSubmit={(event) => {
