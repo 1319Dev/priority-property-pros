@@ -11,24 +11,61 @@ type PushPayload = {
   tag?: string;
 };
 
+type AppShellHandler = ReturnType<typeof createHandlerBoundToURL>;
+
+let precachedIndex: AppShellHandler | undefined;
+
+function appShellRequest(): Request {
+  return new Request(new URL("index.html", self.registration.scope), {
+    cache: "reload",
+    credentials: "same-origin",
+  });
+}
+
+async function networkFirstIndexHtml(options: Parameters<AppShellHandler>[0]): Promise<Response> {
+  try {
+    const response = await fetch(appShellRequest());
+    if (response.ok) return response;
+  } catch {
+    // Offline or the connection failed. Fall back to the precached shell.
+  }
+  precachedIndex ??= createHandlerBoundToURL("index.html");
+  return precachedIndex(options);
+}
+
+const workerLifecycle = {
+  skipWaiting() {
+    return self.skipWaiting();
+  },
+  clientsClaim() {
+    return self.clients.claim();
+  },
+};
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(workerLifecycle.skipWaiting());
+});
+
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
-    void self.skipWaiting();
+    void workerLifecycle.skipWaiting();
   }
 });
 
-precacheAndRoute(self.__WB_MANIFEST);
-cleanupOutdatedCaches();
+self.addEventListener("activate", (event) => {
+  event.waitUntil(workerLifecycle.clientsClaim());
+});
 
+// Navigations read index.html from the network so a refresh sees the new build.
+// Hashed assets stay on the precache route below, which is cache-first.
 registerRoute(
-  new NavigationRoute(createHandlerBoundToURL("index.html"), {
+  new NavigationRoute(networkFirstIndexHtml, {
     denylist: [/offline\.html$/],
   }),
 );
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
-});
+precacheAndRoute(self.__WB_MANIFEST);
+cleanupOutdatedCaches();
 
 function notificationTarget(path: string | undefined): string {
   const relative = (path && path.startsWith("/") ? path.slice(1) : path) || "";

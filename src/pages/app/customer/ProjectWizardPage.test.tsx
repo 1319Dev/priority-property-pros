@@ -70,6 +70,7 @@ describe("post-a-project wizard", () => {
     renderWizard();
 
     await user.type(await screen.findByLabelText(/what do you need done/i), "Fence repair");
+    expect(document.querySelector("[data-pwa-form='project-wizard']")).not.toBeNull();
     expect(submit).not.toHaveBeenCalled();
     expect(fetchExisting).not.toHaveBeenCalled();
 

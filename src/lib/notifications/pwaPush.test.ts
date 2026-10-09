@@ -12,9 +12,18 @@ describe("injectManifest service worker", () => {
     const vapid = readFileSync(path.join(repoRoot, "src/lib/notifications/vapid.ts"), "utf8");
     expect(vite).toMatch(/strategies:\s*"injectManifest"/);
     expect(vite).toMatch(/filename:\s*"sw.ts"/);
+    expect(vite).toMatch(/registerType:\s*"autoUpdate"/);
     expect(worker).toMatch(/createHandlerBoundToURL\("index.html"\)/);
     expect(worker).toMatch(/offline\\?\.html/);
+    expect(worker).toMatch(/cache:\s*"reload"/);
+    expect(worker).toMatch(/addEventListener\("install"/);
+    expect(worker).toMatch(/self\.skipWaiting\(\)/);
+    expect(worker).toMatch(/clientsClaim\(\)/);
+    expect(worker).toMatch(/self\.clients\.claim\(\)/);
+    expect(worker).toMatch(/cleanupOutdatedCaches\(\)/);
     expect(worker).toMatch(/precacheAndRoute\(self\.__WB_MANIFEST\)/);
+    expect(worker.indexOf("new NavigationRoute")).toBeGreaterThan(-1);
+    expect(worker.indexOf("new NavigationRoute")).toBeLessThan(worker.indexOf("precacheAndRoute(self.__WB_MANIFEST)"));
     expect(worker).toMatch(/addEventListener\("push"/);
     expect(worker).toMatch(/addEventListener\("notificationclick"/);
     expect(worker).toMatch(/clients\.openWindow/);
