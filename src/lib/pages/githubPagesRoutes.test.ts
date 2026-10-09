@@ -46,5 +46,17 @@ describe("GitHub Pages SPA shells", () => {
     }
     expect(readFileSync(path.join(distDir, "trust/index.html"), "utf8")).toBe(shell);
     expect(readFileSync(path.join(distDir, "trust.html"), "utf8")).toBe(shell);
+    expect(readFileSync(path.join(distDir, "auth/reset-password/index.html"), "utf8")).toBe(shell);
+    expect(readFileSync(path.join(distDir, "auth/reset-password.html"), "utf8")).toBe(shell);
+  });
+
+  it("does not rewrite /auth/reset-password through a fragment-dropping 404 redirect", () => {
+    const index = readFileSync(path.join(repoRoot, "index.html"), "utf8");
+    expect(GITHUB_PAGES_SPA_ROUTES).toContain("/auth/reset-password");
+    expect(index).not.toMatch(/pathSegmentsToKeep|location\.replace|history\.replaceState/);
+    expect(spaShellDestinations("/auth/reset-password")).toEqual([
+      "auth/reset-password.html",
+      "auth/reset-password/index.html",
+    ]);
   });
 });

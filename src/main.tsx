@@ -1,3 +1,5 @@
+// Keep this first. It snapshots ?query and #hash before the PKCE client is created.
+import "./lib/auth/installRecoveryLinkSnapshot";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";

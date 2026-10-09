@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { getSupabaseClient, isSupabaseConfigured } from "../supabase/client";
+import { getSupabaseClient, getSupabaseRecoveryRequestClient, isSupabaseConfigured } from "../supabase/client";
 import { AUTH_CALLBACK_PATH, AUTH_RESET_PATH, authRedirectUrl } from "./redirects";
 import { AuthContext } from "./AuthContext";
 import { requestsVerifierSignup } from "./roles";
@@ -135,12 +135,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const requestPasswordReset = useCallback(async (email: string) => {
-    const supabase = getSupabaseClient();
+    const supabase = getSupabaseRecoveryRequestClient();
     if (!supabase) return { error: "Supabase is not configured yet." };
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: authRedirectUrl(AUTH_RESET_PATH),
     });
-    return { error: error?.message ?? null };
+    return { error: error?.message ?? null, status: error?.status ?? null };
   }, []);
 
   const updatePassword = useCallback(async (password: string) => {
