@@ -100,27 +100,34 @@ describe("homepage iPhone hero contract", () => {
 describe("homepage house photo crop contract", () => {
   it("keeps the official homeowners photo as the only homepage hero image", () => {
     expect(HERO_BANNER_FRAME_CLASS).toMatch(/aspect-\[650\/312\]/);
-    expect(HERO_BANNER_OBJECT_POSITION).toBe("center center");
+    expect(HERO_BANNER_FRAME_CLASS).toMatch(/lg:aspect-\[4\/3\]/);
+    expect(HERO_BANNER_OBJECT_POSITION).toBe("center top");
+    expect(HERO_BANNER_FRAME_CLASS).not.toMatch(/max-h-/);
     const heroSource = readFileSync(path.join(repoRoot, "src/features/home/Hero.tsx"), "utf8");
     expect(heroSource).not.toContain("HERO_PHOTO_FRAME_CLASS");
     expect(heroSource).not.toContain("homepageHero");
     expect(heroSource).toContain("TrustMarkList");
+    expect(heroSource).toContain("lg:grid");
     expect(HERO_PHOTO_FRAME_CLASS).toMatch(/overflow-hidden/);
     expect(HERO_PHOTO_OBJECT_POSITION).toBe("center 40%");
   });
 });
 
 describe("homepage hero banner contract", () => {
-  it("crops the official homeowners photo with object-cover inside a fixed frame", () => {
+  it("covers the official homeowners photo without cropping faces on desktop", () => {
     expect(HERO_BANNER_FRAME_CLASS).toMatch(/w-full/);
     expect(HERO_BANNER_FRAME_CLASS).toMatch(/overflow-hidden/);
     expect(HERO_BANNER_FRAME_CLASS).toMatch(/aspect-\[650\/312\]/);
-    expect(HERO_BANNER_FRAME_CLASS).toMatch(/sm:max-h-\[22rem\]/);
-    expect(HERO_BANNER_FRAME_CLASS).toMatch(/lg:max-h-\[26rem\]/);
-    expect(HERO_BANNER_OBJECT_POSITION).toBe("center center");
+    expect(HERO_BANNER_FRAME_CLASS).toMatch(/lg:aspect-\[4\/3\]/);
+    expect(HERO_BANNER_FRAME_CLASS).toMatch(/lg:rounded-/);
+    expect(HERO_BANNER_FRAME_CLASS).not.toMatch(/max-h-/);
+    expect(HERO_BANNER_OBJECT_POSITION).toBe("center top");
 
     const heroSource = readFileSync(path.join(repoRoot, "src/features/home/Hero.tsx"), "utf8");
     expect(heroSource).toContain("HeroBanner");
+    expect(heroSource).toContain("lg:grid");
+    expect(heroSource).toContain("lg:order-1");
+    expect(heroSource).toContain("lg:order-2");
 
     const bannerSource = readFileSync(path.join(repoRoot, "src/features/home/HeroBanner.tsx"), "utf8");
     expect(bannerSource).toContain("homepageHeroBanner");
