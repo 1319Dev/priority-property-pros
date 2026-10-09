@@ -17,7 +17,7 @@ export type AuthContextValue = {
   signUp: (input: SignUpInput) => Promise<{ error: string | null; needsEmailConfirm: boolean }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  requestPasswordReset: (email: string) => Promise<{ error: string | null }>;
+  requestPasswordReset: (email: string) => Promise<{ error: string | null; status?: number | null }>;
   updatePassword: (password: string) => Promise<{ error: string | null }>;
   resendVerification: (email: string) => Promise<{ error: string | null }>;
 };

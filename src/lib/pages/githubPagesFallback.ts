@@ -5,6 +5,10 @@ import { dirname, resolve } from "node:path";
  * Static paths that must exist as real files on GitHub Pages.
  * A copied 404.html still answers with HTTP 404, so each public route also
  * gets `<route>.html` and `<route>/index.html` (both copies of the SPA shell).
+ *
+ * Those copies are the SPA document at the real path. Query and hash stay put,
+ * including /auth/reset-password#access_token=… recovery links. Do not swap
+ * this for a path-rewriting 404 redirect; that drops the fragment.
  */
 export const GITHUB_PAGES_SPA_ROUTES = [
   "/find-a-pro",
