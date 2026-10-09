@@ -197,7 +197,7 @@ describe("Jobs page after passing a job", () => {
     renderJobsPage();
     expect(await screen.findByRole("heading", { name: "Jobs" })).toBeInTheDocument();
     expect(screen.getByText("No open jobs")).toBeInTheDocument();
-    expect(screen.getByText("Passed job")).toBeInTheDocument();
+    expect(await screen.findByText("Passed job")).toBeInTheDocument();
     expect(screen.getByText(/you passed on this job/i)).toBeInTheDocument();
     expect(screen.queryByText("Project not found.")).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -222,8 +222,8 @@ describe("Jobs page after passing a job", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: PASS_SKIP_CONFIRM }));
     await waitFor(() => {
       expect(screen.getByText("No open jobs")).toBeInTheDocument();
+      expect(screen.getByText("Passed job")).toBeInTheDocument();
     });
-    expect(screen.getByText("Passed job")).toBeInTheDocument();
     expect(screen.queryByText("Project not found.")).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(marketplaceApi.endContractorJob).toHaveBeenCalledWith("opp-open");
