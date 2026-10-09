@@ -3,6 +3,7 @@ import { EmptyState } from "../../components/layout/DashboardShell";
 import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { FormError } from "../../lib/auth/AuthCard";
+import { JobReference } from "../../components/marketplace/JobReference";
 import {
   adminGrantBookingContactAccess,
   adminRevokeBookingContactAccess,
@@ -11,6 +12,9 @@ import {
   fetchBooking,
   fetchBookingContactAccess,
   fetchBookingEvents,
+  fetchProject,
+  findAdminBookingsByReference,
+  type AdminReferenceBooking,
 } from "../../lib/marketplace/api";
 import {
   contactAccessRowAllowsReveal,
@@ -115,6 +119,12 @@ export function AdminContactAccessPanel({
 export function AdminBookingsPage() {
   const toast = useToast();
   const [bookingId, setBookingId] = useState("");
+  const [referenceQuery, setReferenceQuery] = useState("");
+  const [referenceTitle, setReferenceTitle] = useState<string | null>(null);
+  const [referenceNumber, setReferenceNumber] = useState<number | null>(null);
+  const [referenceBookings, setReferenceBookings] = useState<AdminReferenceBooking[]>([]);
+  const [jobReference, setJobReference] = useState<number | null>(null);
+  const [jobTitle, setJobTitle] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [access, setAccess] = useState<BookingContactAccess | null>(null);
   const [audit, setAudit] = useState<ContactAccessAuditEvent[]>([]);
@@ -132,6 +142,9 @@ export function AdminBookingsPage() {
   async function loadBooking(id: string) {
     const row = await fetchBooking(id);
     setStatus(row.status);
+    const project = await fetchProject(row.project_id).catch(() => null);
+    setJobTitle(project?.title ?? null);
+    setJobReference(project?.reference_number ?? null);
     const rowAccess = await fetchBookingContactAccess(id).catch(() => null);
     setAccess(rowAccess);
     const events = await fetchBookingEvents(id).catch(() => []);
@@ -159,6 +172,76 @@ export function AdminBookingsPage() {
         Confirming a booking does not unlock private contact.
       </p>
       <FormError message={error} />
+      <section className="space-y-3 rounded-3xl border border-forest-800/10 px-5 py-4">
+        <h2 className="font-display text-2xl text-forest-800">Find a job</h2>
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
+            Job reference
+          </span>
+          <input
+            className="min-h-14 w-full rounded-2xl border border-forest-800/15 px-4"
+            value={referenceQuery}
+            placeholder="PPP-1042"
+            onChange={(e) => setReferenceQuery(e.target.value)}
+          />
+        </label>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={busy || !referenceQuery.trim()}
+          onClick={() => {
+            setBusy(true);
+            setError(null);
+            void findAdminBookingsByReference(referenceQuery)
+              .then((found) => {
+                if (!found) {
+                  setReferenceTitle(null);
+                  setReferenceNumber(null);
+                  setReferenceBookings([]);
+                  setError("No job uses that reference.");
+                  return;
+                }
+                setReferenceTitle(found.title);
+                setReferenceNumber(found.referenceNumber);
+                setReferenceBookings(found.bookings);
+              })
+              .catch((err: Error) => setError(err.message))
+              .finally(() => setBusy(false));
+          }}
+        >
+          Search reference
+        </Button>
+        {referenceNumber != null ? (
+          <div>
+            <p className="font-semibold text-forest-800">{referenceTitle}</p>
+            <JobReference value={referenceNumber} />
+            {referenceBookings.length === 0 ? (
+              <p className="mt-2 text-sm text-ink-500">This job has no booking yet.</p>
+            ) : (
+              <ul className="mt-2 space-y-2">
+                {referenceBookings.map((row) => (
+                  <li key={row.id}>
+                    <button
+                      type="button"
+                      className="min-h-11 text-left text-sm font-semibold text-forest-800 underline"
+                      onClick={() => {
+                        setBookingId(row.id);
+                        setBusy(true);
+                        setError(null);
+                        void loadBooking(row.id)
+                          .catch((err: Error) => setError(err.message))
+                          .finally(() => setBusy(false));
+                      }}
+                    >
+                      Open booking · {row.status.replaceAll("_", " ")}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : null}
+      </section>
       <label className="block">
         <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
           Booking id
@@ -183,7 +266,13 @@ export function AdminBookingsPage() {
       >
         Look up
       </Button>
-      {status ? <p className="text-sm">Current status: {status.replaceAll("_", " ")}</p> : null}
+      {status ? (
+        <div className="text-sm">
+          {jobTitle ? <p className="font-semibold text-forest-800">{jobTitle}</p> : null}
+          <JobReference value={jobReference} />
+          <p>Current status: {status.replaceAll("_", " ")}</p>
+        </div>
+      ) : null}
       {lookedUp ? <AdminContactAccessPanel access={access} audit={audit} /> : null}
       <Button
         type="button"

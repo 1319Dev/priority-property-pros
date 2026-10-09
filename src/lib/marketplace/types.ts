@@ -298,6 +298,8 @@ export type Project = {
   accepting_connections?: boolean;
   connections_closed_at?: string | null;
   connections_closed_by?: string | null;
+  /** Present after the project reference migration. Omitted until then. */
+  reference_number?: number | null;
   created_at: string;
   updated_at: string;
 };

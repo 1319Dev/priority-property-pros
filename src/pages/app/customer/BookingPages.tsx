@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { ChangeOrderPanel } from "../../../components/marketplace/ChangeOrderPanel";
+import { JobReference } from "../../../components/marketplace/JobReference";
 import { Button, ButtonLink } from "../../../components/ui/Button";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { FormError } from "../../../lib/auth/AuthCard";
@@ -44,6 +45,7 @@ export function CustomerBookingsPage() {
   const { profile } = useAuth();
   const [rows, setRows] = useState<Booking[]>([]);
   const [titles, setTitles] = useState<Record<string, string>>({});
+  const [references, setReferences] = useState<Record<string, number | null | undefined>>({});
   const [names, setNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
@@ -55,6 +57,7 @@ export function CustomerBookingsPage() {
         const bookings = data as Booking[];
         setRows(bookings);
         setTitles(Object.fromEntries(projects.map((project) => [project.id, project.title || "Project"])));
+        setReferences(Object.fromEntries(projects.map((project) => [project.id, project.reference_number])));
         const ids = [...new Set(bookings.map((row) => row.contractor_profile_id))];
         const pros = await Promise.all(ids.map((id) => fetchPublicContractor(id).catch(() => null)));
         setNames(Object.fromEntries(ids.map((id, index) => [id, pros[index]?.display_label || "Local pro"])));
@@ -80,6 +83,7 @@ export function CustomerBookingsPage() {
             return (
             <li key={row.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
               <p className="font-semibold text-forest-800">{titles[row.project_id] || "Project"}</p>
+              <JobReference value={references[row.project_id]} />
               <p className="text-sm text-ink-700">{names[row.contractor_profile_id] || "Local pro"}</p>
               <p className="mt-1 text-sm text-ink-500">{hiredLabel ?? statusLabel(row.status)}</p>
               <p className="mt-1 text-sm text-ink-500">
@@ -102,6 +106,7 @@ export function CustomerBookingDetailPage() {
   const toast = useToast();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [title, setTitle] = useState("");
+  const [referenceNumber, setReferenceNumber] = useState<number | null>(null);
   const [contractor, setContractor] = useState<string>("");
   const [orders, setOrders] = useState<ChangeOrder[]>([]);
   const [reviews, setReviews] = useState<BookingReview[]>([]);
@@ -116,6 +121,7 @@ export function CustomerBookingDetailPage() {
     setBooking(row);
     const project = await fetchProject(row.project_id).catch(() => null);
     setTitle(project?.title ?? "Booking");
+    setReferenceNumber(project?.reference_number ?? null);
     const pro = await fetchPublicContractor(row.contractor_profile_id).catch(() => null);
     setContractor(pro?.display_label ?? "Local pro");
     setOrders((await fetchChangeOrders(bookingId)) as ChangeOrder[]);
@@ -141,6 +147,7 @@ export function CustomerBookingDetailPage() {
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">{statusLabel(booking.status)}</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{title}</h1>
+        <JobReference value={referenceNumber} />
         <p className="mt-2 text-ink-700">{contractor}</p>
       </header>
       <FormError message={error} />
@@ -260,6 +267,7 @@ export function CustomerBookingDetailPage() {
         <ChangeOrderPanel
           role="customer"
           orders={orders}
+          referenceNumber={referenceNumber}
           onPropose={async (description, cents) => {
             await proposeChangeOrder(booking.id, description, cents);
             await reload();
@@ -281,6 +289,7 @@ export function CustomerBookingDetailPage() {
         reviews={reviews}
         rating={rating}
         body={body}
+        referenceNumber={referenceNumber}
         onRatingChange={setRating}
         onBodyChange={setBody}
         onSubmit={() => {

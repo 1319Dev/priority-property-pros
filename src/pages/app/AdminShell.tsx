@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { DashboardShell } from "../../components/layout/DashboardShell";
+import { subscribeApprovalsChanged } from "../../lib/admin/approvals";
 import { countPendingContractorApprovals } from "../../lib/admin/approvalsApi";
 
 export function AdminShell() {
@@ -8,9 +9,22 @@ export function AdminShell() {
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
-    void countPendingContractorApprovals()
-      .then(setPendingCount)
-      .catch(() => setPendingCount(0));
+    let stop = false;
+    const refresh = () => {
+      void countPendingContractorApprovals()
+        .then((count) => {
+          if (!stop) setPendingCount(count);
+        })
+        .catch(() => {
+          if (!stop) setPendingCount(0);
+        });
+    };
+    refresh();
+    const unsubscribe = subscribeApprovalsChanged(refresh);
+    return () => {
+      stop = true;
+      unsubscribe();
+    };
   }, [location.pathname]);
 
   const items = [

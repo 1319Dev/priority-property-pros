@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { ContactSharePanel } from "../../../components/marketplace/ContactSharePanel";
+import { JobReference } from "../../../components/marketplace/JobReference";
 import { Button } from "../../../components/ui/Button";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
@@ -269,6 +270,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
                     <span className="min-w-0">
                       <span className="block text-forest-800">{thread.other_party_label || thread.contractor_label}</span>
                       <span className="block text-sm text-ink-700">{thread.project_title}</span>
+                      <JobReference value={thread.project_reference_number} copy={false} />
                     </span>
                     <span className="shrink-0 text-xs text-ink-500">
                       {formatInboxTime(thread.last_message_at)}
@@ -303,6 +305,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
             <header>
               <p className="font-display text-3xl font-semibold text-forest-800">{otherName}</p>
               <h2 className="mt-1 text-lg font-semibold text-forest-800">{selected?.project_title ?? "Project"}</h2>
+              <JobReference value={selected?.project_reference_number} />
               {place ? <p className="text-sm text-ink-500">{place}</p> : null}
               {contextHref ? (
                 <Link to={contextHref} className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-forest-800 underline">

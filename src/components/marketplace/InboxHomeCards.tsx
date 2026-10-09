@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { JobReference } from "./JobReference";
 import { listMyMessageThreads } from "../../lib/marketplace/messagingApi";
 import { messageNotificationHref, newMessageFromLabel, sortMessageThreads } from "../../lib/marketplace/messaging";
 
@@ -41,6 +42,7 @@ export function InboxHomeCards({ role }: { role: "customer" | "contractor" }) {
               >
                 {newMessageFromLabel(name)}
                 <span className="mt-1 block font-normal text-ink-700">{row.project_title}</span>
+                <JobReference value={row.project_reference_number} copy={false} />
               </Link>
             </li>
           );

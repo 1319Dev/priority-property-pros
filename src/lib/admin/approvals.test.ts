@@ -7,6 +7,7 @@ import {
   applyRequestInfoDecision,
   approvalContactName,
   approvedContractorMatchingGate,
+  approvalActionVisibility,
   filterApprovalQueue,
   formatCategoryNames,
   formatServiceAreaSummary,
@@ -167,6 +168,32 @@ describe("admin contractor approval decisions", () => {
         ],
       }),
     ).toBe("Serves within 25 miles of Conroe, TX");
+  });
+
+  it("shows approval actions from the current status", () => {
+    expect(approvalActionVisibility("PENDING")).toEqual({
+      showApprove: true,
+      showReject: true,
+      showRequestInfo: true,
+      showSuspend: false,
+    });
+    expect(approvalActionVisibility("APPROVED")).toEqual({
+      showApprove: false,
+      showReject: false,
+      showRequestInfo: false,
+      showSuspend: false,
+    });
+    expect(approvalActionVisibility("REJECTED")).toEqual({
+      showApprove: true,
+      showReject: false,
+      showRequestInfo: false,
+      showSuspend: false,
+    });
+    expect(approvalActionVisibility("SUSPENDED").showSuspend).toBe(false);
+    expect(approvalActionVisibility("SUSPENDED").showRequestInfo).toBe(false);
+    const approved = applyApproveDecision(baseItem, "admin-1", "2026-10-09T00:00:00Z");
+    expect(pendingApprovalCount([approved])).toBe(0);
+    expect(filterApprovalQueue([approved], "PENDING")).toEqual([]);
   });
 
   it("surfaces identity re-verification without unapproving", () => {

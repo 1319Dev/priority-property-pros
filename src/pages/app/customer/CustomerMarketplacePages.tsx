@@ -4,6 +4,7 @@ import { ContractorAvatar } from "../../../components/media/ContractorAvatar";
 import { ContactSharePanel } from "../../../components/marketplace/ContactSharePanel";
 import { CustomerEstimateHomeCards } from "../../../components/marketplace/CustomerEstimateHomeCards";
 import { HiredConfirmationCard } from "../../../components/marketplace/HiredConfirmation";
+import { JobReference } from "../../../components/marketplace/JobReference";
 import { ProjectPhotoGallery } from "../../../components/marketplace/ProjectPhotoGallery";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { Button, ButtonLink } from "../../../components/ui/Button";
@@ -154,6 +155,7 @@ export function CustomerHomePage() {
             <li key={project.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
               <HumanStatus label={customerLifecycleLabel(project.status, booking?.status ?? null)} />
               <p className="mt-2 font-semibold text-forest-800">{project.title || "Project"}</p>
+              <JobReference value={project.reference_number} />
               <div className="mt-3 flex min-w-0 flex-col gap-2 sm:flex-row">
                 {actions.slice(0, 2).map((action) => (
                   <ButtonLink key={action.label} to={action.to} variant={action.variant ?? "primary"} size="sm" className="w-full sm:w-auto">
@@ -268,6 +270,7 @@ export function CustomerProjectsPage() {
               <li key={project.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
                 <HumanStatus label={customerLifecycleLabel(project.status, booking?.status ?? null)} />
                 <p className="mt-2 font-semibold text-forest-800">{project.title || "Project"}</p>
+                <JobReference value={project.reference_number} />
                 {state === "cancelled" ? <p className="mt-1 text-sm text-ink-500">Cancelled</p> : null}
                 <div className="mt-3 flex min-w-0 flex-col gap-2">
                   {actions.map((action) => (
@@ -376,6 +379,7 @@ export function CustomerProjectDetailPage() {
       <header>
         <HumanStatus label={customerLifecycleLabel(project.status, booking?.status ?? null)} />
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{project.title || "Project"}</h1>
+        <JobReference value={project.reference_number} />
         <p className="mt-3 text-sm text-ink-700">{CUSTOMER_PAYS_DIRECTLY}</p>
       </header>
       {project.status === "CANCELLED" ? (
@@ -696,6 +700,7 @@ export function CompareEstimatesPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Compare estimates</h1>
+      <JobReference value={project?.reference_number} />
       <p className="text-ink-700">{COMPARE_INTRO} {CUSTOMER_PAYS_DIRECTLY}</p>
       <FormError message={error} />
       {rows.length === 0 ? <EmptyState title="No estimates yet" body="Submitted estimates will appear here in the order they arrived." /> : null}
@@ -861,6 +866,7 @@ export function CustomerEstimateDetailPage() {
         <ContractorAvatar size={72} />
         <h1 className="min-w-0 break-words font-display text-4xl font-semibold text-forest-800">{contractor?.display_label || "Estimate"}</h1>
       </div>
+      <JobReference value={project.reference_number} />
       <p className="text-sm text-ink-500">{customerEstimateStatusLabel(status)}</p>
       <p className="text-sm text-ink-500">{STREET_STAYS_PRIVATE}</p>
       <FormError message={error} />

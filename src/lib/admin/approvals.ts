@@ -88,6 +88,47 @@ export function pendingApprovalCount(items: ContractorApprovalItem[]): number {
   return items.filter((item) => item.approval_status === "PENDING").length;
 }
 
+const APPROVALS_CHANGED = "ppp-approvals-changed";
+
+/** Tell the approvals queue and nav badge to reload after an admin decision. */
+export function notifyApprovalsChanged(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(APPROVALS_CHANGED));
+}
+
+export function subscribeApprovalsChanged(listener: () => void): () => void {
+  if (typeof window === "undefined") return () => undefined;
+  window.addEventListener(APPROVALS_CHANGED, listener);
+  return () => window.removeEventListener(APPROVALS_CHANGED, listener);
+}
+
+export type ApprovalActionVisibility = {
+  showApprove: boolean;
+  showReject: boolean;
+  showRequestInfo: boolean;
+  showSuspend: boolean;
+};
+
+/**
+ * Buttons follow the current approval_status.
+ * admin_approve_contractor allows any non-deleted contractor, including REJECTED.
+ * admin_request_contractor_info only succeeds while PENDING.
+ * Reject stays available while the application is still open (PENDING or SUSPENDED).
+ * No contractor suspend/revoke approval RPC exists, so that action stays hidden.
+ */
+export function approvalActionVisibility(status: ApprovalStatus): ApprovalActionVisibility {
+  if (status === "APPROVED") {
+    return { showApprove: false, showReject: false, showRequestInfo: false, showSuspend: false };
+  }
+  if (status === "REJECTED") {
+    return { showApprove: true, showReject: false, showRequestInfo: false, showSuspend: false };
+  }
+  if (status === "PENDING") {
+    return { showApprove: true, showReject: true, showRequestInfo: true, showSuspend: false };
+  }
+  return { showApprove: true, showReject: true, showRequestInfo: false, showSuspend: false };
+}
+
 export function approvalContactName(item: Pick<ContractorApprovalItem, "contact_name" | "first_name" | "last_name" | "email">): string {
   if (item.contact_name?.trim()) return item.contact_name.trim();
   return displayName(item.first_name, item.last_name, item.email);

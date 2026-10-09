@@ -8,15 +8,18 @@ import { ErrorState, LoadingState } from "../../../components/ui/PageState";
 import { FormError } from "../../../lib/auth/AuthCard";
 import {
   APPROVAL_TABS,
+  approvalActionVisibility,
   approvalContactName,
   approvalStatusLabel,
   filterApprovalQueue,
   formatApprovalDate,
   formatCategoryNames,
   formatServiceAreaSummary,
+  notifyApprovalsChanged,
   onboardingStatusLabel,
   pendingApprovalCount,
   identityReviewCount,
+  subscribeApprovalsChanged,
   type ApprovalTab,
   type ContractorApprovalItem,
 } from "../../../lib/admin/approvals";
@@ -30,6 +33,7 @@ import {
 import { accountStatusLabel } from "../../../lib/marketplace/statusLabels";
 import { centsToDollarString } from "../../../lib/marketplace/fees";
 import { useToast } from "../../../hooks/useToast";
+import { StatusBanner } from "../../../components/ui/StatusBanner";
 
 const TAB_LABELS: Record<ApprovalTab, string> = {
   PENDING: "Pending",
@@ -50,17 +54,20 @@ export function AdminApprovalsPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  function load() {
-    setLoading(true);
+  function load(quiet = false) {
+    if (!quiet) setLoading(true);
     setError(null);
     void listContractorApprovals("ALL")
       .then(setItems)
       .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!quiet) setLoading(false);
+      });
   }
 
   useEffect(() => {
     load();
+    return subscribeApprovalsChanged(() => load(true));
   }, []);
 
   const filtered = useMemo(() => filterApprovalQueue(items, tab), [items, tab]);
@@ -223,6 +230,7 @@ export function AdminApprovalDetailPage() {
     try {
       const next = await action();
       setItem(next);
+      notifyApprovalsChanged();
       toast.push(success);
       setConfirmApprove(false);
       setRejectOpen(false);
@@ -343,14 +351,6 @@ export function AdminApprovalDetailPage() {
           </Button>
         </div>
       </BottomSheet>
-      {item.approval_status === "APPROVED" ? (
-        <p className="text-sm text-ink-500">Approved contractors can be reviewed here. Matching still requires availability and area.</p>
-      ) : null}
-      {item.approval_status === "REJECTED" ? (
-        <Button type="button" variant="outline" disabled={busy} onClick={() => setConfirmApprove(true)}>
-          Approve anyway
-        </Button>
-      ) : null}
     </div>
   );
 }
@@ -370,7 +370,7 @@ export function ApprovalDetailView({
   onReject?: () => void;
   onRequestInfo?: () => void;
 }) {
-  const pending = item.approval_status === "PENDING";
+  const actions = approvalActionVisibility(item.approval_status);
   const credentials = item.credentials ?? [];
 
   return (
@@ -414,7 +414,7 @@ export function ApprovalDetailView({
         {item.bio ? <p className="mt-4 text-sm leading-relaxed text-ink-700">{item.bio}</p> : null}
       </section>
       <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
-        <h2 className="font-display text-2xl font-semibold text-forest-800">Verification fields</h2>
+        <h2 className="font-display text-2xl font-semibold text-forest-800">Contractor-provided credentials</h2>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
           <Field label="License number" value={dash(item.license_number)} />
           <Field label="Insurance carrier" value={dash(item.insurance_carrier)} />
@@ -438,9 +438,24 @@ export function ApprovalDetailView({
           </ul>
         )}
       </section>
+      {item.approval_status === "APPROVED" ? (
+        <section className="rounded-3xl border border-forest-800/20 bg-forest-800 px-5 py-4 text-cream-50">
+          <h2 className="font-display text-2xl font-semibold">Approved</h2>
+          <p className="mt-2 text-sm">
+            {item.approved_at ? `Approved at ${formatApprovalDate(item.approved_at)}` : "This contractor is approved."}
+          </p>
+          <p className="mt-2 text-sm text-cream-50/80">Matching still requires availability, category, and area.</p>
+          <Link to="/app/admin/approvals" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold underline">
+            Back to approvals
+          </Link>
+        </section>
+      ) : null}
+      {item.approval_status === "SUSPENDED" ? (
+        <StatusBanner tone="warning" title="Suspended" body="This contractor is suspended. Approve restores an approved profile. There is no separate suspend action." />
+      ) : null}
       {item.identity_review_required ? (
         <section className="rounded-3xl border border-gold-500/40 bg-gold-500/10 px-5 py-4">
-          <h2 className="font-display text-2xl font-semibold text-forest-800">Credential re-verification</h2>
+          <h2 className="font-display text-2xl font-semibold text-forest-800">Re-verify</h2>
           <p className="mt-2 text-sm text-ink-700">
             This contractor changed previously verified license, insurance, or credential info. Review those
             documents. Approval and Active status were not stripped.
@@ -450,9 +465,9 @@ export function ApprovalDetailView({
           </p>
         </section>
       ) : null}
-      {item.info_request_message ? (
+      {item.approval_status === "PENDING" && item.info_request_message ? (
         <section className="rounded-3xl border border-gold-500/40 bg-gold-500/10 px-5 py-4">
-          <h2 className="font-display text-2xl font-semibold text-forest-800">More information requested</h2>
+          <h2 className="font-display text-2xl font-semibold text-forest-800">Needs information</h2>
           <p className="mt-2 text-sm text-ink-700">{item.info_request_message}</p>
           <p className="mt-2 text-xs uppercase tracking-[0.16em] text-gold-700">
             {formatApprovalDate(item.info_requested_at)} · stays pending
@@ -468,17 +483,25 @@ export function ApprovalDetailView({
           </p>
         </section>
       ) : null}
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Button type="button" className="min-h-14" disabled={busy} onClick={onApprove}>
-          Approve
-        </Button>
-        <Button type="button" variant="outline" className="min-h-14" disabled={busy} onClick={onReject}>
-          Reject
-        </Button>
-        <Button type="button" variant="ghost" className="min-h-14" disabled={busy || !pending} onClick={onRequestInfo}>
-          Request More Information
-        </Button>
-      </div>
+      {actions.showApprove || actions.showReject || actions.showRequestInfo ? (
+        <div className="flex flex-col gap-2 sm:flex-row">
+          {actions.showApprove ? (
+            <Button type="button" className="min-h-14" disabled={busy} onClick={onApprove}>
+              Approve
+            </Button>
+          ) : null}
+          {actions.showReject ? (
+            <Button type="button" variant="outline" className="min-h-14" disabled={busy} onClick={onReject}>
+              Reject
+            </Button>
+          ) : null}
+          {actions.showRequestInfo ? (
+            <Button type="button" variant="ghost" className="min-h-14" disabled={busy} onClick={onRequestInfo}>
+              Request More Information
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
