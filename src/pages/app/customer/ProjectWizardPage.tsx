@@ -229,7 +229,7 @@ export function ProjectWizardPage() {
   const ready = canPostProject({ title: form.title, category_id: form.categoryId, zip_code: form.zipCode });
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <div className="mx-auto max-w-xl space-y-6" data-pwa-form="project-wizard">
       <header className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Post a project</p>
         <h1 className="font-display text-4xl font-semibold text-forest-800">

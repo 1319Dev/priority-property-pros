@@ -857,7 +857,7 @@ export function EstimateBuilderPage() {
   }, [opportunityId, user]);
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <div className="mx-auto max-w-xl space-y-6" data-pwa-form="estimate">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Estimate</h1>
       <JobReference value={referenceNumber} />
       <p className="text-sm text-ink-700">
