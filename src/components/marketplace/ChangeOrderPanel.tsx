@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { JobReference } from "./JobReference";
 import { Button } from "../ui/Button";
 import { TextInput } from "../ui/Input";
 import { FormError } from "../../lib/auth/AuthCard";
@@ -15,11 +16,13 @@ import type { ChangeOrder } from "../../lib/marketplace/types";
 export function ChangeOrderPanel({
   role,
   orders,
+  referenceNumber,
   onPropose,
   onRespond,
 }: {
   role: "customer" | "contractor";
   orders: ChangeOrder[];
+  referenceNumber?: number | string | null;
   onPropose: (description: string, amountDeltaCents: number) => Promise<void>;
   onRespond: (changeOrderId: string, approve: boolean) => Promise<void>;
 }) {
@@ -71,6 +74,7 @@ export function ChangeOrderPanel({
   return (
     <section className="space-y-3">
       <h2 className="font-display text-2xl text-forest-800">Change orders</h2>
+      <JobReference value={referenceNumber} />
       <p className="text-sm text-ink-700">
         {role === "contractor"
           ? "You cannot raise the price by yourself. The customer has to approve."

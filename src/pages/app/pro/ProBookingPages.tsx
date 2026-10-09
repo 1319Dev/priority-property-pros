@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { ChangeOrderPanel } from "../../../components/marketplace/ChangeOrderPanel";
+import { JobReference } from "../../../components/marketplace/JobReference";
 import { Button } from "../../../components/ui/Button";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
@@ -18,6 +19,7 @@ import {
   fetchContractorProfileByUser,
   fetchMyBookings,
   fetchProject,
+  fetchProjectSummaries,
   proposeChangeOrder,
   respondChangeOrder,
   startBooking,
@@ -85,6 +87,8 @@ export function ProjectContactSection({
 export function ProBookingsPage() {
   const { user } = useAuth();
   const [rows, setRows] = useState<Booking[]>([]);
+  const [references, setReferences] = useState<Record<string, number | null | undefined>>({});
+  const [titles, setTitles] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -95,7 +99,13 @@ export function ProBookingsPage() {
         if (!profile) throw new Error("Contractor profile missing.");
         return fetchMyBookings("contractor", profile.id);
       })
-      .then((data) => setRows(data as Booking[]))
+      .then(async (data) => {
+        const bookings = data as Booking[];
+        setRows(bookings);
+        const summaries = await fetchProjectSummaries(bookings.map((row) => row.project_id)).catch(() => []);
+        setTitles(Object.fromEntries(summaries.map((project) => [project.id, project.title || "Project"])));
+        setReferences(Object.fromEntries(summaries.map((project) => [project.id, project.reference_number])));
+      })
       .catch((err: Error) => setError(err.message));
   }, [user]);
 
@@ -119,7 +129,9 @@ export function ProBookingsPage() {
             return (
             <li key={row.id}>
               <Link to={`/app/pro/bookings/${row.id}`} className="block rounded-3xl border border-forest-800/10 px-5 py-4">
-                <p className="font-semibold text-forest-800">{hiredLabel ?? statusLabel(row.status)}</p>
+                <p className="font-semibold text-forest-800">{titles[row.project_id] || "Project"}</p>
+                <JobReference value={references[row.project_id]} copy={false} />
+                <p className="text-sm text-ink-500">{hiredLabel ?? statusLabel(row.status)}</p>
                 {hiredLabel ? <p className="text-sm text-ink-500">{statusLabel(row.status)}</p> : null}
                 <p className="text-sm text-ink-500">{formatUsdFromCents(row.billable_amount_cents || row.amount_cents)}</p>
               </Link>
@@ -137,6 +149,7 @@ export function ProBookingDetailPage() {
   const toast = useToast();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [title, setTitle] = useState("");
+  const [referenceNumber, setReferenceNumber] = useState<number | null>(null);
   const [cityZip, setCityZip] = useState("");
   const [contact, setContact] = useState<ProjectContactFields | null>(null);
   const [contactShared, setContactShared] = useState(false);
@@ -153,6 +166,7 @@ export function ProBookingDetailPage() {
     setBooking(row);
     const project = await fetchProject(row.project_id);
     setTitle(project.title);
+    setReferenceNumber(project.reference_number ?? null);
     setCityZip([project.city, project.state, project.zip_code].filter(Boolean).join(", "));
     setOrders((await fetchChangeOrders(bookingId)) as ChangeOrder[]);
     setReviews(await fetchBookingReviews(bookingId));
@@ -190,6 +204,7 @@ export function ProBookingDetailPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">{title}</h1>
+      <JobReference value={referenceNumber} />
       <p className="text-sm text-ink-500">{statusLabel(booking.status)}</p>
       <FormError message={error} />
       {pending ? <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm font-semibold">{paymentsComingSoonCopy()}</p> : null}
@@ -253,6 +268,7 @@ export function ProBookingDetailPage() {
         <ChangeOrderPanel
           role="contractor"
           orders={orders}
+          referenceNumber={referenceNumber}
           onPropose={async (description, cents) => {
             await proposeChangeOrder(booking.id, description, cents);
             await reload();
@@ -273,6 +289,7 @@ export function ProBookingDetailPage() {
         reviews={reviews}
         rating={rating}
         body={body}
+        referenceNumber={referenceNumber}
         onRatingChange={setRating}
         onBodyChange={setBody}
         onSubmit={() => {

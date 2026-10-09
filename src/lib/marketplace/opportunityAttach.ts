@@ -16,16 +16,22 @@ export type OpportunityProjectPreview = Pick<
   | "category_id"
   | "preferred_date"
   | "accepting_connections"
+  | "reference_number"
 > | null;
 
 export const OPPORTUNITY_COLUMNS =
   "id, project_id, contractor_profile_id, match_id, status, available_at, responded_at, expires_at, created_at";
 
-export const OPPORTUNITY_PROJECT_EMBED_COLUMNS =
+export const OPPORTUNITY_PROJECT_EMBED_COLUMNS_BASE =
   "id, title, description, city, state, zip_code, timing, budget_min_cents, budget_max_cents, status, completeness, category_id, preferred_date, accepting_connections";
+
+export const OPPORTUNITY_PROJECT_EMBED_COLUMNS = `${OPPORTUNITY_PROJECT_EMBED_COLUMNS_BASE}, reference_number`;
 
 /** Left-join style embed. RLS-hidden projects come back as null instead of throwing. */
 export const OPPORTUNITY_WITH_PROJECTS_SELECT = `${OPPORTUNITY_COLUMNS}, projects(${OPPORTUNITY_PROJECT_EMBED_COLUMNS})`;
+
+/** Same embed without reference_number, for a frontend deployed before that column exists. */
+export const OPPORTUNITY_WITH_PROJECTS_SELECT_LEGACY = `${OPPORTUNITY_COLUMNS}, projects(${OPPORTUNITY_PROJECT_EMBED_COLUMNS_BASE})`;
 
 export function normalizeOpportunityProject(value: unknown): OpportunityProjectPreview {
   if (Array.isArray(value)) return normalizeOpportunityProject(value[0]);

@@ -5,11 +5,13 @@ import { looksLikeFilename } from "./publicDirectory";
 import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
 import { detectContactLeak } from "./contactLeak";
 import { projectInsertForPost, runProjectSubmit } from "./projectPost";
+import { isMissingReferenceColumn, parseProjectReference } from "./projectReference";
 import { customerFacingConnectionCheckoutError, CONNECTION_RECONCILE_CUSTOMER_ERROR } from "./connectionCheckout";
 import {
   attachOpportunityProjects,
   OPPORTUNITY_COLUMNS,
   OPPORTUNITY_WITH_PROJECTS_SELECT,
+  OPPORTUNITY_WITH_PROJECTS_SELECT_LEGACY,
 } from "./opportunityAttach";
 import { sanitizeConnectionCards, type ProjectConnectionCard } from "./connectionCards";
 import type {
@@ -83,16 +85,20 @@ function withoutUnpostedDrafts(rows: Project[]): Project[] {
   return rows.filter((row) => row.status !== "DRAFT");
 }
 
+const CUSTOMER_PROJECT_COLUMNS =
+  "id, customer_id, category_id, title, description, status, completeness, city, state, zip_code, timing, preferred_date, budget_min_cents, budget_max_cents, draft_step, selected_contractor_profile_id, selected_estimate_id, selected_booking_id, posted_at, selected_at, scope_revision, cancelled_at, cancel_reason, accepting_connections, connections_closed_at, connections_closed_by, created_at, updated_at";
+
 export async function fetchCustomerProjects(customerId?: string): Promise<Project[]> {
   void customerId;
   const { data, error } = await client().rpc("list_my_customer_projects");
   if (error) {
-    const fallback = await client()
+    const withReference = await client()
       .from("projects")
-      .select(
-        "id, customer_id, category_id, title, description, status, completeness, city, state, zip_code, timing, preferred_date, budget_min_cents, budget_max_cents, draft_step, selected_contractor_profile_id, selected_estimate_id, selected_booking_id, posted_at, selected_at, scope_revision, cancelled_at, cancel_reason, accepting_connections, connections_closed_at, connections_closed_by, created_at, updated_at",
-      )
+      .select(`${CUSTOMER_PROJECT_COLUMNS}, reference_number`)
       .order("updated_at", { ascending: false });
+    const fallback = isMissingReferenceColumn(withReference.error?.message)
+      ? await client().from("projects").select(CUSTOMER_PROJECT_COLUMNS).order("updated_at", { ascending: false })
+      : withReference;
     if (fallback.error) throw new Error(asError(error, "Could not load projects."));
     return withoutUnpostedDrafts((fallback.data ?? []) as Project[]);
   }
@@ -404,6 +410,7 @@ export type ContractorEstimateListItem = {
   project_id: string;
   opportunity_id: string;
   project_title: string;
+  project_reference_number?: number | string | null;
   status: string;
   total_cents: number;
   submitted_at: string | null;
@@ -665,13 +672,22 @@ export type OpportunityRow = Database["public"]["Tables"]["opportunities"]["Row"
     | "category_id"
     | "preferred_date"
     | "accepting_connections"
+    | "reference_number"
   > | null;
 };
+
+async function selectOpportunityEmbed(
+  build: (select: string) => PromiseLike<{ data: unknown; error: { message: string } | null }>,
+) {
+  const embedded = await build(OPPORTUNITY_WITH_PROJECTS_SELECT);
+  if (!embedded.error || !isMissingReferenceColumn(embedded.error.message)) return embedded;
+  return build(OPPORTUNITY_WITH_PROJECTS_SELECT_LEGACY);
+}
 
 async function loadOpportunityRows(
   build: (select: string) => PromiseLike<{ data: unknown; error: { message: string } | null }>,
 ): Promise<OpportunityRow[]> {
-  const embedded = await build(OPPORTUNITY_WITH_PROJECTS_SELECT);
+  const embedded = await selectOpportunityEmbed(build);
   if (!embedded.error) {
     return attachOpportunityProjects((Array.isArray(embedded.data) ? embedded.data : []) as OpportunityRow[]);
   }
@@ -693,12 +709,68 @@ export async function fetchMyOpportunities(contractorProfileId: string) {
   );
 }
 
-export async function fetchOpportunity(id: string) {
-  const embedded = await client()
-    .from("opportunities")
-    .select(OPPORTUNITY_WITH_PROJECTS_SELECT)
-    .eq("id", id)
+export type ProjectSummary = {
+  id: string;
+  title: string;
+  reference_number?: number | null;
+};
+
+export async function fetchProjectSummaries(ids: string[]): Promise<ProjectSummary[]> {
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (unique.length === 0) return [];
+  const withReference = await client().from("projects").select("id, title, reference_number").in("id", unique);
+  if (!withReference.error) return (withReference.data ?? []) as ProjectSummary[];
+  if (!isMissingReferenceColumn(withReference.error.message)) {
+    throw new Error(asError(withReference.error, "Could not load projects."));
+  }
+  const fallback = await client().from("projects").select("id, title").in("id", unique);
+  if (fallback.error) throw new Error(asError(fallback.error, "Could not load projects."));
+  return (fallback.data ?? []) as ProjectSummary[];
+}
+
+export type AdminReferenceBooking = {
+  id: string;
+  status: string;
+};
+
+export async function findAdminBookingsByReference(raw: string): Promise<{
+  projectId: string;
+  title: string;
+  referenceNumber: number;
+  bookings: AdminReferenceBooking[];
+} | null> {
+  const referenceNumber = parseProjectReference(raw);
+  if (referenceNumber == null) throw new Error("Enter a job reference like PPP-1042 or 1042.");
+  const lookup = await client()
+    .from("projects")
+    .select("id, title, reference_number")
+    .eq("reference_number", referenceNumber)
     .maybeSingle();
+  if (lookup.error) {
+    if (isMissingReferenceColumn(lookup.error.message)) {
+      throw new Error("Job references are not available until the database update is applied.");
+    }
+    throw new Error(asError(lookup.error, "Could not search job references."));
+  }
+  if (!lookup.data) return null;
+  const bookings = await client()
+    .from("bookings")
+    .select("id, status, created_at")
+    .eq("project_id", lookup.data.id)
+    .order("created_at", { ascending: false });
+  if (bookings.error) throw new Error(asError(bookings.error, "Could not load bookings for that job."));
+  return {
+    projectId: lookup.data.id,
+    title: lookup.data.title || "Project",
+    referenceNumber,
+    bookings: (bookings.data ?? []).map((row) => ({ id: row.id, status: row.status })),
+  };
+}
+
+export async function fetchOpportunity(id: string) {
+  const embedded = await selectOpportunityEmbed((select) =>
+    client().from("opportunities").select(select).eq("id", id).maybeSingle(),
+  );
   if (!embedded.error) {
     if (!embedded.data) throw new Error("Opportunity not found.");
     const [row] = await attachOpportunityProjects([embedded.data as unknown as OpportunityRow]);

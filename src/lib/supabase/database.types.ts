@@ -420,6 +420,7 @@ export type Database = {
           accepting_connections: boolean;
           connections_closed_at: string | null;
           connections_closed_by: string | null;
+          reference_number?: number | null;
           created_at: string;
           updated_at: string;
         };

@@ -1,4 +1,5 @@
 import { PRE_HIRE_CONTACT_MESSAGE, assertNoPreHireContact } from "./antiCircumvention";
+import { coerceProjectReference } from "./projectReference";
 
 /** Job-payment copy stays out of this module. Messaging is a $4.99 connection unlock. */
 
@@ -53,6 +54,7 @@ export type MessageThreadSummary = {
   project_id: string;
   contractor_profile_id: string;
   project_title: string;
+  project_reference_number?: number | null;
   city: string | null;
   state: string | null;
   contractor_label: string;
@@ -139,6 +141,7 @@ export function sanitizeThreadSummary(value: unknown): MessageThreadSummary | nu
     project_id: row.project_id,
     contractor_profile_id: row.contractor_profile_id,
     project_title: textOrNull(row.project_title) ?? "Project",
+    project_reference_number: coerceProjectReference(row.project_reference_number),
     city: textOrNull(row.city),
     state: textOrNull(row.state),
     contractor_label: contractorLabel,

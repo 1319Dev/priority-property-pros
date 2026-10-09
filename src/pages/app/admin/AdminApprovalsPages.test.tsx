@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -8,9 +8,11 @@ import { DashboardShell } from "../../../components/layout/DashboardShell";
 import { ToastProvider } from "../../../components/ui/Toast";
 import {
   filterApprovalQueue,
+  notifyApprovalsChanged,
   type ApprovalTab,
   type ContractorApprovalItem,
 } from "../../../lib/admin/approvals";
+import { AdminShell } from "../AdminShell";
 import { AdminApprovalDetailPage, ApprovalDetailView, ApprovalsQueueView } from "./AdminApprovalsPages";
 import * as approvalsApi from "../../../lib/admin/approvalsApi";
 
@@ -162,6 +164,8 @@ describe("Admin approvals queue UI", () => {
       </MemoryRouter>,
     );
     expect(screen.getByText("Please upload a current certificate of insurance.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Needs information" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Contractor-provided credentials" })).toBeInTheDocument();
     expect(screen.getByText("GA-123")).toBeInTheDocument();
     expect(screen.getByText("Hartford")).toBeInTheDocument();
     expect(screen.getByText(/general liability/i)).toBeInTheDocument();
@@ -195,16 +199,64 @@ describe("Admin approvals queue UI", () => {
     );
 
     expect(await screen.findByRole("heading", { name: "Peachtree Handy" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^reject$/i }));
+    expect(screen.getByRole("heading", { name: /reject this application/i })).toBeInTheDocument();
+    expect(approvalsApi.adminRejectContractor).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: /keep it/i }));
+
     await user.click(screen.getByRole("button", { name: /^approve$/i }));
     expect(screen.getByRole("heading", { name: /approve this contractor/i })).toBeInTheDocument();
     expect(approvalsApi.adminApproveContractor).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: /approve contractor/i }));
     expect(approvalsApi.adminApproveContractor).toHaveBeenCalledWith("cp-1");
+    expect(await screen.findByRole("heading", { name: "Approved" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /request more information/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /back to approvals/i }).length).toBeGreaterThan(0);
+  });
 
-    await user.click(screen.getByRole("button", { name: /^reject$/i }));
-    expect(screen.getByRole("heading", { name: /reject this application/i })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /reject application/i }));
-    expect(approvalsApi.adminRejectContractor).toHaveBeenCalled();
+  it("hides reject after a rejection and still allows approve", () => {
+    render(
+      <MemoryRouter>
+        <ApprovalDetailView
+          item={{
+            ...pending,
+            approval_status: "REJECTED",
+            rejected_at: "2026-10-09T00:00:00Z",
+            rejection_reason: "Insurance expired",
+          }}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("heading", { name: "Rejected" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^approve$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /request more information/i })).not.toBeInTheDocument();
+  });
+
+  it("hides decision buttons on an approved re-verify profile", () => {
+    render(
+      <MemoryRouter>
+        <ApprovalDetailView
+          item={{
+            ...pending,
+            approval_status: "APPROVED",
+            account_status: "ACTIVE",
+            approved_at: "2026-10-09T00:00:00Z",
+            identity_review_required: true,
+            identity_review_at: "2026-10-09T00:00:00Z",
+            identity_review_fields: ["license_number"],
+          }}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("heading", { name: "Approved" })).toBeInTheDocument();
+    expect(screen.getByText(/approved at oct 9, 2026/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Re-verify" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /suspend|revoke/i })).not.toBeInTheDocument();
   });
 });
 
@@ -260,5 +312,53 @@ describe("Admin Approvals nav badge", () => {
 
     expect(screen.getAllByLabelText("3 pending").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Approvals").length).toBeGreaterThan(0);
+  });
+
+  it("clears the Approvals badge as soon as the pending count drops", async () => {
+    vi.mocked(approvalsApi.countPendingContractorApprovals).mockResolvedValue(1);
+    const value: AuthContextValue = {
+      configured: true,
+      loading: false,
+      user: { id: "admin-1", email: "ada@example.com" } as AuthContextValue["user"],
+      session: null,
+      profile: {
+        id: "admin-1",
+        email: "ada@example.com",
+        first_name: "Ada",
+        last_name: "Admin",
+        phone: null,
+        avatar_url: null,
+        account_type: "ADMIN",
+        account_status: "ACTIVE",
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
+      },
+      account_type: "ADMIN",
+      account_status: "ACTIVE",
+      signup_fee_status: "NOT_REQUIRED",
+      signup_fee_enabled: false,
+      signIn: async () => ({ error: null }),
+      signUp: async () => ({ error: null, needsEmailConfirm: true }),
+      signOut: async () => undefined,
+      refreshProfile: async () => undefined,
+      requestPasswordReset: async () => ({ error: null }),
+      updatePassword: async () => ({ error: null }),
+      resendVerification: async () => ({ error: null }),
+    };
+
+    render(
+      <AuthContext.Provider value={value}>
+        <MemoryRouter>
+          <AdminShell />
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    );
+
+    expect((await screen.findAllByLabelText("1 pending")).length).toBeGreaterThan(0);
+    vi.mocked(approvalsApi.countPendingContractorApprovals).mockResolvedValue(0);
+    notifyApprovalsChanged();
+    await waitFor(() => {
+      expect(screen.queryAllByLabelText("1 pending")).toHaveLength(0);
+    });
   });
 });

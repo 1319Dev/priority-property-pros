@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { EditableProjectPhotos, type EditablePhoto } from "../../../components/marketplace/EditableProjectPhotos";
+import { JobReference } from "../../../components/marketplace/JobReference";
 import { QuestionAnswerField } from "../../../components/marketplace/QuestionAnswerField";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { Button, ButtonLink } from "../../../components/ui/Button";
@@ -203,6 +204,7 @@ export function ProjectEditPage() {
   if (project.status === "CANCELLED" || project.status === "CONTRACTOR_SELECTED") {
     return (
       <div className="space-y-4">
+        <JobReference value={project.reference_number} />
         <StatusBanner
           tone="warning"
           title="Editing is not available"
@@ -226,6 +228,7 @@ export function ProjectEditPage() {
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Edit project</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Update the job</h1>
+        <JobReference value={project.reference_number} />
         <p className="mt-3 text-sm text-ink-700">
           {kind === "material"
             ? "Changing the work itself may take current estimates off this job until those pros send a new price."

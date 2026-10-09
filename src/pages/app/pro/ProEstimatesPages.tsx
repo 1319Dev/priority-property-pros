@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { JobReference } from "../../../components/marketplace/JobReference";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { HumanStatus } from "../../../components/ui/StatusBanner";
@@ -108,6 +109,7 @@ export function ContractorEstimateCard({
     <li className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
       <EstimateStatusChip status={status} viewedAt={row.last_viewed_at ?? row.first_viewed_at} />
       <p className="mt-2 font-semibold text-forest-800">{row.project_title || "Project"}</p>
+      <JobReference value={row.project_reference_number} />
       <p className="text-sm text-ink-700">{formatUsdFromCents(row.total_cents)}</p>
       <p className="text-sm text-ink-500">
         Submitted {row.submitted_at ? formatViewedTimestamp(row.submitted_at) : "—"}

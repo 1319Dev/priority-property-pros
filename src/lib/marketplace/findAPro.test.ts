@@ -41,8 +41,8 @@ function allSql(): string {
 function latestDirectoryRpc(): string {
   const sql = allSql();
   const start = sql.lastIndexOf("CREATE OR REPLACE FUNCTION public.list_public_directory_contractors()");
-  const end = sql.indexOf("CREATE OR REPLACE FUNCTION public.get_public_directory_contractor", start);
-  return sql.slice(start, end);
+  const end = sql.indexOf("$$;", start);
+  return sql.slice(start, end === -1 ? start : end);
 }
 
 const approvedId = "11111111-1111-4111-8111-111111111111";

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { JobReference } from "./JobReference";
 import { Button, ButtonLink } from "../ui/Button";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { StatusBanner } from "../ui/StatusBanner";
@@ -90,6 +91,7 @@ export function ProfileReviewForm({
   reviews,
   rating,
   body,
+  referenceNumber,
   onRatingChange,
   onBodyChange,
   onSubmit,
@@ -100,6 +102,7 @@ export function ProfileReviewForm({
   reviews: BookingReview[];
   rating: string;
   body: string;
+  referenceNumber?: number | string | null;
   onRatingChange: (value: string) => void;
   onBodyChange: (value: string) => void;
   onSubmit: () => void;
@@ -116,7 +119,12 @@ export function ProfileReviewForm({
   if (!visible) return null;
 
   if (mine) {
-    return <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm">Your review of {otherPartyLabel(role)} is saved · {mine.rating} / 5</p>;
+    return (
+      <div className="rounded-3xl bg-cream-100 px-5 py-4 text-sm">
+        <p>Your review of {otherPartyLabel(role)} is saved · {mine.rating} / 5</p>
+        <JobReference value={referenceNumber} />
+      </div>
+    );
   }
 
   if (!canSubmit) return null;
@@ -124,6 +132,7 @@ export function ProfileReviewForm({
   return (
     <section className="space-y-3">
       <h2 className="font-display text-2xl text-forest-800">Review {otherPartyLabel(role)}</h2>
+      <JobReference value={referenceNumber} />
       <p className="text-sm text-ink-700">This is a profile review of the other party after mutual Hired. It is not a review of the Priority Property Pros marketplace.</p>
       <div className="flex flex-wrap gap-2" role="group" aria-label="Rating">
         {["1", "2", "3", "4", "5"].map((value) => (
