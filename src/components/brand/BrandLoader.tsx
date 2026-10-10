@@ -1,5 +1,5 @@
-import { cn } from "../../utils/cn";
-import { BrandMark } from "./Logo";
+import { useId } from "react";
+import { cn, withBase } from "../../utils/cn";
 
 const layoutClass = {
   page: "min-h-[70vh] w-full flex-col gap-3 px-6 py-16",
@@ -24,8 +24,23 @@ const labelClass = {
 
 type Layout = keyof typeof layoutClass;
 
-/** Every loader uses the house tile with a gold arc. */
+/** Full-page, section, and inline loaders use the circular logo. */
 export const FULL_PAGE_LOADER = "logo" as const;
+
+/** Navy and green sampled from the circular logo (ring mode, roof median). */
+const LOADER_NAVY = "#002450";
+const LOADER_GREEN = "#53A217";
+
+const RING_VIEWBOX = 72;
+const RING_RADIUS = 34.15;
+const RING_STROKE = 3.05;
+/** Inner artwork diameter divided by the full logo diameter, so the mark meets the ring. */
+const MARK_RATIO = (2 * (RING_RADIUS - RING_STROKE / 2)) / RING_VIEWBOX;
+
+const MARK_256_WEBP = "brand/ppp-loader-mark-256.webp";
+const MARK_512_WEBP = "brand/ppp-loader-mark-512.webp";
+const MARK_256_PNG = "brand/ppp-loader-mark-256.png";
+const MARK_512_PNG = "brand/ppp-loader-mark-512.png";
 
 export function BrandLoader({
   label = "Loading…",
@@ -70,27 +85,55 @@ export function LoaderSlot({ compact = false }: { compact?: boolean }) {
 }
 
 function LogoArc({ size }: { size: number }) {
+  const gradientId = `brand-loader-sweep-${useId().replace(/:/g, "")}`;
+  const mark = Math.round(size * MARK_RATIO);
+  const webpSrcSet = `${withBase(MARK_256_WEBP)} 256w, ${withBase(MARK_512_WEBP)} 512w`;
+  const pngSrcSet = `${withBase(MARK_256_PNG)} 256w, ${withBase(MARK_512_PNG)} 512w`;
+
   return (
     <span className="relative inline-grid shrink-0 place-items-center" style={{ width: size, height: size }}>
       <svg
-        viewBox="0 0 72 72"
+        viewBox={`0 0 ${RING_VIEWBOX} ${RING_VIEWBOX}`}
         width={size}
         height={size}
         className="brand-loader-arc absolute inset-0 h-full w-full"
         aria-hidden="true"
       >
+        <defs>
+          <linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1="70.2" y1="36" x2="29.6" y2="69.5">
+            <stop offset="0%" stopColor={LOADER_NAVY} />
+            <stop offset="42%" stopColor={LOADER_NAVY} />
+            <stop offset="100%" stopColor={LOADER_GREEN} />
+          </linearGradient>
+        </defs>
+        <circle cx="36" cy="36" r={RING_RADIUS} fill="none" stroke={LOADER_NAVY} strokeWidth={RING_STROKE} />
         <circle
           cx="36"
           cy="36"
-          r="32.5"
+          r={RING_RADIUS}
           fill="none"
-          stroke="var(--color-gold-500)"
-          strokeWidth="2.75"
+          stroke={`url(#${gradientId})`}
+          strokeWidth={RING_STROKE}
           strokeLinecap="round"
-          strokeDasharray="46 158"
+          pathLength="100"
+          strokeDasharray="28 72"
         />
       </svg>
-      <BrandMark decorative className="h-[68%] w-[68%]" />
+      <picture style={{ width: mark, height: mark }}>
+        <source type="image/webp" srcSet={webpSrcSet} sizes={`${mark}px`} />
+        <img
+          src={withBase(MARK_512_PNG)}
+          srcSet={pngSrcSet}
+          sizes={`${mark}px`}
+          alt=""
+          width={mark}
+          height={mark}
+          decoding="sync"
+          fetchPriority="high"
+          draggable={false}
+          className="brand-loader-mark pointer-events-none block h-full w-full select-none"
+        />
+      </picture>
     </span>
   );
 }
