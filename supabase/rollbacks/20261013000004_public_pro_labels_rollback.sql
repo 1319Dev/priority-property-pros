@@ -214,7 +214,8 @@ AS $$
   );
 $$;
 
--- Previous list_my_message_threads (20261011000004).
+-- Live list_my_message_threads. Production applied project_reference_numbers
+-- after message_inbox_reads, so this restores that later definition.
 CREATE OR REPLACE FUNCTION public.list_my_message_threads()
 RETURNS jsonb
 LANGUAGE sql
@@ -240,6 +241,7 @@ AS $$
           THEN 'Project'
         ELSE coalesce(nullif(btrim(p.title), ''), 'Project')
       END AS project_title,
+      p.reference_number AS project_reference_number,
       CASE
         WHEN public.text_contains_contact_info(p.city) OR public.text_contains_pre_hire_contact(p.city)
           THEN NULL
@@ -335,6 +337,7 @@ AS $$
         'project_id', rows.project_id,
         'contractor_profile_id', rows.contractor_profile_id,
         'project_title', rows.project_title,
+        'project_reference_number', rows.project_reference_number,
         'city', rows.city,
         'state', rows.state,
         'contractor_label', rows.contractor_label,
@@ -514,7 +517,7 @@ REVOKE ALL ON FUNCTION public.list_my_project_connection_cards(uuid) FROM PUBLIC
 GRANT EXECUTE ON FUNCTION public.list_my_project_connection_cards(uuid) TO authenticated;
 
 COMMENT ON FUNCTION public.list_my_message_threads() IS
-  'Inbox rows after a $4.99 connection entitlement. Customers see the contractor business name. Contractors see the customer first name. No phone, email, or street.';
+  'Inbox rows after a $4.99 connection entitlement. Customers see the contractor business name. Contractors see the customer first name. Includes project_reference_number. No phone, email, or street.';
 
 REVOKE ALL ON FUNCTION public.list_my_message_threads() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.list_my_message_threads() TO authenticated;

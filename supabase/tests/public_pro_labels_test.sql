@@ -523,13 +523,14 @@ VALUES ('77301', 30.311800, -95.456100, 'Conroe', 'TX');
 INSERT INTO public.contractor_service_areas (contractor_profile_id, center_zip, radius_miles, label)
 VALUES ('a6208af2-2f61-41ca-bd4b-51f81fe61638', '77301', 25, 'Montgomery County, TX');
 
-INSERT INTO public.projects (id, customer_id, title, city, state)
+INSERT INTO public.projects (id, customer_id, title, city, state, reference_number)
 VALUES (
   '55555555-5555-4555-8555-555555555555',
   '11111111-1111-4111-8111-111111111111',
   'Fence repair',
   'Conroe',
-  'TX'
+  'TX',
+  1042
 );
 
 INSERT INTO public.project_connections (id, project_id, contractor_profile_id, status)
@@ -819,6 +820,7 @@ DECLARE
   v_card text;
   v_note text;
   v_hire text;
+  v_thread jsonb;
 BEGIN
   v_name := public.contractor_name_for_my_project(
     '55555555-5555-4555-8555-555555555555',
@@ -826,6 +828,16 @@ BEGIN
   );
   IF v_name IS DISTINCT FROM 'Plymate Property Maintenance' THEN
     RAISE EXCEPTION 'post-connect name: %', v_name;
+  END IF;
+
+  SELECT item INTO v_thread
+  FROM jsonb_array_elements(public.list_my_message_threads()) item
+  WHERE item ->> 'project_id' = '55555555-5555-4555-8555-555555555555';
+  IF v_thread IS NULL OR NOT (v_thread ? 'project_reference_number') THEN
+    RAISE EXCEPTION 'inbox dropped project_reference_number: %', coalesce(v_thread::text, '<null>');
+  END IF;
+  IF v_thread ->> 'project_reference_number' IS DISTINCT FROM '1042' THEN
+    RAISE EXCEPTION 'inbox project_reference_number: %', coalesce(v_thread ->> 'project_reference_number', '<null>');
   END IF;
 
   SELECT card ->> 'display_name' INTO v_card
@@ -1092,12 +1104,42 @@ BEGIN
 END
 $$;
 
+INSERT INTO public.booking_contact_access (project_id, contractor_profile_id, status, grant_source)
+VALUES (
+  '55555555-5555-4555-8555-555555555555',
+  'a6208af2-2f61-41ca-bd4b-51f81fe61638',
+  'UNLOCKED',
+  'CONNECTION_FEE_PAYMENT'
+);
+
+SELECT set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', false);
+SET ROLE authenticated;
+DO $$
+DECLARE
+  v_thread jsonb;
+BEGIN
+  SELECT item INTO v_thread
+  FROM jsonb_array_elements(public.list_my_message_threads()) item
+  WHERE item ->> 'project_id' = '55555555-5555-4555-8555-555555555555';
+  IF v_thread IS NULL OR NOT (v_thread ? 'project_reference_number') THEN
+    RAISE EXCEPTION 'rolled-back inbox dropped project_reference_number: %', coalesce(v_thread::text, '<null>');
+  END IF;
+  IF v_thread ->> 'project_reference_number' IS DISTINCT FROM '1042' THEN
+    RAISE EXCEPTION 'rolled-back inbox reference: %', coalesce(v_thread ->> 'project_reference_number', '<null>');
+  END IF;
+END
+$$;
+RESET ROLE;
+
 \ir ../migrations/20261013000004_public_pro_labels.sql
 \ir ../migrations/20261013000005_contractor_public_text_guards.sql
 
+SELECT set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', false);
+SET ROLE authenticated;
 DO $$
 DECLARE
   v_label text;
+  v_thread jsonb;
 BEGIN
   SELECT display_label INTO v_label
   FROM public.contractor_public_profiles
@@ -1105,16 +1147,29 @@ BEGIN
   IF v_label IS DISTINCT FROM 'Fence Repair & Handyman pro in Conroe' THEN
     RAISE EXCEPTION 'reapplied label: %', coalesce(v_label, '<null>');
   END IF;
-  BEGIN
-    UPDATE public.contractor_profiles
-    SET website_url = 'javascript:alert(1)'
-    WHERE id = 'a6208af2-2f61-41ca-bd4b-51f81fe61638';
-    RAISE EXCEPTION 'reapplied guard did not reject javascript';
-  EXCEPTION
-    WHEN OTHERS THEN
-      IF SQLERRM NOT ILIKE '%http://%' THEN
-        RAISE;
-      END IF;
-  END;
+  SELECT item INTO v_thread
+  FROM jsonb_array_elements(public.list_my_message_threads()) item
+  WHERE item ->> 'project_id' = '55555555-5555-4555-8555-555555555555';
+  IF v_thread IS NULL OR NOT (v_thread ? 'project_reference_number') THEN
+    RAISE EXCEPTION 'reapplied inbox dropped project_reference_number: %', coalesce(v_thread::text, '<null>');
+  END IF;
+  IF v_thread ->> 'project_reference_number' IS DISTINCT FROM '1042' THEN
+    RAISE EXCEPTION 'reapplied inbox reference: %', coalesce(v_thread ->> 'project_reference_number', '<null>');
+  END IF;
+END
+$$;
+RESET ROLE;
+
+DO $$
+BEGIN
+  UPDATE public.contractor_profiles
+  SET website_url = 'javascript:alert(1)'
+  WHERE id = 'a6208af2-2f61-41ca-bd4b-51f81fe61638';
+  RAISE EXCEPTION 'reapplied guard did not reject javascript';
+EXCEPTION
+  WHEN OTHERS THEN
+    IF SQLERRM NOT ILIKE '%http://%' THEN
+      RAISE;
+    END IF;
 END
 $$;

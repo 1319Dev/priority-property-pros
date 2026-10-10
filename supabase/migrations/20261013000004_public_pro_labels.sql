@@ -703,6 +703,8 @@ COMMENT ON FUNCTION public.list_my_project_connection_cards(uuid) IS
 
 -- Inbox. Rows exist only after the entitlement filter. Customers then see the
 -- business name. The fallback label is the neutral public label.
+-- Production applied project_reference_numbers after message_inbox_reads, so
+-- the live function returns project_reference_number. Keep that field.
 CREATE OR REPLACE FUNCTION public.list_my_message_threads()
 RETURNS jsonb
 LANGUAGE sql
@@ -728,6 +730,7 @@ AS $$
           THEN 'Project'
         ELSE coalesce(nullif(btrim(p.title), ''), 'Project')
       END AS project_title,
+      p.reference_number AS project_reference_number,
       CASE
         WHEN public.text_contains_contact_info(p.city) OR public.text_contains_pre_hire_contact(p.city)
           THEN NULL
@@ -823,6 +826,7 @@ AS $$
         'project_id', rows.project_id,
         'contractor_profile_id', rows.contractor_profile_id,
         'project_title', rows.project_title,
+        'project_reference_number', rows.project_reference_number,
         'city', rows.city,
         'state', rows.state,
         'contractor_label', rows.contractor_label,
@@ -843,7 +847,7 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION public.list_my_message_threads() IS
-  'Inbox rows only after message_pair_has_connection_entitlement. Customers then see the contractor business name. Before that, this function returns no row. No phone, email, or street.';
+  'Inbox rows only after message_pair_has_connection_entitlement. Customers then see the contractor business name. Includes project_reference_number. Before that, this function returns no row. No phone, email, or street.';
 
 REVOKE ALL ON FUNCTION public.list_my_message_threads() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.list_my_message_threads() TO authenticated;
