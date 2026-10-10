@@ -27,7 +27,9 @@ import {
   CONNECTION_CHECKOUT_CUSTOMER_ERROR,
   CONNECTION_RECONCILE_CUSTOMER_ERROR,
   FUNCTIONS_HTTP_ERROR_MESSAGE,
+  ACTIVATION_REQUIRED_CONNECT_MESSAGE,
   customerFacingConnectionCheckoutError,
+  friendlyActivationConnectError,
   fulfillmentReferenceValue,
   ineligibleContractorRejected,
   isStripePaymentIntentId,
@@ -247,6 +249,19 @@ describe("Connection Fee TEST Checkout", () => {
     await expect(
       customerFacingConnectionCheckoutError(null, { message: FUNCTIONS_HTTP_ERROR_MESSAGE }, CONNECTION_RECONCILE_CUSTOMER_ERROR),
     ).resolves.toBe(CONNECTION_RECONCILE_CUSTOMER_ERROR);
+  });
+
+  it("tells an unpaid pro to activate instead of showing signup fee required", async () => {
+    expect(friendlyActivationConnectError("signup fee required")).toBe(ACTIVATION_REQUIRED_CONNECT_MESSAGE);
+    expect(friendlyActivationConnectError("ineligible contractor")).toBe("ineligible contractor");
+    await expect(
+      customerFacingConnectionCheckoutError(
+        { error: "signup fee required", contact_unlocked: false },
+        { message: FUNCTIONS_HTTP_ERROR_MESSAGE },
+      ),
+    ).resolves.toBe(ACTIVATION_REQUIRED_CONNECT_MESSAGE);
+    expect(ACTIVATION_REQUIRED_CONNECT_MESSAGE).toMatch(/one-time \$9\.99 activation/);
+    expect(ACTIVATION_REQUIRED_CONNECT_MESSAGE).not.toMatch(/signup fee required/);
   });
 
   it("rejects closed and full projects and duplicate contractor+project pairs", () => {

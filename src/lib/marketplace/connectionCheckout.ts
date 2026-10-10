@@ -329,6 +329,14 @@ export function ineligibleContractorRejected(input: {
 export const FUNCTIONS_HTTP_ERROR_MESSAGE = "Edge Function returned a non-2xx status code";
 export const CONNECTION_CHECKOUT_CUSTOMER_ERROR = "We couldn't start checkout. Please try again.";
 export const CONNECTION_RECONCILE_CUSTOMER_ERROR = "We couldn't verify that payment. Please try again.";
+export const ACTIVATION_REQUIRED_CONNECT_MESSAGE =
+  "Activate your account before connecting. The one-time $9.99 activation is required before a pro can connect.";
+
+/** Raw database text for an unpaid $9.99 activation. Show the activation sentence instead. */
+export function friendlyActivationConnectError(message: string): string {
+  if (/signup fee required/i.test(message)) return ACTIVATION_REQUIRED_CONNECT_MESSAGE;
+  return message;
+}
 
 function usableCheckoutErrorMessage(value: string): boolean {
   const trimmed = value.trim();
@@ -349,12 +357,14 @@ export function parseConnectionCheckoutErrorPayload(payload: unknown): string | 
     try {
       return parseConnectionCheckoutErrorPayload(JSON.parse(trimmed));
     } catch {
-      return usableCheckoutErrorMessage(trimmed) ? trimmed : null;
+      return usableCheckoutErrorMessage(trimmed) ? friendlyActivationConnectError(trimmed) : null;
     }
   }
   if (!payload || typeof payload !== "object") return null;
   const error = (payload as { error?: unknown }).error;
-  if (typeof error === "string" && usableCheckoutErrorMessage(error)) return error.trim();
+  if (typeof error === "string" && usableCheckoutErrorMessage(error)) {
+    return friendlyActivationConnectError(error.trim());
+  }
   return null;
 }
 

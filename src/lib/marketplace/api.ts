@@ -6,7 +6,11 @@ import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./pr
 import { detectContactLeak } from "./contactLeak";
 import { projectInsertForPost, runProjectSubmit } from "./projectPost";
 import { isMissingReferenceColumn, parseProjectReference } from "./projectReference";
-import { customerFacingConnectionCheckoutError, CONNECTION_RECONCILE_CUSTOMER_ERROR } from "./connectionCheckout";
+import {
+  customerFacingConnectionCheckoutError,
+  CONNECTION_RECONCILE_CUSTOMER_ERROR,
+  friendlyActivationConnectError,
+} from "./connectionCheckout";
 import {
   attachOpportunityProjects,
   OPPORTUNITY_COLUMNS,
@@ -1222,7 +1226,7 @@ export async function requestProjectConnection(projectId: string, idempotencyKey
     p_project_id: projectId,
     p_idempotency_key: idempotencyKey ?? null,
   });
-  if (error) throw new Error(asError(error, "Could not request a connection."));
+  if (error) throw new Error(friendlyActivationConnectError(asError(error, "Could not request a connection.")));
   return (data ?? {}) as RpcJson;
 }
 
