@@ -110,12 +110,6 @@ const swaps: Array<{ id: string; match: RegExp; real: string; names: string[] }>
     names: ["listInAppNotifications", "updateNotificationPreference", "markNotificationRead", "markAllNotificationsRead", "countMyPushSubscriptions"],
   },
   {
-    id: "\0ppp-platform-reviews-api",
-    match: /\/marketplace\/platformReviewsApi(?:\.ts)?$/,
-    real: path.resolve(rootDir, "src/lib/marketplace/platformReviewsApi.ts"),
-    names: ["adminListPlatformReviews", "adminSetPlatformReviewStatus"],
-  },
-  {
     id: "\0ppp-approvals-api",
     match: /\/admin\/approvalsApi(?:\.ts)?$/,
     real: path.resolve(rootDir, "src/lib/admin/approvalsApi.ts"),
@@ -129,6 +123,12 @@ const swaps: Array<{ id: string; match: RegExp; real: string; names: string[] }>
       "adminListPortfolioReviewQueue",
       "adminSetPortfolioPrivacy",
     ],
+  },
+  {
+    id: "\0ppp-platform-reviews-api",
+    match: /\/marketplace\/platformReviewsApi(?:\.ts)?$/,
+    real: path.resolve(rootDir, "src/lib/marketplace/platformReviewsApi.ts"),
+    names: ["adminListPlatformReviews", "adminSetPlatformReviewStatus"],
   },
 ];
 

@@ -514,6 +514,23 @@ export async function adminSetPortfolioPrivacy() {
 export async function signedContractorDocUrl() {
   return "/images/marketing/official-portfolio-deck-360w.jpg";
 }
+export async function adminListPlatformReviews() {
+  return [
+    {
+      id: "review-2",
+      user_id: "user-2",
+      display_name: "Jordan M.",
+      city: "Decatur",
+      rating: 4,
+      body: "The marketplace was easy to follow from posting to hiring.",
+      status: "PENDING",
+      created_at: "2026-10-08T15:00:00.000Z",
+    },
+  ];
+}
+export async function adminSetPlatformReviewStatus() {
+  return undefined;
+}
 export async function fetchPortfolioEditorRows() {
   return [
     {
@@ -539,23 +556,4 @@ export async function deletePortfolioItem() {
 }
 export async function uploadContractorDoc() {
   return "user/portfolio/new.jpg";
-}
-
-export async function adminListPlatformReviews() {
-  return [
-    {
-      id: "review-2",
-      user_id: "user-2",
-      display_name: "Jordan M.",
-      city: "Decatur",
-      rating: 4,
-      body: "The marketplace was easy to follow from posting to hiring.",
-      status: "PENDING",
-      created_at: "2026-10-08T15:00:00.000Z",
-    },
-  ];
-}
-
-export async function adminSetPlatformReviewStatus() {
-  return undefined;
 }
