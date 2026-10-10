@@ -30,6 +30,10 @@ AS $$
   );
 $$;
 
+-- Public views must not call signup_fee_is_satisfied: anon has no EXECUTE on it,
+-- so every directory view failed with permission denied. signup_fee_enabled()
+-- is granted to anon, and platform_settings is readable by anon. Do not grant
+-- signup_fee_is_satisfied to anon. SECURITY DEFINER RPCs may still call it.
 CREATE OR REPLACE VIEW public.contractor_public_profiles
 WITH (security_invoker = false)
 AS
@@ -50,7 +54,7 @@ FROM public.contractor_profiles cp
 JOIN public.profiles p ON p.id = cp.profile_id
 WHERE cp.approval_status = 'APPROVED'
   AND p.account_status = 'ACTIVE'
-  AND public.signup_fee_is_satisfied(cp.profile_id);
+  AND (NOT public.signup_fee_enabled() OR p.signup_fee_status IN ('PAID', 'NOT_REQUIRED') OR p.account_type NOT IN ('CUSTOMER', 'CONTRACTOR'));
 CREATE OR REPLACE VIEW public.contractor_public_areas
 WITH (security_invoker = false)
 AS
@@ -66,7 +70,7 @@ JOIN public.contractor_profiles cp ON cp.id = a.contractor_profile_id
 JOIN public.profiles p ON p.id = cp.profile_id
 WHERE cp.approval_status = 'APPROVED'
   AND p.account_status = 'ACTIVE'
-  AND public.signup_fee_is_satisfied(cp.profile_id);
+  AND (NOT public.signup_fee_enabled() OR p.signup_fee_status IN ('PAID', 'NOT_REQUIRED') OR p.account_type NOT IN ('CUSTOMER', 'CONTRACTOR'));
 CREATE OR REPLACE VIEW public.contractor_public_services
 WITH (security_invoker = false)
 AS
@@ -82,7 +86,7 @@ JOIN public.profiles p ON p.id = cp.profile_id
 JOIN public.service_categories sc ON sc.id = cs.category_id
 WHERE cp.approval_status = 'APPROVED'
   AND p.account_status = 'ACTIVE'
-  AND public.signup_fee_is_satisfied(cp.profile_id);
+  AND (NOT public.signup_fee_enabled() OR p.signup_fee_status IN ('PAID', 'NOT_REQUIRED') OR p.account_type NOT IN ('CUSTOMER', 'CONTRACTOR'));
 CREATE OR REPLACE VIEW public.contractor_public_portfolio
 WITH (security_invoker = false)
 AS
@@ -97,7 +101,7 @@ JOIN public.profiles p ON p.id = cp.profile_id
 WHERE pf.privacy_state = 'PUBLIC_SAFE'
   AND cp.approval_status = 'APPROVED'
   AND p.account_status = 'ACTIVE'
-  AND public.signup_fee_is_satisfied(cp.profile_id)
+  AND (NOT public.signup_fee_enabled() OR p.signup_fee_status IN ('PAID', 'NOT_REQUIRED') OR p.account_type NOT IN ('CUSTOMER', 'CONTRACTOR'))
   AND NOT public.text_contains_pre_hire_contact(pf.title)
   AND NOT public.text_contains_pre_hire_contact(coalesce(pf.description, ''));
 CREATE OR REPLACE VIEW public.contractor_public_ratings
@@ -114,7 +118,7 @@ WHERE r.is_verified = true
   AND r.reviewer_role = 'CUSTOMER'
   AND cp.approval_status = 'APPROVED'
   AND p.account_status = 'ACTIVE'
-  AND public.signup_fee_is_satisfied(cp.profile_id)
+  AND (NOT public.signup_fee_enabled() OR p.signup_fee_status IN ('PAID', 'NOT_REQUIRED') OR p.account_type NOT IN ('CUSTOMER', 'CONTRACTOR'))
 GROUP BY r.contractor_profile_id;
 CREATE OR REPLACE VIEW public.contractor_public_reviews
 WITH (security_invoker = false)
@@ -137,7 +141,7 @@ WHERE r.is_verified = true
   AND r.reviewer_role = 'CUSTOMER'
   AND cp.approval_status = 'APPROVED'
   AND p.account_status = 'ACTIVE'
-  AND public.signup_fee_is_satisfied(cp.profile_id);
+  AND (NOT public.signup_fee_enabled() OR p.signup_fee_status IN ('PAID', 'NOT_REQUIRED') OR p.account_type NOT IN ('CUSTOMER', 'CONTRACTOR'));
 CREATE OR REPLACE VIEW public.contractor_verified_credential_badges
 WITH (security_invoker = false)
 AS
@@ -154,7 +158,7 @@ JOIN public.profiles p ON p.id = cp.profile_id
 WHERE cr.status = 'VERIFIED'
   AND cp.approval_status = 'APPROVED'
   AND p.account_status = 'ACTIVE'
-  AND public.signup_fee_is_satisfied(cp.profile_id);
+  AND (NOT public.signup_fee_enabled() OR p.signup_fee_status IN ('PAID', 'NOT_REQUIRED') OR p.account_type NOT IN ('CUSTOMER', 'CONTRACTOR'));
 
 CREATE OR REPLACE FUNCTION public.list_public_directory_contractors()
 RETURNS TABLE (
@@ -454,6 +458,41 @@ BEGIN
 END;
 $$;
 
+
+-- The $9.99 activation webhook sets signup_fee_status, so this trigger runs
+-- inside that transaction. A matching error must not roll back the payment
+-- record or Stripe will retry the webhook.
+CREATE OR REPLACE FUNCTION public.call_match_project_after_eligibility_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  contractor_id uuid;
+BEGIN
+  IF TG_TABLE_NAME = 'profiles' THEN
+    SELECT cp.id INTO contractor_id
+    FROM public.contractor_profiles cp
+    WHERE cp.profile_id = COALESCE(NEW.id, OLD.id);
+  ELSIF TG_TABLE_NAME = 'contractor_profiles' THEN
+    contractor_id := COALESCE(NEW.id, OLD.id);
+  ELSE
+    contractor_id := COALESCE(NEW.contractor_profile_id, OLD.contractor_profile_id);
+  END IF;
+
+  BEGIN
+    PERFORM public.call_match_project_for_contractor(contractor_id);
+  EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING 'match after eligibility change failed: %', SQLERRM;
+  END;
+
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
+  RETURN NEW;
+END;
+$$;
 
 DROP TRIGGER IF EXISTS profiles_match_projects_on_account_status ON public.profiles;
 CREATE TRIGGER profiles_match_projects_on_account_status

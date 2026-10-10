@@ -55,6 +55,7 @@ export function acceptFailureBlocksConnect(message: string | null | undefined): 
   return (
     text.includes("not your opportunity") ||
     text.includes("auth required") ||
+    text.includes("signup fee required") ||
     text.includes("before you can accept an offer") ||
     text.includes("before accepting an offer")
   );

@@ -27,8 +27,10 @@ import {
   CONNECTION_CHECKOUT_CUSTOMER_ERROR,
   CONNECTION_RECONCILE_CUSTOMER_ERROR,
   FUNCTIONS_HTTP_ERROR_MESSAGE,
+  ACTIVATION_REQUIRED_ACCEPT_MESSAGE,
   ACTIVATION_REQUIRED_CONNECT_MESSAGE,
   customerFacingConnectionCheckoutError,
+  friendlyActivationAcceptError,
   friendlyActivationConnectError,
   fulfillmentReferenceValue,
   ineligibleContractorRejected,
@@ -262,6 +264,13 @@ describe("Connection Fee TEST Checkout", () => {
     ).resolves.toBe(ACTIVATION_REQUIRED_CONNECT_MESSAGE);
     expect(ACTIVATION_REQUIRED_CONNECT_MESSAGE).toMatch(/one-time \$9\.99 activation/);
     expect(ACTIVATION_REQUIRED_CONNECT_MESSAGE).not.toMatch(/signup fee required/);
+  });
+
+  it("maps the accept path signup fee required error to the activation sentence", () => {
+    expect(friendlyActivationAcceptError("signup fee required")).toBe(ACTIVATION_REQUIRED_ACCEPT_MESSAGE);
+    expect(friendlyActivationAcceptError("not your opportunity")).toBe("not your opportunity");
+    expect(ACTIVATION_REQUIRED_ACCEPT_MESSAGE).toMatch(/before accepting an offer/);
+    expect(ACTIVATION_REQUIRED_ACCEPT_MESSAGE).toMatch(/one-time \$9\.99 activation/);
   });
 
   it("rejects closed and full projects and duplicate contractor+project pairs", () => {

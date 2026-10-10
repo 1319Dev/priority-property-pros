@@ -9,6 +9,7 @@ import { isMissingReferenceColumn, parseProjectReference } from "./projectRefere
 import {
   customerFacingConnectionCheckoutError,
   CONNECTION_RECONCILE_CUSTOMER_ERROR,
+  friendlyActivationAcceptError,
   friendlyActivationConnectError,
 } from "./connectionCheckout";
 import {
@@ -351,7 +352,9 @@ export async function fetchProjectNotices(projectId: string) {
 
 export async function acceptOpportunity(opportunityId: string): Promise<RpcJson> {
   const { data, error } = await client().rpc("accept_opportunity", { p_opportunity_id: opportunityId });
-  if (error) throw new Error(asError(error, "Could not accept this opportunity."));
+  if (error) {
+    throw new Error(friendlyActivationAcceptError(asError(error, "Could not accept this opportunity.")));
+  }
   return (data ?? {}) as RpcJson;
 }
 

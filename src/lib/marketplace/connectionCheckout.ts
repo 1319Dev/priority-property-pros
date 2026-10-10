@@ -332,9 +332,21 @@ export const CONNECTION_RECONCILE_CUSTOMER_ERROR = "We couldn't verify that paym
 export const ACTIVATION_REQUIRED_CONNECT_MESSAGE =
   "Activate your account before connecting. The one-time $9.99 activation is required before a pro can connect.";
 
+export const ACTIVATION_REQUIRED_ACCEPT_MESSAGE =
+  "Activate your account before accepting an offer. The one-time $9.99 activation is required.";
+
 /** Raw database text for an unpaid $9.99 activation. Show the activation sentence instead. */
 export function friendlyActivationConnectError(message: string): string {
   if (/signup fee required/i.test(message)) return ACTIVATION_REQUIRED_CONNECT_MESSAGE;
+  return message;
+}
+
+/**
+ * accept_opportunity calls ppp_set_rpc first, and that raises "signup fee required"
+ * before the later activation sentence. Show the activation sentence anyway.
+ */
+export function friendlyActivationAcceptError(message: string): string {
+  if (/signup fee required/i.test(message)) return ACTIVATION_REQUIRED_ACCEPT_MESSAGE;
   return message;
 }
 

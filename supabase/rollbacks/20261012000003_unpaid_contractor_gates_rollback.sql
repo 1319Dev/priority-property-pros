@@ -64,8 +64,8 @@ WITH (security_invoker = false) AS
     r.rating,
         CASE
             WHEN r.body IS NULL OR btrim(r.body) = ''::text OR text_contains_pre_hire_contact(r.body) THEN 'Verified PPP review.'::text
-            WHEN char_length(regexp_replace(btrim(r.body), '\\s+'::text, ' '::text, 'g'::text)) > 280 THEN "left"(regexp_replace(btrim(r.body), '\\s+'::text, ' '::text, 'g'::text), 277) || '…'::text
-            ELSE regexp_replace(btrim(r.body), '\\s+'::text, ' '::text, 'g'::text)
+            WHEN char_length(regexp_replace(btrim(r.body), '\s+'::text, ' '::text, 'g'::text)) > 280 THEN "left"(regexp_replace(btrim(r.body), '\s+'::text, ' '::text, 'g'::text), 277) || '…'::text
+            ELSE regexp_replace(btrim(r.body), '\s+'::text, ' '::text, 'g'::text)
         END AS body
    FROM booking_reviews r
      JOIN contractor_profiles cp ON cp.id = r.contractor_profile_id
@@ -890,6 +890,35 @@ COMMENT ON FUNCTION public.fulfill_connection_fee_checkout(text, text, integer, 
   'Service-role only. Unlocks #14 booking_contact_access after Stripe verification of Price ID + 499 USD whose livemode matches stripe_test_mode. stripe_payment_intent_id stores pi_... only. Never trust success URLs. TEST events cannot fulfill LIVE transactions and vice versa.';
 
 COMMENT ON FUNCTION public.accept_opportunity(uuid) IS NULL;
+
+
+CREATE OR REPLACE FUNCTION public.call_match_project_after_eligibility_change()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  contractor_id uuid;
+BEGIN
+  IF TG_TABLE_NAME = 'profiles' THEN
+    SELECT cp.id INTO contractor_id
+    FROM public.contractor_profiles cp
+    WHERE cp.profile_id = COALESCE(NEW.id, OLD.id);
+  ELSIF TG_TABLE_NAME = 'contractor_profiles' THEN
+    contractor_id := COALESCE(NEW.id, OLD.id);
+  ELSE
+    contractor_id := COALESCE(NEW.contractor_profile_id, OLD.contractor_profile_id);
+  END IF;
+
+  PERFORM public.call_match_project_for_contractor(contractor_id);
+
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
+  RETURN NEW;
+END;
+$function$;
 
 DROP TRIGGER IF EXISTS profiles_match_projects_on_account_status ON public.profiles;
 CREATE TRIGGER profiles_match_projects_on_account_status AFTER UPDATE OF account_status ON profiles FOR EACH ROW EXECUTE FUNCTION call_match_project_after_eligibility_change();

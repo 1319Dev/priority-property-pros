@@ -86,9 +86,27 @@ describe("single Connect flow", () => {
     expect(startCheckout).toHaveBeenCalledTimes(1);
   });
 
+  it("stops Connect when accept raises signup fee required", async () => {
+    const accept = vi.fn().mockRejectedValue(new Error("signup fee required"));
+    const startCheckout = vi.fn().mockResolvedValue(undefined);
+    const requestConnection = vi.fn().mockResolvedValue(undefined);
+    await expect(
+      runContractorConnect({
+        opportunityStatus: "AVAILABLE",
+        accept,
+        checkoutEnabled: true,
+        startCheckout,
+        requestConnection,
+      }),
+    ).rejects.toThrow(/signup fee required/);
+    expect(startCheckout).not.toHaveBeenCalled();
+    expect(requestConnection).not.toHaveBeenCalled();
+  });
+
   it("blocks Connect when accept fails as an auth, ownership, or eligibility error", () => {
     expect(acceptFailureBlocksConnect("not your opportunity")).toBe(true);
     expect(acceptFailureBlocksConnect("auth required")).toBe(true);
+    expect(acceptFailureBlocksConnect("signup fee required")).toBe(true);
     expect(acceptFailureBlocksConnect("Your pro account has to be approved before you can accept an offer.")).toBe(true);
     expect(acceptFailureBlocksConnect("Your account has to be active before you can accept an offer.")).toBe(true);
     expect(

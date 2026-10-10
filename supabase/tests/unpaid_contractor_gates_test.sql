@@ -311,10 +311,17 @@ BEGIN
 END;
 $$;
 
+-- Mirrors production ppp_set_rpc for accept_opportunity: a signed-in caller
+-- raises 'signup fee required' before the rest of the function runs.
 CREATE OR REPLACE FUNCTION public.ppp_set_rpc(p_name text)
 RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
   PERFORM set_config('ppp.rpc', p_name, true);
+  IF public.signup_fee_enabled()
+     AND auth.uid() IS NOT NULL
+     AND p_name = 'accept_opportunity' THEN
+    PERFORM public.assert_signup_fee_paid(auth.uid());
+  END IF;
 END;
 $$;
 
@@ -478,7 +485,8 @@ WHERE n.nspname = 'public'
     'enforce_signup_fee_on_project_connections',
     'reserve_connection_checkout',
     'fulfill_connection_fee_checkout',
-    'accept_opportunity'
+    'accept_opportunity',
+    'call_match_project_after_eligibility_change'
   );
 
 INSERT INTO public.test_pre_migration_defs (object_kind, object_name, definition)
@@ -514,8 +522,8 @@ DECLARE
   rec record;
   got text;
 BEGIN
-  IF (SELECT count(*) FROM public.test_pre_migration_defs) <> 17 THEN
-    RAISE EXCEPTION 'expected 17 pre-migration definitions, got %',
+  IF (SELECT count(*) FROM public.test_pre_migration_defs) <> 18 THEN
+    RAISE EXCEPTION 'expected 18 pre-migration definitions, got %',
       (SELECT count(*) FROM public.test_pre_migration_defs);
   END IF;
   -- md5(prosrc) from live production pg_proc on 2026-10-10. Version-independent body check.
@@ -528,7 +536,8 @@ BEGIN
       ('fill_project_opportunity_offers', '5435bf4f4f024dcd36ed02cb85d60780'),
       ('fulfill_connection_fee_checkout', '01c81ad2cf7a8523804c5388f30574c5'),
       ('list_public_directory_contractors', 'b138be9f1439d61987daa266b4d8fad0'),
-      ('reserve_connection_checkout', '1289d89eeff8e99ae4ab0ce4a87e8b1e')
+      ('reserve_connection_checkout', '1289d89eeff8e99ae4ab0ce4a87e8b1e'),
+      ('call_match_project_after_eligibility_change', '1e691d9c8a651c0b7aea6b60feed415a')
     ) AS v(name, body_md5)
   LOOP
     SELECT md5(p.prosrc) INTO got
@@ -539,6 +548,27 @@ BEGIN
       RAISE EXCEPTION 'prosrc is not the production definition for % (got %)', rec.name, got;
     END IF;
     RAISE NOTICE 'PASS: % prosrc matches production', rec.name;
+  END LOOP;
+  -- md5(pg_get_viewdef) from live production on 2026-10-10, including contractor_public_reviews '\s+'.
+  FOR rec IN
+    SELECT * FROM (VALUES
+      ('contractor_public_areas', '5f82f7eca0d6eb4f333e5d72ac11490f'),
+      ('contractor_public_portfolio', 'd662a73b4947c16c0f8a89d5203acb2e'),
+      ('contractor_public_profiles', 'b2224307a4aa3b15952074072cacf93e'),
+      ('contractor_public_ratings', '9aea02d5531e6a496db650800a21493c'),
+      ('contractor_public_reviews', 'b01921318ceb3a76c5bdfbef52446966'),
+      ('contractor_public_services', '6fc5c10ee503b28a5569a610552bde47'),
+      ('contractor_verified_credential_badges', 'cecfa25b8eeb741798199c2a26d34631')
+    ) AS v(name, view_md5)
+  LOOP
+    SELECT md5(pg_get_viewdef(c.oid, true)) INTO got
+    FROM pg_class c
+    JOIN pg_namespace ns ON ns.oid = c.relnamespace
+    WHERE ns.nspname = 'public' AND c.relname = rec.name AND c.relkind = 'v';
+    IF got IS DISTINCT FROM rec.view_md5 THEN
+      RAISE EXCEPTION 'view def is not the production definition for % (got %)', rec.name, got;
+    END IF;
+    RAISE NOTICE 'PASS: % viewdef matches production', rec.name;
   END LOOP;
 END $$;
 
@@ -735,6 +765,69 @@ BEGIN
     PERFORM public.test_fail('NOT_REQUIRED contractor is not eligible');
   END IF;
   RAISE NOTICE 'PASS: directory, views, admins, verifiers, and eligibility';
+END $$;
+
+-- Production: anon can execute signup_fee_enabled and cannot execute signup_fee_is_satisfied.
+REVOKE ALL ON FUNCTION public.signup_fee_is_satisfied(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.signup_fee_is_satisfied(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.signup_fee_enabled() TO anon, authenticated;
+GRANT SELECT ON TABLE public.platform_settings TO anon, authenticated;
+
+DO $$
+DECLARE
+  role_name text;
+  view_name text;
+  n int;
+  smoke uuid := 'af55cdfe-b3aa-421d-84b3-0411d9d7e3b6';
+  paid uuid := '30000000-0000-4000-8000-000000000012';
+BEGIN
+  FOREACH role_name IN ARRAY ARRAY['anon', 'authenticated']
+  LOOP
+    EXECUTE format('SET ROLE %I', role_name);
+    IF public.signup_fee_enabled() IS NOT TRUE THEN
+      PERFORM public.test_fail(role_name || ' could not read signup_fee_enabled()');
+    END IF;
+    IF role_name = 'anon' THEN
+      BEGIN
+        PERFORM public.signup_fee_is_satisfied(smoke);
+        PERFORM public.test_fail('anon was allowed to call signup_fee_is_satisfied');
+      EXCEPTION WHEN insufficient_privilege THEN
+        NULL;
+      END;
+    END IF;
+    FOREACH view_name IN ARRAY ARRAY[
+      'contractor_public_profiles',
+      'contractor_public_services',
+      'contractor_public_areas',
+      'contractor_public_portfolio',
+      'contractor_public_ratings',
+      'contractor_public_reviews',
+      'contractor_verified_credential_badges'
+    ]
+    LOOP
+      EXECUTE format('SELECT count(*) FROM public.%I', view_name) INTO n;
+    END LOOP;
+    SELECT count(*) INTO n FROM public.contractor_public_profiles WHERE id = smoke;
+    IF n <> 0 THEN
+      PERFORM public.test_fail(role_name || ' saw UNPAID in contractor_public_profiles');
+    END IF;
+    SELECT count(*) INTO n FROM public.contractor_public_profiles WHERE id = paid;
+    IF n <> 1 THEN
+      PERFORM public.test_fail(role_name || ' missed PAID in contractor_public_profiles');
+    END IF;
+    SELECT count(*) INTO n FROM public.contractor_public_services WHERE contractor_profile_id = smoke;
+    IF n <> 0 THEN PERFORM public.test_fail(role_name || ' saw UNPAID services'); END IF;
+    SELECT count(*) INTO n FROM public.contractor_public_areas WHERE contractor_profile_id = smoke;
+    IF n <> 0 THEN PERFORM public.test_fail(role_name || ' saw UNPAID areas'); END IF;
+    SELECT count(*) INTO n FROM public.contractor_public_portfolio WHERE contractor_profile_id = smoke;
+    IF n <> 0 THEN PERFORM public.test_fail(role_name || ' saw UNPAID portfolio'); END IF;
+    SELECT count(*) INTO n FROM public.contractor_public_ratings WHERE contractor_profile_id = smoke;
+    IF n <> 0 THEN PERFORM public.test_fail(role_name || ' saw UNPAID ratings'); END IF;
+    SELECT count(*) INTO n FROM public.contractor_public_reviews WHERE contractor_profile_id = smoke;
+    IF n <> 0 THEN PERFORM public.test_fail(role_name || ' saw UNPAID reviews'); END IF;
+    RESET ROLE;
+    RAISE NOTICE 'PASS: % can select all 7 public views and does not see UNPAID', role_name;
+  END LOOP;
 END $$;
 
 INSERT INTO public.opportunities (project_id, contractor_profile_id, status, expires_at) VALUES
@@ -936,6 +1029,37 @@ BEGIN
   RAISE NOTICE 'PASS: UNPAID to PAID re-ran matching';
 END $$;
 
+CREATE OR REPLACE FUNCTION public.match_project(p_project_id uuid)
+RETURNS integer LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION 'forced match failure';
+END
+$$;
+
+DO $$
+DECLARE
+  fee text;
+BEGIN
+  UPDATE public.profiles
+  SET signup_fee_status = 'NOT_REQUIRED'
+  WHERE id = '30000000-0000-4000-8000-000000000006';
+  SELECT signup_fee_status::text INTO fee
+  FROM public.profiles
+  WHERE id = '30000000-0000-4000-8000-000000000006';
+  IF fee IS DISTINCT FROM 'NOT_REQUIRED' THEN
+    PERFORM public.test_fail('signup_fee_status update rolled back when matching failed');
+  END IF;
+  RAISE NOTICE 'PASS: matching error does not roll back the signup_fee_status update';
+END $$;
+
+CREATE OR REPLACE FUNCTION public.match_project(p_project_id uuid)
+RETURNS integer LANGUAGE plpgsql AS $$
+BEGIN
+  INSERT INTO public.test_match_log (project_id) VALUES (p_project_id);
+  RETURN 1;
+END
+$$;
+
 DO $$
 DECLARE
   i int;
@@ -998,8 +1122,22 @@ UPDATE public.test_actor SET contractor_profile_id = 'af55cdfe-b3aa-421d-84b3-04
 SELECT public.test_expect_error(
   $$SELECT public.accept_opportunity('50000000-0000-4000-8000-000000000001')$$,
   'one-time $9.99 activation is required',
-  'UNPAID accept denied'
+  'UNPAID accept denied when auth.uid() is null'
 );
+
+-- Signed-in callers hit ppp_set_rpc before the later activation sentence.
+-- That order stays. The client remaps this text.
+CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
+  SELECT '30000000-0000-4000-8000-000000000001'::uuid
+$$;
+SELECT public.test_expect_error(
+  $$SELECT public.accept_opportunity('50000000-0000-4000-8000-000000000001')$$,
+  'signup fee required',
+  'signed-in UNPAID accept raises signup fee required first'
+);
+CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
+  SELECT NULL::uuid
+$$;
 
 DO $$
 DECLARE
@@ -1124,10 +1262,10 @@ BEGIN
   IF mismatches <> '' THEN
     RAISE EXCEPTION 'rollback definitions differ from the pre-migration bootstrap: %', mismatches;
   END IF;
-  IF matched <> 17 THEN
-    RAISE EXCEPTION 'expected 17 identical definitions, compared %', matched;
+  IF matched <> 18 THEN
+    RAISE EXCEPTION 'expected 18 identical definitions, compared %', matched;
   END IF;
-  RAISE NOTICE 'PASS: rollback pg_get_functiondef, trigger, and view definitions match the pre-migration bootstrap (17 objects)';
+  RAISE NOTICE 'PASS: rollback pg_get_functiondef, trigger, and view definitions match the pre-migration bootstrap (18 objects)';
 END $$;
 
 -- Re-apply the migration. The unpaid gate must be back; NOT_REQUIRED stays eligible.
