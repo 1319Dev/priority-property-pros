@@ -111,7 +111,7 @@ test.describe("admin command center stays inside the viewport", () => {
         waitUntil: "domcontentloaded",
       });
       await page.evaluate(() => document.fonts.ready);
-      await expect(page.getByRole("heading", { name: "Operations shell" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
 
       const box = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
@@ -171,7 +171,7 @@ test.describe("admin command center stays inside the viewport", () => {
     await search.fill("PPP-1042");
     await page.getByRole("option", { name: "Open job PPP-1042" }).click();
     await expect(page).toHaveURL(/#\/app\/admin\/bookings\?ref=PPP-1042$/);
-    await expect(page.getByRole("heading", { name: "Test booking confirm" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Booking tools" })).toBeVisible();
     await expect(page.getByText("Replace a leaning cedar fence before the storm")).toBeVisible();
   });
 });
@@ -225,4 +225,38 @@ test("signed-in header keeps the bell inside a 320px viewport", async ({ page })
   expect(panelBox).not.toBeNull();
   expect(panelBox!.x).toBeGreaterThanOrEqual(-1);
   expect(panelBox!.x + panelBox!.width).toBeLessThanOrEqual(320 + 1);
+});
+
+const adminCleanupWidths = [390, 768, 1280];
+
+test.describe("admin cleanup copy", () => {
+  for (const width of adminCleanupWidths) {
+    test(`booking tools at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: width < 768 ? 844 : 900 });
+      await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=admin#/app/admin", {
+        waitUntil: "domcontentloaded",
+      });
+      await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+      await expect(page.getByText(/Payments are not live/i)).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "People" })).toHaveCount(0);
+      await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=admin#/app/admin/bookings", {
+        waitUntil: "domcontentloaded",
+      });
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page.getByRole("heading", { name: "Booking tools" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Confirm for testing (no charge)" })).toBeVisible();
+      const box = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+      }));
+      expect(box.scrollWidth).toBeLessThanOrEqual(box.innerWidth + 1);
+      if (process.env.PPP_ADMIN_SCREENSHOTS) {
+        const name = width === 1280 ? "desktop" : width === 768 ? "tablet" : "phone";
+        await page.screenshot({
+          path: `/opt/cursor/artifacts/screenshots/pr-d-bookings-${name}.png`,
+          fullPage: true,
+        });
+      }
+    });
+  }
 });

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { EmptyState } from "../../components/layout/DashboardShell";
 import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { FormError } from "../../lib/auth/AuthCard";
@@ -26,46 +25,25 @@ import {
 } from "../../lib/marketplace/bookings";
 import type { BookingContactAccess } from "../../lib/marketplace/types";
 import { useToast } from "../../hooks/useToast";
+import { showTestingConfirmButton } from "../../lib/admin/testingConfirm";
 
 export function AdminHomePage() {
   return (
     <div className="space-y-6">
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Admin</p>
-        <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Operations shell</h1>
+        <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Overview</h1>
         <p className="mt-3 max-w-xl text-ink-700">
           There is no public Admin registration. The first admin is promoted in the Supabase SQL editor. This
-          screen does not elevate anyone. Payments are not live.
+          screen does not elevate anyone.
         </p>
       </header>
-      <EmptyState
-        title="Queues stay small on purpose"
-        body="Use Bookings for the test-only confirmation path. Do not tell customers a card was charged."
-      />
     </div>
-  );
-}
-
-export function AdminPeoplePage() {
-  return (
-    <EmptyState
-      title="People list not wired"
-      body="Admins will review profiles here later. Do not grant Admin from the website."
-    />
   );
 }
 
 export { AdminApprovalDetailPage, AdminApprovalsPage } from "./admin/AdminApprovalsPages";
 export { AdminReviewsPage } from "./admin/AdminReviewsPage";
-
-export function AdminAuditPage() {
-  return (
-    <EmptyState
-      title="Audit log viewer later"
-      body="Rows exist in audit_logs. Clients cannot edit them. A read UI can wait until a live project is connected."
-    />
-  );
-}
 
 export type ContactAccessAuditEvent = {
   id: string;
@@ -201,11 +179,17 @@ export function AdminBookingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-4xl font-semibold text-forest-800">Test booking confirm</h1>
-      <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm font-semibold text-forest-800">
-        TEST ONLY. This is not “Pay now succeeded.” {paymentsComingSoonCopy()} Customers and contractors cannot call this.
-        Confirming a booking does not unlock private contact.
-      </p>
+      <h1 className="font-display text-4xl font-semibold text-forest-800">Booking tools</h1>
+      {showTestingConfirmButton() ? (
+        <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm font-semibold text-forest-800">
+          TEST ONLY. This is not “Pay now succeeded.” {paymentsComingSoonCopy()} Customers and contractors cannot call
+          this. Confirming a booking does not unlock private contact.
+        </p>
+      ) : (
+        <p className="max-w-xl text-sm text-ink-700">
+          Look up a job, then grant or revoke contact access for that one booking. The grant is audited.
+        </p>
+      )}
       <FormError message={error} />
       <section className="space-y-3 rounded-3xl border border-forest-800/10 px-5 py-4">
         <h2 className="font-display text-2xl text-forest-800">Find a job</h2>
@@ -309,25 +293,27 @@ export function AdminBookingsPage() {
         </div>
       ) : null}
       {lookedUp ? <AdminContactAccessPanel access={access} audit={audit} /> : null}
-      <Button
-        type="button"
-        className="min-h-14 w-full"
-        disabled={busy || !bookingId.trim()}
-        onClick={() => {
-          setBusy(true);
-          setError(null);
-          void confirmBookingForTesting(bookingId.trim())
-            .then(async (result) => {
-              toast.push("Testing confirmation recorded. No charge was made. Private contact stays locked.");
-              setStatus(String(result.status ?? "CONFIRMED"));
-              await loadBooking(bookingId.trim());
-            })
-            .catch((err: Error) => setError(err.message))
-            .finally(() => setBusy(false));
-        }}
-      >
-        Confirm for testing (no charge)
-      </Button>
+      {showTestingConfirmButton() ? (
+        <Button
+          type="button"
+          className="min-h-14 w-full"
+          disabled={busy || !bookingId.trim()}
+          onClick={() => {
+            setBusy(true);
+            setError(null);
+            void confirmBookingForTesting(bookingId.trim())
+              .then(async (result) => {
+                toast.push("Testing confirmation recorded. No charge was made. Private contact stays locked.");
+                setStatus(String(result.status ?? "CONFIRMED"));
+                await loadBooking(bookingId.trim());
+              })
+              .catch((err: Error) => setError(err.message))
+              .finally(() => setBusy(false));
+          }}
+        >
+          Confirm for testing (no charge)
+        </Button>
+      ) : null}
 
       <section className="space-y-3 rounded-3xl border border-forest-800/10 px-5 py-4">
         <h2 className="font-display text-2xl text-forest-800">Grant contact access</h2>
