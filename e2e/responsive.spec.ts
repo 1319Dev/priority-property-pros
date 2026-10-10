@@ -111,7 +111,7 @@ test.describe("admin command center stays inside the viewport", () => {
         waitUntil: "domcontentloaded",
       });
       await page.evaluate(() => document.fonts.ready);
-      await expect(page.getByRole("heading", { name: "Operations shell" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
 
       const box = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
@@ -171,7 +171,7 @@ test.describe("admin command center stays inside the viewport", () => {
     await search.fill("PPP-1042");
     await page.getByRole("option", { name: "Open job PPP-1042" }).click();
     await expect(page).toHaveURL(/#\/app\/admin\/bookings\?ref=PPP-1042$/);
-    await expect(page.getByRole("heading", { name: "Test booking confirm" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Booking tools" })).toBeVisible();
     await expect(page.getByText("Replace a leaning cedar fence before the storm")).toBeVisible();
   });
 });
