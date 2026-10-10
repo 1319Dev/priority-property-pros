@@ -31,6 +31,7 @@ export function InboxHomeCards({ role }: { role: "customer" | "contractor" }) {
           const href = messageNotificationHref(role, {
             project_id: row.project_id,
             contractor_profile_id: row.contractor_profile_id,
+            booking_id: row.booking_id,
           });
           if (!href) return null;
           const name = row.other_party_label || (role === "customer" ? row.contractor_label : "Customer");

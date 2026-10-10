@@ -24,6 +24,7 @@ export const project = {
   selected_at: null,
   scope_revision: 1,
   accepting_connections: true,
+  reference_number: 1042,
   created_at: now,
   updated_at: now,
 };
@@ -203,7 +204,7 @@ export const thread = {
   city: "Atlanta",
   state: "GA",
   contractor_label: "Northside Fence Co.",
-  other_party_label: "Christopher Homeowner",
+  other_party_label: "Christopher",
   last_message_at: now,
   last_preview: "I can look Thursday morning if the side yard is clear.",
   last_sender_is_viewer: false,

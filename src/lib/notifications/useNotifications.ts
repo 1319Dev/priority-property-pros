@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../auth/useAuth";
+import { fetchContractorProfileByUser, fetchMyBookings } from "../marketplace/api";
+import { contractorHiredLandingPath, type HiredBookingRef } from "../marketplace/hiredJobs";
 import { getSupabaseClient } from "../supabase/client";
 import {
   listInAppNotifications,
@@ -9,6 +11,18 @@ import {
   type InAppNotification,
   type PreferenceRecord,
 } from "./api";
+
+function withHiredJobLinks(notes: InAppNotification[], bookings: readonly HiredBookingRef[]): InAppNotification[] {
+  return notes.map((note) => ({
+    ...note,
+    path: contractorHiredLandingPath({
+      kind: note.kind,
+      path: note.path,
+      payload: { project_id: note.projectId ?? undefined },
+      bookings,
+    }),
+  }));
+}
 
 const FALLBACK_POLL_MS = 20_000;
 
@@ -25,12 +39,24 @@ export function useNotifications(options?: { enabled?: boolean }) {
         listInAppNotifications(account_type),
         listNotificationPreferences(),
       ]);
-      setItems(notes);
+      let nextNotes = notes;
+      if (account_type === "CONTRACTOR" && user) {
+        try {
+          const profile = await fetchContractorProfileByUser(user.id);
+          if (profile) {
+            const bookings = (await fetchMyBookings("contractor", profile.id)) as HiredBookingRef[];
+            nextNotes = withHiredJobLinks(notes, bookings);
+          }
+        } catch {
+          nextNotes = notes;
+        }
+      }
+      setItems(nextNotes);
       setPreferences(prefs);
     } catch {
       setItems((current) => current);
     }
-  }, [account_type, enabled]);
+  }, [account_type, enabled, user]);
 
   useEffect(() => {
     if (!enabled || !user) return undefined;

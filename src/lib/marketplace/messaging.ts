@@ -1,4 +1,5 @@
 import { PRE_HIRE_CONTACT_MESSAGE, assertNoPreHireContact } from "./antiCircumvention";
+import { hiredJobPath, isSafeRecordId } from "./hiredJobs";
 import { coerceProjectReference } from "./projectReference";
 
 /** Job-payment copy stays out of this module. Messaging is a $4.99 connection unlock. */
@@ -184,6 +185,8 @@ export function messageNotificationHref(
   const projectId = typeof payload?.project_id === "string" ? payload.project_id : null;
   const contractorId = typeof payload?.contractor_profile_id === "string" ? payload.contractor_profile_id : null;
   if (!projectId || !contractorId) return null;
+  const bookingId = typeof payload?.booking_id === "string" ? payload.booking_id : null;
+  if (role === "contractor" && isSafeRecordId(bookingId)) return hiredJobPath(bookingId);
   const base = role === "customer" ? "/app/customer/messages" : "/app/pro/messages";
   return `${base}/${projectId}/${contractorId}`;
 }
@@ -310,7 +313,7 @@ export function threadContextHref(
       ? `/app/customer/bookings/${thread.booking_id}`
       : `/app/customer/projects/${thread.project_id}`;
   }
-  if (thread.booking_id) return `/app/pro/bookings/${thread.booking_id}`;
+  if (isSafeRecordId(thread.booking_id)) return hiredJobPath(thread.booking_id);
   if (thread.opportunity_id) return `/app/pro/opportunities/${thread.opportunity_id}`;
   return "/app/pro/opportunities";
 }

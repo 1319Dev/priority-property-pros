@@ -22,19 +22,45 @@ export async function fetchCustomerProjects() {
 export async function fetchMyCustomerProject() {
   return project;
 }
-export async function fetchProject() {
+export async function fetchProject(id) {
+  if (id === "proj-2") {
+    return {
+      ...project,
+      id: "proj-2",
+      title: "Repair a sticking front door",
+      city: "Decatur",
+      reference_number: 1048,
+      status: "CONTRACTOR_SELECTED",
+    };
+  }
   return project;
 }
 export async function fetchMyBookings() {
-  return [booking];
+  return [
+    booking,
+    {
+      ...booking,
+      id: "book-2",
+      project_id: "proj-2",
+      estimate_id: "est-2",
+      status: "PENDING",
+      customer_hired_at: null,
+      contractor_hired_at: null,
+      amount_cents: 24000,
+      billable_amount_cents: 24000,
+      customer_amount_cents: 24000,
+      contractor_earnings_cents: 24000,
+    },
+  ];
 }
 export async function fetchBooking() {
   return booking;
 }
 export async function fetchProjectBooking() {
-  return booking;
+  return null;
 }
-export async function fetchChangeOrders() {
+export async function fetchChangeOrders(bookingId) {
+  if (bookingId === "book-2") return [];
   return [
     {
       id: "co-1",
@@ -63,20 +89,73 @@ export async function fetchHireAgainContractors() {
 export async function expireStalePendingBookings() {
   return 0;
 }
+const secondEstimate = {
+  ...estimate,
+  id: "est-2",
+  contractor_profile_id: "pro-2",
+  total_cents: 98000,
+  notes: "Labor and haul-away. I can start the week after next.",
+  duration_hours: 16,
+  available_from: "2026-04-20",
+  submitted_at: "2026-04-03T15:00:00.000Z",
+};
+
+const secondItems = [
+  {
+    id: "item-3",
+    estimate_id: "est-2",
+    kind: "LABOR",
+    label: "Reset the side fence",
+    quantity: 16,
+    unit_label: "hours",
+    unit_cents: 4500,
+    line_total_cents: 72000,
+    sort_order: 0,
+  },
+  {
+    id: "item-4",
+    estimate_id: "est-2",
+    kind: "CUSTOM",
+    label: "Haul-away",
+    quantity: 1,
+    unit_label: "trip",
+    unit_cents: 26000,
+    line_total_cents: 26000,
+    sort_order: 1,
+  },
+];
+
 export async function fetchProjectEstimates() {
-  return [estimate];
+  return [estimate, secondEstimate];
 }
-export async function fetchEstimate() {
-  return estimate;
+export async function fetchEstimate(id) {
+  return id === "est-2" ? secondEstimate : estimate;
 }
-export async function fetchEstimateItems() {
+export async function fetchEstimateItems(estimateId) {
+  if (estimateId === "est-2") return secondItems;
   return estimateItems;
 }
-export async function fetchPublicContractor() {
+export async function fetchPublicContractor(id) {
+  if (id === "pro-2") {
+    return {
+      ...contractorPublic,
+      id: "pro-2",
+      display_label: "Oak Street Repairs",
+      rating_average: null,
+      rating_count: 0,
+      short_description: "Small fence repairs.",
+    };
+  }
   return contractorPublic;
 }
-export async function fetchPublicContractorExtras() {
-  return { services: [], areas: [], badges: [], portfolio: [] };
+export async function fetchPublicContractorExtras(id) {
+  if (id === "pro-2") return { services: [], areas: [], badges: [], portfolio: [] };
+  return {
+    services: [],
+    areas: [],
+    badges: [{ id: "badge-1", contractor_profile_id: "pro-1", kind: "LICENSE", label: "TDLR-999-SECRET", status: "VERIFIED" }],
+    portfolio: [],
+  };
 }
 export async function fetchProjectPhotos() {
   return [];
@@ -227,7 +306,20 @@ export const startConnectionCheckout = ok;
 export const reconcileConnectionCheckout = ok;
 
 export async function listMyMessageThreads() {
-  return [thread];
+  return [
+    thread,
+    {
+      ...thread,
+      thread_id: "thread-2",
+      project_id: "proj-2",
+      project_title: "Repair a sticking front door",
+      city: "Decatur",
+      other_party_label: "Maria",
+      booking_id: "book-2",
+      unread_count: 0,
+      last_preview: "The door sticks at the top.",
+    },
+  ];
 }
 export async function ensureMessageThread() {
   return "thread-1";

@@ -16,6 +16,7 @@ export type InAppNotification = {
   title: string;
   body: string;
   path: string;
+  projectId?: string | null;
   readAt: string | null;
   createdAt: string;
   category: NotificationCategory;
@@ -48,6 +49,7 @@ export function toInAppNotification(
   accountType: NotificationAudience,
 ): InAppNotification {
   const category = categoryForKind(row.kind);
+  const payload = asRecord(row.payload);
   return {
     id: row.id,
     kind: row.kind,
@@ -56,9 +58,10 @@ export function toInAppNotification(
     path: notificationPath({
       kind: row.kind,
       entityId: row.entity_id,
-      payload: asRecord(row.payload),
+      payload,
       accountType,
     }),
+    projectId: typeof payload.project_id === "string" ? payload.project_id : null,
     readAt: row.read_at,
     createdAt: row.created_at,
     category,

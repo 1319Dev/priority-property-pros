@@ -231,15 +231,22 @@ export function notificationPath(input: {
   accountType: NotificationAudience;
 }): string {
   const explicit = typeof input.payload.path === "string" ? input.payload.path : "";
-  if (isSafeAppPath(explicit)) return explicit;
+  const proRoot = input.accountType === "CONTRACTOR";
+  if (isSafeAppPath(explicit)) {
+    if (proRoot) {
+      const hired = /^\/app\/pro\/bookings\/([A-Za-z0-9-]{1,80})$/.exec(explicit);
+      if (hired?.[1]) return `/app/pro/jobs/${hired[1]}`;
+    }
+    return explicit;
+  }
 
   const projectId = segment(input.payload.project_id);
   const contractorId = segment(input.payload.contractor_profile_id);
   const bookingId = segment(input.payload.booking_id) ?? (input.kind.startsWith("booking.") ? segment(input.entityId) : null);
   const opportunityId = segment(input.payload.opportunity_id) ?? (input.kind === "opportunity.offered" ? segment(input.entityId) : null);
-  const proRoot = input.accountType === "CONTRACTOR";
 
   if (input.kind === "message.received" && projectId && contractorId) {
+    if (proRoot && bookingId) return `/app/pro/jobs/${bookingId}`;
     const root = proRoot ? "/app/pro" : "/app/customer";
     return `${root}/messages/${projectId}/${contractorId}`;
   }
@@ -259,6 +266,9 @@ export function notificationPath(input: {
     return projectId ? `/app/customer/projects/${projectId}` : "/app/customer/projects";
   }
   if (input.kind.startsWith("estimate.")) {
+    if (proRoot && input.kind === "estimate.accepted") {
+      return projectId ? `/app/pro/jobs/project/${projectId}` : "/app/pro/jobs";
+    }
     if (proRoot) return "/app/pro/estimates";
     const estimateId = segment(input.entityId);
     if (projectId && estimateId) return `/app/customer/projects/${projectId}/estimates/${estimateId}`;
@@ -270,8 +280,8 @@ export function notificationPath(input: {
     input.kind.startsWith("change_order.") ||
     input.kind.startsWith("review.")
   ) {
-    const root = proRoot ? "/app/pro" : "/app/customer";
-    return bookingId ? `${root}/bookings/${bookingId}` : `${root}/bookings`;
+    if (proRoot) return bookingId ? `/app/pro/jobs/${bookingId}` : "/app/pro/jobs";
+    return bookingId ? `/app/customer/bookings/${bookingId}` : "/app/customer/bookings";
   }
   return homeFor(input.accountType);
 }

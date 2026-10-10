@@ -51,7 +51,7 @@ import {
 import { ConnectionCheckoutReturnPage } from "./pages/app/pro/ConnectionCheckoutReturnPage";
 import { ProProfilePage } from "./pages/app/pro/ProProfilePages";
 import { ProEstimatesPage } from "./pages/app/pro/ProEstimatesPages";
-import { ProBookingDetailPage, ProBookingsPage } from "./pages/app/pro/ProBookingPages";
+import { ProBookingDetailPage, ProBookingRedirect, ProBookingsPage, ProHiredJobByProjectPage } from "./pages/app/pro/ProBookingPages";
 import { VerifierHomePage, VerifierMessagesPage, VerifierVisitsPage } from "./pages/app/VerifierPages";
 import {
   AdminApprovalDetailPage,
@@ -153,8 +153,10 @@ export default function App() {
             <Route path="opportunities/:opportunityId/estimate" element={<EstimateBuilderPage />} />
             <Route path="opportunities/:opportunityId" element={<OpportunityDetailPage />} />
             <Route path="connections/return" element={<ConnectionCheckoutReturnPage />} />
+            <Route path="jobs/project/:projectId" element={<ProHiredJobByProjectPage />} />
+            <Route path="jobs/:bookingId" element={<ProBookingDetailPage />} />
             <Route path="bookings" element={<ProBookingsPage />} />
-            <Route path="bookings/:bookingId" element={<ProBookingDetailPage />} />
+            <Route path="bookings/:bookingId" element={<ProBookingRedirect />} />
             <Route path="estimates" element={<ProEstimatesPage />} />
             <Route path="onboarding" element={<ProOnboardingPage />} />
             <Route path="profile" element={<ProProfilePage />} />
