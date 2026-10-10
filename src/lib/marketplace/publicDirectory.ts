@@ -134,14 +134,88 @@ export function titleCaseTrade(value: string): string {
     .replace(/\b\w/g, (ch) => ch.toUpperCase());
 }
 
+const BROAD_PUBLIC_SERVICES = new Set([
+  "other",
+  "handyman",
+  "general property maintenance",
+  "all of it",
+  "local",
+]);
+
+export function publicServiceIsOther(name: string | null | undefined): boolean {
+  return (name ?? "").trim().toLowerCase() === "other";
+}
+
+export function publicServiceIsBroad(name: string | null | undefined): boolean {
+  return BROAD_PUBLIC_SERVICES.has((name ?? "").trim().toLowerCase());
+}
+
+export function publicTradeIsSafe(name: string | null | undefined): boolean {
+  const text = name?.trim() ?? "";
+  if (!text || publicServiceIsOther(text)) return false;
+  if (publicTextLooksUnsafe(text) || looksLikeStreetAddress(text) || /^\d{5}(-\d{4})?$/.test(text)) return false;
+  return true;
+}
+
+function mostSpecificPublicService(names: readonly string[], skip?: string | null): string | null {
+  let best: string | null = null;
+  let bestScore = -1;
+  for (const raw of names) {
+    const name = raw.trim();
+    if (!publicTradeIsSafe(name)) continue;
+    if (skip && name.toLowerCase() === skip.toLowerCase()) continue;
+    const score = (publicServiceIsBroad(name) ? 0 : 1000) + name.length;
+    if (best == null || score > bestScore || (score === bestScore && name < best)) {
+      best = name;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+/**
+ * Catalog service only. A typed primary trade is used when it matches one of
+ * the contractor's service category names. Any other free text, including a
+ * phone number, is ignored.
+ */
+export function publicPrimaryTrade(primaryTrade: string | null | undefined, categories: readonly string[] = []): string | null {
+  const chosen = primaryTrade?.trim().toLowerCase();
+  if (chosen) {
+    const match = categories.find((name) => name.trim().toLowerCase() === chosen && publicTradeIsSafe(name));
+    if (match) return match.trim();
+  }
+  return mostSpecificPublicService(categories);
+}
+
+/**
+ * Neutral public role label. This is not a business name.
+ * A broad chosen trade is paired with the most specific other service:
+ * "Fence Repair & Handyman pro in Conroe".
+ */
+export function publicProLabel(input: {
+  primaryTrade?: string | null;
+  categories?: string[];
+  city?: string | null;
+}): string {
+  const categories = input.categories ?? [];
+  const primary = publicPrimaryTrade(input.primaryTrade, categories) ?? "Local";
+  const second = mostSpecificPublicService(categories, primary);
+  const phrase =
+    second && publicServiceIsBroad(primary) && !publicServiceIsBroad(second) ? `${second} & ${primary}` : primary;
+  const city = input.city?.trim() ?? "";
+  if (!city || publicTextLooksUnsafe(city) || /\d/.test(city) || looksLikeStreetAddress(city)) {
+    return `${phrase} pro`;
+  }
+  return `${phrase} pro in ${city}`;
+}
+
 export function anonymizedProLabel(input: {
   primaryTrade?: string | null;
   categories?: string[];
+  city?: string | null;
   demo?: boolean;
 }): string {
-  const raw = (input.primaryTrade?.trim() || input.categories?.find(Boolean)?.trim() || "Local").replace(/\s+/g, " ");
-  const trade = titleCaseTrade(raw.replace(/\s+pro$/i, "").trim() || "Local");
-  return `${input.demo ? "Example" : "Approved"} ${trade} Pro`;
+  return publicProLabel(input);
 }
 
 export function initialsFromLabel(label: string): string {
@@ -289,7 +363,11 @@ export function toPublicContractorCard(input: {
   const ratingAverage = ratingCount > 0 && input.ratingAverage != null ? Number(input.ratingAverage) : null;
   const displayLabel =
     input.displayLabel?.trim() ||
-    anonymizedProLabel({ primaryTrade: input.primaryTrade, categories: input.categories, demo: input.demo });
+    anonymizedProLabel({
+      primaryTrade: input.primaryTrade,
+      categories: input.categories,
+      demo: input.demo,
+    });
   return {
     id: input.id,
     displayLabel,

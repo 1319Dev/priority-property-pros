@@ -8,6 +8,8 @@ import {
   isDirectoryListedContractor,
   isUuid,
   publicBrowseBypassesContactEntitlement,
+  publicPrimaryTrade,
+  publicServiceIsOther,
   publicTextLooksUnsafe,
   toPublicContractorCard,
   toPublicSafePortfolioItem,
@@ -51,7 +53,7 @@ export const PORTFOLIO_EMPTY = "No portfolio yet";
 export const VERIFIED_PROJECT_LABEL = "Verified Project";
 
 export const FIND_A_PRO_INTRO =
-  "Approved, active contractors are listed here even when they have no reviews yet. New contractors do not show stars. A contractor pays a $4.99 connection fee to communicate with you. PPP does not take a cut of the job.";
+  "Approved, active contractors are listed here even when they have no reviews yet. New contractors do not show stars. Contact details stay private until you and a pro connect on a project. PPP does not take a cut of the job.";
 
 export const FIND_A_PRO_EMPTY_TITLE = "No approved contractors yet";
 
@@ -166,12 +168,14 @@ export function splitPublicServices(categories: string[], primaryTrade?: string 
   primaryService: string | null;
   otherServices: string[];
 } {
-  const names = categories.map((name) => name.trim()).filter(Boolean);
-  if (names.length === 0) {
-    const trade = primaryTrade?.trim();
-    return { primaryService: trade || null, otherServices: [] };
-  }
-  return { primaryService: names[0], otherServices: names.slice(1) };
+  const names = categories
+    .map((name) => name.trim())
+    .filter((name) => Boolean(name) && !publicServiceIsOther(name));
+  const primary = publicPrimaryTrade(primaryTrade, names);
+  return {
+    primaryService: primary,
+    otherServices: names.filter((name) => name.toLowerCase() !== (primary ?? "").toLowerCase()),
+  };
 }
 
 export function showVerifiedProjectBadge(review: {
@@ -238,7 +242,9 @@ export function toFindAProCard(input: {
   const reviews = input.reviews ?? [];
   const ratingCount = reviews.length;
   const ratingAverage = ratingCount > 0 ? reviewedContractorAverage(reviews) : null;
-  const categories = (input.categories ?? []).filter(Boolean);
+  const categories = (input.categories ?? [])
+    .map((name) => name.trim())
+    .filter((name) => Boolean(name) && !publicServiceIsOther(name));
   const services = splitPublicServices(categories, input.primaryTrade);
   const card = toPublicContractorCard({
     id: input.id,

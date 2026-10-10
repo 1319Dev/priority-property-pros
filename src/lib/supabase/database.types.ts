@@ -1143,6 +1143,10 @@ export type Database = {
       stop_new_project_connections: { Args: { p_project_id: string }; Returns: Json };
       list_my_project_connections: { Args: { p_project_id?: string | null }; Returns: Json };
       list_my_project_connection_cards: { Args: { p_project_id: string }; Returns: Json };
+      contractor_name_for_my_project: {
+        Args: { p_project_id: string; p_contractor_profile_id: string };
+        Returns: string;
+      };
       submit_content_report: {
         Args: { p_target_type: string; p_target_id?: string | null; p_reason: string; p_notes?: string | null };
         Returns: Json;

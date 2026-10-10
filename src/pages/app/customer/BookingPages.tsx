@@ -16,6 +16,7 @@ import {
   expireStalePendingBookings,
   fetchBooking,
   fetchBookingReviews,
+  fetchContractorNameForProject,
   fetchChangeOrders,
   fetchCustomerProjects,
   fetchHireAgainContractors,
@@ -59,9 +60,15 @@ export function CustomerBookingsPage() {
         setRows(bookings);
         setTitles(Object.fromEntries(projects.map((project) => [project.id, project.title || "Project"])));
         setReferences(Object.fromEntries(projects.map((project) => [project.id, project.reference_number])));
-        const ids = [...new Set(bookings.map((row) => row.contractor_profile_id))];
-        const pros = await Promise.all(ids.map((id) => fetchPublicContractor(id).catch(() => null)));
-        setNames(Object.fromEntries(ids.map((id, index) => [id, pros[index]?.display_label || "Local pro"])));
+        const labeled = await Promise.all(
+          bookings.map(async (row) => {
+            const entitled = await fetchContractorNameForProject(row.project_id, row.contractor_profile_id).catch(() => null);
+            if (entitled) return [row.id, entitled] as const;
+            const pro = await fetchPublicContractor(row.contractor_profile_id).catch(() => null);
+            return [row.id, pro?.display_label || "Local pro"] as const;
+          }),
+        );
+        setNames(Object.fromEntries(labeled));
       })
       .catch((err: Error) => setError(err.message));
   }, [profile]);
@@ -85,7 +92,7 @@ export function CustomerBookingsPage() {
             <li key={row.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
               <p className="font-semibold text-forest-800">{titles[row.project_id] || "Project"}</p>
               <JobReference value={references[row.project_id]} />
-              <p className="text-sm text-ink-700">{names[row.contractor_profile_id] || "Local pro"}</p>
+              <p className="text-sm text-ink-700">{names[row.id] || "Local pro"}</p>
               <p className="mt-1 text-sm text-ink-500">{hiredLabel ?? statusLabel(row.status)}</p>
               <p className="mt-1 text-sm text-ink-500">
                 Job {formatUsdFromCents(row.billable_amount_cents || row.amount_cents)}
@@ -123,8 +130,9 @@ export function CustomerBookingDetailPage() {
     const project = await fetchProject(row.project_id).catch(() => null);
     setTitle(project?.title ?? "Booking");
     setReferenceNumber(project?.reference_number ?? null);
-    const pro = await fetchPublicContractor(row.contractor_profile_id).catch(() => null);
-    setContractor(pro?.display_label ?? "Local pro");
+    const entitled = await fetchContractorNameForProject(row.project_id, row.contractor_profile_id).catch(() => null);
+    const pro = entitled ? null : await fetchPublicContractor(row.contractor_profile_id).catch(() => null);
+    setContractor(entitled || pro?.display_label || "Local pro");
     setOrders((await fetchChangeOrders(bookingId)) as ChangeOrder[]);
     setReviews(await fetchBookingReviews(bookingId));
   }

@@ -212,11 +212,12 @@ describe("Phase 3 marketplace surfaces", () => {
     expect(screen.queryByText(/online payment setup is coming soon/i)).not.toBeInTheDocument();
   });
 
-  it("shows approved contractors on Find a Pro and still states the connection fee", () => {
+  it("shows approved contractors on Find a Pro without a connection-fee pitch", () => {
     renderApp("/find-a-pro");
     expect(screen.getByRole("heading", { name: /find a pro/i })).toBeInTheDocument();
     expect(screen.getByText(/no approved contractors yet/i)).toBeInTheDocument();
-    expect(screen.getByText(/\$4\.99 connection fee/i)).toBeInTheDocument();
+    expect(screen.getByText(/contact details stay private until you and a pro connect on a project/i)).toBeInTheDocument();
+    expect(screen.queryByText(/\$4\.99 connection fee/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/not a directory/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/loading live directory/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/show labeled example cards/i)).not.toBeInTheDocument();

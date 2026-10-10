@@ -1182,6 +1182,16 @@ export async function fetchPublicDirectoryAcceptingWork(): Promise<Array<{ id: s
   }));
 }
 
+/** Real business name only after a paid connection on this project. Otherwise the neutral public label. */
+export async function fetchContractorNameForProject(projectId: string, contractorProfileId: string): Promise<string | null> {
+  const { data, error } = await client().rpc("contractor_name_for_my_project", {
+    p_project_id: projectId,
+    p_contractor_profile_id: contractorProfileId,
+  });
+  if (error) throw new Error(asError(error, "Could not load the contractor name."));
+  return typeof data === "string" && data.trim() ? data.trim() : null;
+}
+
 export async function fetchPublicContractor(id: string): Promise<PublicDirectoryRpcRow | null> {
   const { data, error } = await client().rpc("get_public_directory_contractor", { p_id: id });
   if (error) throw new Error(asError(error, "Could not load the contractor."));

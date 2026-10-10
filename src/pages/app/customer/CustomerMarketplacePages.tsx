@@ -19,6 +19,7 @@ import {
   cancelCustomerProject,
   confirmBookingHired,
   declineEstimate,
+  fetchContractorNameForProject,
   fetchCustomerProjects,
   fetchEstimate,
   fetchEstimateItems,
@@ -655,6 +656,7 @@ export function CustomerEstimateDetailPage() {
   const [estimate, setEstimate] = useState<Awaited<ReturnType<typeof fetchEstimate>> | null>(null);
   const [items, setItems] = useState<Awaited<ReturnType<typeof fetchEstimateItems>>>([]);
   const [contractor, setContractor] = useState<Awaited<ReturnType<typeof fetchPublicContractor>>>(null);
+  const [contractorName, setContractorName] = useState<string | null>(null);
   const [badges, setBadges] = useState<Awaited<ReturnType<typeof fetchPublicContractorExtras>>["badges"]>([]);
   const [error, setError] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
@@ -671,6 +673,9 @@ export function CustomerEstimateDetailPage() {
       setEstimate(est);
       setItems(await fetchEstimateItems(est.id));
       setContractor(await fetchPublicContractor(est.contractor_profile_id));
+      setContractorName(
+        await fetchContractorNameForProject(projectId, est.contractor_profile_id).catch(() => null),
+      );
       const extras = await fetchPublicContractorExtras(est.contractor_profile_id).catch(() => ({
         services: [],
         areas: [],
@@ -699,7 +704,7 @@ export function CustomerEstimateDetailPage() {
       </ButtonLink>
       <div className="flex min-w-0 items-center gap-4">
         <ContractorAvatar size={72} />
-        <h1 className="min-w-0 break-words font-display text-4xl font-semibold text-forest-800">{contractor?.display_label || "Estimate"}</h1>
+        <h1 className="min-w-0 break-words font-display text-4xl font-semibold text-forest-800">{contractorName || contractor?.display_label || "Estimate"}</h1>
       </div>
       <JobReference value={project.reference_number} />
       <p className="text-sm text-ink-500">{customerEstimateStatusLabel(status)}</p>
