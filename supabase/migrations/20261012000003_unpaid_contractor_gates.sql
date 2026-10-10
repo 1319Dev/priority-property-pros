@@ -1,5 +1,6 @@
 -- Unpaid contractors (signup_fee_status UNPAID while signup_fee_enabled) do not
--- receive public directory listing, new match offers, or Connection Fee reservations.
+-- receive public directory listing, new match offers, Connection Fee reservations,
+-- or the ability to accept an existing offer.
 -- Does not change the $9.99 or $4.99 amounts, Stripe Price IDs, webhooks, payment
 -- rows, contractor_fee_bps, matching caps, hiring rules, or contact-unlock rules
 -- beyond the activation check below.
@@ -1017,6 +1018,141 @@ BEGIN
   );
 END;
 $$;
+
+-- Production accept_opportunity (fetched 2026-10-10) matched
+-- 20260917000006_phase3_functions.sql: ownership, availability, expiry, and the
+-- 3-slot cap only. Eligibility is checked on the offer's contractor before the
+-- project lock so an existing AVAILABLE row cannot be accepted into a slot.
+-- signup_fee_is_satisfied is unchanged: PAID and NOT_REQUIRED pass (there is no
+-- WAIVED label; waived accounts such as Plymate are NOT_REQUIRED), and a disabled
+-- fee passes everyone.
+CREATE OR REPLACE FUNCTION public.accept_opportunity(p_opportunity_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  opp public.opportunities;
+  slot smallint;
+  taken integer;
+  approval public.approval_status;
+  account public.account_status;
+  profile_id uuid;
+BEGIN
+  PERFORM public.ppp_set_rpc('accept_opportunity');
+
+  SELECT * INTO opp FROM public.opportunities WHERE id = p_opportunity_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'opportunity not found';
+  END IF;
+  IF opp.contractor_profile_id IS DISTINCT FROM public.current_contractor_profile_id()
+     AND NOT public.is_admin() THEN
+    RAISE EXCEPTION 'not your opportunity';
+  END IF;
+
+  SELECT cp.approval_status, p.account_status, p.id
+    INTO approval, account, profile_id
+  FROM public.contractor_profiles cp
+  JOIN public.profiles p ON p.id = cp.profile_id
+  WHERE cp.id = opp.contractor_profile_id;
+  IF NOT FOUND OR approval IS DISTINCT FROM 'APPROVED' THEN
+    RAISE EXCEPTION 'Your pro account has to be approved before you can accept an offer.';
+  END IF;
+  IF account IS DISTINCT FROM 'ACTIVE' THEN
+    RAISE EXCEPTION 'Your account has to be active before you can accept an offer.';
+  END IF;
+  IF NOT public.signup_fee_is_satisfied(profile_id) THEN
+    RAISE EXCEPTION 'Activate your account before accepting an offer. The one-time $9.99 activation is required.';
+  END IF;
+
+  -- Serialize accepts for this project; unique slot PK is the race-safe cap.
+  PERFORM 1 FROM public.projects WHERE id = opp.project_id FOR UPDATE;
+
+  SELECT * INTO opp FROM public.opportunities WHERE id = p_opportunity_id;
+  IF opp.status <> 'AVAILABLE' THEN
+    RAISE EXCEPTION 'opportunity is not available';
+  END IF;
+  IF opp.expires_at IS NOT NULL AND opp.expires_at < now() THEN
+    UPDATE public.opportunities SET status = 'EXPIRED' WHERE id = opp.id AND status = 'AVAILABLE';
+    RAISE EXCEPTION 'opportunity has expired';
+  END IF;
+
+  IF (SELECT status FROM public.projects WHERE id = opp.project_id) = 'CONTRACTOR_SELECTED' THEN
+    RAISE EXCEPTION 'contractor already selected';
+  END IF;
+
+  SELECT count(*) INTO taken
+  FROM public.opportunity_slots
+  WHERE project_id = opp.project_id;
+
+  IF taken >= 3 THEN
+    UPDATE public.opportunities
+    SET status = 'CLOSED'
+    WHERE project_id = opp.project_id
+      AND status = 'AVAILABLE';
+    RAISE EXCEPTION 'this project already has 3 participating contractors';
+  END IF;
+
+  SELECT s INTO slot
+  FROM generate_series(1, 3) AS s
+  WHERE s NOT IN (
+    SELECT slot_number FROM public.opportunity_slots WHERE project_id = opp.project_id
+  )
+  ORDER BY s
+  LIMIT 1;
+
+  BEGIN
+    INSERT INTO public.opportunity_slots (
+      project_id, slot_number, opportunity_id, contractor_profile_id
+    ) VALUES (
+      opp.project_id, slot, opp.id, opp.contractor_profile_id
+    );
+  EXCEPTION WHEN unique_violation THEN
+    RAISE EXCEPTION 'this project already has 3 participating contractors';
+  END;
+
+  UPDATE public.opportunities
+  SET status = 'ACCEPTED', responded_at = now()
+  WHERE id = opp.id;
+
+  UPDATE public.projects
+  SET status = 'CONTRACTORS_RESPONDING'
+  WHERE id = opp.project_id
+    AND status IN ('POSTED', 'MATCHING', 'CONTRACTORS_RESPONDING');
+
+  SELECT count(*) INTO taken
+  FROM public.opportunity_slots
+  WHERE project_id = opp.project_id;
+
+  IF taken >= 3 THEN
+    UPDATE public.opportunities
+    SET status = 'CLOSED'
+    WHERE project_id = opp.project_id
+      AND status = 'AVAILABLE';
+  END IF;
+
+  PERFORM public.write_audit_log(
+    auth.uid(),
+    'opportunity.accepted',
+    'opportunities',
+    opp.id,
+    jsonb_build_object('project_id', opp.project_id, 'slot', slot)
+  );
+
+  RETURN jsonb_build_object(
+    'opportunity_id', opp.id,
+    'slot', slot,
+    'participating', taken
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.accept_opportunity(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.accept_opportunity(uuid) TO authenticated;
+
+COMMENT ON FUNCTION public.accept_opportunity(uuid) IS
+  'Authenticated contractor accepts an AVAILABLE offer into one of 3 slots. The offer contractor must be APPROVED, ACTIVE, and signup_fee_is_satisfied. Does not grant contact.';
 
 REVOKE ALL ON FUNCTION public.contractor_is_directory_listed(uuid) FROM PUBLIC, anon, authenticated;
 

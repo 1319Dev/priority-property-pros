@@ -86,9 +86,16 @@ describe("single Connect flow", () => {
     expect(startCheckout).toHaveBeenCalledTimes(1);
   });
 
-  it("blocks Connect only when accept fails as an auth/ownership error", () => {
+  it("blocks Connect when accept fails as an auth, ownership, or eligibility error", () => {
     expect(acceptFailureBlocksConnect("not your opportunity")).toBe(true);
     expect(acceptFailureBlocksConnect("auth required")).toBe(true);
+    expect(acceptFailureBlocksConnect("Your pro account has to be approved before you can accept an offer.")).toBe(true);
+    expect(acceptFailureBlocksConnect("Your account has to be active before you can accept an offer.")).toBe(true);
+    expect(
+      acceptFailureBlocksConnect(
+        "Activate your account before accepting an offer. The one-time $9.99 activation is required.",
+      ),
+    ).toBe(true);
     expect(acceptFailureBlocksConnect("this project already has 3 participating contractors")).toBe(false);
     expect(acceptFailureBlocksConnect("opportunity is not available")).toBe(false);
   });

@@ -52,7 +52,12 @@ export function shouldAcceptOpportunityOnConnect(status: OpportunityStatus | nul
 export function acceptFailureBlocksConnect(message: string | null | undefined): boolean {
   const text = (message ?? "").toLowerCase();
   if (!text) return false;
-  return text.includes("not your opportunity") || text.includes("auth required");
+  return (
+    text.includes("not your opportunity") ||
+    text.includes("auth required") ||
+    text.includes("before you can accept an offer") ||
+    text.includes("before accepting an offer")
+  );
 }
 
 export async function runContractorConnect(input: {

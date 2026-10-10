@@ -136,6 +136,7 @@ CREATE TABLE public.opportunities (
   match_id uuid REFERENCES public.matches (id),
   status public.opportunity_status NOT NULL DEFAULT 'AVAILABLE',
   expires_at timestamptz,
+  responded_at timestamptz,
   UNIQUE (project_id, contractor_profile_id)
 );
 
@@ -360,6 +361,27 @@ CREATE OR REPLACE FUNCTION public.record_connection_checkout_event(
 CREATE OR REPLACE FUNCTION public.grant_booking_contact_access_from_connection_fee(p_connection_id uuid, p_reason text)
 RETURNS jsonb LANGUAGE sql AS $$ SELECT jsonb_build_object('contact_unlocked', true) $$;
 
+CREATE TABLE public.test_actor (
+  contractor_profile_id uuid
+);
+INSERT INTO public.test_actor (contractor_profile_id) VALUES (NULL);
+
+CREATE OR REPLACE FUNCTION public.current_contractor_profile_id()
+RETURNS uuid LANGUAGE sql STABLE AS $$
+  SELECT contractor_profile_id FROM public.test_actor LIMIT 1
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT false $$;
+
+CREATE OR REPLACE FUNCTION public.write_audit_log(
+  p_actor uuid,
+  p_action text,
+  p_entity text,
+  p_entity_id uuid,
+  p_metadata jsonb
+) RETURNS void LANGUAGE plpgsql AS $$ BEGIN RETURN; END $$;
+
 CREATE OR REPLACE FUNCTION public.contractor_eligible_for_project(p_project_id uuid, p_contractor_profile_id uuid)
 RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT false $$;
 
@@ -490,7 +512,24 @@ INSERT INTO public.projects (id, customer_id, category_id, status, zip_code) VAL
   ('40000000-0000-4000-8000-000000000007', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'POSTED', '77301'),
   ('40000000-0000-4000-8000-000000000008', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'POSTED', '77301'),
   ('40000000-0000-4000-8000-000000000009', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'POSTED', '77301'),
-  ('40000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'POSTED', '77301');
+  ('40000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'POSTED', '77301'),
+  ('40000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'POSTED', '77301'),
+  ('40000000-0000-4000-8000-00000000000c', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'POSTED', '77301'),
+  ('40000000-0000-4000-8000-00000000000d', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'POSTED', '77301'),
+  ('40000000-0000-4000-8000-00000000000e', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'POSTED', '77301');
+
+-- Garrett Plymate / Plymate Property Maintenance: production signup_fee_status is NOT_REQUIRED.
+SELECT public.test_seed_pro(
+  'eaceb84d-a259-49f2-8334-06c50cbe1a9a',
+  'a6208af2-2f61-41ca-bd4b-51f81fe61638',
+  'NOT_REQUIRED',
+  'CONTRACTOR',
+  '77301',
+  '10000000-0000-4000-8000-000000000001'
+);
+UPDATE public.contractor_profiles
+SET business_name = 'Plymate Property Maintenance'
+WHERE id = 'a6208af2-2f61-41ca-bd4b-51f81fe61638';
 
 INSERT INTO public.contractor_portfolio (contractor_profile_id, title, privacy_state) VALUES
   ('af55cdfe-b3aa-421d-84b3-0411d9d7e3b6', 'Unpaid gate', 'PUBLIC_SAFE'),
@@ -856,6 +895,63 @@ SELECT public.test_expect_error(
   'connections full',
   'fourth connection still blocked by the 3-slot cap'
 );
+
+INSERT INTO public.opportunities (id, project_id, contractor_profile_id, status) VALUES
+  ('50000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-00000000000b', 'af55cdfe-b3aa-421d-84b3-0411d9d7e3b6', 'AVAILABLE'),
+  ('50000000-0000-4000-8000-000000000002', '40000000-0000-4000-8000-00000000000c', '30000000-0000-4000-8000-000000000012', 'AVAILABLE'),
+  ('50000000-0000-4000-8000-000000000003', '40000000-0000-4000-8000-00000000000d', '30000000-0000-4000-8000-000000000013', 'AVAILABLE'),
+  ('50000000-0000-4000-8000-000000000004', '40000000-0000-4000-8000-00000000000e', 'a6208af2-2f61-41ca-bd4b-51f81fe61638', 'AVAILABLE');
+
+UPDATE public.test_actor SET contractor_profile_id = 'af55cdfe-b3aa-421d-84b3-0411d9d7e3b6';
+SELECT public.test_expect_error(
+  $$SELECT public.accept_opportunity('50000000-0000-4000-8000-000000000001')$$,
+  'one-time $9.99 activation is required',
+  'UNPAID accept denied'
+);
+
+DO $$
+DECLARE
+  st text;
+  n int;
+  result jsonb;
+BEGIN
+  SELECT status::text INTO st FROM public.opportunities WHERE id = '50000000-0000-4000-8000-000000000001';
+  IF st IS DISTINCT FROM 'AVAILABLE' THEN
+    PERFORM public.test_fail('UNPAID accept changed the offer');
+  END IF;
+  SELECT count(*) INTO n FROM public.opportunity_slots
+  WHERE opportunity_id = '50000000-0000-4000-8000-000000000001';
+  IF n <> 0 THEN PERFORM public.test_fail('UNPAID accept took a slot'); END IF;
+
+  UPDATE public.test_actor SET contractor_profile_id = '30000000-0000-4000-8000-000000000012';
+  result := public.accept_opportunity('50000000-0000-4000-8000-000000000002');
+  IF result->>'slot' IS NULL OR (result->>'participating')::int IS DISTINCT FROM 1 THEN
+    PERFORM public.test_fail('PAID accept did not take a slot');
+  END IF;
+  SELECT status::text INTO st FROM public.opportunities WHERE id = '50000000-0000-4000-8000-000000000002';
+  IF st IS DISTINCT FROM 'ACCEPTED' THEN PERFORM public.test_fail('PAID accept did not accept'); END IF;
+
+  UPDATE public.test_actor SET contractor_profile_id = '30000000-0000-4000-8000-000000000013';
+  result := public.accept_opportunity('50000000-0000-4000-8000-000000000003');
+  SELECT status::text INTO st FROM public.opportunities WHERE id = '50000000-0000-4000-8000-000000000003';
+  IF st IS DISTINCT FROM 'ACCEPTED' THEN PERFORM public.test_fail('NOT_REQUIRED accept did not accept'); END IF;
+
+  IF (SELECT signup_fee_status FROM public.profiles WHERE id = 'eaceb84d-a259-49f2-8334-06c50cbe1a9a')
+     IS DISTINCT FROM 'NOT_REQUIRED' THEN
+    PERFORM public.test_fail('Plymate is not NOT_REQUIRED');
+  END IF;
+  IF (SELECT business_name FROM public.contractor_profiles WHERE id = 'a6208af2-2f61-41ca-bd4b-51f81fe61638')
+     IS DISTINCT FROM 'Plymate Property Maintenance' THEN
+    PERFORM public.test_fail('Plymate business name missing');
+  END IF;
+  UPDATE public.test_actor SET contractor_profile_id = 'a6208af2-2f61-41ca-bd4b-51f81fe61638';
+  result := public.accept_opportunity('50000000-0000-4000-8000-000000000004');
+  SELECT status::text INTO st FROM public.opportunities WHERE id = '50000000-0000-4000-8000-000000000004';
+  IF st IS DISTINCT FROM 'ACCEPTED' OR (result->>'participating')::int IS DISTINCT FROM 1 THEN
+    PERFORM public.test_fail('Plymate NOT_REQUIRED accept was blocked');
+  END IF;
+  RAISE NOTICE 'PASS: unpaid accept denied; PAID, NOT_REQUIRED, and Plymate can accept';
+END $$;
 
 DO $$
 DECLARE

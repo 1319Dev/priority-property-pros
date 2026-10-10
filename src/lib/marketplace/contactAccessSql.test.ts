@@ -162,6 +162,11 @@ describe("Contact-access entitlement SQL", () => {
     expect(submit).not.toMatch(/cust\.email/);
     expect(accept).not.toMatch(/street_line1/);
     expect(accept).not.toMatch(/loc\.lat/);
+    expect(accept).toMatch(/not your opportunity/);
+    expect(accept).toMatch(/approval IS DISTINCT FROM 'APPROVED'/);
+    expect(accept).toMatch(/account IS DISTINCT FROM 'ACTIVE'/);
+    expect(accept).toMatch(/signup_fee_is_satisfied\(profile_id\)/);
+    expect(accept).toMatch(/this project already has 3 participating contractors/);
     expect(listMine).not.toMatch(/street_line1/);
     expect(listMine).not.toMatch(/from public\.profiles/i);
   });
