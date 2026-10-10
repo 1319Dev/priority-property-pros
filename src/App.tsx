@@ -53,7 +53,6 @@ import { ProProfilePage } from "./pages/app/pro/ProProfilePages";
 import { ProEstimatesPage } from "./pages/app/pro/ProEstimatesPages";
 import { ProBookingDetailPage, ProBookingRedirect, ProBookingsPage, ProHiredJobByProjectPage } from "./pages/app/pro/ProBookingPages";
 import { VerifierHomePage, VerifierMessagesPage, VerifierVisitsPage } from "./pages/app/VerifierPages";
-
 const AdminShell = lazy(() => import("./pages/app/AdminShell").then((mod) => ({ default: mod.AdminShell })));
 const AdminHomePage = lazy(() => import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminHomePage })));
 const AdminApprovalsPage = lazy(() =>

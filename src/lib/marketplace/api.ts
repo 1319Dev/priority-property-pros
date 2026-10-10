@@ -1,3 +1,4 @@
+import { friendlyAdminError } from "../admin/friendlyAdminError";
 import { getSupabaseClient } from "../supabase/client";
 import type { Database, Json } from "../supabase/database.types";
 import { assertNoPreHireContact } from "./antiCircumvention";
@@ -576,7 +577,7 @@ export async function disputeBooking(bookingId: string): Promise<RpcJson> {
 
 export async function confirmBookingForTesting(bookingId: string): Promise<RpcJson> {
   const { data, error } = await client().rpc("confirm_booking_for_testing", { p_booking_id: bookingId });
-  if (error) throw new Error(asError(error, "Testing confirmation failed."));
+  if (error) throw new Error(friendlyAdminError(error, "Testing confirmation failed."));
   return (data ?? {}) as RpcJson;
 }
 
@@ -655,7 +656,7 @@ export async function adminGrantBookingContactAccess(bookingId: string, reason: 
     p_booking_id: bookingId,
     p_reason: reason,
   });
-  if (error) throw new Error(asError(error, "Could not grant contact access."));
+  if (error) throw new Error(friendlyAdminError(error, "Could not grant contact access."));
   return (data ?? {}) as RpcJson;
 }
 
@@ -664,7 +665,7 @@ export async function adminRevokeBookingContactAccess(bookingId: string, reason:
     p_booking_id: bookingId,
     p_reason: reason,
   });
-  if (error) throw new Error(asError(error, "Could not revoke contact access."));
+  if (error) throw new Error(friendlyAdminError(error, "Could not revoke contact access."));
   return (data ?? {}) as RpcJson;
 }
 
@@ -775,7 +776,7 @@ export async function findAdminBookingsByReference(raw: string): Promise<{
     if (isMissingReferenceColumn(lookup.error.message)) {
       throw new Error("Job references are not available until the database update is applied.");
     }
-    throw new Error(asError(lookup.error, "Could not search job references."));
+    throw new Error(friendlyAdminError(lookup.error, "Could not search job references."));
   }
   if (!lookup.data) return null;
   const bookings = await client()
@@ -783,7 +784,7 @@ export async function findAdminBookingsByReference(raw: string): Promise<{
     .select("id, status, created_at")
     .eq("project_id", lookup.data.id)
     .order("created_at", { ascending: false });
-  if (bookings.error) throw new Error(asError(bookings.error, "Could not load bookings for that job."));
+  if (bookings.error) throw new Error(friendlyAdminError(bookings.error, "Could not load bookings for that job."));
   return {
     projectId: lookup.data.id,
     title: lookup.data.title || "Project",

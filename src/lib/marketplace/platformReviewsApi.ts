@@ -1,3 +1,4 @@
+import { friendlyAdminError } from "../admin/friendlyAdminError";
 import { getSupabaseClient } from "../supabase/client";
 import {
   canInsertPlatformReview,
@@ -80,7 +81,7 @@ export async function adminListPlatformReviews(): Promise<PlatformReview[]> {
     .from("platform_reviews")
     .select("id, user_id, display_name, city, rating, body, status, created_at")
     .order("created_at", { ascending: false });
-  if (error) throw new Error(asError(error, "Could not load platform reviews."));
+  if (error) throw new Error(friendlyAdminError(error, "Could not load platform reviews."));
   return (data ?? []) as PlatformReview[];
 }
 
@@ -89,5 +90,5 @@ export async function adminSetPlatformReviewStatus(
   status: PlatformReviewStatus,
 ): Promise<void> {
   const { error } = await client().from("platform_reviews").update({ status }).eq("id", id);
-  if (error) throw new Error(asError(error, "Could not update that review."));
+  if (error) throw new Error(friendlyAdminError(error, "Could not update that review."));
 }

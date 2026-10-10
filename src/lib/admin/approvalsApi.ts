@@ -1,5 +1,6 @@
 import { getSupabaseClient } from "../supabase/client";
 import type { ApprovalTab, ContractorApprovalItem } from "./approvals";
+import { friendlyAdminError } from "./friendlyAdminError";
 import type { PortfolioPrivacyChoice, PortfolioReviewItem } from "./portfolioReview";
 
 function client() {
@@ -8,8 +9,8 @@ function client() {
   return supabase;
 }
 
-function asError(error: { message: string } | null, fallback: string): string {
-  return error?.message || fallback;
+function asError(error: { message: string; code?: string } | null, fallback: string): string {
+  return friendlyAdminError(error, fallback);
 }
 
 function asItem(value: unknown, fallback: string): ContractorApprovalItem {
@@ -91,7 +92,7 @@ function asReviewItems(value: unknown): PortfolioReviewItem[] {
 
 export async function adminListPortfolioReviewQueue(): Promise<PortfolioReviewItem[]> {
   const { data, error } = await client().rpc("admin_list_portfolio_review_queue");
-  if (error) throw new Error("Could not load photos waiting for review.");
+  if (error) throw new Error(friendlyAdminError(error, "Could not load photos waiting for review."));
   return asReviewItems(data);
 }
 
@@ -105,7 +106,7 @@ export async function adminSetPortfolioPrivacy(
     p_state: state,
     p_note: note ?? null,
   });
-  if (error) throw new Error("Could not update this photo.");
+  if (error) throw new Error(friendlyAdminError(error, "Could not update this photo."));
 }
 
 export async function adminRequestContractorInfo(
