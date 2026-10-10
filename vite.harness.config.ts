@@ -23,6 +23,7 @@ const swaps: Array<{ id: string; match: RegExp; real: string; names: string[] }>
       "fetchBookingReviews",
       "fetchHireAgainContractors",
       "expireStalePendingBookings",
+      "findAdminBookingsByReference",
       "fetchProjectEstimates",
       "fetchEstimate",
       "fetchEstimateItems",

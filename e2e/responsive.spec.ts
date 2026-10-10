@@ -101,6 +101,78 @@ test("mocked Find a Pro directory and storefront stay inside 390 and 1280", asyn
   }
 });
 
+const adminWidths = [320, 390, 768, 1024, 1280, 1920];
+
+test.describe("admin command center stays inside the viewport", () => {
+  for (const width of adminWidths) {
+    test(`admin overview at ${width}px has no horizontal overflow`, async ({ page }) => {
+      await page.setViewportSize({ width, height: width < 768 ? 844 : 900 });
+      await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=admin#/app/admin", {
+        waitUntil: "domcontentloaded",
+      });
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page.getByRole("heading", { name: "Operations shell" })).toBeVisible();
+
+      const box = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+      }));
+      expect(box.scrollWidth).toBeLessThanOrEqual(box.innerWidth + 1);
+
+      const menu = page.getByRole("button", { name: "Open admin menu" });
+      const adminNav = page.getByRole("navigation", { name: "Admin" });
+      if (width < 768) {
+        await expect(menu).toBeVisible();
+        await expect(adminNav).toHaveCount(0);
+        await expect(page.getByRole("navigation", { name: "Dashboard" })).toHaveCount(0);
+      } else {
+        await expect(menu).toBeHidden();
+        await expect(adminNav).toBeVisible();
+        const approvals = adminNav.getByRole("link", { name: /Approvals/ });
+        await expect(approvals).toBeVisible();
+        if (width >= 1024) await expect(approvals).toContainText("Approvals");
+      }
+
+      const search = page.getByRole("combobox", { name: "Search jobs and admin sections" });
+      await expect(search).toBeVisible();
+      await expect(page.getByRole("button", { name: /^Notifications/ })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
+    });
+  }
+
+  test("phone drawer opens, traps focus, and closes from the keyboard", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=admin#/app/admin", {
+      waitUntil: "domcontentloaded",
+    });
+    const menu = page.getByRole("button", { name: "Open admin menu" });
+    await menu.click();
+    const dialog = page.getByRole("dialog", { name: "Admin menu" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Booking tools" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "People" })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(menu).toBeFocused();
+  });
+
+  test("search jumps to a section and to a job reference", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=admin#/app/admin", {
+      waitUntil: "domcontentloaded",
+    });
+    const search = page.getByRole("combobox", { name: "Search jobs and admin sections" });
+    await search.fill("reviews");
+    await page.getByRole("option", { name: "Reviews" }).click();
+    await expect(page.getByRole("heading", { name: "Platform reviews" })).toBeVisible();
+
+    await search.fill("PPP-1042");
+    await page.getByRole("option", { name: "Open job PPP-1042" }).click();
+    await expect(page.getByRole("heading", { name: "Test booking confirm" })).toBeVisible();
+    await expect(page.getByText("Replace a leaning cedar fence before the storm")).toBeVisible();
+  });
+});
+
 test("signed-in header keeps the bell inside a 320px viewport", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
   await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=customer#/app/customer", {

@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { BrandLoader } from "./components/brand/BrandLoader";
 import { AppShell } from "./components/layout/AppShell";
 import { ScrollToTop } from "./components/layout/ScrollToTop";
 import { RequireAdmin, RequireAuth, RequireRole } from "./lib/auth/guards";
@@ -30,8 +31,6 @@ import { TrustPage } from "./pages/TrustPage";
 import { CustomerShell } from "./pages/app/CustomerShell";
 import { ProShell } from "./pages/app/ProShell";
 import { VerifierShell } from "./pages/app/VerifierShell";
-import { AdminShell } from "./pages/app/AdminShell";
-import { AdminTwoFactorPage } from "./pages/app/admin/AdminTwoFactorPage";
 import {
   AccountPage,
   CustomerHomePage,
@@ -54,15 +53,8 @@ import { ProProfilePage } from "./pages/app/pro/ProProfilePages";
 import { ProEstimatesPage } from "./pages/app/pro/ProEstimatesPages";
 import { ProBookingDetailPage, ProBookingRedirect, ProBookingsPage, ProHiredJobByProjectPage } from "./pages/app/pro/ProBookingPages";
 import { VerifierHomePage, VerifierMessagesPage, VerifierVisitsPage } from "./pages/app/VerifierPages";
-import {
-  AdminApprovalDetailPage,
-  AdminApprovalsPage,
-  AdminAuditPage,
-  AdminBookingsPage,
-  AdminHomePage,
-  AdminPeoplePage,
-  AdminReviewsPage,
-} from "./pages/app/AdminPages";
+
+const AdminApp = lazy(() => import("./pages/app/admin/AdminApp"));
 
 const DevNotificationPreview = import.meta.env.DEV
   ? lazy(() =>
@@ -179,18 +171,20 @@ export default function App() {
           </Route>
         </Route>
         <Route element={<RequireAdmin />}>
-          <Route path="/app/admin" element={<AdminShell />}>
-            <Route index element={<AdminHomePage />} />
-            <Route path="people" element={<AdminPeoplePage />} />
-            <Route path="approvals" element={<AdminApprovalsPage />} />
-            <Route path="approvals/:contractorProfileId" element={<AdminApprovalDetailPage />} />
-            <Route path="reviews" element={<AdminReviewsPage />} />
-            <Route path="audit" element={<AdminAuditPage />} />
-            <Route path="bookings" element={<AdminBookingsPage />} />
-            <Route path="security" element={<AdminTwoFactorPage />} />
-            <Route path="account" element={<AccountPage />} />
-            <Route path="account/notifications" element={<NotificationSettingsPage />} />
-          </Route>
+          <Route
+            path="/app/admin/*"
+            element={
+              <Suspense
+                fallback={
+                  <div className="paper-grain flex min-h-dvh items-center justify-center">
+                    <BrandLoader layout="page" label="Loading admin…" />
+                  </div>
+                }
+              >
+                <AdminApp />
+              </Suspense>
+            }
+          />
         </Route>
       </Route>
 
