@@ -32,6 +32,7 @@ export function AdminShell() {
     { to: "/app/admin/bookings", label: "Bookings" },
     { to: "/app/admin/approvals", label: "Approvals", badge: pendingCount },
     { to: "/app/admin/reviews", label: "Reviews" },
+    { to: "/app/admin/security", label: "Two-factor sign-in" },
     { to: "/app/admin/account", label: "Account" },
     { to: "/app/admin/people", label: "People" },
   ];
