@@ -26,6 +26,7 @@ import {
   respondChangeOrder,
   startBooking,
   submitBookingReview,
+  updateBookingReview,
 } from "../../../lib/marketplace/api";
 import { BOOKING_STATUS_LABELS, contactAccessRowAllowsReveal, paymentsComingSoonCopy, privateContactLockedCopy } from "../../../lib/marketplace/bookings";
 import { SHARE_CONTACT_WAITING_COPY, jobContactWasShared } from "../../../lib/marketplace/contactShare";
@@ -356,10 +357,15 @@ export function ProBookingDetailPage() {
         referenceNumber={referenceNumber}
         onRatingChange={setRating}
         onBodyChange={setBody}
-        onSubmit={() => {
-          void submitBookingReview(booking.id, Number(rating), body)
+        onSubmit={(nextRating, nextBody) => {
+          const own = reviews.some((review) => review.reviewer_role === "CONTRACTOR");
+          const save = own ? updateBookingReview : submitBookingReview;
+          return save(booking.id, Number(nextRating), nextBody)
             .then(() => reload())
-            .catch((err: Error) => setError(err.message));
+            .catch((err: Error) => {
+              setError(err.message);
+              throw err;
+            });
         }}
       />
     </div>

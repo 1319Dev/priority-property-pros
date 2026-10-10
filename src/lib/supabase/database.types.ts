@@ -991,6 +991,10 @@ export type Database = {
         Args: { p_booking_id: string; p_rating: number; p_body?: string | null };
         Returns: Json;
       };
+      update_booking_review: {
+        Args: { p_booking_id: string; p_rating: number; p_body?: string | null };
+        Returns: Json;
+      };
       confirm_booking_hired: { Args: { p_booking_id: string }; Returns: Json };
       booking_is_mutually_hired: { Args: { p_booking_id: string }; Returns: boolean };
       booking_job_contact: { Args: { p_booking_id: string }; Returns: Json };

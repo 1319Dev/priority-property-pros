@@ -3,7 +3,13 @@ import { JobReference } from "./JobReference";
 import { Button, ButtonLink } from "../ui/Button";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { StatusBanner } from "../ui/StatusBanner";
+import { StarRating } from "../../features/reviews/ReviewCard";
 import { liveContractorPath } from "../../lib/marketplace/publicDirectory";
+import {
+  formatReviewPostedDate,
+  reviewEditWindowNote,
+  reviewIsEditable,
+} from "../../lib/marketplace/reviewEdits";
 import type { BookingReview, BookingStatus } from "../../lib/marketplace/types";
 import {
   HIRED_BUTTON_LABEL,
@@ -84,6 +90,32 @@ export function HiredConfirmationCard({
   );
 }
 
+function RatingPicker({
+  rating,
+  onChange,
+}: {
+  rating: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2" role="group" aria-label="Rating">
+      {["1", "2", "3", "4", "5"].map((value) => (
+        <button
+          key={value}
+          type="button"
+          aria-pressed={rating === value}
+          className={`min-h-11 min-w-11 rounded-full px-3 text-sm font-semibold ${
+            rating === value ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-forest-800"
+          }`}
+          onClick={() => onChange(value)}
+        >
+          {value}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function ProfileReviewForm({
   role,
   bookingStatus,
@@ -95,6 +127,7 @@ export function ProfileReviewForm({
   onRatingChange,
   onBodyChange,
   onSubmit,
+  now = Date.now(),
 }: {
   role: HiredParty;
   bookingStatus: BookingStatus;
@@ -105,7 +138,9 @@ export function ProfileReviewForm({
   referenceNumber?: number | string | null;
   onRatingChange: (value: string) => void;
   onBodyChange: (value: string) => void;
-  onSubmit: () => void;
+  onSubmit: (rating: string, body: string) => void | Promise<void>;
+  /** Test clock. Production callers leave this unset. */
+  now?: number;
 }) {
   const mine = reviews.find((review) => review.reviewer_role === ownReviewerRole(role));
   const visible = canSeeReviewCta({ mutuallyHired, bookingStatus });
@@ -115,50 +150,99 @@ export function ProfileReviewForm({
     alreadyReviewed: Boolean(mine),
     reviewerIsParticipant: true,
   });
+  const [editing, setEditing] = useState(false);
+  const [draftRating, setDraftRating] = useState(rating);
+  const [draftBody, setDraftBody] = useState(body);
+  const [saving, setSaving] = useState(false);
 
   if (!visible) return null;
 
-  if (mine) {
+  if (mine && editing) {
     return (
-      <div className="rounded-3xl bg-cream-100 px-5 py-4 text-sm">
-        <p>Your review of {otherPartyLabel(role)} is saved · {mine.rating} / 5</p>
+      <section className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4" aria-label="Edit your review">
+        <h2 className="font-display text-2xl text-forest-800">Your review</h2>
         <JobReference value={referenceNumber} />
-      </div>
+        <p className="text-sm text-ink-700">Update the stars or the text. The same checks apply as when you first posted it.</p>
+        <RatingPicker rating={draftRating} onChange={setDraftRating} />
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Review</span>
+          <textarea
+            aria-label="Review"
+            className="min-h-28 w-full rounded-2xl border border-forest-800/15 px-4 py-3"
+            value={draftBody}
+            onChange={(event) => setDraftBody(event.target.value)}
+          />
+        </label>
+        <Button
+          type="button"
+          className="min-h-14 w-full"
+          disabled={saving}
+          onClick={() => {
+            setSaving(true);
+            void Promise.resolve(onSubmit(draftRating, draftBody))
+              .then(() => setEditing(false))
+              .catch(() => undefined)
+              .finally(() => setSaving(false));
+          }}
+        >
+          {saving ? "Saving…" : "Save review"}
+        </Button>
+        <Button type="button" variant="outline" className="min-h-14 w-full" disabled={saving} onClick={() => setEditing(false)}>
+          Cancel
+        </Button>
+      </section>
+    );
+  }
+
+  if (mine) {
+    const editable = reviewIsEditable(mine.created_at, now);
+    const posted = formatReviewPostedDate(mine.created_at);
+    const edited = mine.edited_at ? formatReviewPostedDate(mine.edited_at) : "";
+    return (
+      <section className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4" aria-label="Your review">
+        <h2 className="font-display text-2xl text-forest-800">Your review</h2>
+        <JobReference value={referenceNumber} />
+        <StarRating rating={mine.rating} />
+        <p className="text-sm leading-relaxed text-ink-700">{mine.body?.trim() ? mine.body : "No written comment."}</p>
+        <p className="text-sm text-ink-500">{posted}</p>
+        {edited ? <p className="text-sm font-semibold text-forest-800">Edited {edited}</p> : null}
+        <p className="text-sm text-ink-700">{reviewEditWindowNote(editable)}</p>
+        {editable ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-14 w-full"
+            onClick={() => {
+              setDraftRating(String(mine.rating));
+              setDraftBody(mine.body ?? "");
+              setEditing(true);
+            }}
+          >
+            Edit
+          </Button>
+        ) : null}
+      </section>
     );
   }
 
   if (!canSubmit) return null;
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-3" aria-label="Leave a review">
       <h2 className="font-display text-2xl text-forest-800">Review {otherPartyLabel(role)}</h2>
       <JobReference value={referenceNumber} />
       <p className="text-sm text-ink-700">This is a profile review of the other party after mutual Hired. It is not a review of the Priority Property Pros marketplace.</p>
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Rating">
-        {["1", "2", "3", "4", "5"].map((value) => (
-          <button
-            key={value}
-            type="button"
-            aria-pressed={rating === value}
-            className={`min-h-11 min-w-11 rounded-full px-3 text-sm font-semibold ${
-              rating === value ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-forest-800"
-            }`}
-            onClick={() => onRatingChange(value)}
-          >
-            {value}
-          </button>
-        ))}
-      </div>
+      <RatingPicker rating={rating} onChange={onRatingChange} />
       <label className="block">
         <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Review</span>
         <textarea
           aria-label="Review"
-          className="w-full rounded-2xl border border-forest-800/15 px-4 py-3"
+          className="min-h-28 w-full rounded-2xl border border-forest-800/15 px-4 py-3"
           value={body}
-          onChange={(e) => onBodyChange(e.target.value)}
+          onChange={(event) => onBodyChange(event.target.value)}
         />
       </label>
-      <Button type="button" className="min-h-14 w-full" onClick={onSubmit}>
+      <Button type="button" className="min-h-14 w-full" onClick={() => void onSubmit(rating, body)}>
         Submit review
       </Button>
     </section>
