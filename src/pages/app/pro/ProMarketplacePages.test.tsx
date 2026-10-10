@@ -196,7 +196,9 @@ describe("Jobs page after passing a job", () => {
     vi.mocked(marketplaceApi.fetchMyOpportunities).mockResolvedValue([passedRow]);
     renderJobsPage();
     expect(await screen.findByRole("heading", { name: "Jobs" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Open jobs" }));
     expect(screen.getByText("No open jobs")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "History" }));
     expect(await screen.findByText("Passed job")).toBeInTheDocument();
     expect(screen.getByText(/you passed on this job/i)).toBeInTheDocument();
     expect(screen.queryByText("Project not found.")).not.toBeInTheDocument();
@@ -209,6 +211,7 @@ describe("Jobs page after passing a job", () => {
       return [openRow];
     });
     renderJobsPage();
+    await userEvent.click(await screen.findByRole("button", { name: "Open jobs" }));
     expect(await screen.findByText("Kitchen faucet")).toBeInTheDocument();
     expect(screen.getByText(/You'll see the approximate location only/)).toBeInTheDocument();
     const viewJob = screen.getByRole("link", { name: /view job/i });
@@ -222,8 +225,9 @@ describe("Jobs page after passing a job", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: PASS_SKIP_CONFIRM }));
     await waitFor(() => {
       expect(screen.getByText("No open jobs")).toBeInTheDocument();
-      expect(screen.getByText("Passed job")).toBeInTheDocument();
     });
+    await userEvent.click(screen.getByRole("button", { name: "History" }));
+    expect(await screen.findByText("Passed job")).toBeInTheDocument();
     expect(screen.queryByText("Project not found.")).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(marketplaceApi.endContractorJob).toHaveBeenCalledWith("opp-open");

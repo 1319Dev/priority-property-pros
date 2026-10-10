@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { PortfolioExample } from "../../../components/media/PortfolioExample";
 import { PortfolioPhotoEditor } from "../../../components/marketplace/PortfolioPhotoEditor";
@@ -103,6 +103,7 @@ import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../hooks/useToast";
 import { PRO_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
 import { ProNotificationsList } from "./ProEstimatesPages";
+import { HiredJobsPanel } from "../../../components/marketplace/HiredJobsPanel";
 import { InboxHomeCards } from "../../../components/marketplace/InboxHomeCards";
 
 export function ProHomePage() {
@@ -113,7 +114,9 @@ export function ProHomePage() {
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{name}</h1>
-        <p className="mt-3 max-w-xl text-ink-700">
+      </header>
+      <HiredJobsPanel />
+      <p className="max-w-xl text-ink-700">
           Respond to nearby jobs and track estimates. You cannot approve or verify yourself. Browse anonymized
           opportunities first. Pay $4.99 only when you choose to connect — that does not guarantee a hire.
           The $4.99 Connection Fee is non-refundable.
@@ -121,13 +124,12 @@ export function ProHomePage() {
           is never charged.
           {` ${PRO_DASHBOARD_PRICING_NOTE}`}
         </p>
-      </header>
       <div className="flex flex-wrap gap-3">
         <ButtonLink to="/app/pro/profile">Manage Profile</ButtonLink>
         <ButtonLink to="/app/pro/estimates" variant="outline">
           My Estimates
         </ButtonLink>
-        <ButtonLink to="/app/pro/opportunities" variant="outline">
+        <ButtonLink to="/app/pro/opportunities?tab=open" variant="outline">
           Opportunities
         </ButtonLink>
       </div>
@@ -420,7 +422,12 @@ function PortfolioBlock({
   );
 }
 
+type JobsTab = "hired" | "open" | "history";
+
 export function OpportunitiesPage() {
+  const [params] = useSearchParams();
+  const initialTab: JobsTab = params.get("tab") === "open" ? "open" : params.get("tab") === "history" ? "history" : "hired";
+  const [tab, setTab] = useState<JobsTab>(initialTab);
   const { user } = useAuth();
   const [rows, setRows] = useState<OpportunityRow[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -457,11 +464,34 @@ export function OpportunitiesPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Jobs</h1>
-      <p className="text-sm text-ink-700">{JOBS_STREET_HELPER_COPY}</p>
+      <div className="flex flex-wrap gap-2" aria-label="Job lists">
+        {(
+          [
+            ["hired", "Hired jobs"],
+            ["open", "Open jobs"],
+            ["history", "History"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            className={`min-h-11 rounded-full px-4 text-sm font-semibold ${
+              tab === key ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-forest-800"
+            }`}
+            aria-pressed={tab === key}
+            onClick={() => setTab(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {tab === "hired" ? <HiredJobsPanel showHeading={false} /> : null}
+      {tab !== "hired" ? <p className="text-sm text-ink-700">{JOBS_STREET_HELPER_COPY}</p> : null}
       <FormError message={error} />
-      {live.length === 0 ? (
+      {tab === "open" && live.length === 0 ? (
         <EmptyState title="No open jobs" body="Nearby matching jobs will land here. You can browse anonymized opportunities at no charge. At most three paid connections per project. Cancelled jobs leave this list." />
-      ) : (
+      ) : null}
+      {tab === "open" && live.length > 0 ? (
         <ul className="space-y-3">
           {live.map((row) => {
             const showPass = canContractorEndJob({
@@ -495,8 +525,8 @@ export function OpportunitiesPage() {
             );
           })}
         </ul>
-      )}
-      {historyRows.length > 0 ? (
+      ) : null}
+      {tab === "history" && historyRows.length > 0 ? (
         <section className="space-y-3">
           <h2 className="font-display text-2xl text-forest-800">History</h2>
           <ul className="space-y-3">
@@ -702,8 +732,8 @@ export function OpportunityDetailPage() {
                 .finally(() => setBusy(false));
             }}
           />
-          <ButtonLink to={`/app/pro/bookings/${booking.id}`} variant="outline" className="min-h-14 w-full">
-            View booking
+          <ButtonLink to={`/app/pro/jobs/${booking.id}`} className="min-h-14 w-full">
+            Open job
           </ButtonLink>
         </>
       ) : null}

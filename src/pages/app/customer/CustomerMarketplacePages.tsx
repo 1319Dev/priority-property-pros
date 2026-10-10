@@ -29,7 +29,6 @@ import {
   fetchPrivateLocation,
   fetchProjectAnswers,
   fetchProjectBooking,
-  fetchProjectEstimates,
   fetchProjectNotices,
   fetchProjectPhotos,
   fetchServiceQuestions,
@@ -44,12 +43,9 @@ import {
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
 import {
   CANCEL_PROJECT_TOAST,
-  COMPARE_INTRO,
   CUSTOMER_HOME_EMPTY,
   CUSTOMER_HOME_INTRO,
   CUSTOMER_PAYS_DIRECTLY,
-  SELECT_CONFIRM_BODY,
-  SELECTED_BOOKING_COPY,
   STOP_CONNECTIONS_BODY,
   STOP_CONNECTIONS_TOAST,
   STREET_STAYS_PRIVATE,
@@ -67,7 +63,6 @@ import {
   canCustomerDeclineFrom,
   canCustomerSelectFrom,
   customerEstimateStatusLabel,
-  liveCustomerEstimates,
 } from "../../../lib/marketplace/estimateLifecycle";
 import { formatCityStateZip } from "../../../lib/marketplace/location";
 import { formatBudgetRange } from "../../../lib/marketplace/wizardValidation";
@@ -79,9 +74,9 @@ import {
   customerVisibleProjects,
   type CustomerDashboardTab,
 } from "../../../lib/marketplace/statusLabels";
-import { estimateNeedsNewSubmission } from "../../../lib/marketplace/privacy";
 import { useToast } from "../../../hooks/useToast";
 import { InboxHomeCards } from "../../../components/marketplace/InboxHomeCards";
+import { ProjectEstimateComparison } from "../../../components/marketplace/ProjectEstimateComparison";
 
 function bookingByProject(bookings: Booking[]) {
   const map = new Map<string, Booking>();
@@ -382,6 +377,15 @@ export function CustomerProjectDetailPage() {
         <JobReference value={project.reference_number} />
         <p className="mt-3 text-sm text-ink-700">{CUSTOMER_PAYS_DIRECTLY}</p>
       </header>
+      <ProjectEstimateComparison
+        projectId={project.id}
+        projectStatus={project.status}
+        selectedEstimateId={project.selected_estimate_id}
+        selectedBookingId={project.selected_booking_id}
+        onChanged={() => {
+          void reload().catch((err: Error) => setError(err.message));
+        }}
+      />
       {project.status === "CANCELLED" ? (
         <StatusBanner tone="warning" title="Cancelled" body="This project left the marketplace. Estimates are kept in your history." />
       ) : null}
@@ -467,9 +471,12 @@ export function CustomerProjectDetailPage() {
           <p className="text-sm text-ink-500">New connections are closed. Existing unlocked connections were kept.</p>
         ) : null}
         {project.status === "ESTIMATES_AVAILABLE" || project.status === "CONTRACTOR_SELECTED" ? (
-          <ButtonLink to={`/app/customer/projects/${project.id}/compare`} variant="outline" className="min-h-14 w-full">
+          <a
+            href="#compare"
+            className="inline-flex min-h-14 w-full items-center justify-center rounded-full border border-forest-800/20 bg-cream-50 px-5 text-center text-[0.8rem] font-semibold uppercase tracking-[0.12em] text-forest-800"
+          >
             Compare estimates
-          </ButtonLink>
+          </a>
         ) : null}
         {project.selected_booking_id ? (
           <ButtonLink to={`/app/customer/bookings/${project.selected_booking_id}`} variant="outline" className="min-h-14 w-full">
@@ -607,208 +614,35 @@ export function CustomerProjectDetailPage() {
 
 export function CompareEstimatesPage() {
   const { projectId = "" } = useParams();
-  const toast = useToast();
   const [project, setProject] = useState<Project | null>(null);
   const [missing, setMissing] = useState(false);
-  const [rows, setRows] = useState<
-    {
-      estimate: Awaited<ReturnType<typeof fetchProjectEstimates>>[number];
-      items: Awaited<ReturnType<typeof fetchEstimateItems>>;
-      contractor: Awaited<ReturnType<typeof fetchPublicContractor>>;
-      extras: Awaited<ReturnType<typeof fetchPublicContractorExtras>>;
-    }[]
-  >([]);
-  const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
-      const proj = await fetchMyCustomerProject(projectId);
-      setProject(proj);
-      const estimates = liveCustomerEstimates(await fetchProjectEstimates(projectId)).slice(0, 3);
-      const detailed = await Promise.all(
-        estimates.map(async (estimate) => ({
-          estimate,
-          items: await fetchEstimateItems(estimate.id),
-          contractor: await fetchPublicContractor(estimate.contractor_profile_id),
-          extras: await fetchPublicContractorExtras(estimate.contractor_profile_id).catch(() => ({
-            services: [],
-            areas: [],
-            badges: [],
-            portfolio: [],
-          })),
-        })),
-      );
-      setRows(detailed);
-    }
-    void load()
+    void fetchMyCustomerProject(projectId)
+      .then(setProject)
       .catch(() => setMissing(true))
       .finally(() => setLoading(false));
   }, [projectId]);
 
-  async function confirm(estimateId: string) {
-    setBusy(true);
-    setError(null);
-    try {
-      await selectEstimate(projectId, estimateId);
-      toast.push("Pro selected.");
-      setConfirmId(null);
-      const proj = await fetchMyCustomerProject(projectId);
-      setProject(proj);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Selection failed.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function decline(estimateId: string) {
-    setBusy(true);
-    setError(null);
-    try {
-      await declineEstimate(estimateId);
-      toast.push("Estimate declined.");
-      const estimates = liveCustomerEstimates(await fetchProjectEstimates(projectId)).slice(0, 3);
-      const detailed = await Promise.all(
-        estimates.map(async (estimate) => ({
-          estimate,
-          items: await fetchEstimateItems(estimate.id),
-          contractor: await fetchPublicContractor(estimate.contractor_profile_id),
-          extras: await fetchPublicContractorExtras(estimate.contractor_profile_id).catch(() => ({
-            services: [],
-            areas: [],
-            badges: [],
-            portfolio: [],
-          })),
-        })),
-      );
-      setRows(detailed);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Decline failed.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   if (loading) return <LoadingState label="Loading estimates" />;
-  if (missing) {
+  if (missing || !project) {
     return <NotFoundState title="Project not found" body="You can only compare estimates on your own projects." />;
   }
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Compare estimates</h1>
-      <JobReference value={project?.reference_number} />
-      <p className="text-ink-700">{COMPARE_INTRO} {CUSTOMER_PAYS_DIRECTLY}</p>
-      <FormError message={error} />
-      {rows.length === 0 ? <EmptyState title="No estimates yet" body="Submitted estimates will appear here in the order they arrived." /> : null}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {rows.map(({ estimate, items, contractor, extras }) => {
-          const status = estimate.status as EstimateStatus;
-          const outOfDate = estimateNeedsNewSubmission(status);
-          const openForChoice = project?.status !== "CONTRACTOR_SELECTED" && project?.status !== "CANCELLED";
-          const selectable = canCustomerSelectFrom(status) && openForChoice;
-          const declinable = canCustomerDeclineFrom(status) && openForChoice;
-          return (
-            <article key={estimate.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 p-5">
-              <div className="flex min-w-0 items-center gap-3">
-                <ContractorAvatar size={56} />
-                <h2 className="min-w-0 break-words font-display text-2xl text-forest-800">{contractor?.display_label || "Local pro"}</h2>
-              </div>
-              <p className="text-sm text-ink-500">
-                {outOfDate ? "Needs a new estimate" : customerEstimateStatusLabel(status)}
-              </p>
-              <p className="text-sm text-ink-700">{contractor?.short_description || "Independent contractor"}</p>
-              {extras.badges.length > 0 ? (
-                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">
-                  {extras.badges.map((badge) => badge.label).join(" · ")}
-                </p>
-              ) : null}
-              <p className="mt-1 text-xs text-ink-500">{STREET_STAYS_PRIVATE}</p>
-              {outOfDate ? (
-                <StatusBanner
-                  tone="warning"
-                  title="This estimate is out of date"
-                  body="The job details changed after this price was sent. It does not cover the current scope until the pro sends a new estimate."
-                />
-              ) : null}
-              <p className="mt-3 text-lg font-semibold">{formatUsdFromCents(estimate.total_cents)}</p>
-              <ul className="mt-3 space-y-1 text-sm">
-                {items.map((item) => (
-                  <li key={item.id}>
-                    {ESTIMATE_ITEM_KIND_LABELS[(item.kind as EstimateItemKind) ?? "CUSTOM"]}: {item.label} · {item.quantity}{" "}
-                    {item.unit_label || "each"} × {formatUsdFromCents(item.unit_cents)} = {formatUsdFromCents(item.line_total_cents)}
-                  </li>
-                ))}
-              </ul>
-              <dl className="mt-3 space-y-1 text-sm text-ink-700">
-                <div>
-                  <dt className="inline font-semibold">Duration: </dt>
-                  <dd className="inline">{estimate.duration_hours != null ? `${estimate.duration_hours} hours` : "Not stated"}</dd>
-                </div>
-                <div>
-                  <dt className="inline font-semibold">Available from: </dt>
-                  <dd className="inline">{estimate.available_from ?? "Not stated"}</dd>
-                </div>
-                <div>
-                  <dt className="inline font-semibold">Expires: </dt>
-                  <dd className="inline">{estimate.valid_until ?? "Not stated"}</dd>
-                </div>
-              </dl>
-              {estimate.notes ? <p className="mt-3 text-sm">{estimate.notes}</p> : null}
-              {project?.status === "CONTRACTOR_SELECTED" && project.selected_estimate_id === estimate.id ? (
-                <div className="mt-4 space-y-2">
-                  <p className="font-semibold text-forest-800">{SELECTED_BOOKING_COPY}</p>
-                  {project.selected_booking_id ? (
-                    <ButtonLink to={`/app/customer/bookings/${project.selected_booking_id}`} className="min-h-14 w-full">
-                      View booking
-                    </ButtonLink>
-                  ) : null}
-                </div>
-              ) : project?.status === "CONTRACTOR_SELECTED" ? (
-                <p className="mt-4 text-sm text-ink-500">Not selected</p>
-              ) : outOfDate ? (
-                <p className="mt-4 text-sm text-ink-500">Waiting on a new estimate from this pro.</p>
-              ) : (
-                <div className="mt-4 space-y-2">
-                  <ButtonLink
-                    to={`/app/customer/projects/${projectId}/estimates/${estimate.id}`}
-                    variant="outline"
-                    className="min-h-14 w-full"
-                  >
-                    View estimate
-                  </ButtonLink>
-                  {selectable && confirmId === estimate.id ? (
-                    <>
-                      <p className="text-sm">
-                        {SELECT_CONFIRM_BODY}
-                      </p>
-                      <Button type="button" className="min-h-14 w-full" disabled={busy} onClick={() => void confirm(estimate.id)}>
-                        Confirm this pro
-                      </Button>
-                      <Button type="button" variant="ghost" className="min-h-12 w-full" onClick={() => setConfirmId(null)}>
-                        Keep comparing
-                      </Button>
-                    </>
-                  ) : null}
-                  {selectable && confirmId !== estimate.id ? (
-                    <Button type="button" className="min-h-14 w-full" onClick={() => setConfirmId(estimate.id)}>
-                      Select / Hire
-                    </Button>
-                  ) : null}
-                  {declinable ? (
-                    <Button type="button" variant="outline" className="min-h-12 w-full" disabled={busy} onClick={() => void decline(estimate.id)}>
-                      Decline
-                    </Button>
-                  ) : null}
-                </div>
-              )}
-            </article>
-          );
-        })}
-      </div>
+      <JobReference value={project.reference_number} />
+      <ProjectEstimateComparison
+        projectId={project.id}
+        projectStatus={project.status}
+        selectedEstimateId={project.selected_estimate_id}
+        selectedBookingId={project.selected_booking_id}
+        onChanged={() => {
+          void fetchMyCustomerProject(projectId).then(setProject).catch(() => setMissing(true));
+        }}
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { useAuth } from "../../../lib/auth/useAuth";
 import { deleteEstimate, fetchMyEstimates, fetchMyNotifications, markNotificationRead, type ContractorEstimateListItem } from "../../../lib/marketplace/api";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { messageNotificationHref } from "../../../lib/marketplace/messaging";
+import { notificationPath } from "../../../lib/notifications/policy";
 import {
   canDeleteFrom,
   contractorEstimateStatusDetail,
@@ -191,7 +192,12 @@ export function ProNotificationsList() {
           const messageHref =
             row.kind === "message.received" || row.kind === "contact.shared"
               ? messageNotificationHref("contractor", row.payload)
-              : null;
+              : notificationPath({
+                  kind: row.kind,
+                  entityId: row.entity_id,
+                  payload: row.payload ?? {},
+                  accountType: "CONTRACTOR",
+                });
           return (
           <li key={row.id}>
             {messageHref ? (

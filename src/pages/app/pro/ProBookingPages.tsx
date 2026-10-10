@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { ChangeOrderPanel } from "../../../components/marketplace/ChangeOrderPanel";
@@ -17,6 +17,8 @@ import {
   fetchBookingReviews,
   fetchChangeOrders,
   fetchContractorProfileByUser,
+  fetchEstimate,
+  fetchEstimateItems,
   fetchMyBookings,
   fetchProject,
   fetchProjectSummaries,
@@ -27,9 +29,13 @@ import {
 } from "../../../lib/marketplace/api";
 import { BOOKING_STATUS_LABELS, contactAccessRowAllowsReveal, paymentsComingSoonCopy, privateContactLockedCopy } from "../../../lib/marketplace/bookings";
 import { SHARE_CONTACT_WAITING_COPY, jobContactWasShared } from "../../../lib/marketplace/contactShare";
+import { JobThreadPanel } from "../../../components/marketplace/JobThreadPanel";
+import { HiredJobStatusChip } from "../../../components/marketplace/HiredJobsSection";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
+import { customerFirstNameFromLabel, hiredJobChip, hiredJobNextStep, hiredJobPath, isSafeRecordId } from "../../../lib/marketplace/hiredJobs";
 import { isMutuallyHired, bookingListHiredLabel } from "../../../lib/marketplace/hired";
-import type { Booking, BookingContactAccess, BookingReview, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
+import { listMyMessageThreads } from "../../../lib/marketplace/messagingApi";
+import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type BookingContactAccess, type BookingReview, type BookingStatus, type ChangeOrder, type EstimateItemKind } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
 import { HiredConfirmationCard, ProfileReviewForm } from "../../../components/marketplace/HiredConfirmation";
 
@@ -128,7 +134,7 @@ export function ProBookingsPage() {
             });
             return (
             <li key={row.id}>
-              <Link to={`/app/pro/bookings/${row.id}`} className="block rounded-3xl border border-forest-800/10 px-5 py-4">
+              <Link to={hiredJobPath(row.id)} className="block rounded-3xl border border-forest-800/10 px-5 py-4">
                 <p className="font-semibold text-forest-800">{titles[row.project_id] || "Project"}</p>
                 <JobReference value={references[row.project_id]} copy={false} />
                 <p className="text-sm text-ink-500">{hiredLabel ?? statusLabel(row.status)}</p>
@@ -160,6 +166,9 @@ export function ProBookingDetailPage() {
   const [rating, setRating] = useState("5");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const [customerLabel, setCustomerLabel] = useState("Customer");
+  const [estimateLines, setEstimateLines] = useState<Array<{ id: string; label: string }>>([]);
+  const [estimateMeta, setEstimateMeta] = useState<{ total: number; notes: string | null; timeline: string; start: string } | null>(null);
 
   async function reload() {
     const row = (await fetchBooking(bookingId)) as Booking;
@@ -170,6 +179,28 @@ export function ProBookingDetailPage() {
     setCityZip([project.city, project.state, project.zip_code].filter(Boolean).join(", "));
     setOrders((await fetchChangeOrders(bookingId)) as ChangeOrder[]);
     setReviews(await fetchBookingReviews(bookingId));
+    const threads = await listMyMessageThreads().catch(() => []);
+    const thread = threads.find((item) => item.project_id === row.project_id);
+    setCustomerLabel(customerFirstNameFromLabel(thread?.other_party_label));
+    const estimate = await fetchEstimate(row.estimate_id).catch(() => null);
+    if (estimate && estimate.project_id === row.project_id) {
+      const items = await fetchEstimateItems(estimate.id).catch(() => []);
+      setEstimateMeta({
+        total: estimate.total_cents,
+        notes: estimate.notes,
+        timeline: estimate.duration_hours != null ? `${estimate.duration_hours} hours` : "Not stated",
+        start: estimate.available_from ?? "Not stated",
+      });
+      setEstimateLines(
+        items.map((item) => ({
+          id: item.id,
+          label: `${ESTIMATE_ITEM_KIND_LABELS[(item.kind as EstimateItemKind) ?? "CUSTOM"]}: ${item.label}`,
+        })),
+      );
+    } else {
+      setEstimateMeta(null);
+      setEstimateLines([]);
+    }
     const access = await fetchBookingContactAccess(row.id).catch(() => null);
     setContactAccess(access);
     if (contactAccessRowAllowsReveal(access)) {
@@ -200,12 +231,29 @@ export function ProBookingDetailPage() {
 
   if (!booking) return error ? <p className="text-ink-500">{error}</p> : <BrandLoader layout="section" />;
   const pending = booking.status === "PENDING" || booking.status === "AWAITING_PAYMENT";
+  const chip = hiredJobChip({
+    bookingStatus: booking.status,
+    customerHiredAt: booking.customer_hired_at,
+    contractorHiredAt: booking.contractor_hired_at,
+  });
+  const pendingOrders = orders.filter((order) => order.status === "PROPOSED").length;
+  const nextStep = hiredJobNextStep({
+    bookingStatus: booking.status,
+    customerHiredAt: booking.customer_hired_at,
+    contractorHiredAt: booking.contractor_hired_at,
+    pendingChangeOrders: pendingOrders,
+  });
+  const cityOnly = cityZip.split(",")[0]?.trim() || "City not listed";
 
   return (
     <div className="space-y-6">
+      {chip ? <HiredJobStatusChip chip={chip} /> : <p className="text-sm text-ink-500">{statusLabel(booking.status)}</p>}
       <h1 className="font-display text-4xl font-semibold text-forest-800">{title}</h1>
       <JobReference value={referenceNumber} />
-      <p className="text-sm text-ink-500">{statusLabel(booking.status)}</p>
+      <p className="text-sm text-ink-700">
+        {customerLabel} · {cityOnly}
+      </p>
+      <p className="text-sm font-semibold text-forest-800">Next: {nextStep}</p>
       <FormError message={error} />
       {pending ? <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm font-semibold">{paymentsComingSoonCopy()}</p> : null}
       <HiredConfirmationCard
@@ -233,6 +281,21 @@ export function ProBookingDetailPage() {
           PPP does not take a percentage of this job. Project payment is between you and the customer. {paymentsComingSoonCopy()}
         </p>
       </section>
+      {estimateMeta ? (
+        <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm" aria-label="Estimate">
+          <h2 className="font-display text-2xl text-forest-800">Estimate</h2>
+          <p className="mt-2 text-lg font-semibold text-forest-800">{formatUsdFromCents(estimateMeta.total)}</p>
+          <ul className="mt-3 space-y-1">
+            {estimateLines.map((item) => (
+              <li key={item.id}>{item.label}</li>
+            ))}
+          </ul>
+          <p className="mt-3">Timeline: {estimateMeta.timeline}</p>
+          <p>Start: {estimateMeta.start}</p>
+          {estimateMeta.notes ? <p className="mt-3">{estimateMeta.notes}</p> : null}
+        </section>
+      ) : null}
+      <JobThreadPanel projectId={booking.project_id} contractorProfileId={booking.contractor_profile_id} customerLabel={customerLabel} />
       <ProjectContactSection
         entitled={contactAccessRowAllowsReveal(contactAccess)}
         shared={contactShared}
@@ -300,4 +363,55 @@ export function ProBookingDetailPage() {
       />
     </div>
   );
+}
+
+export function ProBookingRedirect() {
+  const { bookingId = "" } = useParams();
+  if (!isSafeRecordId(bookingId)) return <Navigate to="/app/pro/opportunities?tab=hired" replace />;
+  return <Navigate to={hiredJobPath(bookingId)} replace />;
+}
+
+export function ProHiredJobByProjectPage() {
+  const { projectId = "" } = useParams();
+  const { user } = useAuth();
+  const [target, setTarget] = useState<string | null>(null);
+  const [missing, setMissing] = useState(false);
+
+  useEffect(() => {
+    if (!user || !isSafeRecordId(projectId)) {
+      setMissing(true);
+      return;
+    }
+    let stop = false;
+    void fetchContractorProfileByUser(user.id)
+      .then((profile) => {
+        if (!profile) throw new Error("Contractor profile missing.");
+        return fetchMyBookings("contractor", profile.id);
+      })
+      .then((rows) => {
+        if (stop) return;
+        const match = (rows as Booking[]).find(
+          (row) => row.project_id === projectId && hiredJobChip({ bookingStatus: row.status, customerHiredAt: row.customer_hired_at, contractorHiredAt: row.contractor_hired_at }),
+        );
+        if (match && isSafeRecordId(match.id)) setTarget(hiredJobPath(match.id));
+        else setMissing(true);
+      })
+      .catch(() => {
+        if (!stop) setMissing(true);
+      });
+    return () => {
+      stop = true;
+    };
+  }, [projectId, user]);
+
+  if (target) return <Navigate to={target} replace />;
+  if (missing) {
+    return (
+      <EmptyState
+        title="This hired job is not on your list"
+        body="Open Hired jobs to see work a customer selected you for."
+      />
+    );
+  }
+  return <BrandLoader layout="section" label="Opening job" />;
 }

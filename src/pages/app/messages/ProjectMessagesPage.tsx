@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { ContactSharePanel } from "../../../components/marketplace/ContactSharePanel";
@@ -15,6 +15,7 @@ import {
   sendProjectMessage,
   subscribeToProjectMessages,
 } from "../../../lib/marketplace/messagingApi";
+import { hiredJobPath, isSafeRecordId } from "../../../lib/marketplace/hiredJobs";
 import {
   MESSAGES_EMPTY_BODY,
   MESSAGES_EMPTY_TITLE,
@@ -233,6 +234,11 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
     void onSend();
   }
 
+  const hiredBookingId = selected?.booking_id;
+  if (role === "contractor" && threadRoute && isSafeRecordId(hiredBookingId)) {
+    return <Navigate to={hiredJobPath(hiredBookingId)} replace />;
+  }
+
   const place = selected ? threadPlaceLabel(selected) : null;
   const otherName = selected?.other_party_label || selected?.contractor_label || (role === "customer" ? "Connected pro" : "Customer");
   const contextHref = selected ? threadContextHref(role, selected) : null;
@@ -256,6 +262,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
             const href = messageNotificationHref(role, {
               project_id: thread.project_id,
               contractor_profile_id: thread.contractor_profile_id,
+              booking_id: thread.booking_id,
             });
             return (
               <li key={`${thread.project_id}:${thread.contractor_profile_id}`}>
@@ -309,7 +316,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
               {place ? <p className="text-sm text-ink-500">{place}</p> : null}
               {contextHref ? (
                 <Link to={contextHref} className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-forest-800 underline">
-                  {selected?.booking_id ? "View booking" : "View project"}
+                  {selected?.booking_id ? (role === "contractor" ? "Open job" : "View booking") : "View project"}
                 </Link>
               ) : null}
               <p className="mt-2 text-sm text-ink-500">This thread does not show phone, email, or street.</p>
