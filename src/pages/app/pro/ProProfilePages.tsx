@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { ContractorAvatar } from "../../../components/media/ContractorAvatar";
 import { PortfolioExample } from "../../../components/media/PortfolioExample";
+import { PortfolioPhotoEditor } from "../../../components/marketplace/PortfolioPhotoEditor";
 import { Button, ButtonLink } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/Input";
 import { HumanStatus, StatusBanner } from "../../../components/ui/StatusBanner";
@@ -11,11 +12,12 @@ import {
   addCredential,
   addPortfolioItem,
   deletePortfolioItem,
+  fetchPortfolioEditorRows,
+  updatePortfolioItem,
   fetchContractorAreas,
   fetchContractorProfileByUser,
   fetchContractorServices,
   fetchCredentials,
-  fetchPortfolio,
   fetchServiceCategories,
   setContractorServices,
   signedContractorDocUrl,
@@ -634,62 +636,47 @@ function PortfolioManage({
   onEdit: () => void;
   onError: (message: string) => void;
 }) {
-  const [rows, setRows] = useState<Awaited<ReturnType<typeof fetchPortfolio>>>([]);
+  const [rows, setRows] = useState<Awaited<ReturnType<typeof fetchPortfolioEditorRows>>>([]);
+  function reload() {
+    return fetchPortfolioEditorRows(contractorId).then(setRows);
+  }
   useEffect(() => {
-    void fetchPortfolio(contractorId).then(setRows).catch((err: Error) => onError(err.message));
+    void reload().catch((err: Error) => onError(err.message));
+    // reload closes over contractorId; onError is stable enough for this screen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contractorId, onError]);
   return (
     <SectionCard title="Portfolio" actionLabel="Manage Photos" editing={editing} onEdit={onEdit}>
-      <p className="text-sm text-ink-500">
-        {rows.length} photo(s). New uploads stay private until a human marks them public-safe. Original filenames are
-        not shown on public browse.
-      </p>
       {rows.length === 0 ? <PortfolioExample /> : null}
-      {editing ? (
-        <div className="mt-3 space-y-2">
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            aria-label="Add portfolio photo"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              if (!file) return;
-              void uploadContractorDoc({ userId, folder: "portfolio", file })
-                .then((path) =>
-                  addPortfolioItem({
-                    contractor_profile_id: contractorId,
-                    title: "Portfolio photo",
-                    storage_path: path,
-                    privacy_state: "REVIEW_REQUIRED",
-                  }),
-                )
-                .then(() => fetchPortfolio(contractorId))
-                .then(setRows)
-                .catch((err: Error) => onError(err.message));
-            }}
-          />
-          <ul className="space-y-2 text-sm">
-            {rows.map((row) => (
-              <li key={row.id} className="flex items-center justify-between gap-3 rounded-2xl bg-cream-100 px-3 py-2">
-                <span>{row.title || "Photo"}</span>
-                <button
-                  type="button"
-                  className="min-h-11 font-semibold text-danger-600"
-                  onClick={() =>
-                    void deletePortfolioItem(row.id)
-                      .then(() => fetchPortfolio(contractorId))
-                      .then(setRows)
-                      .catch((err: Error) => onError(err.message))
-                  }
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      <PortfolioPhotoEditor
+        rows={rows}
+        editing={editing}
+        onAddFile={(file) => {
+          void uploadContractorDoc({ userId, folder: "portfolio", file })
+            .then((path) =>
+              addPortfolioItem({
+                contractor_profile_id: contractorId,
+                title: "Portfolio photo",
+                storage_path: path,
+              }),
+            )
+            .then(() => reload())
+            .catch((err: Error) => onError(err.message));
+        }}
+        onRemove={(id) => {
+          void deletePortfolioItem(id)
+            .then(() => reload())
+            .catch((err: Error) => onError(err.message));
+        }}
+        onSaveCaption={(id, title) => {
+          setRows((current) =>
+            current.map((row) => (row.id === id ? { ...row, title, privacy_state: "REVIEW_REQUIRED" } : row)),
+          );
+          void updatePortfolioItem(id, { title })
+            .then(() => reload())
+            .catch((err: Error) => onError(err.message));
+        }}
+      />
     </SectionCard>
   );
 }

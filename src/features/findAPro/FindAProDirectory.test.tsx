@@ -130,6 +130,7 @@ describe("Contractor storefront", () => {
       />,
     );
     expect(screen.getByText("Reset a cedar panel")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Portfolio" }).closest("section")?.querySelector("img")).toBeNull();
     expect(screen.getAllByText(VERIFIED_PROJECT_LABEL)).toHaveLength(1);
     expect(screen.getByText(/no qualifying relationship/i)).toBeInTheDocument();
   });

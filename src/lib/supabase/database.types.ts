@@ -1061,6 +1061,26 @@ export type Database = {
         Args: { p_contractor_profile_id: string; p_message: string };
         Returns: Json;
       };
+      admin_set_portfolio_privacy: {
+        Args: {
+          p_item_id: string;
+          p_state: "PUBLIC_SAFE" | "PRIVATE" | "REVIEW_REQUIRED";
+          p_note?: string | null;
+        };
+        Returns: Json;
+      };
+      admin_list_portfolio_review_queue: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          contractor_profile_id: string;
+          contractor_label: string;
+          title: string;
+          description: string | null;
+          storage_path: string;
+          created_at: string;
+        }[];
+      };
       list_public_directory_contractors: {
         Args: Record<string, never>;
         Returns: {

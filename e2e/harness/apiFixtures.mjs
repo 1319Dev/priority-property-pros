@@ -294,3 +294,48 @@ export async function adminRejectContractor() {
 export async function adminRequestContractorInfo() {
   return approval;
 }
+export async function adminListPortfolioReviewQueue() {
+  return [
+    {
+      id: "photo-1",
+      contractor_profile_id: "pro-1",
+      contractor_label: "Northside Fence Co.",
+      title: "Cedar fence repair",
+      description: "Replaced a broken panel on a side yard.",
+      storage_path: "user/portfolio/cedar.jpg",
+      created_at: "2026-10-01T15:00:00.000Z",
+    },
+  ];
+}
+export async function adminSetPortfolioPrivacy() {
+  return { id: "photo-1", privacy_state: "PUBLIC_SAFE" };
+}
+export async function signedContractorDocUrl() {
+  return "/images/marketing/official-portfolio-deck-360w.jpg";
+}
+export async function fetchPortfolioEditorRows() {
+  return [
+    {
+      id: "photo-1",
+      contractor_profile_id: "pro-1",
+      title: "Cedar fence repair",
+      description: null,
+      storage_path: "user/portfolio/cedar.jpg",
+      sort_order: 0,
+      privacy_state: "REVIEW_REQUIRED",
+      imageUrl: "/images/marketing/official-portfolio-deck-360w.jpg",
+    },
+  ];
+}
+export async function addPortfolioItem() {
+  return undefined;
+}
+export async function updatePortfolioItem() {
+  return undefined;
+}
+export async function deletePortfolioItem() {
+  return undefined;
+}
+export async function uploadContractorDoc() {
+  return "user/portfolio/new.jpg";
+}
