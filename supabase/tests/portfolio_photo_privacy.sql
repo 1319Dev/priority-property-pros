@@ -777,3 +777,139 @@ BEGIN
   END IF;
 END
 $$;
+
+-- 14. Re-applying the migration leaves existing portfolio rows and storage objects unchanged.
+-- Models the two production REVIEW_REQUIRED photos: same privacy_state, same paths, no deletes.
+BEGIN;
+INSERT INTO public.contractor_portfolio (
+  id, contractor_profile_id, title, description, storage_path, privacy_state, sort_order, created_at, updated_at
+)
+VALUES
+  (
+    'a14a14a1-14a1-44a1-84a1-14a114a114a1',
+    '11111111-1111-4111-8111-111111111111',
+    'Existing porch',
+    'Waiting for review',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/existing-1.jpg',
+    'REVIEW_REQUIRED',
+    8,
+    '2026-09-01 12:00:00+00',
+    '2026-09-02 12:00:00+00'
+  ),
+  (
+    'b14b14b1-14b1-44b1-84b1-14b114b114b1',
+    '11111111-1111-4111-8111-111111111111',
+    'Existing gate',
+    'Also waiting',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/existing-2.jpg',
+    'REVIEW_REQUIRED',
+    9,
+    '2026-09-03 12:00:00+00',
+    '2026-09-04 12:00:00+00'
+  );
+INSERT INTO storage.objects (id, bucket_id, name, owner, created_at, updated_at, metadata)
+VALUES
+  (
+    'c14c14c1-14c1-44c1-84c1-14c114c114c1',
+    'contractor-docs',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/existing-1.jpg',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    '2026-09-01 12:00:00+00',
+    '2026-09-01 12:00:00+00',
+    '{"size": 1200}'::jsonb
+  ),
+  (
+    'd14d14d1-14d1-44d1-84d1-14d114d114d1',
+    'contractor-docs',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/existing-2.jpg',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    '2026-09-03 12:00:00+00',
+    '2026-09-03 12:00:00+00',
+    '{"size": 1400}'::jsonb
+  );
+CREATE TEMP TABLE portfolio_snapshot ON COMMIT DROP AS
+SELECT id, contractor_profile_id, title, description, storage_path, sort_order,
+       privacy_state::text AS privacy_state, created_at, updated_at
+FROM public.contractor_portfolio;
+CREATE TEMP TABLE storage_snapshot ON COMMIT DROP AS
+SELECT id, bucket_id, name, owner, created_at, updated_at, metadata
+FROM storage.objects;
+\i supabase/migrations/20261010001728_portfolio_photo_privacy.sql
+DO $$
+DECLARE
+  n integer;
+  v_states text;
+BEGIN
+  SELECT count(*) INTO n
+  FROM (
+    SELECT * FROM portfolio_snapshot
+    EXCEPT
+    SELECT id, contractor_profile_id, title, description, storage_path, sort_order,
+           privacy_state::text, created_at, updated_at
+    FROM public.contractor_portfolio
+  ) changed;
+  IF n <> 0 THEN
+    RAISE EXCEPTION '14. re-applying the migration changed % portfolio row(s)', n;
+  END IF;
+  SELECT count(*) INTO n
+  FROM (
+    SELECT id, contractor_profile_id, title, description, storage_path, sort_order,
+           privacy_state::text, created_at, updated_at
+    FROM public.contractor_portfolio
+    EXCEPT
+    SELECT * FROM portfolio_snapshot
+  ) added;
+  IF n <> 0 THEN
+    RAISE EXCEPTION '14. re-applying the migration added % portfolio row(s)', n;
+  END IF;
+  SELECT count(*) INTO n
+  FROM (
+    SELECT * FROM storage_snapshot
+    EXCEPT
+    SELECT id, bucket_id, name, owner, created_at, updated_at, metadata
+    FROM storage.objects
+  ) changed_objects;
+  IF n <> 0 THEN
+    RAISE EXCEPTION '14. re-applying the migration changed % storage object(s)', n;
+  END IF;
+  SELECT count(*) INTO n
+  FROM (
+    SELECT id, bucket_id, name, owner, created_at, updated_at, metadata
+    FROM storage.objects
+    EXCEPT
+    SELECT * FROM storage_snapshot
+  ) added_objects;
+  IF n <> 0 THEN
+    RAISE EXCEPTION '14. re-applying the migration added % storage object(s)', n;
+  END IF;
+  SELECT string_agg(privacy_state::text, ',' ORDER BY id) INTO v_states
+  FROM public.contractor_portfolio
+  WHERE id IN (
+    'a14a14a1-14a1-44a1-84a1-14a114a114a1',
+    'b14b14b1-14b1-44b1-84b1-14b114b114b1'
+  );
+  IF v_states IS DISTINCT FROM 'REVIEW_REQUIRED,REVIEW_REQUIRED' THEN
+    RAISE EXCEPTION '14. existing review rows are now %', coalesce(v_states, 'NULL');
+  END IF;
+  SELECT count(*) INTO n
+  FROM storage.objects
+  WHERE bucket_id = 'contractor-docs'
+    AND name IN (
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/existing-1.jpg',
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/existing-2.jpg'
+    );
+  IF n <> 2 THEN
+    RAISE EXCEPTION '14. expected both uploaded objects, found %', n;
+  END IF;
+  SELECT count(*) INTO n
+  FROM public.audit_logs
+  WHERE entity_id IN (
+    'a14a14a1-14a1-44a1-84a1-14a114a114a1',
+    'b14b14b1-14b1-44b1-84b1-14b114b114b1'
+  );
+  IF n <> 0 THEN
+    RAISE EXCEPTION '14. migration wrote % audit row(s) for existing photos', n;
+  END IF;
+END
+$$;
+ROLLBACK;

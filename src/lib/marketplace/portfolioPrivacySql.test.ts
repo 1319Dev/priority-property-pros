@@ -30,6 +30,14 @@ describe("portfolio photo privacy migration", () => {
     expect(migration).not.toMatch(/payments_live|stripe/i);
     expect(migration).not.toMatch(/DROP VIEW/i);
     expect(migration).not.toMatch(/contractor_public_portfolio/);
+    expect(migration).not.toMatch(/DELETE\s+FROM\s+storage\.objects/i);
+    expect(migration).not.toMatch(/DELETE\s+FROM\s+public\.contractor_portfolio/i);
+    expect(migration).not.toMatch(/INSERT\s+INTO\s+(storage\.objects|public\.contractor_portfolio)/i);
+    expect(migration).not.toMatch(/UPDATE\s+storage\.objects/i);
+    expect(migration).not.toMatch(/TRUNCATE/i);
+    expect(migration.match(/UPDATE\s+public\.contractor_portfolio/gi)).toEqual([
+      "UPDATE public.contractor_portfolio",
+    ]);
   });
 
   it("keeps privacy_state out of the portfolio insert and caption update", () => {

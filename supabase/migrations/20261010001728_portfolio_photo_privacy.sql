@@ -19,6 +19,12 @@
 -- permission errors before the trigger could force or explain the result.
 -- UPDATE on contractor_profile_id is revoked; the trigger also rejects that
 -- change for any JWT caller that still holds the column privilege.
+--
+-- Existing data: applying this file does not INSERT, UPDATE, or DELETE
+-- public.contractor_portfolio, and it does not INSERT, UPDATE, or DELETE
+-- storage.objects. The two production REVIEW_REQUIRED portfolio rows and their
+-- uploaded files stay as they are, including privacy_state. The UPDATE inside
+-- admin_set_portfolio_privacy runs only when an admin calls that RPC later.
 
 CREATE OR REPLACE FUNCTION public.contractor_portfolio_owner_profile_id(p_contractor_profile_id uuid)
 RETURNS uuid
