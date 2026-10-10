@@ -1,24 +1,34 @@
 -- Portfolio photo privacy.
--- Closes three holes without changing payments, matching, contact unlock, or older migrations:
---   1. Contractors could insert or update privacy_state to PUBLIC_SAFE.
---   2. Any signed-in user could read an approved contractor's portfolio objects,
---      regardless of privacy_state. Signed URLs are minted in the browser, so
---      storage SELECT is the only gate.
---   3. An owner could replace storage_path, overwrite the bytes, or delete the
---      object and insert a new one with the same name, skipping another review.
+-- Closes the live self-approval hole without changing payments, matching,
+-- contact unlock, or older migrations:
+--   1. A contractor can INSERT or UPDATE privacy_state to PUBLIC_SAFE, and that
+--      publishes the caption on Find a Pro. This trigger forces REVIEW_REQUIRED
+--      on insert and rejects a direct privacy change.
+--   2. In production today, other signed-in users cannot read portfolio files.
+--      The old storage SELECT policy looks at contractor_profiles, and that
+--      table's RLS hides the contractor row from them, so the EXISTS check
+--      fails. This migration intentionally changes that: every signed-in user
+--      can read a PUBLIC_SAFE portfolio object when the contractor is APPROVED
+--      and the profile is ACTIVE. Signed URLs are minted in the browser, so
+--      storage SELECT is that gate.
+--   3. After a photo is PUBLIC_SAFE, a non-admin must not land new bytes on
+--      that object name. Insert covers copy and upsert. Update covers in-place
+--      edits and move/rename (an UPDATE of objects.name). USING locks the old
+--      name. WITH CHECK locks the new name, so deleting the approved file and
+--      renaming another object onto it is denied. Delete of the object stays
+--      allowed. The portfolio row is unchanged, so the name stays locked.
 --
 -- Non-admin JWT callers are auth.uid() IS NOT NULL AND NOT is_admin().
 -- Service role (no JWT sub) and admins are unchanged.
 --
--- Column privileges: the app insert sends contractor_profile_id and does not
--- send privacy_state. INSERT on contractor_profile_id stays granted because the
--- column is NOT NULL and has no session default. INSERT/UPDATE on privacy_state
--- stay granted so a client that still names the column reaches this trigger:
--- INSERT is forced to REVIEW_REQUIRED, and a direct UPDATE raises a friendly
--- error. Revoking those column privileges would turn the same statements into
--- permission errors before the trigger could force or explain the result.
--- UPDATE on contractor_profile_id is revoked; the trigger also rejects that
--- change for any JWT caller that still holds the column privilege.
+-- Column privileges stay table-level, matching production. A column-level
+-- revoke of contractor_profile_id would not remove UPDATE, because UPDATE is
+-- already granted on the whole table. A column GRANT would add
+-- pg_attribute.attacl entries production does not have. The trigger rejects a
+-- change of contractor_profile_id and a direct change of privacy_state. INSERT
+-- still sends contractor_profile_id. A client that still names privacy_state
+-- reaches this trigger: INSERT is forced to REVIEW_REQUIRED, and a direct
+-- UPDATE raises a friendly error.
 --
 -- Existing data: applying this file does not INSERT, UPDATE, or DELETE
 -- public.contractor_portfolio, and it does not INSERT, UPDATE, or DELETE
@@ -94,8 +104,6 @@ CREATE TRIGGER trg_enforce_contractor_portfolio_privacy
   BEFORE INSERT OR UPDATE ON public.contractor_portfolio
   FOR EACH ROW
   EXECUTE FUNCTION public.enforce_contractor_portfolio_privacy();
-
-REVOKE UPDATE (contractor_profile_id) ON TABLE public.contractor_portfolio FROM authenticated;
 
 -- Partial index for the storage-policy lookups below. Both helpers filter
 -- privacy_state = PUBLIC_SAFE and compare storage_path to the object name.
@@ -182,6 +190,9 @@ CREATE POLICY contractor_docs_storage_insert
     )
   );
 
+-- USING sees the old objects.name. WITH CHECK sees the name after the update,
+-- which is what storage move writes. Both must reject a PUBLIC_SAFE portfolio
+-- name for a non-admin. Copy and upsert are inserts and use the insert policy.
 DROP POLICY IF EXISTS contractor_docs_storage_update ON storage.objects;
 CREATE POLICY contractor_docs_storage_update
   ON storage.objects FOR UPDATE TO authenticated
@@ -197,6 +208,11 @@ CREATE POLICY contractor_docs_storage_update
   WITH CHECK (
     bucket_id = 'contractor-docs'
     AND (storage.foldername(name))[1] = auth.uid()::text
+    AND (
+      public.is_admin()
+      OR (storage.foldername(name))[2] IS DISTINCT FROM 'portfolio'
+      OR NOT public.portfolio_storage_is_public_safe(name)
+    )
   );
 
 CREATE OR REPLACE FUNCTION public.admin_set_portfolio_privacy(

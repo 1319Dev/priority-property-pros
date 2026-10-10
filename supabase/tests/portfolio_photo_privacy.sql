@@ -929,11 +929,190 @@ END
 $$;
 ROLLBACK;
 
+-- 17. A move/rename (UPDATE of objects.name), a copy (INSERT), and an upsert
+--     cannot land bytes on a PUBLIC_SAFE name. Pending photos can still be
+--     renamed and edited. An admin can rename onto a PUBLIC_SAFE name.
+BEGIN;
+SELECT set_config(
+  'request.jwt.claims',
+  '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}',
+  true
+);
+SET LOCAL ROLE authenticated;
+DO $$
+DECLARE
+  n integer;
+BEGIN
+  UPDATE storage.objects
+  SET metadata = '{"pending":true}'::jsonb
+  WHERE name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/review.jpg';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN
+    RAISE EXCEPTION '17. pending metadata edit updated % rows', n;
+  END IF;
+
+  UPDATE storage.objects
+  SET name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/review-renamed.jpg'
+  WHERE name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/review.jpg';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN
+    RAISE EXCEPTION '17. pending rename updated % rows', n;
+  END IF;
+
+  INSERT INTO storage.objects (bucket_id, name, metadata)
+  VALUES (
+    'contractor-docs',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/review-renamed.jpg',
+    '{"upsert":true}'::jsonb
+  )
+  ON CONFLICT (bucket_id, name) DO UPDATE
+  SET metadata = EXCLUDED.metadata;
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN
+    RAISE EXCEPTION '17. pending upsert updated % rows', n;
+  END IF;
+
+  UPDATE storage.objects
+  SET name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe-moved.jpg'
+  WHERE name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 0 THEN
+    RAISE EXCEPTION '17. moved a PUBLIC_SAFE object (% rows)', n;
+  END IF;
+
+  DELETE FROM storage.objects
+  WHERE name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN
+    RAISE EXCEPTION '17. owner could not delete the approved file (% rows)', n;
+  END IF;
+
+  BEGIN
+    INSERT INTO storage.objects (bucket_id, name, metadata)
+    VALUES (
+      'contractor-docs',
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg',
+      '{"copy":true}'::jsonb
+    );
+    RAISE EXCEPTION '17. copy onto a PUBLIC_SAFE name succeeded';
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      NULL;
+  END;
+
+  INSERT INTO storage.objects (bucket_id, name, metadata)
+  VALUES (
+    'contractor-docs',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/swap.jpg',
+    '{"swap":true}'::jsonb
+  );
+
+  BEGIN
+    INSERT INTO storage.objects (bucket_id, name, metadata)
+    VALUES (
+      'contractor-docs',
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/swap.jpg',
+      '{"upsert":true}'::jsonb
+    )
+    ON CONFLICT (bucket_id, name) DO UPDATE
+    SET name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg',
+        metadata = EXCLUDED.metadata;
+    RAISE EXCEPTION '17. upsert rename onto a PUBLIC_SAFE name succeeded';
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      NULL;
+  END;
+
+  BEGIN
+    UPDATE storage.objects
+    SET name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg'
+    WHERE name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/swap.jpg';
+    RAISE EXCEPTION '17. rename onto a PUBLIC_SAFE name succeeded';
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      NULL;
+  END;
+
+  BEGIN
+    UPDATE storage.objects
+    SET name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg'
+    WHERE name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/credentials/license.pdf';
+    RAISE EXCEPTION '17. credential rename onto a PUBLIC_SAFE name succeeded';
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      NULL;
+  END;
+
+  SELECT count(*) INTO n
+  FROM storage.objects
+  WHERE name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg';
+  IF n <> 0 THEN
+    RAISE EXCEPTION '17. PUBLIC_SAFE name has % object(s)', n;
+  END IF;
+
+  SELECT count(*) INTO n
+  FROM storage.objects
+  WHERE name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/swap.jpg'
+    AND metadata = '{"swap":true}'::jsonb;
+  IF n <> 1 THEN
+    RAISE EXCEPTION '17. swap object was lost or rewritten (% rows)', n;
+  END IF;
+END
+$$;
+ROLLBACK;
+
+-- 17b. An admin may rename an object in their own folder onto a PUBLIC_SAFE name.
+BEGIN;
+INSERT INTO public.contractor_portfolio (
+  id, contractor_profile_id, title, storage_path, privacy_state
+)
+VALUES (
+  'a17a17a1-17a1-47a1-87a1-17a117a117a1',
+  '11111111-1111-4111-8111-111111111111',
+  'Admin folder photo',
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc/portfolio/admin-safe.jpg',
+  'PUBLIC_SAFE'
+);
+INSERT INTO storage.objects (bucket_id, name, metadata)
+VALUES (
+  'contractor-docs',
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc/portfolio/admin-scratch.jpg',
+  '{"from":"scratch"}'::jsonb
+);
+SELECT set_config(
+  'request.jwt.claims',
+  '{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","role":"authenticated"}',
+  true
+);
+SET LOCAL ROLE authenticated;
+DO $$
+DECLARE
+  n integer;
+  v_meta jsonb;
+BEGIN
+  UPDATE storage.objects
+  SET name = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc/portfolio/admin-safe.jpg'
+  WHERE name = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc/portfolio/admin-scratch.jpg';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN
+    RAISE EXCEPTION '17. admin rename onto a PUBLIC_SAFE name updated % rows', n;
+  END IF;
+  SELECT metadata INTO v_meta
+  FROM storage.objects
+  WHERE name = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc/portfolio/admin-safe.jpg';
+  IF v_meta IS DISTINCT FROM '{"from":"scratch"}'::jsonb THEN
+    RAISE EXCEPTION '17. admin rename did not keep the new bytes (%)', coalesce(v_meta::text, 'NULL');
+  END IF;
+END
+$$;
+ROLLBACK;
+
 -- The replaced storage policies no longer publish every approved contractor folder.
 DO $$
 DECLARE
   v_qual text;
   v_using text;
+  v_update_check text;
   v_insert text;
   v_readable text;
   v_locked text;
@@ -941,7 +1120,7 @@ BEGIN
   SELECT qual INTO v_qual
   FROM pg_policies
   WHERE schemaname = 'storage' AND policyname = 'contractor_docs_storage_select';
-  SELECT qual INTO v_using
+  SELECT qual, with_check INTO v_using, v_update_check
   FROM pg_policies
   WHERE schemaname = 'storage' AND policyname = 'contractor_docs_storage_update';
   SELECT with_check INTO v_insert
@@ -954,6 +1133,9 @@ BEGIN
   END IF;
   IF v_using NOT ILIKE '%portfolio_storage_is_public_safe%' THEN
     RAISE EXCEPTION 'update policy was not replaced: %', v_using;
+  END IF;
+  IF v_update_check NOT ILIKE '%portfolio_storage_is_public_safe%' THEN
+    RAISE EXCEPTION 'update WITH CHECK does not lock the new name: %', v_update_check;
   END IF;
   IF v_insert NOT ILIKE '%portfolio_storage_is_public_safe%'
      OR v_insert NOT ILIKE '%portfolio%'

@@ -8,6 +8,14 @@ const migration = readFileSync(
   path.join(root, "supabase/migrations/20261010001728_portfolio_photo_privacy.sql"),
   "utf8",
 );
+const rollback = readFileSync(
+  path.join(root, "supabase/rollbacks/20261010001728_portfolio_photo_privacy_rollback.sql"),
+  "utf8",
+);
+const partialRollback = readFileSync(
+  path.join(root, "supabase/rollbacks/20261010001728_portfolio_photo_privacy_partial_rollback.sql"),
+  "utf8",
+);
 const api = readFileSync(path.join(root, "src/lib/marketplace/api.ts"), "utf8");
 
 describe("portfolio photo privacy migration", () => {
@@ -46,6 +54,27 @@ describe("portfolio photo privacy migration", () => {
     expect(migration.match(/UPDATE\s+public\.contractor_portfolio/gi)).toEqual([
       "UPDATE public.contractor_portfolio",
     ]);
+    expect(migration).not.toMatch(/REVOKE UPDATE \(contractor_profile_id\)/);
+    const updatePolicy = migration.slice(
+      migration.indexOf("CREATE POLICY contractor_docs_storage_update"),
+      migration.indexOf("CREATE OR REPLACE FUNCTION public.admin_set_portfolio_privacy"),
+    );
+    expect(updatePolicy.match(/portfolio_storage_is_public_safe\(name\)/g)).toEqual([
+      "portfolio_storage_is_public_safe(name)",
+      "portfolio_storage_is_public_safe(name)",
+    ]);
+    expect(rollback).not.toMatch(/GRANT INSERT \(privacy_state\)/);
+    expect(rollback).toMatch(/DROP FUNCTION IF EXISTS public\.enforce_contractor_portfolio_privacy/);
+    expect(partialRollback).toMatch(/CREATE POLICY contractor_docs_storage_select/);
+    expect(partialRollback).toMatch(/CREATE POLICY contractor_docs_storage_insert/);
+    expect(partialRollback).toMatch(/CREATE POLICY contractor_docs_storage_update/);
+    expect(partialRollback).toMatch(/DROP FUNCTION IF EXISTS public\.portfolio_storage_is_publicly_readable\(text\)/);
+    expect(partialRollback).toMatch(/DROP FUNCTION IF EXISTS public\.portfolio_storage_is_public_safe\(text\)/);
+    expect(partialRollback).toMatch(/DROP INDEX IF EXISTS public\.contractor_portfolio_public_safe_path_idx/);
+    expect(partialRollback).not.toMatch(/DROP FUNCTION IF EXISTS public\.enforce_contractor_portfolio_privacy/);
+    expect(partialRollback).not.toMatch(/DROP FUNCTION IF EXISTS public\.admin_set_portfolio_privacy/);
+    expect(partialRollback).not.toMatch(/DROP FUNCTION IF EXISTS public\.admin_list_portfolio_review_queue/);
+    expect(partialRollback).not.toMatch(/GRANT /);
   });
 
   it("keeps privacy_state out of the portfolio insert and caption update", () => {

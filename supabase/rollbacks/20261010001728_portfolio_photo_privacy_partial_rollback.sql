@@ -1,9 +1,10 @@
--- Rollback for 20261010001728_portfolio_photo_privacy.sql.
--- Restores the production contractor-docs SELECT, INSERT, and UPDATE policies
--- from before this change, and drops the portfolio privacy trigger, helper functions, admin
--- RPCs, and partial index. Does not touch other migrations, payments, or data.
--- Apply only on the database where the forward migration was applied, and only
--- with the owner's approval. This re-opens the previous storage and self-review holes.
+-- Partial rollback for 20261010001728_portfolio_photo_privacy.sql.
+-- Restores only the production contractor-docs SELECT, INSERT, and UPDATE
+-- policies, then drops the two storage helper functions and the partial index.
+-- Keeps trg_enforce_contractor_portfolio_privacy and the admin RPCs, so a
+-- storage-policy problem can be undone without reopening self-approval.
+-- Does not change table grants. Apply only on a database where the forward
+-- migration was applied, and only with the owner's approval.
 
 DROP POLICY IF EXISTS contractor_docs_storage_select ON storage.objects;
 CREATE POLICY contractor_docs_storage_select
@@ -46,13 +47,8 @@ CREATE POLICY contractor_docs_storage_update
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
 
-DROP TRIGGER IF EXISTS trg_enforce_contractor_portfolio_privacy ON public.contractor_portfolio;
-
-DROP FUNCTION IF EXISTS public.admin_set_portfolio_privacy(uuid, public.portfolio_privacy_state, text);
-DROP FUNCTION IF EXISTS public.admin_list_portfolio_review_queue();
+-- The restored policies do not call these helpers, so they are unused.
 DROP FUNCTION IF EXISTS public.portfolio_storage_is_publicly_readable(text);
 DROP FUNCTION IF EXISTS public.portfolio_storage_is_public_safe(text);
-DROP FUNCTION IF EXISTS public.contractor_portfolio_owner_profile_id(uuid);
-DROP FUNCTION IF EXISTS public.enforce_contractor_portfolio_privacy();
 
 DROP INDEX IF EXISTS public.contractor_portfolio_public_safe_path_idx;
