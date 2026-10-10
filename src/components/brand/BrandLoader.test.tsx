@@ -44,7 +44,7 @@ describe("BrandLoader", () => {
     expect(page.querySelector("linearGradient stop:last-child")).toHaveAttribute("stop-color", "#53A217");
     const img = page.querySelector("img");
     expect(img).toHaveAttribute("alt", "");
-    expect(img).toHaveAttribute("width", "87");
+    expect(img).toHaveAttribute("width", "85");
     expect(Number(img?.getAttribute("width"))).toBeLessThan(96);
     expect(img?.closest("svg")).toBeNull();
     expect(img?.className).not.toContain("brand-loader-arc");

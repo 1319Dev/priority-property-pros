@@ -32,9 +32,11 @@ const LOADER_NAVY = "#002450";
 const LOADER_GREEN = "#53A217";
 
 const RING_VIEWBOX = 72;
-const RING_RADIUS = 34.15;
 const RING_STROKE = 3.05;
-/** Inner artwork diameter divided by the full logo diameter, so the mark meets the ring. */
+/** Keeps the antialiased stroke inside the box so the circle is not flattened at the sides. */
+const RING_INSET = 1.2;
+const RING_RADIUS = RING_VIEWBOX / 2 - RING_INSET - RING_STROKE / 2;
+/** Inner artwork diameter divided by the loader box, so the mark meets the ring. */
 const MARK_RATIO = (2 * (RING_RADIUS - RING_STROKE / 2)) / RING_VIEWBOX;
 
 const MARK_256_WEBP = "brand/ppp-loader-mark-256.webp";
@@ -100,7 +102,7 @@ function LogoArc({ size }: { size: number }) {
         aria-hidden="true"
       >
         <defs>
-          <linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1="70.2" y1="36" x2="29.6" y2="69.5">
+          <linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1="69.3" y1="36" x2="29.8" y2="68.7">
             <stop offset="0%" stopColor={LOADER_NAVY} />
             <stop offset="42%" stopColor={LOADER_NAVY} />
             <stop offset="100%" stopColor={LOADER_GREEN} />
