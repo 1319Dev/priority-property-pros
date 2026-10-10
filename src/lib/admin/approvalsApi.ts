@@ -1,5 +1,6 @@
 import { getSupabaseClient } from "../supabase/client";
 import type { ApprovalTab, ContractorApprovalItem } from "./approvals";
+import type { PortfolioPrivacyChoice, PortfolioReviewItem } from "./portfolioReview";
 
 function client() {
   const supabase = getSupabaseClient();
@@ -66,6 +67,45 @@ export async function adminRejectContractor(
   });
   if (error || !data) throw new Error(asError(error, "Could not reject this contractor."));
   return asItem(data, "Could not reject this contractor.");
+}
+
+function asReviewItems(value: unknown): PortfolioReviewItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const item = row as Partial<PortfolioReviewItem>;
+    if (!item.id || !item.contractor_profile_id || !item.storage_path) return [];
+    return [
+      {
+        id: item.id,
+        contractor_profile_id: item.contractor_profile_id,
+        contractor_label: item.contractor_label?.trim() || "Contractor",
+        title: item.title?.trim() || "Portfolio photo",
+        description: item.description ?? null,
+        storage_path: item.storage_path,
+        created_at: item.created_at ?? "",
+      },
+    ];
+  });
+}
+
+export async function adminListPortfolioReviewQueue(): Promise<PortfolioReviewItem[]> {
+  const { data, error } = await client().rpc("admin_list_portfolio_review_queue");
+  if (error) throw new Error(asError(error, "Could not load photos waiting for review."));
+  return asReviewItems(data);
+}
+
+export async function adminSetPortfolioPrivacy(
+  itemId: string,
+  state: PortfolioPrivacyChoice,
+  note?: string | null,
+): Promise<void> {
+  const { error } = await client().rpc("admin_set_portfolio_privacy", {
+    p_item_id: itemId,
+    p_state: state,
+    p_note: note ?? null,
+  });
+  if (error) throw new Error(asError(error, "Could not update this photo."));
 }
 
 export async function adminRequestContractorInfo(

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { PortfolioPhotoReviewPanel } from "./PortfolioPhotoReview";
 import { Link, useParams } from "react-router-dom";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { BottomSheet } from "../../../components/ui/BottomSheet";
@@ -49,6 +50,7 @@ function dash(value: string | number | null | undefined): string {
 }
 
 export function AdminApprovalsPage() {
+  const [section, setSection] = useState<"contractors" | "photos">("contractors");
   const [tab, setTab] = useState<ApprovalTab>("PENDING");
   const [items, setItems] = useState<ContractorApprovalItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -92,15 +94,45 @@ export function AdminApprovalsPage() {
           contractor. Matching still needs an active, approved pro who is accepting work in the right category and area.
         </p>
       </header>
-      <FormError message={error} />
-      <ApprovalsQueueView
-        tab={tab}
-        counts={counts}
-        items={filtered}
-        loading={loading}
-        onTabChange={setTab}
-        onRetry={load}
-      />
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Approval sections">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={section === "contractors"}
+          className={`min-h-11 rounded-full px-4 py-2 text-sm font-semibold ${
+            section === "contractors" ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-forest-800"
+          }`}
+          onClick={() => setSection("contractors")}
+        >
+          Contractors
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={section === "photos"}
+          className={`min-h-11 rounded-full px-4 py-2 text-sm font-semibold ${
+            section === "photos" ? "bg-forest-800 text-cream-50" : "bg-gold-500 text-forest-950"
+          }`}
+          onClick={() => setSection("photos")}
+        >
+          Photo review
+        </button>
+      </div>
+      {section === "photos" ? (
+        <PortfolioPhotoReviewPanel />
+      ) : (
+        <>
+          <FormError message={error} />
+          <ApprovalsQueueView
+            tab={tab}
+            counts={counts}
+            items={filtered}
+            loading={loading}
+            onTabChange={setTab}
+            onRetry={load}
+          />
+        </>
+      )}
     </div>
   );
 }

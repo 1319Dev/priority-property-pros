@@ -922,12 +922,28 @@ export async function uploadContractorDoc(params: {
 export async function addPortfolioItem(row: Database["public"]["Tables"]["contractor_portfolio"]["Insert"]) {
   rejectContactLeak(row.title);
   rejectContactLeak(row.description);
-  const { error } = await client().from("contractor_portfolio").insert({
-    ...row,
-    title: looksLikeFilename(row.title ?? "") ? "Portfolio photo" : row.title,
-    privacy_state: row.privacy_state ?? "REVIEW_REQUIRED",
-  });
+  const payload: Database["public"]["Tables"]["contractor_portfolio"]["Insert"] = {
+    contractor_profile_id: row.contractor_profile_id,
+    title: looksLikeFilename(row.title ?? "") ? "Portfolio photo" : (row.title ?? ""),
+    storage_path: row.storage_path,
+  };
+  if (row.description !== undefined) payload.description = row.description;
+  if (row.sort_order !== undefined) payload.sort_order = row.sort_order;
+  const { error } = await client().from("contractor_portfolio").insert(payload);
   if (error) throw new Error(asError(error, "Could not add portfolio photo."));
+}
+
+export async function updatePortfolioItem(
+  id: string,
+  patch: { title?: string; description?: string | null },
+) {
+  if (patch.title !== undefined) rejectContactLeak(patch.title);
+  if (patch.description !== undefined) rejectContactLeak(patch.description);
+  const next: { title?: string; description?: string | null } = {};
+  if (patch.title !== undefined) next.title = patch.title;
+  if (patch.description !== undefined) next.description = patch.description;
+  const { error } = await client().from("contractor_portfolio").update(next).eq("id", id);
+  if (error) throw new Error(asError(error, "Could not update the portfolio photo."));
 }
 
 export async function deletePortfolioItem(id: string) {
@@ -948,6 +964,21 @@ export async function fetchPortfolio(contractorProfileId: string) {
     .order("sort_order");
   if (error) throw new Error(asError(error, "Could not load portfolio."));
   return data ?? [];
+}
+
+export async function fetchPortfolioEditorRows(contractorProfileId: string) {
+  const rows = await fetchPortfolio(contractorProfileId);
+  return Promise.all(
+    rows.map(async (row) => {
+      let imageUrl: string | null = null;
+      try {
+        imageUrl = await signedContractorDocUrl(row.storage_path);
+      } catch {
+        imageUrl = null;
+      }
+      return { ...row, imageUrl };
+    }),
+  );
 }
 
 export async function fetchEstimateQuestions(projectId: string, opportunityId?: string) {

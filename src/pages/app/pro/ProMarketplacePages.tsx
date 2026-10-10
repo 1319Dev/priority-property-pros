@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { PortfolioExample } from "../../../components/media/PortfolioExample";
+import { PortfolioPhotoEditor } from "../../../components/marketplace/PortfolioPhotoEditor";
 import { Button, ButtonLink } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/Input";
 import { ErrorState, LoadingState } from "../../../components/ui/PageState";
@@ -15,6 +16,9 @@ import {
   addCredential,
   addEstimateItem,
   addPortfolioItem,
+  deletePortfolioItem,
+  fetchPortfolioEditorRows,
+  updatePortfolioItem,
   askEstimateQuestion,
   confirmBookingHired,
   deleteEstimateItem,
@@ -27,7 +31,6 @@ import {
   fetchOrCreateEstimate,
   fetchOpportunity,
   fetchMyOpportunities,
-  fetchPortfolio,
   fetchProjectBooking,
   fetchProjectConnectionAvailability,
   fetchConnectionFeeCheckoutFlags,
@@ -372,30 +375,47 @@ function PortfolioBlock({
   userId: string;
   onError: (message: string) => void;
 }) {
-  const [rows, setRows] = useState<Awaited<ReturnType<typeof fetchPortfolio>>>([]);
+  const [rows, setRows] = useState<Awaited<ReturnType<typeof fetchPortfolioEditorRows>>>([]);
+  function reload() {
+    return fetchPortfolioEditorRows(contractorId).then(setRows);
+  }
   useEffect(() => {
-    void fetchPortfolio(contractorId).then(setRows).catch((err: Error) => onError(err.message));
+    void reload().catch((err: Error) => onError(err.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contractorId, onError]);
   return (
     <div className="space-y-2">
-      <h2 className="font-semibold">Portfolio</h2>
-      <input
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        aria-label="Add portfolio photo"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          event.target.value = "";
-          if (!file) return;
+      <h2 className="font-semibold text-forest-800">Portfolio</h2>
+      {rows.length === 0 ? <PortfolioExample /> : null}
+      <PortfolioPhotoEditor
+        rows={rows}
+        editing
+        onAddFile={(file) => {
           void uploadContractorDoc({ userId, folder: "portfolio", file })
-            .then((path) => addPortfolioItem({ contractor_profile_id: contractorId, title: file.name, storage_path: path }))
-            .then(() => fetchPortfolio(contractorId))
-            .then(setRows)
+            .then((path) =>
+              addPortfolioItem({
+                contractor_profile_id: contractorId,
+                title: "Portfolio photo",
+                storage_path: path,
+              }),
+            )
+            .then(() => reload())
+            .catch((err: Error) => onError(err.message));
+        }}
+        onRemove={(id) => {
+          void deletePortfolioItem(id)
+            .then(() => reload())
+            .catch((err: Error) => onError(err.message));
+        }}
+        onSaveCaption={(id, title) => {
+          setRows((current) =>
+            current.map((row) => (row.id === id ? { ...row, title, privacy_state: "REVIEW_REQUIRED" } : row)),
+          );
+          void updatePortfolioItem(id, { title })
+            .then(() => reload())
             .catch((err: Error) => onError(err.message));
         }}
       />
-      <p className="text-sm text-ink-500">{rows.length} photo(s)</p>
-      {rows.length === 0 ? <PortfolioExample /> : null}
     </div>
   );
 }
