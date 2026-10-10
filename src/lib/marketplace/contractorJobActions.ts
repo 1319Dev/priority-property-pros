@@ -1,7 +1,7 @@
 import type { OpportunityStatus, ProjectConnectionStatus, ProjectStatus } from "./types";
 
 export const CONNECT_SINGLE_STEP_COPY =
-  "Tap Connect to take this job. You do not need a separate Participate step.";
+  "Choose Connect to take this job. You do not need a separate Participate step.";
 
 export const PASS_SKIP_LABEL = "Pass on this job";
 export const PASS_SKIP_TITLE = "Pass on this job?";

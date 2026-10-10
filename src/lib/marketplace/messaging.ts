@@ -12,17 +12,27 @@ export const MESSAGES_EMPTY_BODY =
 export const MESSAGES_LOCKED_BODY =
   "Messaging opens after this pro connects on the project.";
 
+export const CONTRACTOR_MESSAGES_EMPTY_BODY =
+  "A conversation opens after you connect on a job.";
+
+export const CONTRACTOR_MESSAGES_LOCKED_BODY =
+  "Messaging opens after you connect on this job.";
+
 export const THREAD_EMPTY_BODY =
   "No messages yet. Write about the work. Phone, email, and street address stay out of this thread.";
 
 export const MESSAGE_COMPOSER_HINT =
   "Phone numbers, emails, and street addresses stay out of this thread.";
 
-export function messageComposerHint(contactShared: boolean): string {
-  if (contactShared) {
-    return "Phone numbers, emails, and street addresses stay out of this thread. This pro already has the contact you shared.";
+export function messageComposerHint(role: "customer" | "contractor", contactShared = false): string {
+  const base = "Phone numbers, emails, and street addresses stay out of this thread.";
+  if (role === "contractor") {
+    return contactShared
+      ? `${base} The customer already shared contact with you.`
+      : `${base} The customer chooses when to share contact.`;
   }
-  return "Phone numbers, emails, and street addresses stay out of this thread. Use Share my contact when you want this pro to see them.";
+  if (contactShared) return `${base} This pro already has the contact you shared.`;
+  return `${base} Use Share my contact when you want this pro to see them.`;
 }
 
 export const MESSAGE_NOTIFICATION_TITLE = "New message";
@@ -185,8 +195,6 @@ export function messageNotificationHref(
   const projectId = typeof payload?.project_id === "string" ? payload.project_id : null;
   const contractorId = typeof payload?.contractor_profile_id === "string" ? payload.contractor_profile_id : null;
   if (!projectId || !contractorId) return null;
-  const bookingId = typeof payload?.booking_id === "string" ? payload.booking_id : null;
-  if (role === "contractor" && isSafeRecordId(bookingId)) return hiredJobPath(bookingId);
   const base = role === "customer" ? "/app/customer/messages" : "/app/pro/messages";
   return `${base}/${projectId}/${contractorId}`;
 }
@@ -196,9 +204,11 @@ export function threadPlaceLabel(thread: Pick<MessageThreadSummary, "city" | "st
   return parts.length > 0 ? parts.join(", ") : null;
 }
 
-export function inboxPreview(preview: string | null | undefined, sentByViewer: boolean): string {
+export function inboxPreview(preview: string | null | undefined, sentByViewer: boolean, senderLabel?: string | null): string {
   const text = (preview ?? "").trim();
+  const name = (senderLabel ?? "").trim();
   if (!text) return "No messages yet";
+  if (name && text.toLowerCase() === name.toLowerCase()) return "No message text yet";
   return sentByViewer ? `You: ${text}` : text;
 }
 

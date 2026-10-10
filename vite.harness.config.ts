@@ -17,6 +17,7 @@ const swaps: Array<{ id: string; match: RegExp; real: string; names: string[] }>
       "fetchProject",
       "fetchMyBookings",
       "fetchBooking",
+      "fetchBookingJobContact",
       "fetchProjectBooking",
       "fetchChangeOrders",
       "fetchBookingReviews",

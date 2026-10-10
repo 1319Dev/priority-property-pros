@@ -9,6 +9,7 @@ import {
   sendProjectMessage,
 } from "../../lib/marketplace/messagingApi";
 import {
+  CONTRACTOR_MESSAGES_LOCKED_BODY,
   MESSAGES_LOCKED_BODY,
   THREAD_EMPTY_BODY,
   assertMessageBodyAllowed,
@@ -22,10 +23,14 @@ export function JobThreadPanel({
   projectId,
   contractorProfileId,
   customerLabel,
+  role = "contractor",
+  contactShared = false,
 }: {
   projectId: string;
   contractorProfileId: string;
   customerLabel: string;
+  role?: "customer" | "contractor";
+  contactShared?: boolean;
 }) {
   const { profile } = useAuth();
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -34,6 +39,7 @@ export function JobThreadPanel({
   const [locked, setLocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [loadingThread, setLoadingThread] = useState(true);
 
   const loadMessages = useCallback(async (id: string) => {
     setMessages(await listProjectMessages(id));
@@ -41,6 +47,7 @@ export function JobThreadPanel({
 
   useEffect(() => {
     let stop = false;
+    setLoadingThread(true);
     void ensureMessageThread(projectId, contractorProfileId)
       .then(async (id) => {
         if (stop) return;
@@ -54,6 +61,9 @@ export function JobThreadPanel({
         const message = customerFacingMessageError(err.message);
         if (message === MESSAGES_LOCKED_BODY) setLocked(true);
         else setError(message);
+      })
+      .finally(() => {
+        if (!stop) setLoadingThread(false);
       });
     return () => {
       stop = true;
@@ -98,8 +108,13 @@ export function JobThreadPanel({
     <section className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4" aria-label="Messages">
       <h2 className="font-display text-2xl text-forest-800">Messages</h2>
       <p className="text-sm text-ink-500">This thread does not show phone, email, or street.</p>
-      {locked ? <p className="text-sm text-ink-700">{MESSAGES_LOCKED_BODY}</p> : null}
-      {!locked && bubbles.length === 0 ? <p className="text-sm text-ink-700">{THREAD_EMPTY_BODY}</p> : null}
+      {loadingThread ? <p className="text-sm text-ink-500">Loading messages…</p> : null}
+      {!loadingThread && locked ? (
+        <p className="text-sm text-ink-700">
+          {role === "contractor" ? CONTRACTOR_MESSAGES_LOCKED_BODY : MESSAGES_LOCKED_BODY}
+        </p>
+      ) : null}
+      {!loadingThread && !locked && bubbles.length === 0 ? <p className="text-sm text-ink-700">{THREAD_EMPTY_BODY}</p> : null}
       {bubbles.length > 0 ? (
         <ol className="max-h-80 space-y-2 overflow-y-auto" aria-label="Messages">
           {bubbles.map((item) =>
@@ -136,8 +151,8 @@ export function JobThreadPanel({
             />
           </label>
           <FormError message={error} />
-          <p className="text-xs leading-relaxed text-ink-500">{messageComposerHint(false)}</p>
-          <Button type="submit" className="min-h-14 w-full" disabled={sending || draft.trim().length === 0}>
+          <p className="text-xs leading-relaxed text-ink-500">{messageComposerHint(role, contactShared)}</p>
+          <Button type="submit" className="min-h-14 w-full" disabled={sending}>
             {sending ? "Sending…" : "Send"}
           </Button>
         </form>

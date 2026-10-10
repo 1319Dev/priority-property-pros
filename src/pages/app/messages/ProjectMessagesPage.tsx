@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { ContactSharePanel } from "../../../components/marketplace/ContactSharePanel";
@@ -15,8 +15,11 @@ import {
   sendProjectMessage,
   subscribeToProjectMessages,
 } from "../../../lib/marketplace/messagingApi";
-import { hiredJobPath, isSafeRecordId } from "../../../lib/marketplace/hiredJobs";
+import { customerFirstNameFromLabel } from "../../../lib/marketplace/hiredJobs";
+import { isQueryableId } from "../../../lib/marketplace/recordId";
 import {
+  CONTRACTOR_MESSAGES_EMPTY_BODY,
+  CONTRACTOR_MESSAGES_LOCKED_BODY,
   MESSAGES_EMPTY_BODY,
   MESSAGES_EMPTY_TITLE,
   MESSAGES_LOCKED_BODY,
@@ -59,6 +62,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
   const navigate = useNavigate();
   const { projectId = "", contractorProfileId = "" } = useParams();
   const threadRoute = Boolean(projectId && contractorProfileId);
+  const threadIdsOk = isQueryableId(projectId) && isQueryableId(contractorProfileId);
   const base = role === "customer" ? "/app/customer/messages" : "/app/pro/messages";
   const [threads, setThreads] = useState<MessageThreadSummary[]>([]);
   const [messages, setMessages] = useState<ProjectMessage[]>([]);
@@ -126,6 +130,15 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
       setOpening(false);
       return;
     }
+    if (!threadIdsOk) {
+      setThreadId(null);
+      setMessages([]);
+      setPending([]);
+      setLocked(false);
+      setOpening(false);
+      setError(null);
+      return;
+    }
     let stop = false;
     setLocked(false);
     setError(null);
@@ -153,7 +166,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
     return () => {
       stop = true;
     };
-  }, [threadRoute, projectId, contractorProfileId, loadMessages, loadThreads]);
+  }, [threadRoute, threadIdsOk, projectId, contractorProfileId, loadMessages, loadThreads]);
 
   useEffect(() => {
     if (!threadId) return;
@@ -234,11 +247,6 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
     void onSend();
   }
 
-  const hiredBookingId = selected?.booking_id;
-  if (role === "contractor" && threadRoute && isSafeRecordId(hiredBookingId)) {
-    return <Navigate to={hiredJobPath(hiredBookingId)} replace />;
-  }
-
   const place = selected ? threadPlaceLabel(selected) : null;
   const otherName = selected?.other_party_label || selected?.contractor_label || (role === "customer" ? "Connected pro" : "Customer");
   const contextHref = selected ? threadContextHref(role, selected) : null;
@@ -252,7 +260,10 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
         </header>
         {loading ? <BrandLoader layout="section" label="Loading conversations…" /> : null}
         {!loading && ordered.length === 0 ? (
-          <EmptyState title={MESSAGES_EMPTY_TITLE} body={MESSAGES_EMPTY_BODY} />
+          <EmptyState
+            title={MESSAGES_EMPTY_TITLE}
+            body={role === "contractor" ? CONTRACTOR_MESSAGES_EMPTY_BODY : MESSAGES_EMPTY_BODY}
+          />
         ) : null}
         <ul className="space-y-2">
           {ordered.map((thread) => {
@@ -275,7 +286,11 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
                 >
                   <span className="flex items-start justify-between gap-3">
                     <span className="min-w-0">
-                      <span className="block text-forest-800">{thread.other_party_label || thread.contractor_label}</span>
+                      <span className="block text-forest-800">
+                        {role === "contractor"
+                          ? customerFirstNameFromLabel(thread.other_party_label || thread.contractor_label)
+                          : thread.other_party_label || thread.contractor_label}
+                      </span>
                       <span className="block text-sm text-ink-700">{thread.project_title}</span>
                       <JobReference value={thread.project_reference_number} copy={false} />
                     </span>
@@ -285,7 +300,11 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
                   </span>
                   <span className="mt-1 flex items-center justify-between gap-2">
                     <span className="line-clamp-1 text-sm text-ink-500">
-                      {inboxPreview(thread.last_preview, thread.last_sender_is_viewer)}
+                      {inboxPreview(
+                        thread.last_preview,
+                        thread.last_sender_is_viewer,
+                        thread.other_party_label || thread.contractor_label,
+                      )}
                     </span>
                     {unread ? (
                       <span
@@ -304,7 +323,10 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
       </section>
 
       <section className={threadRoute ? "flex min-h-[70vh] flex-col" : "hidden lg:block"} aria-label="Conversation">
-        {!threadRoute ? null : (
+        {threadRoute && !threadIdsOk ? (
+          <EmptyState title="Conversation not found" body="Check the link and open the conversation from your inbox." />
+        ) : null}
+        {!threadRoute || !threadIdsOk ? null : (
           <div className="flex min-h-0 flex-1 flex-col gap-4">
             <Link to={base} className="inline-flex min-h-11 items-center text-sm font-semibold text-forest-800 lg:hidden">
               Back to messages
@@ -322,7 +344,12 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
               <p className="mt-2 text-sm text-ink-500">This thread does not show phone, email, or street.</p>
             </header>
             {opening ? <p className="text-sm text-ink-500">Opening conversation…</p> : null}
-            {locked ? <EmptyState title="Messaging is locked" body={MESSAGES_LOCKED_BODY} /> : null}
+            {locked ? (
+              <EmptyState
+                title="Messaging is locked"
+                body={role === "contractor" ? CONTRACTOR_MESSAGES_LOCKED_BODY : MESSAGES_LOCKED_BODY}
+              />
+            ) : null}
             {!locked && threadId ? (
               <ContactSharePanel role={role} projectId={projectId} contractorProfileId={contractorProfileId} />
             ) : null}
@@ -385,8 +412,8 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
                   />
                 </label>
                 <FormError message={error} />
-                <p className="text-xs leading-relaxed text-ink-500">{messageComposerHint(role === "customer" ? false : true)}</p>
-                <Button type="submit" className="min-h-14 w-full" disabled={sending || draft.trim().length === 0}>
+                <p className="text-xs leading-relaxed text-ink-500">{messageComposerHint(role, false)}</p>
+                <Button type="submit" className="min-h-14 w-full" disabled={sending}>
                   {sending ? "Sending…" : "Send"}
                 </Button>
               </form>

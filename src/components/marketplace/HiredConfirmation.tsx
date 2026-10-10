@@ -51,7 +51,7 @@ export function HiredConfirmationCard({
   return (
     <section className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
       <h2 className="font-display text-2xl text-forest-800">{state === "hired" ? "You're working together" : "Confirm hired"}</h2>
-      {state === "hired" ? <StatusBanner tone="success" title="Working together" body={HIRED_MUTUAL_COPY} /> : null}
+      {state === "hired" ? <p className="text-sm leading-relaxed text-ink-700">{HIRED_MUTUAL_COPY}</p> : null}
       {waiting ? <StatusBanner tone="info" title={waiting} body="Profile reviews stay locked until both of you confirm Hired." /> : null}
       {state === "idle" ? <p className="text-sm leading-relaxed text-ink-700">{idleHiredCopy(role)}</p> : null}
       {canClick ? (

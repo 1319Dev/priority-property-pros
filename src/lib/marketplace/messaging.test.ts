@@ -166,6 +166,7 @@ describe("message privacy", () => {
     expect(formatMessageDay("2026-10-05T08:00:00", now)).toBe("Oct 5");
     expect(inboxPreview("See you Monday.", true)).toBe("You: See you Monday.");
     expect(inboxPreview("On my way.", false)).toBe("On my way.");
+    expect(inboxPreview("Christopher", false, "Christopher")).toBe("No message text yet");
     expect(deriveUnread({ lastMessageAt: "2026-10-08T12:00:00Z", lastSenderIsViewer: false, lastReadAt: null })).toBe(1);
     expect(deriveUnread({ lastMessageAt: "2026-10-08T12:00:00Z", lastSenderIsViewer: true, lastReadAt: null })).toBe(0);
     expect(

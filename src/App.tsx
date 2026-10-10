@@ -24,6 +24,7 @@ import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import { AccountStatusPage } from "./pages/AccountStatusPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { NotificationSettingsPage } from "./pages/app/NotificationSettingsPage";
+import { NotificationHistoryPage } from "./pages/app/NotificationHistoryPage";
 import { ActivateAccountPage } from "./pages/ActivateAccountPage";
 import { TrustPage } from "./pages/TrustPage";
 import { CustomerShell } from "./pages/app/CustomerShell";
@@ -142,6 +143,7 @@ export default function App() {
             <Route path="messages" element={<CustomerMessagesPage />} />
             <Route path="messages/:projectId/:contractorProfileId" element={<CustomerMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="notifications" element={<NotificationHistoryPage />} />
             <Route path="account/notifications" element={<NotificationSettingsPage />} />
           </Route>
         </Route>
@@ -163,6 +165,7 @@ export default function App() {
             <Route path="messages" element={<ProMessagesPage />} />
             <Route path="messages/:projectId/:contractorProfileId" element={<ProMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="notifications" element={<NotificationHistoryPage />} />
             <Route path="account/notifications" element={<NotificationSettingsPage />} />
           </Route>
         </Route>

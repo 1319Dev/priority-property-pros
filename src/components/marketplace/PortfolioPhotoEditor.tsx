@@ -61,7 +61,10 @@ export function PortfolioPhotoEditor({
                   </button>
                 ) : null}
               </div>
-              <PortfolioPhotoFrame src={row.imageUrl} alt={row.title || "Portfolio photo"} />
+              <PortfolioPhotoFrame
+                src={row.imageUrl}
+                alt={row.title?.trim() ? row.title.trim() : "Portfolio photo pending review"}
+              />
               {editing ? (
                 <CaptionField initial={row.title} onSave={(title) => onSaveCaption(row.id, title)} />
               ) : null}

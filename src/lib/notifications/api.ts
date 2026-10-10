@@ -1,5 +1,6 @@
 import { getSupabaseClient } from "../supabase/client";
 import type { Json } from "../supabase/database.types";
+import { coerceProjectReference } from "../marketplace/projectReference";
 import {
   NOTIFICATION_CATEGORIES,
   categoryForKind,
@@ -17,6 +18,10 @@ export type InAppNotification = {
   body: string;
   path: string;
   projectId?: string | null;
+  bookingId?: string | null;
+  contractorProfileId?: string | null;
+  projectTitle?: string | null;
+  referenceNumber?: number | null;
   readAt: string | null;
   createdAt: string;
   category: NotificationCategory;
@@ -62,6 +67,10 @@ export function toInAppNotification(
       accountType,
     }),
     projectId: typeof payload.project_id === "string" ? payload.project_id : null,
+    bookingId: typeof payload.booking_id === "string" ? payload.booking_id : null,
+    contractorProfileId: typeof payload.contractor_profile_id === "string" ? payload.contractor_profile_id : null,
+    projectTitle: typeof payload.project_title === "string" ? payload.project_title : null,
+    referenceNumber: coerceProjectReference(payload.project_reference_number ?? payload.reference_number),
     readAt: row.read_at,
     createdAt: row.created_at,
     category,
@@ -69,13 +78,26 @@ export function toInAppNotification(
 }
 
 export async function listInAppNotifications(accountType: NotificationAudience): Promise<InAppNotification[]> {
-  const { data, error } = await client()
-    .from("notifications")
-    .select("id, kind, title, body, entity_id, payload, read_at, created_at")
-    .order("created_at", { ascending: false })
-    .limit(30);
+  const { data, error } = await client().rpc("list_my_notifications");
   if (error) throw new Error("Could not load notifications.");
-  return (data ?? []).map((row) => toInAppNotification(row, accountType));
+  const rows = Array.isArray(data) ? data : [];
+  return rows.map((row) => {
+    const item = (row ?? {}) as Record<string, unknown>;
+    const payload = item.payload;
+    return toInAppNotification(
+      {
+        id: String(item.id ?? ""),
+        kind: String(item.kind ?? ""),
+        title: String(item.title ?? ""),
+        body: String(item.body ?? ""),
+        entity_id: typeof item.entity_id === "string" ? item.entity_id : null,
+        payload: payload && typeof payload === "object" && !Array.isArray(payload) ? (payload as Json) : {},
+        read_at: typeof item.read_at === "string" ? item.read_at : null,
+        created_at: typeof item.created_at === "string" ? item.created_at : "",
+      },
+      accountType,
+    );
+  });
 }
 
 export async function listNotificationPreferences(): Promise<PreferenceRecord[]> {

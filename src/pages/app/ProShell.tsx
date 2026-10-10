@@ -1,3 +1,4 @@
+import { HowFeesWork } from "../../components/marketplace/HowFeesWork";
 import { DashboardShell, type DashNavItem } from "../../components/layout/DashboardShell";
 import { useMessageUnreadCount } from "../../lib/marketplace/useMessageUnread";
 
@@ -15,5 +16,5 @@ export function ProShell() {
   const items = baseItems.map((item) =>
     item.to === "/app/pro/messages" ? { ...item, badge: unread } : item,
   );
-  return <DashboardShell items={items} eyebrow="Priority Pro" />;
+  return <DashboardShell items={items} eyebrow="Priority Pro" notice={<HowFeesWork />} />;
 }

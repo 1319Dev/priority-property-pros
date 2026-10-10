@@ -56,7 +56,24 @@ export async function fetchMyBookings() {
 export async function fetchBooking() {
   return booking;
 }
-export async function fetchProjectBooking() {
+export async function fetchBookingJobContact(bookingId) {
+  if (bookingId !== "book-1") {
+    return { unlocked: false, customer_shared: false };
+  }
+  return {
+    unlocked: true,
+    customer_shared: true,
+    contact_access_status: "UNLOCKED",
+    first_name: "Christopher",
+    last_name: "Homeowner",
+    phone: sharedContact.phone,
+    email: sharedContact.email,
+    street_line1: sharedContact.street_line1,
+    street_line2: sharedContact.street_line2,
+  };
+}
+export async function fetchProjectBooking(projectId) {
+  if (projectId === "proj-1") return booking;
   return null;
 }
 export async function fetchChangeOrders(bookingId) {
@@ -77,6 +94,22 @@ export async function fetchChangeOrders(bookingId) {
       decided_at: null,
       created_at: "2026-04-02T15:00:00.000Z",
       updated_at: "2026-04-02T15:00:00.000Z",
+    },
+    {
+      id: "co-0",
+      booking_id: "book-1",
+      created_by: "pro-1",
+      created_by_role: "CONTRACTOR",
+      description: "Confirm the existing gate hardware stays.",
+      amount_delta_cents: 0,
+      status: "APPROVED",
+      customer_approved_at: "2026-04-02T16:00:00.000Z",
+      customer_approved_by: "user-layout",
+      contractor_acked_at: "2026-04-02T16:10:00.000Z",
+      contractor_acked_by: "pro-1",
+      decided_at: "2026-04-02T16:10:00.000Z",
+      created_at: "2026-04-02T16:00:00.000Z",
+      updated_at: "2026-04-02T16:10:00.000Z",
     },
   ];
 }
@@ -187,7 +220,12 @@ export async function fetchMyNotifications() {
       body: "Northside Fence Co. sent an estimate.",
       entity_type: "estimate",
       entity_id: "est-1",
-      payload: { project_id: "proj-1", estimate_id: "est-1" },
+      payload: {
+        project_id: "proj-1",
+        estimate_id: "est-1",
+        project_title: project.title,
+        project_reference_number: project.reference_number,
+      },
       channel: "in_app",
       read_at: null,
       created_at: "2026-04-02T15:00:00.000Z",
@@ -207,13 +245,50 @@ export async function fetchContractorProfileByUser() {
   return contractorProfile;
 }
 export async function fetchMyOpportunities() {
-  return [opportunity];
+  return [
+    opportunity,
+    {
+      ...opportunity,
+      id: "opp-2",
+      project_id: "proj-2",
+      status: "AVAILABLE",
+      projects: {
+        ...project,
+        id: "proj-2",
+        title: "Repair a sticking front door",
+        city: "Decatur",
+        state: "GA",
+        zip_code: "30030",
+        reference_number: 1048,
+        status: "POSTED",
+      },
+    },
+    {
+      ...opportunity,
+      id: "opp-3",
+      project_id: "proj-3",
+      status: "PASSED",
+      projects: {
+        ...project,
+        id: "proj-3",
+        title: "Replace a storm-damaged gate",
+        city: "Marietta",
+        state: "GA",
+        zip_code: "30060",
+        reference_number: 1004,
+        status: "POSTED",
+      },
+    },
+  ];
 }
 export async function fetchOpportunity() {
   return opportunity;
 }
 export async function fetchContractorServices() {
-  return [{ id: "svc-1", contractor_profile_id: "pro-1", category_id: "cat-fence" }];
+  return [
+    { id: "svc-1", contractor_profile_id: "pro-1", category_id: "cat-fence" },
+    { id: "svc-2", contractor_profile_id: "pro-1", category_id: "cat-handyman" },
+  ];
 }
 export async function fetchContractorAreas() {
   return [
@@ -318,6 +393,7 @@ export async function listMyMessageThreads() {
       booking_id: "book-2",
       unread_count: 0,
       last_preview: "The door sticks at the top.",
+      project_reference_number: 1048,
     },
   ];
 }

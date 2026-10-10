@@ -79,14 +79,19 @@ test("signed-in header keeps the bell inside a 320px viewport", async ({ page })
   const layout = await page.evaluate(() => {
     const header = document.querySelector("header");
     const controls = header
-      ? [...header.querySelectorAll("a, button")].map((el) => {
+      ? [...header.querySelectorAll("a, button")].flatMap((el) => {
+          const style = getComputedStyle(el);
+          if (style.display === "none" || style.visibility === "hidden") return [];
           const rect = el.getBoundingClientRect();
-          return {
-            label: (el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 40),
-            left: rect.left,
-            right: rect.right,
-            height: rect.height,
-          };
+          if (rect.width < 1 || rect.height < 1) return [];
+          return [
+            {
+              label: (el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 40),
+              left: rect.left,
+              right: rect.right,
+              height: rect.height,
+            },
+          ];
         })
       : [];
     return {

@@ -23,7 +23,7 @@ export const CONNECT_BUTTON_LABEL = "Connect — $4.99";
 export const CONNECTED_LABEL = "Connected";
 
 export const CONNECTED_BODY =
-  `Your $4.99 connection is active for this project. ${CONNECTION_FEE_NON_REFUNDABLE} Contact is unlocked for this project only.`;
+  `Your $4.99 connection is active for this project only. ${CONNECTION_FEE_NON_REFUNDABLE} Phone, email, and street stay hidden until the customer shares them.`;
 
 export const CHECKOUT_PENDING_COPY =
   `Checkout is in progress. Contact stays locked until the server verifies the $4.99 payment. ${CONNECTION_FEE_NON_REFUNDABLE}`;
@@ -41,7 +41,7 @@ export const CONNECT_PAYMENTS_OFF_COPY =
 
 /** Jobs list helper. Contact stays locked until the $4.99 connection is verified. */
 export const JOBS_STREET_HELPER_COPY =
-  "You'll see the approximate location only. The exact address stays hidden until you Connect for $4.99. Tap View job to see details and Connect, or pass if it's not a fit so the job can go to another pro.";
+  "You'll see the approximate location only. The exact address stays hidden until you Connect for $4.99. Open the job to see details and Connect, or pass if it's not a fit so the job can go to another pro.";
 
 export const OPPORTUNITY_CONTACT_LOCKED_COPY =
   "Exact street, phone, email, name, and precise coordinates stay hidden until a paid $4.99 connection entitlement or an admin unlock. Clicking Connect does not unlock contact.";
