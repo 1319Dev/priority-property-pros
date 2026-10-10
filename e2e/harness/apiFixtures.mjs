@@ -139,6 +139,18 @@ export async function fetchBookingReviews() {
 export async function fetchHireAgainContractors() {
   return [{ contractor_profile_id: "pro-1", display_label: "Northside Fence Co.", project_title: project.title }];
 }
+export async function findAdminBookingsByReference(raw) {
+  const match = String(raw ?? "").match(/(\d+)/);
+  if (!match) throw new Error("Enter a job reference like PPP-1042 or 1042.");
+  const referenceNumber = Number(match[1]);
+  if (referenceNumber !== project.reference_number) return null;
+  return {
+    projectId: project.id,
+    title: project.title,
+    referenceNumber,
+    bookings: [{ id: booking.id, status: booking.status }],
+  };
+}
 export async function expireStalePendingBookings() {
   return 0;
 }

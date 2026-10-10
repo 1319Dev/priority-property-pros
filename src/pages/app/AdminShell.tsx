@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { DashboardShell } from "../../components/layout/DashboardShell";
+import { AdminLayout } from "../../components/admin/AdminLayout";
 import { subscribeApprovalsChanged } from "../../lib/admin/approvals";
 import { countPendingContractorApprovals } from "../../lib/admin/approvalsApi";
 
@@ -27,15 +27,5 @@ export function AdminShell() {
     };
   }, [location.pathname]);
 
-  const items = [
-    { to: "/app/admin", label: "Overview", end: true },
-    { to: "/app/admin/bookings", label: "Bookings" },
-    { to: "/app/admin/approvals", label: "Approvals", badge: pendingCount },
-    { to: "/app/admin/reviews", label: "Reviews" },
-    { to: "/app/admin/security", label: "Two-factor sign-in" },
-    { to: "/app/admin/account", label: "Account" },
-    { to: "/app/admin/people", label: "People" },
-  ];
-
-  return <DashboardShell items={items} eyebrow="Admin" />;
+  return <AdminLayout pendingApprovals={pendingCount} />;
 }

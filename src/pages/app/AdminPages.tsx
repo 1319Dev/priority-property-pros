@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { EmptyState } from "../../components/layout/DashboardShell";
 import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
@@ -118,6 +119,8 @@ export function AdminContactAccessPanel({
 
 export function AdminBookingsPage() {
   const toast = useToast();
+  const [searchParams] = useSearchParams();
+  const refParam = searchParams.get("ref");
   const [bookingId, setBookingId] = useState("");
   const [referenceQuery, setReferenceQuery] = useState("");
   const [referenceTitle, setReferenceTitle] = useState<string | null>(null);
@@ -138,6 +141,38 @@ export function AdminBookingsPage() {
   useEffect(() => {
     void expireStalePendingBookings().catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    const ref = refParam?.trim();
+    if (!ref) return;
+    let cancel = false;
+    setReferenceQuery(ref);
+    setBusy(true);
+    setError(null);
+    void findAdminBookingsByReference(ref)
+      .then((found) => {
+        if (cancel) return;
+        if (!found) {
+          setReferenceTitle(null);
+          setReferenceNumber(null);
+          setReferenceBookings([]);
+          setError("No job uses that reference.");
+          return;
+        }
+        setReferenceTitle(found.title);
+        setReferenceNumber(found.referenceNumber);
+        setReferenceBookings(found.bookings);
+      })
+      .catch((err: Error) => {
+        if (!cancel) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancel) setBusy(false);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [refParam]);
 
   async function loadBooking(id: string) {
     const row = await fetchBooking(id);
