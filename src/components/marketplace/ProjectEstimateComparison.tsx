@@ -107,6 +107,7 @@ export function ProjectEstimateComparison({
           selected: selectedEstimateId === estimate.id,
           outOfDate,
           statusLabel: outOfDate ? "Needs a new estimate" : customerEstimateStatusLabel(status),
+          contractorProfileId: estimate.contractor_profile_id,
         } satisfies ComparisonViewRow;
       }),
     );

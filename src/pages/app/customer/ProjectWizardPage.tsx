@@ -8,6 +8,7 @@ import { FormError } from "../../../lib/auth/AuthCard";
 import { PHOTO_UPLOAD_GUIDANCE } from "../../../lib/marketplace/photoSafety";
 import { useAuth } from "../../../lib/auth/useAuth";
 import {
+  customerHasBlockedContractor,
   fetchProject,
   fetchServiceCategories,
   fetchServiceQuestions,
@@ -16,7 +17,8 @@ import {
 } from "../../../lib/marketplace/api";
 import { PRE_HIRE_CONTACT_HINT } from "../../../lib/marketplace/antiCircumvention";
 import { canPostProject } from "../../../lib/marketplace/completeness";
-import { POST_BLOCKED_REASON, STREET_STAYS_PRIVATE, TARGETED_PRO_NOTE, WIZARD_PERSIST_NOTE } from "../../../lib/marketplace/customerCopy";
+import { POST_BLOCKED_REASON, STREET_STAYS_PRIVATE, WIZARD_PERSIST_NOTE } from "../../../lib/marketplace/customerCopy";
+import { targetedProNote } from "../../../lib/marketplace/contractorBlocks";
 import { formatBudgetRange, normalizedWizardPlace, todayIsoDate, wizardStepError } from "../../../lib/marketplace/wizardValidation";
 import { dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { photoUploadError } from "../../../lib/marketplace/flows";
@@ -48,6 +50,8 @@ export function ProjectWizardPage() {
     composing ? (readWizardSession() ?? emptyWizardSession()) : emptyWizardSession(),
   );
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const targetedPro = params.get("pro");
+  const [targetedBlocked, setTargetedBlocked] = useState(false);
   const [questions, setQuestions] = useState<ServiceQuestion[]>([]);
   const [photos, setPhotos] = useState<LocalPhoto[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +62,25 @@ export function ProjectWizardPage() {
   const persistReady = useRef(false);
 
   const step = form.step;
+
+  useEffect(() => {
+    const proId = targetedPro ?? "";
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(proId)) {
+      setTargetedBlocked(false);
+      return;
+    }
+    let stop = false;
+    void customerHasBlockedContractor(proId)
+      .then((blocked) => {
+        if (!stop) setTargetedBlocked(blocked);
+      })
+      .catch(() => {
+        if (!stop) setTargetedBlocked(false);
+      });
+    return () => {
+      stop = true;
+    };
+  }, [targetedPro]);
 
   useEffect(() => {
     if (!composing) {
@@ -236,7 +259,9 @@ export function ProjectWizardPage() {
           {WIZARD_STEPS[step - 1]?.label ?? "Project"}
         </h1>
         <p className="text-sm text-ink-500">{WIZARD_PERSIST_NOTE}</p>
-        {params.get("pro") ? <p className="text-sm text-ink-700">{TARGETED_PRO_NOTE}</p> : null}
+        {targetedProNote(targetedPro, targetedBlocked) ? (
+          <p className="text-sm text-ink-700">{targetedProNote(targetedPro, targetedBlocked)}</p>
+        ) : null}
         <ol className="flex flex-wrap gap-1 pb-1" aria-label="Steps">
           {WIZARD_STEPS.map((item) => (
             <li key={item.id}>

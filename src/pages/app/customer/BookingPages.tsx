@@ -20,6 +20,7 @@ import {
   fetchChangeOrders,
   fetchCustomerProjects,
   fetchHireAgainContractors,
+  listMyContractorBlocks,
   fetchMyBookings,
   fetchProject,
   fetchPublicContractor,
@@ -33,10 +34,12 @@ import {
 import { BOOKING_STATUS_LABELS, canCustomerCancelPendingBooking, canStartBooking } from "../../../lib/marketplace/bookings";
 import { CUSTOMER_PAYS_DIRECTLY, HIRE_AGAIN_EMPTY, HIRE_AGAIN_INTRO, customerWizardPath } from "../../../lib/marketplace/customerCopy";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
-import { isMutuallyHired, bookingListHiredLabel } from "../../../lib/marketplace/hired";
+import { excludeBlockedHireAgain, parseBlockedContractors } from "../../../lib/marketplace/contractorBlocks";
+import { canSeeReviewCta, isMutuallyHired, bookingListHiredLabel } from "../../../lib/marketplace/hired";
 import type { Booking, BookingReview, BookingStatus, ChangeOrder } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
 import { ContactSharePanel } from "../../../components/marketplace/ContactSharePanel";
+import { BlockContractorControl } from "../../../components/marketplace/BlockContractorControl";
 import { HiredConfirmationCard, ProfileReviewForm } from "../../../components/marketplace/HiredConfirmation";
 
 function statusLabel(status: string) {
@@ -150,6 +153,11 @@ export function CustomerBookingDetailPage() {
     contractorHiredAt: booking.contractor_hired_at,
   });
   const canStart = canStartBooking("CUSTOMER", booking.status);
+  const mutuallyHired = isMutuallyHired({
+    customerHiredAt: booking.customer_hired_at,
+    contractorHiredAt: booking.contractor_hired_at,
+  });
+  const reviewVisible = canSeeReviewCta({ mutuallyHired, bookingStatus: booking.status });
 
   return (
     <div className="space-y-6">
@@ -288,17 +296,19 @@ export function CustomerBookingDetailPage() {
         />
       )}
 
+      {reviewVisible ? null : (
+        <BlockContractorControl contractorProfileId={booking.contractor_profile_id} bookingId={booking.id} />
+      )}
       <ProfileReviewForm
         role="customer"
         bookingStatus={booking.status}
-        mutuallyHired={isMutuallyHired({
-          customerHiredAt: booking.customer_hired_at,
-          contractorHiredAt: booking.contractor_hired_at,
-        })}
+        mutuallyHired={mutuallyHired}
         reviews={reviews}
         rating={rating}
         body={body}
         referenceNumber={referenceNumber}
+        contractorProfileId={booking.contractor_profile_id}
+        bookingId={booking.id}
         onRatingChange={setRating}
         onBodyChange={setBody}
         onSubmit={(nextRating, nextBody) => {
@@ -324,8 +334,11 @@ export function HireAgainPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetchHireAgainContractors()
-      .then(setRows)
+    void Promise.all([fetchHireAgainContractors(), listMyContractorBlocks().catch(() => [])])
+      .then(([pros, blocks]) => {
+        const blockedIds = parseBlockedContractors(blocks).map((row) => row.contractorProfileId);
+        setRows(excludeBlockedHireAgain(pros, blockedIds));
+      })
       .catch((err: Error) => setError(err.message));
   }, []);
 

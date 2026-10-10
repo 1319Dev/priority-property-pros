@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DeleteAccountDialog } from "../../components/account/DeleteAccountDialog";
+import { BlockedProsList } from "../../components/marketplace/BlockedProsList";
 import { TextInput } from "../../components/ui/Input";
 import { useAuth } from "../../lib/auth/useAuth";
 import { deleteOwnAccount } from "../../lib/auth/deleteAccount";
@@ -112,6 +113,14 @@ export function AccountPage() {
       >
         Notification settings
       </Link>
+      {account_type === "CUSTOMER" ? (
+        <Link
+          to="/app/customer/account/blocked"
+          className="inline-flex min-h-12 items-center justify-center rounded-full border border-gold-500/50 bg-cream-100 px-5 text-sm font-semibold text-forest-800"
+        >
+          Blocked pros
+        </Link>
+      ) : null}
       <FormError message={error} />
       <button
         type="button"
@@ -163,6 +172,21 @@ export function AccountPage() {
             .finally(() => setBusy(false));
         }}
       />
+    </div>
+  );
+}
+
+export function BlockedProsPage() {
+  return (
+    <div className="max-w-lg space-y-4">
+      <header>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Settings</p>
+        <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Blocked pros</h1>
+      </header>
+      <p className="text-sm leading-relaxed text-ink-700">
+        These pros will not be offered your future projects. A job already underway stays as it is. A paid connection stays paid.
+      </p>
+      <BlockedProsList />
     </div>
   );
 }

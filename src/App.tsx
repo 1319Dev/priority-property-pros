@@ -33,6 +33,7 @@ import { ProShell } from "./pages/app/ProShell";
 import { VerifierShell } from "./pages/app/VerifierShell";
 import {
   AccountPage,
+  BlockedProsPage,
   CustomerHomePage,
   CustomerMessagesPage,
   CustomerProjectsPage,
@@ -151,6 +152,7 @@ export default function App() {
             <Route path="messages/:projectId/:contractorProfileId" element={<CustomerMessagesPage />} />
             <Route path="account" element={<AccountPage />} />
             <Route path="notifications" element={<NotificationHistoryPage />} />
+            <Route path="account/blocked" element={<BlockedProsPage />} />
             <Route path="account/notifications" element={<NotificationSettingsPage />} />
           </Route>
         </Route>

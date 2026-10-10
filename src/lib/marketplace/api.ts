@@ -675,6 +675,42 @@ export async function fetchHireAgainContractors(): Promise<RpcJson[]> {
   return (Array.isArray(data) ? data : []) as RpcJson[];
 }
 
+export async function blockContractorForCustomer(input: {
+  contractorProfileId: string;
+  bookingId?: string | null;
+  estimateId?: string | null;
+}): Promise<RpcJson> {
+  const { data, error } = await client().rpc("block_contractor_for_customer", {
+    p_contractor_profile_id: input.contractorProfileId,
+    p_booking_id: input.bookingId ?? null,
+    p_estimate_id: input.estimateId ?? null,
+  });
+  if (error) throw new Error(asError(error, "Could not block this pro."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function unblockContractorForCustomer(contractorProfileId: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("unblock_contractor_for_customer", {
+    p_contractor_profile_id: contractorProfileId,
+  });
+  if (error) throw new Error(asError(error, "Could not unblock this pro."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function listMyContractorBlocks(): Promise<unknown> {
+  const { data, error } = await client().rpc("list_my_contractor_blocks");
+  if (error) throw new Error(asError(error, "Could not load blocked pros."));
+  return data ?? [];
+}
+
+export async function customerHasBlockedContractor(contractorProfileId: string): Promise<boolean> {
+  const { data, error } = await client().rpc("customer_has_blocked_contractor", {
+    p_contractor_profile_id: contractorProfileId,
+  });
+  if (error) throw new Error(asError(error, "Could not check this pro."));
+  return data === true;
+}
+
 export async function expireStalePendingBookings(): Promise<number> {
   const { data, error } = await client().rpc("expire_stale_pending_bookings");
   if (error) throw new Error(asError(error, "Could not refresh expired bookings."));
