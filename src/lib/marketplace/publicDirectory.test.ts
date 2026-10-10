@@ -103,7 +103,7 @@ describe("public marketplace directory privacy", () => {
     expect(leaked.photo_url).toBeUndefined();
     expect(card).not.toHaveProperty("businessName");
     expect(card).not.toHaveProperty("photoUrl");
-    expect(card.displayLabel).toBe("Approved Handyman Pro");
+    expect(card.displayLabel).toBe("Minor Remodeling & Handyman pro");
     expect(card.serviceArea).toBe("Houston Area");
     expect(formatPublicRating(card.ratingAverage, card.ratingCount)).toBe("★ 4.9 · 18 verified PPP reviews");
     expect(card.badges.map((badge) => badge.label)).toContain("Approved platform profile");
@@ -126,7 +126,14 @@ describe("public marketplace directory privacy", () => {
     expect(publicRatingOrNew(empty.ratingAverage, empty.ratingCount)).toBe(NEW_TO_PPP);
     expect(empty.serviceArea).toBe("Local service area");
     expect(formatGeneralServiceArea({ serviceArea: "77002" })).toBe("Local service area");
-    expect(anonymizedProLabel({ categories: ["Fencing"] })).toBe("Approved Fencing Pro");
+    expect(anonymizedProLabel({ categories: ["Fencing"] })).toBe("Fencing pro");
+    expect(anonymizedProLabel({ primaryTrade: "Handyman", categories: ["Other", "Fence Repair", "Handyman"], city: "Conroe" })).toBe(
+      "Fence Repair & Handyman pro in Conroe",
+    );
+    expect(anonymizedProLabel({ primaryTrade: "Text 936-555-1212", categories: ["Fence Repair", "Handyman"], city: "Conroe" })).toBe(
+      "Fence Repair pro in Conroe",
+    );
+    expect(anonymizedProLabel({ categories: ["Other"] })).toBe("Local pro");
   });
 
   it("does not treat demo example slugs as live contractor UUIDs", () => {

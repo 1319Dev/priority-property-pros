@@ -25,7 +25,8 @@ describe("Find a Pro page", () => {
     expect(document.title).toBe(FIND_A_PRO_DOCUMENT_TITLE);
     expect(screen.getByRole("heading", { name: FIND_A_PRO_TITLE })).toBeInTheDocument();
     expect(screen.getByText(FIND_A_PRO_EMPTY_TITLE)).toBeInTheDocument();
-    expect(screen.getByText(/\$4\.99 connection fee/i)).toBeInTheDocument();
+    expect(screen.getByText(/contact details stay private until you and a pro connect on a project/i)).toBeInTheDocument();
+    expect(screen.queryByText(/\$4\.99 connection fee/i)).not.toBeInTheDocument();
     expect(screen.getByText(/does not take a cut of the job/i)).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /^service/i })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /^area/i })).toBeInTheDocument();

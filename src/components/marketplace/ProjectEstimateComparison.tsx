@@ -3,6 +3,7 @@ import { useToast } from "../../hooks/useToast";
 import {
   declineEstimate,
   directoryRowBadges,
+  fetchContractorNameForProject,
   fetchEstimateItems,
   fetchProjectEstimates,
   fetchPublicContractor,
@@ -55,7 +56,7 @@ export function ProjectEstimateComparison({
     const openForChoice = projectStatus !== "CONTRACTOR_SELECTED" && projectStatus !== "CANCELLED";
     const detailed = await Promise.all(
       estimates.map(async (estimate) => {
-        const [items, contractor, extras] = await Promise.all([
+        const [items, contractor, extras, entitledName] = await Promise.all([
           fetchEstimateItems(estimate.id),
           fetchPublicContractor(estimate.contractor_profile_id),
           fetchPublicContractorExtras(estimate.contractor_profile_id).catch(() => ({
@@ -64,6 +65,7 @@ export function ProjectEstimateComparison({
             badges: [],
             portfolio: [],
           })),
+          fetchContractorNameForProject(projectId, estimate.contractor_profile_id).catch(() => null),
         ]);
         const status = estimate.status as EstimateStatus;
         const directoryBadges = contractor ? directoryRowBadges(contractor) : [];
@@ -81,7 +83,7 @@ export function ProjectEstimateComparison({
         const ratingAverage = ratingCount > 0 ? contractor?.rating_average ?? null : null;
         const base: ComparisonEstimate = {
           id: estimate.id,
-          businessName: contractor?.display_label || "Local pro",
+          businessName: entitledName || contractor?.display_label || "Local pro",
           totalCents: estimate.total_cents,
           lineItems: items.map((item) => ({
             id: item.id,

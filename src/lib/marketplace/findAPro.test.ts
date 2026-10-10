@@ -22,6 +22,7 @@ import {
   publicDirectoryReviews,
   publicPortfolioItems,
   showVerifiedProjectBadge,
+  splitPublicServices,
   storefrontDocumentTitle,
   toFindAProCard,
   VERIFIED_PROJECT_LABEL,
@@ -78,6 +79,25 @@ describe("Find a Pro visibility", () => {
     expect(card.newOnPlatform).toBe(true);
     expect(card.ratingCount).toBe(0);
     expect(card.displayLabel).toBe("Approved Fence Pro");
+  });
+
+  it("uses the chosen trade and hides Other", () => {
+    const split = splitPublicServices(["Appliance Installation", "Other", "Fence Repair"], "Handyman");
+    expect(split.primaryService).toBe("Appliance Installation");
+    expect(split.otherServices).toEqual(["Fence Repair"]);
+    const matched = splitPublicServices(["Appliance Installation", "Other", "Fence Repair", "Handyman"], "Handyman");
+    expect(matched.primaryService).toBe("Handyman");
+    expect(matched.otherServices).not.toContain("Other");
+    const card = listedCard({
+      displayLabel: "Fence Repair & Handyman pro in Conroe",
+      primaryTrade: "Handyman",
+      categories: ["Other", "Fence Repair", "Handyman"],
+      serviceArea: "Serves within 25 miles of Conroe, TX",
+    });
+    expect(card.primaryService).toBe("Handyman");
+    expect(card.categories).not.toContain("Other");
+    expect(card.displayLabel).not.toMatch(/Plymate|Approved /);
+    expect(card.serviceArea).toBe("Serves within 25 miles of Conroe, TX");
   });
 
   it("hides unapproved and inactive contractors", () => {

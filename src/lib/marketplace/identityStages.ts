@@ -12,9 +12,9 @@ export const IDENTITY_STAGES = [
     title: "Public visitor",
     implemented: true,
     visible: [
-      "Anonymized display label (trade + generic title, e.g. Approved Handyman Pro)",
-      "General trade / categories",
-      "General service area (e.g. Houston Area) — not a street address or ZIP list",
+      "Neutral role label (trade and city, e.g. Fence Repair & Handyman pro in Conroe) — not a business name",
+      "General trade / categories, with Other omitted",
+      "General service area from the home ZIP city or county plus radius — not a street address or ZIP",
       "Aggregate PPP rating and verified review count only when real reviews exist",
       "Earned approval / credential badges with generic labels (Approved platform profile, Contractor-provided license)",
       "Years of experience when provided",

@@ -67,6 +67,40 @@ test("homepage hero headline stays in the first laptop viewport", async ({ page 
   expect(layout.image!.width / layout.image!.height).toBeLessThanOrEqual(layout.naturalAspect! + 0.02);
 });
 
+test("mocked Find a Pro directory and storefront stay inside 390 and 1280", async ({ page }) => {
+  const shots = [
+    { view: "directory", width: 390, height: 844, file: "find-a-pro-directory-390.png" },
+    { view: "directory", width: 1280, height: 900, file: "find-a-pro-directory-1280.png" },
+    { view: "storefront", width: 390, height: 844, file: "find-a-pro-storefront-390.png" },
+    { view: "storefront", width: 1280, height: 900, file: "find-a-pro-storefront-1280.png" },
+  ];
+  for (const shot of shots) {
+    await page.setViewportSize({ width: shot.width, height: shot.height });
+    await page.goto(`http://127.0.0.1:5174/e2e/harness/index.html?preview=${shot.view}`, {
+      waitUntil: "domcontentloaded",
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await expect(page.getByRole("heading", { name: "Fence Repair & Handyman pro in Conroe" })).toBeVisible();
+    await expect(page.getByText("Serves within 25 miles of Conroe, TX", { exact: true })).toBeVisible();
+    await expect(page.getByText("Plymate")).toHaveCount(0);
+    if (shot.view === "directory") {
+      await expect(page.getByText(/contact details stay private until you and a pro connect on a project/i)).toBeVisible();
+    } else {
+      await expect(page.getByText("No portfolio yet", { exact: true })).toHaveCount(1);
+      await expect(page.getByText("No reviews yet", { exact: true })).toHaveCount(2);
+    }
+    const box = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      innerWidth: window.innerWidth,
+    }));
+    expect(box.scrollWidth).toBeLessThanOrEqual(box.innerWidth + 1);
+    await page.screenshot({
+      path: `/opt/cursor/artifacts/screenshots/${shot.file}`,
+      fullPage: true,
+    });
+  }
+});
+
 test("signed-in header keeps the bell inside a 320px viewport", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
   await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=customer#/app/customer", {
