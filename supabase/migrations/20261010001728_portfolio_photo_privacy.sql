@@ -4,8 +4,8 @@
 --   2. Any signed-in user could read an approved contractor's portfolio objects,
 --      regardless of privacy_state. Signed URLs are minted in the browser, so
 --      storage SELECT is the only gate.
---   3. An owner could replace storage_path or overwrite the bytes of a photo
---      that was already PUBLIC_SAFE, skipping another review.
+--   3. An owner could replace storage_path, overwrite the bytes, or delete the
+--      object and insert a new one with the same name, skipping another review.
 --
 -- Non-admin JWT callers are auth.uid() IS NOT NULL AND NOT is_admin().
 -- Service role (no JWT sub) and admins are unchanged.
@@ -41,13 +41,12 @@ $fn$;
 COMMENT ON FUNCTION public.contractor_portfolio_owner_profile_id(uuid) IS
   'Profile id (auth uid folder) that owns a contractor_profiles row. SECURITY DEFINER so portfolio triggers can check the storage prefix without depending on contractor_profiles RLS.';
 
-REVOKE ALL ON FUNCTION public.contractor_portfolio_owner_profile_id(uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.contractor_portfolio_owner_profile_id(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.contractor_portfolio_owner_profile_id(uuid) FROM PUBLIC, anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.enforce_contractor_portfolio_privacy()
 RETURNS trigger
 LANGUAGE plpgsql
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path = public
 AS $fn$
 DECLARE
@@ -85,7 +84,7 @@ END;
 $fn$;
 
 COMMENT ON FUNCTION public.enforce_contractor_portfolio_privacy() IS
-  'SECURITY INVOKER. For non-admin JWT callers: force REVIEW_REQUIRED on insert, reject privacy_state and owner changes, reset review when the photo or caption changes, and keep storage_path under the owner profile folder.';
+  'SECURITY DEFINER, search_path public. auth.uid() reads request.jwt claims, not current_user, so the definer owner is not treated as the caller. is_admin() uses auth.uid() the same way. For non-admin JWT callers: force REVIEW_REQUIRED on insert, reject privacy_state and owner changes, reset review when the photo or caption changes, and keep storage_path under the owner profile folder.';
 
 REVOKE ALL ON FUNCTION public.enforce_contractor_portfolio_privacy() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.enforce_contractor_portfolio_privacy() TO authenticated, service_role;
@@ -161,6 +160,25 @@ CREATE POLICY contractor_docs_storage_select
         (storage.foldername(name))[2] = 'portfolio'
         AND public.portfolio_storage_is_publicly_readable(name)
       )
+    )
+  );
+
+-- Non-admins cannot insert a new object at a path a PUBLIC_SAFE row already
+-- names. Delete of the object stays allowed: the portfolio row is left as it
+-- is, so this check still fails and the owner cannot put unreviewed bytes
+-- back at that path. Deleting the portfolio row and inserting it again is a
+-- new row, and the trigger forces REVIEW_REQUIRED.
+DROP POLICY IF EXISTS contractor_docs_storage_insert ON storage.objects;
+CREATE POLICY contractor_docs_storage_insert
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'contractor-docs'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+    AND (storage.foldername(name))[2] = ANY (ARRAY['portfolio', 'credentials'])
+    AND (
+      public.is_admin()
+      OR (storage.foldername(name))[2] IS DISTINCT FROM 'portfolio'
+      OR NOT public.portfolio_storage_is_public_safe(name)
     )
   );
 

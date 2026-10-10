@@ -1,6 +1,6 @@
 -- Rollback for 20261010001728_portfolio_photo_privacy.sql.
--- Restores the production contractor-docs SELECT and UPDATE policies from before
--- this change, and drops the portfolio privacy trigger, helper functions, admin
+-- Restores the production contractor-docs SELECT, INSERT, and UPDATE policies
+-- from before this change, and drops the portfolio privacy trigger, helper functions, admin
 -- RPCs, and partial index. Does not touch other migrations, payments, or data.
 -- Apply only on the database where the forward migration was applied, and only
 -- with the owner's approval. This re-opens the previous storage and self-review holes.
@@ -23,6 +23,15 @@ CREATE POLICY contractor_docs_storage_select
         )
       )
     )
+  );
+
+DROP POLICY IF EXISTS contractor_docs_storage_insert ON storage.objects;
+CREATE POLICY contractor_docs_storage_insert
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'contractor-docs'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+    AND (storage.foldername(name))[2] = ANY (ARRAY['portfolio', 'credentials'])
   );
 
 DROP POLICY IF EXISTS contractor_docs_storage_update ON storage.objects;

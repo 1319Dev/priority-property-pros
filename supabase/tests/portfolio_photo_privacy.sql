@@ -737,11 +737,204 @@ END
 $$;
 ROLLBACK;
 
--- The replaced SELECT policy no longer publishes every approved contractor folder.
+-- 15. Owner cannot upsert or delete-then-reinsert a PUBLIC_SAFE object.
+--     Deleting the object leaves the portfolio row PUBLIC_SAFE.
+BEGIN;
+SELECT set_config(
+  'request.jwt.claims',
+  '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}',
+  true
+);
+SET LOCAL ROLE authenticated;
+DO $$
+DECLARE
+  n integer;
+  v_state text;
+BEGIN
+  BEGIN
+    INSERT INTO storage.objects (bucket_id, name, metadata)
+    VALUES (
+      'contractor-docs',
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg',
+      '{"swap":true}'::jsonb
+    )
+    ON CONFLICT (bucket_id, name) DO UPDATE
+    SET metadata = EXCLUDED.metadata;
+    RAISE EXCEPTION '15. upsert of a PUBLIC_SAFE object succeeded';
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      NULL;
+  END;
+
+  SELECT count(*) INTO n
+  FROM storage.objects
+  WHERE name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg'
+    AND coalesce(metadata, '{}'::jsonb) <> '{"swap":true}'::jsonb;
+  IF n <> 1 THEN
+    RAISE EXCEPTION '15. PUBLIC_SAFE object was overwritten (% rows left unchanged)', n;
+  END IF;
+
+  DELETE FROM storage.objects
+  WHERE name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN
+    RAISE EXCEPTION '15. owner could not delete their PUBLIC_SAFE object (% rows)', n;
+  END IF;
+
+  SELECT privacy_state::text INTO v_state
+  FROM public.contractor_portfolio
+  WHERE id = '44444444-4444-4444-8444-444444444444';
+  IF v_state IS DISTINCT FROM 'PUBLIC_SAFE' THEN
+    RAISE EXCEPTION '15. deleting the object changed privacy to %', coalesce(v_state, 'NULL');
+  END IF;
+
+  BEGIN
+    INSERT INTO storage.objects (bucket_id, name)
+    VALUES (
+      'contractor-docs',
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg'
+    );
+    RAISE EXCEPTION '15. owner reinserted a PUBLIC_SAFE path';
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      NULL;
+  END;
+
+  SELECT count(*) INTO n
+  FROM storage.objects
+  WHERE name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg';
+  IF n <> 0 THEN
+    RAISE EXCEPTION '15. PUBLIC_SAFE path has % object(s) after the denied reinsert', n;
+  END IF;
+
+  INSERT INTO storage.objects (bucket_id, name)
+  VALUES (
+    'contractor-docs',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/credentials/extra.pdf'
+  );
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN
+    RAISE EXCEPTION '15. credential insert was blocked (% rows)', n;
+  END IF;
+END
+$$;
+ROLLBACK;
+
+-- 15b. An admin can insert an object at a PUBLIC_SAFE path in their own folder.
+BEGIN;
+INSERT INTO public.contractor_portfolio (
+  id, contractor_profile_id, title, storage_path, privacy_state
+)
+VALUES (
+  'a15a15a1-15a1-45a1-85a1-15a115a115a1',
+  '11111111-1111-4111-8111-111111111111',
+  'Admin folder photo',
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc/portfolio/admin-safe.jpg',
+  'PUBLIC_SAFE'
+);
+INSERT INTO storage.objects (bucket_id, name)
+VALUES (
+  'contractor-docs',
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc/portfolio/admin-safe.jpg'
+);
+SELECT set_config(
+  'request.jwt.claims',
+  '{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","role":"authenticated"}',
+  true
+);
+SET LOCAL ROLE authenticated;
+DO $$
+DECLARE
+  n integer;
+  v_state text;
+BEGIN
+  DELETE FROM storage.objects
+  WHERE name = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc/portfolio/admin-safe.jpg';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN
+    RAISE EXCEPTION '15. admin could not delete the PUBLIC_SAFE object (% rows)', n;
+  END IF;
+
+  INSERT INTO storage.objects (bucket_id, name)
+  VALUES (
+    'contractor-docs',
+    'cccccccc-cccc-4ccc-8ccc-cccccccccccc/portfolio/admin-safe.jpg'
+  );
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN
+    RAISE EXCEPTION '15. admin could not reinsert a PUBLIC_SAFE path (% rows)', n;
+  END IF;
+
+  SELECT privacy_state::text INTO v_state
+  FROM public.contractor_portfolio
+  WHERE storage_path = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc/portfolio/admin-safe.jpg';
+  IF v_state IS DISTINCT FROM 'PUBLIC_SAFE' THEN
+    RAISE EXCEPTION '15. admin reinsert changed privacy to %', coalesce(v_state, 'NULL');
+  END IF;
+END
+$$;
+ROLLBACK;
+
+-- 16. Deleting the portfolio row and inserting it again forces REVIEW_REQUIRED,
+--     even when the new row names the old storage_path and asks for PUBLIC_SAFE.
+BEGIN;
+SELECT set_config(
+  'request.jwt.claims',
+  '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}',
+  true
+);
+SET LOCAL ROLE authenticated;
+DO $$
+DECLARE
+  n integer;
+  v_state text;
+BEGIN
+  DELETE FROM public.contractor_portfolio
+  WHERE id = '44444444-4444-4444-8444-444444444444';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN
+    RAISE EXCEPTION '16. owner could not delete their portfolio row (% rows)', n;
+  END IF;
+
+  DELETE FROM storage.objects
+  WHERE name = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg';
+
+  INSERT INTO public.contractor_portfolio (
+    contractor_profile_id, title, storage_path, privacy_state
+  )
+  VALUES (
+    '11111111-1111-4111-8111-111111111111',
+    'Replacement',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg',
+    'PUBLIC_SAFE'
+  );
+
+  SELECT privacy_state::text INTO v_state
+  FROM public.contractor_portfolio
+  WHERE storage_path = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg';
+  IF v_state IS DISTINCT FROM 'REVIEW_REQUIRED' THEN
+    RAISE EXCEPTION '16. reinserted row stored %', coalesce(v_state, 'NULL');
+  END IF;
+
+  INSERT INTO storage.objects (bucket_id, name)
+  VALUES (
+    'contractor-docs',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/portfolio/safe.jpg'
+  );
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN
+    RAISE EXCEPTION '16. new review row still blocked the file insert (% rows)', n;
+  END IF;
+END
+$$;
+ROLLBACK;
+
+-- The replaced storage policies no longer publish every approved contractor folder.
 DO $$
 DECLARE
   v_qual text;
   v_using text;
+  v_insert text;
   v_readable text;
   v_locked text;
 BEGIN
@@ -751,6 +944,9 @@ BEGIN
   SELECT qual INTO v_using
   FROM pg_policies
   WHERE schemaname = 'storage' AND policyname = 'contractor_docs_storage_update';
+  SELECT with_check INTO v_insert
+  FROM pg_policies
+  WHERE schemaname = 'storage' AND policyname = 'contractor_docs_storage_insert';
   SELECT pg_get_functiondef('public.portfolio_storage_is_publicly_readable(text)'::regprocedure) INTO v_readable;
   SELECT pg_get_functiondef('public.portfolio_storage_is_public_safe(text)'::regprocedure) INTO v_locked;
   IF v_qual NOT ILIKE '%portfolio_storage_is_publicly_readable%' OR v_qual ILIKE '%approval_status%' THEN
@@ -759,13 +955,18 @@ BEGIN
   IF v_using NOT ILIKE '%portfolio_storage_is_public_safe%' THEN
     RAISE EXCEPTION 'update policy was not replaced: %', v_using;
   END IF;
+  IF v_insert NOT ILIKE '%portfolio_storage_is_public_safe%'
+     OR v_insert NOT ILIKE '%portfolio%'
+     OR v_insert NOT ILIKE '%credentials%' THEN
+    RAISE EXCEPTION 'insert policy was not replaced: %', v_insert;
+  END IF;
   IF v_readable NOT ILIKE '%PUBLIC_SAFE%' OR v_readable NOT ILIKE '%APPROVED%' OR v_readable NOT ILIKE '%ACTIVE%' THEN
     RAISE EXCEPTION 'readable helper is missing the public gate';
   END IF;
   IF v_locked NOT ILIKE '%PUBLIC_SAFE%' THEN
     RAISE EXCEPTION 'lock helper is missing PUBLIC_SAFE';
   END IF;
-  IF EXISTS (
+  IF NOT EXISTS (
     SELECT 1
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
@@ -773,7 +974,13 @@ BEGIN
       AND p.proname = 'enforce_contractor_portfolio_privacy'
       AND p.prosecdef
   ) THEN
-    RAISE EXCEPTION 'privacy trigger function is SECURITY DEFINER; it must be SECURITY INVOKER';
+    RAISE EXCEPTION 'privacy trigger function must be SECURITY DEFINER';
+  END IF;
+  IF has_function_privilege('authenticated', 'public.contractor_portfolio_owner_profile_id(uuid)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'authenticated can still execute contractor_portfolio_owner_profile_id';
+  END IF;
+  IF NOT has_function_privilege('authenticated', 'public.enforce_contractor_portfolio_privacy()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'authenticated cannot execute the privacy trigger function';
   END IF;
 END
 $$;

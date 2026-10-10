@@ -11,8 +11,16 @@ const migration = readFileSync(
 const api = readFileSync(path.join(root, "src/lib/marketplace/api.ts"), "utf8");
 
 describe("portfolio photo privacy migration", () => {
-  it("guards privacy in a security invoker trigger and admin-only RPCs", () => {
-    expect(migration).toMatch(/SECURITY INVOKER/);
+  it("guards privacy in a security definer trigger and admin-only RPCs", () => {
+    expect(migration).toMatch(/SECURITY DEFINER/);
+    expect(migration).not.toMatch(/SECURITY INVOKER/);
+    expect(migration).toMatch(
+      /REVOKE ALL ON FUNCTION public\.contractor_portfolio_owner_profile_id\(uuid\) FROM PUBLIC, anon, authenticated/,
+    );
+    expect(migration).not.toMatch(
+      /GRANT EXECUTE ON FUNCTION public\.contractor_portfolio_owner_profile_id/,
+    );
+    expect(migration).toMatch(/contractor_docs_storage_insert/);
     expect(migration).toMatch(/SET search_path = public/);
     expect(migration).toMatch(/NEW\.privacy_state := 'REVIEW_REQUIRED'/);
     expect(migration).toMatch(/You cannot change it yourself/);
