@@ -602,6 +602,16 @@ export async function submitBookingReview(bookingId: string, rating: number, bod
   return (data ?? {}) as RpcJson;
 }
 
+export async function updateBookingReview(bookingId: string, rating: number, body?: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("update_booking_review", {
+    p_booking_id: bookingId,
+    p_rating: rating,
+    p_body: body ?? null,
+  });
+  if (error) throw new Error(asError(error, "Could not update the review."));
+  return (data ?? {}) as RpcJson;
+}
+
 export async function confirmBookingHired(bookingId: string): Promise<RpcJson> {
   const { data, error } = await client().rpc("confirm_booking_hired", { p_booking_id: bookingId });
   if (error) throw new Error(asError(error, "Could not confirm Hired."));

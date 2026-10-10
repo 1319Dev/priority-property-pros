@@ -411,6 +411,8 @@ export type BookingReview = {
   body: string | null;
   is_verified: boolean;
   created_at: string;
+  updated_at?: string | null;
+  edited_at?: string | null;
 };
 
 export const OPEN_PROJECT_STATUSES: ProjectStatus[] = [

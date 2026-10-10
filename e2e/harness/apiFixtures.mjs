@@ -81,7 +81,27 @@ export async function fetchChangeOrders(bookingId) {
   ];
 }
 export async function fetchBookingReviews() {
-  return [];
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("review") !== "saved") return [];
+  const role = params.get("as") === "contractor" ? "CONTRACTOR" : "CUSTOMER";
+  return [
+    {
+      id: "rev-1",
+      booking_id: "book-1",
+      customer_id: "user-layout",
+      contractor_profile_id: "pro-1",
+      reviewer_role: role,
+      rating: 5,
+      body:
+        role === "CUSTOMER"
+          ? "The fence line is straight and they hauled the old posts away the same day."
+          : "The homeowner cleared the side yard and was easy to schedule around.",
+      is_verified: true,
+      created_at: "2026-10-01T15:00:00.000Z",
+      updated_at: "2026-10-03T15:00:00.000Z",
+      edited_at: "2026-10-03T15:00:00.000Z",
+    },
+  ];
 }
 export async function fetchHireAgainContractors() {
   return [{ contractor_profile_id: "pro-1", display_label: "Northside Fence Co.", project_title: project.title }];
@@ -299,6 +319,7 @@ export const disputeBooking = ok;
 export const proposeChangeOrder = ok;
 export const respondChangeOrder = ok;
 export const submitBookingReview = ok;
+export const updateBookingReview = ok;
 export const endContractorJob = async () => ({ status: "PASSED" });
 export const acceptOpportunity = ok;
 export const requestProjectConnection = ok;

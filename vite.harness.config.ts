@@ -74,6 +74,7 @@ const swaps: Array<{ id: string; match: RegExp; real: string; names: string[] }>
       "proposeChangeOrder",
       "respondChangeOrder",
       "submitBookingReview",
+      "updateBookingReview",
       "endContractorJob",
       "acceptOpportunity",
       "requestProjectConnection",

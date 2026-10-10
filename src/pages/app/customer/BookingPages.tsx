@@ -26,6 +26,7 @@ import {
   respondChangeOrder,
   startBooking,
   submitBookingReview,
+  updateBookingReview,
   type RpcJson,
 } from "../../../lib/marketplace/api";
 import { BOOKING_STATUS_LABELS, canCustomerCancelPendingBooking, canStartBooking } from "../../../lib/marketplace/bookings";
@@ -292,10 +293,15 @@ export function CustomerBookingDetailPage() {
         referenceNumber={referenceNumber}
         onRatingChange={setRating}
         onBodyChange={setBody}
-        onSubmit={() => {
-          void submitBookingReview(booking.id, Number(rating), body)
+        onSubmit={(nextRating, nextBody) => {
+          const own = reviews.some((review) => review.reviewer_role === "CUSTOMER");
+          const save = own ? updateBookingReview : submitBookingReview;
+          return save(booking.id, Number(nextRating), nextBody)
             .then(() => reload())
-            .catch((err: Error) => setError(err.message));
+            .catch((err: Error) => {
+              setError(err.message);
+              throw err;
+            });
         }}
       />
       <ButtonLink to={`/app/customer/projects/${booking.project_id}`} variant="ghost">
