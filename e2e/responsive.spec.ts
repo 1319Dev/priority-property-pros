@@ -166,7 +166,7 @@ test.describe("admin command center stays inside the viewport", () => {
     await page.getByRole("option", { name: "Reviews" }).click();
     await expect(page).toHaveURL(/#\/app\/admin\/reviews$/);
     await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText("Reviews");
-    await expect(page.getByRole("heading", { name: "Marketplace not connected" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Platform reviews" })).toBeVisible();
 
     await search.fill("PPP-1042");
     await page.getByRole("option", { name: "Open job PPP-1042" }).click();
