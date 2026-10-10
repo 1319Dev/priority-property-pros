@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../lib/auth/useAuth";
-import { fetchChangeOrders, fetchContractorProfileByUser, fetchMyBookings, fetchProject } from "../../lib/marketplace/api";
+import { fetchChangeOrders, fetchContractorProfileByUser, fetchEstimate, fetchMyBookings, fetchProject } from "../../lib/marketplace/api";
 import {
   sortHiredJobCards,
   toHiredJobCard,
@@ -32,9 +32,10 @@ export function HiredJobsPanel({ heading = "Hired jobs", showHeading = true }: {
         const names = new Map(threads.map((thread) => [thread.project_id, thread.other_party_label]));
         const cards = await Promise.all(
           bookings.map(async (booking) => {
-            const [project, orders] = await Promise.all([
+            const [project, orders, estimate] = await Promise.all([
               fetchProject(booking.project_id).catch(() => null),
               fetchChangeOrders(booking.id).catch(() => []),
+              booking.estimate_id ? fetchEstimate(booking.estimate_id).catch(() => null) : Promise.resolve(null),
             ]);
             return toHiredJobCard({
               bookingId: booking.id,
@@ -47,6 +48,7 @@ export function HiredJobsPanel({ heading = "Hired jobs", showHeading = true }: {
               city: project?.city ?? null,
               customerLabel: names.get(booking.project_id) ?? null,
               pendingChangeOrders: orders.filter((order) => order.status === "PROPOSED").length,
+              startAt: estimate?.available_from ?? null,
             });
           }),
         );

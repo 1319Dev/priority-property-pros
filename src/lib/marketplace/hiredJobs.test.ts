@@ -62,7 +62,17 @@ describe("hired job cards", () => {
       referenceNumber: 1042,
       href: "/app/pro/jobs/book-1",
       nextStep: "Review the change order.",
+      startLabel: null,
     });
+    expect(
+      toHiredJobCard({
+        bookingId: "book-1",
+        projectId: "proj-1",
+        bookingStatus: "IN_PROGRESS",
+        title: "Fence repair",
+        startAt: "2026-04-10",
+      })?.startLabel,
+    ).toBe("Fri, Apr 10");
     expect(customerFirstNameFromLabel(null)).toBe("Customer");
     expect(customerFirstNameFromLabel("Customer")).toBe("Customer");
   });

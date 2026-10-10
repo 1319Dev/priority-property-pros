@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { comparisonHighlights, ratingComparisonLabel, sortComparisonEstimates, type ComparisonEstimate } from "./estimateComparison";
+import {
+  comparisonHighlights,
+  ratingComparisonLabel,
+  sortComparisonEstimates,
+  startComparisonLabel,
+  type ComparisonEstimate,
+} from "./estimateComparison";
 
 function row(patch: Partial<ComparisonEstimate> & Pick<ComparisonEstimate, "id" | "totalCents">): ComparisonEstimate {
   return {
@@ -61,21 +67,28 @@ describe("estimate comparison sorting", () => {
     expect(sortComparisonEstimates(rows, "best_rated").map((item) => item.id)).toEqual(["high", "low", "new"]);
   });
 
-  it("highlights price, included work, timeline, start, and rating when they differ", () => {
+  it("highlights the lowest price, highest rating, soonest start, and shortest timeline", () => {
     const highlights = comparisonHighlights(rows);
-    expect(highlights.differing).toEqual(["price", "included", "timeline", "start", "rating"]);
     expect(highlights.lowestPriceIds).toEqual(["low"]);
     expect(highlights.highestRatingIds).toEqual(["high"]);
+    expect(highlights.soonestStartIds).toEqual(["high", "new"]);
+    expect(highlights.shortestTimelineIds).toEqual(["high"]);
     expect(ratingComparisonLabel(null, 0)).toBe("No reviews yet");
     expect(ratingComparisonLabel(5, 1)).toBe("5.0 · 1 review");
+    expect(startComparisonLabel("2026-04-10")).toBe("Fri, Apr 10");
+    expect(startComparisonLabel("2026-04-10T00:00:00.000Z")).toBe("Fri, Apr 10");
+    expect(startComparisonLabel(null)).toBe("Not stated");
   });
 
-  it("does not invent a lowest-price highlight when every total matches", () => {
+  it("does not invent a highlight when every compared value matches", () => {
     const same = [
       row({ id: "a", totalCents: 1000, ratingAverage: 5, ratingCount: 2, ratingLabel: "5.0 · 2 reviews" }),
       row({ id: "b", totalCents: 1000, submittedAt: "2026-04-02T00:00:00.000Z", ratingAverage: 5, ratingCount: 2, ratingLabel: "5.0 · 2 reviews" }),
     ];
-    expect(comparisonHighlights(same).lowestPriceIds).toEqual([]);
-    expect(comparisonHighlights(same).differing).toEqual([]);
+    const highlights = comparisonHighlights(same);
+    expect(highlights.lowestPriceIds).toEqual([]);
+    expect(highlights.highestRatingIds).toEqual([]);
+    expect(highlights.soonestStartIds).toEqual([]);
+    expect(highlights.shortestTimelineIds).toEqual([]);
   });
 });

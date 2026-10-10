@@ -76,6 +76,13 @@ describe("Estimate comparison", () => {
     await user.click(screen.getByRole("button", { name: "Best rated" }));
     expect(cards.textContent?.indexOf("Northside Fence Co.")).toBeLessThan(cards.textContent?.indexOf("Oak Street Repairs") ?? 0);
     expect(screen.getAllByText("Highest rating").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Soonest start").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Shortest timeline").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Fri, Apr 10").length).toBeGreaterThan(0);
+    expect(screen.getByText("Compare up to three estimates side by side. Pick the pro that fits you best.")).toBeInTheDocument();
+    expect(screen.queryByText(/differs/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/does not rank/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("2026-04-10")).not.toBeInTheDocument();
     await user.click(screen.getAllByRole("button", { name: "Hire" })[0]);
     expect(onStartHire).toHaveBeenCalledWith("high");
   });

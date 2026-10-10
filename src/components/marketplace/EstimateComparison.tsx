@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button, ButtonLink } from "../ui/Button";
 import { StatusBanner } from "../ui/StatusBanner";
 import { formatUsdFromCents } from "../../lib/marketplace/fees";
 import {
   comparisonHighlights,
   sortComparisonEstimates,
+  startComparisonLabel,
   type ComparisonEstimate,
   type EstimateComparisonSort,
 } from "../../lib/marketplace/estimateComparison";
@@ -23,8 +24,8 @@ const SORTS: Array<{ key: EstimateComparisonSort; label: string }> = [
   { key: "best_rated", label: "Best rated" },
 ];
 
-function differs(field: "price" | "included" | "timeline" | "start" | "rating", differing: string[]): boolean {
-  return differing.includes(field);
+function highlightNote(ids: readonly string[], id: string, label: string): string | null {
+  return ids.includes(id) ? label : null;
 }
 
 export function EstimateComparison({
@@ -74,7 +75,7 @@ export function EstimateComparison({
           ))}
         </div>
       </div>
-      <p className="text-sm text-ink-700">Factual comparison only. PPP does not rank a best estimate. Up to three local pros can price the job.</p>
+      <p className="text-sm text-ink-700">Compare up to three estimates side by side. Pick the pro that fits you best.</p>
       {ordered.length === 0 ? <p className="text-sm text-ink-500">Submitted estimates will appear here.</p> : null}
       <p className="text-sm font-semibold text-forest-800 lg:hidden">Swipe sideways to compare pros.</p>
       <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 lg:hidden" aria-label="Estimate cards">
@@ -100,15 +101,21 @@ export function EstimateComparison({
           </article>
         ))}
       </div>
-      <div className="hidden max-w-full overflow-x-auto lg:block">
+      <div className="hidden min-w-0 lg:block">
         <table className="w-full table-fixed border-collapse text-sm">
+          <colgroup>
+            <col className="w-44" />
+            {ordered.map((row) => (
+              <col key={row.id} />
+            ))}
+          </colgroup>
           <thead>
             <tr className="border-b border-forest-800/10 text-left">
-              <th className="w-36 px-3 py-3 font-semibold text-ink-500" scope="col">
+              <th className="whitespace-nowrap px-3 py-3 font-semibold text-ink-500" scope="col">
                 <span className="sr-only">Detail</span>
               </th>
               {ordered.map((row) => (
-                <th key={row.id} scope="col" className="px-3 py-3 font-display text-xl text-forest-800">
+                <th key={row.id} scope="col" className="break-words px-3 py-3 font-display text-xl text-forest-800">
                   {row.businessName}
                   <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">{row.statusLabel}</span>
                 </th>
@@ -116,77 +123,51 @@ export function EstimateComparison({
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b border-forest-800/10 align-top">
-              <th scope="row" className="px-3 py-3 text-left font-semibold text-forest-800">
-                Price
-              </th>
+            <CompareRow label="Price">
               {ordered.map((row) => (
-                <td key={row.id} className={`px-3 py-3 ${cellClass(highlights.lowestPriceIds.includes(row.id), differs("price", highlights.differing))}`}>
+                <CompareCell key={row.id} note={highlightNote(highlights.lowestPriceIds, row.id, "Lowest price")}>
                   <span className="text-lg font-semibold text-forest-800">{formatUsdFromCents(row.totalCents)}</span>
-                  <FieldNote featured={highlights.lowestPriceIds.includes(row.id) ? "Lowest price" : null} showDiffers={differs("price", highlights.differing) && !highlights.lowestPriceIds.includes(row.id)} />
-                </td>
+                </CompareCell>
               ))}
-            </tr>
-            <tr className="border-b border-forest-800/10 align-top">
-              <th scope="row" className="px-3 py-3 text-left font-semibold text-forest-800">
-                Included
-              </th>
+            </CompareRow>
+            <CompareRow label="Included">
               {ordered.map((row) => (
-                <td key={row.id} className={`px-3 py-3 ${cellClass(false, differs("included", highlights.differing))}`}>
+                <CompareCell key={row.id} note={null}>
                   <LineList items={row.lineItems} />
-                  <FieldNote featured={null} showDiffers={differs("included", highlights.differing)} />
-                </td>
+                </CompareCell>
               ))}
-            </tr>
-            <tr className="border-b border-forest-800/10 align-top">
-              <th scope="row" className="px-3 py-3 text-left font-semibold text-forest-800">
-                Timeline
-              </th>
+            </CompareRow>
+            <CompareRow label="Timeline">
               {ordered.map((row) => (
-                <td key={row.id} className={`px-3 py-3 ${cellClass(false, differs("timeline", highlights.differing))}`}>
+                <CompareCell key={row.id} note={highlightNote(highlights.shortestTimelineIds, row.id, "Shortest timeline")}>
                   {row.timelineLabel}
-                  <FieldNote featured={null} showDiffers={differs("timeline", highlights.differing)} />
-                </td>
+                </CompareCell>
               ))}
-            </tr>
-            <tr className="border-b border-forest-800/10 align-top">
-              <th scope="row" className="px-3 py-3 text-left font-semibold text-forest-800">
-                Start
-              </th>
+            </CompareRow>
+            <CompareRow label="Start">
               {ordered.map((row) => (
-                <td key={row.id} className={`px-3 py-3 ${cellClass(false, differs("start", highlights.differing))}`}>
-                  {row.startLabel}
-                  <FieldNote featured={null} showDiffers={differs("start", highlights.differing)} />
-                </td>
+                <CompareCell key={row.id} note={highlightNote(highlights.soonestStartIds, row.id, "Soonest start")}>
+                  {startComparisonLabel(row.startAt || row.startLabel)}
+                </CompareCell>
               ))}
-            </tr>
-            <tr className="border-b border-forest-800/10 align-top">
-              <th scope="row" className="px-3 py-3 text-left font-semibold text-forest-800">
-                Rating
-              </th>
+            </CompareRow>
+            <CompareRow label="Rating">
               {ordered.map((row) => (
-                <td key={row.id} className={`px-3 py-3 ${cellClass(highlights.highestRatingIds.includes(row.id), differs("rating", highlights.differing))}`}>
+                <CompareCell key={row.id} note={highlightNote(highlights.highestRatingIds, row.id, "Highest rating")}>
                   {row.ratingLabel}
-                  <FieldNote featured={highlights.highestRatingIds.includes(row.id) ? "Highest rating" : null} showDiffers={differs("rating", highlights.differing) && !highlights.highestRatingIds.includes(row.id)} />
-                </td>
+                </CompareCell>
               ))}
-            </tr>
-            <tr className="align-top">
-              <th scope="row" className="px-3 py-3 text-left font-semibold text-forest-800">
-                Verified
-              </th>
+            </CompareRow>
+            <CompareRow label="Verified" border={false}>
               {ordered.map((row) => (
-                <td key={row.id} className="px-3 py-3">
+                <CompareCell key={row.id} note={null}>
                   <BadgeList badges={row.badges} />
-                </td>
+                </CompareCell>
               ))}
-            </tr>
-            <tr className="align-top">
-              <th scope="row" className="px-3 py-3 text-left font-semibold text-forest-800">
-                Hire
-              </th>
+            </CompareRow>
+            <CompareRow label="Hire" border={false}>
               {ordered.map((row) => (
-                <td key={row.id} className="px-3 py-3">
+                <CompareCell key={row.id} note={null}>
                   <HireActions
                     row={row}
                     confirmId={confirmId}
@@ -199,9 +180,9 @@ export function EstimateComparison({
                     onCancelHire={onCancelHire}
                     onDecline={onDecline}
                   />
-                </td>
+                </CompareCell>
               ))}
-            </tr>
+            </CompareRow>
           </tbody>
         </table>
       </div>
@@ -209,20 +190,41 @@ export function EstimateComparison({
   );
 }
 
-function cellClass(featured: boolean, fieldDiffers: boolean): string {
-  if (featured) return "bg-gold-500/20";
-  if (fieldDiffers) return "bg-cream-100";
-  return "";
+function CompareRow({
+  label,
+  border = true,
+  children,
+}: {
+  label: string;
+  border?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <tr className={border ? "border-b border-forest-800/10 align-top" : "align-top"}>
+      <th scope="row" className="whitespace-nowrap px-3 py-3 text-left font-semibold text-forest-800">
+        {label}
+      </th>
+      {children}
+    </tr>
+  );
 }
 
-function FieldNote({ featured, showDiffers }: { featured: string | null; showDiffers: boolean }) {
-  if (featured) {
-    return <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">{featured}</span>;
-  }
-  if (showDiffers) {
-    return <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.14em] text-ink-500">Differs</span>;
-  }
-  return null;
+function CompareCell({ note, children }: { note: string | null; children: ReactNode }) {
+  return (
+    <td className={`break-words px-3 py-3 align-top ${note ? "bg-gold-500/20" : ""}`}>
+      {children}
+      {note ? <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">{note}</span> : null}
+    </td>
+  );
+}
+
+function MobileField({ note, children }: { note: string | null; children: ReactNode }) {
+  return (
+    <div className={note ? "rounded-2xl bg-gold-500/20 px-3 py-2" : undefined}>
+      {children}
+      {note ? <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">{note}</span> : null}
+    </div>
+  );
 }
 
 function LineList({ items }: { items: ComparisonEstimate["lineItems"] }) {
@@ -281,30 +283,31 @@ function EstimateBody({
       {row.outOfDate ? (
         <StatusBanner tone="warning" title="This estimate is out of date" body="The job details changed after this price was sent." />
       ) : null}
-      <p className={`text-lg font-semibold ${highlights.lowestPriceIds.includes(row.id) ? "text-forest-800" : "text-forest-800"}`}>
-        {formatUsdFromCents(row.totalCents)}
-      </p>
-      <FieldNote featured={highlights.lowestPriceIds.includes(row.id) ? "Lowest price" : null} showDiffers={differs("price", highlights.differing) && !highlights.lowestPriceIds.includes(row.id)} />
+      <MobileField note={highlightNote(highlights.lowestPriceIds, row.id, "Lowest price")}>
+        <p className="text-lg font-semibold text-forest-800">{formatUsdFromCents(row.totalCents)}</p>
+      </MobileField>
       <div>
         <p className="font-semibold text-forest-800">Included</p>
         <LineList items={row.lineItems} />
-        <FieldNote featured={null} showDiffers={differs("included", highlights.differing)} />
       </div>
-      <p>
-        <span className="font-semibold text-forest-800">Timeline: </span>
-        {row.timelineLabel}
-      </p>
-      <FieldNote featured={null} showDiffers={differs("timeline", highlights.differing)} />
-      <p>
-        <span className="font-semibold text-forest-800">Start: </span>
-        {row.startLabel}
-      </p>
-      <FieldNote featured={null} showDiffers={differs("start", highlights.differing)} />
-      <p>
-        <span className="font-semibold text-forest-800">Rating: </span>
-        {row.ratingLabel}
-      </p>
-      <FieldNote featured={highlights.highestRatingIds.includes(row.id) ? "Highest rating" : null} showDiffers={differs("rating", highlights.differing) && !highlights.highestRatingIds.includes(row.id)} />
+      <MobileField note={highlightNote(highlights.shortestTimelineIds, row.id, "Shortest timeline")}>
+        <p>
+          <span className="font-semibold text-forest-800">Timeline: </span>
+          {row.timelineLabel}
+        </p>
+      </MobileField>
+      <MobileField note={highlightNote(highlights.soonestStartIds, row.id, "Soonest start")}>
+        <p>
+          <span className="font-semibold text-forest-800">Start: </span>
+          {startComparisonLabel(row.startAt || row.startLabel)}
+        </p>
+      </MobileField>
+      <MobileField note={highlightNote(highlights.highestRatingIds, row.id, "Highest rating")}>
+        <p>
+          <span className="font-semibold text-forest-800">Rating: </span>
+          {row.ratingLabel}
+        </p>
+      </MobileField>
       <div>
         <p className="font-semibold text-forest-800">Verified</p>
         <BadgeList badges={row.badges} />

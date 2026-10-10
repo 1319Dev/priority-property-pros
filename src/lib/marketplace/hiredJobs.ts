@@ -1,3 +1,4 @@
+import { startComparisonLabel } from "./estimateComparison";
 import type { BookingStatus } from "./types";
 
 export const HIRED_JOB_CHIPS = ["Hired", "Confirmed", "In progress", "Completed"] as const;
@@ -15,6 +16,8 @@ export type HiredJobSource = {
   /** First name already returned by the message inbox, or null when contact is still locked. */
   customerLabel?: string | null;
   pendingChangeOrders?: number;
+  /** Estimate start date, `YYYY-MM-DD` or null. */
+  startAt?: string | null;
 };
 
 export type HiredJobCardModel = {
@@ -27,6 +30,7 @@ export type HiredJobCardModel = {
   chip: HiredJobChip;
   nextStep: string;
   href: string;
+  startLabel: string | null;
 };
 
 const CHIP_RANK: Record<HiredJobChip, number> = {
@@ -104,6 +108,7 @@ export function toHiredJobCard(input: HiredJobSource): HiredJobCardModel | null 
     chip,
     nextStep: hiredJobNextStep(input),
     href: hiredJobPath(input.bookingId),
+    startLabel: input.startAt ? startComparisonLabel(input.startAt) : null,
   };
 }
 

@@ -32,6 +32,7 @@ import { SHARE_CONTACT_WAITING_COPY, jobContactWasShared } from "../../../lib/ma
 import { JobThreadPanel } from "../../../components/marketplace/JobThreadPanel";
 import { HiredJobStatusChip } from "../../../components/marketplace/HiredJobsSection";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
+import { startComparisonLabel } from "../../../lib/marketplace/estimateComparison";
 import { customerFirstNameFromLabel, hiredJobChip, hiredJobNextStep, hiredJobPath, isSafeRecordId } from "../../../lib/marketplace/hiredJobs";
 import { isMutuallyHired, bookingListHiredLabel } from "../../../lib/marketplace/hired";
 import { listMyMessageThreads } from "../../../lib/marketplace/messagingApi";
@@ -189,7 +190,7 @@ export function ProBookingDetailPage() {
         total: estimate.total_cents,
         notes: estimate.notes,
         timeline: estimate.duration_hours != null ? `${estimate.duration_hours} hours` : "Not stated",
-        start: estimate.available_from ?? "Not stated",
+        start: startComparisonLabel(estimate.available_from),
       });
       setEstimateLines(
         items.map((item) => ({

@@ -41,6 +41,7 @@ import {
   TIMING_LABELS,
 } from "../../../lib/marketplace/api";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
+import { startComparisonLabel } from "../../../lib/marketplace/estimateComparison";
 import {
   CANCEL_PROJECT_TOAST,
   CUSTOMER_HOME_EMPTY,
@@ -719,7 +720,7 @@ export function CustomerEstimateDetailPage() {
         ))}
       </ul>
       <p className="text-sm">Duration: {estimate.duration_hours != null ? `${estimate.duration_hours} hours` : "Not stated"}</p>
-      <p className="text-sm">Available from: {estimate.available_from ?? "Not stated"}</p>
+      <p className="text-sm">Available from: {startComparisonLabel(estimate.available_from)}</p>
       {estimate.notes ? <p className="text-sm">{estimate.notes}</p> : null}
       {selectable ? (
         confirm ? (

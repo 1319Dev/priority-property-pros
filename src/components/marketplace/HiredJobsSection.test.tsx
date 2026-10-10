@@ -16,6 +16,7 @@ describe("Hired jobs section", () => {
       referenceNumber: 1042,
       city: "Atlanta",
       customerLabel: "Christopher",
+      startAt: "2026-04-10",
     });
     if (!job) throw new Error("expected a hired job card");
     render(
@@ -27,6 +28,8 @@ describe("Hired jobs section", () => {
     expect(screen.getByText("Confirmed")).toBeInTheDocument();
     expect(screen.getByText("PPP-1042")).toBeInTheDocument();
     expect(screen.getByText("Christopher · Atlanta")).toBeInTheDocument();
+    expect(screen.getByText("Start: Fri, Apr 10")).toBeInTheDocument();
+    expect(screen.queryByText("2026-04-10")).not.toBeInTheDocument();
     expect(screen.getByText("Next: Start the job when you are ready.")).toBeInTheDocument();
     const open = screen.getByRole("link", { name: "Open job" });
     expect(open).toHaveAttribute("href", "/app/pro/jobs/book-1");

@@ -48,6 +48,7 @@ export function HiredJobsSection({
               <p className="text-sm text-ink-700">
                 {job.customerFirstName} · {job.city}
               </p>
+              {job.startLabel ? <p className="text-sm text-ink-700">Start: {job.startLabel}</p> : null}
               <p className="mt-2 text-sm text-ink-700">Next: {job.nextStep}</p>
               <ButtonLink to={job.href} className="mt-4 min-h-14 w-full">
                 Open job
