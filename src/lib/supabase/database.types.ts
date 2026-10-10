@@ -963,6 +963,7 @@ export type Database = {
     };
     Functions: {
       is_admin: { Args: Record<string, never>; Returns: boolean };
+      admin_mfa_required: { Args: Record<string, never>; Returns: boolean };
       zip_service_area_preview: {
         Args: { p_zip: string; p_radius_miles: number };
         Returns: Json;

@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { BrandLoader } from "../../components/brand/BrandLoader";
+import { AdminMfaBlocked, AdminMfaChallenge } from "./AdminMfaChallenge";
+import { loadAdminMfaGate, verifyAdminSignInCode, type AdminMfaGateState } from "./adminMfaApi";
 import { BLOCKED_STATUSES, ROLE_HOME, postLoginPath } from "./roles";
 import { useAuth } from "./useAuth";
 import type { AccountType } from "./types";
@@ -49,5 +52,44 @@ export function RequireRole({ role }: { role: AccountType }) {
 }
 
 export function RequireAdmin() {
-  return <RequireRole role="ADMIN" />;
+  const { loading, profile, account_type, session } = useAuth();
+  if (loading) return <AuthLoadingScreen />;
+  if (!account_type || !profile) return <Navigate to="/sign-in" replace />;
+  if (account_type !== "ADMIN") return <Navigate to={ROLE_HOME[account_type]} replace />;
+  return <AdminStepUp sessionKey={session?.access_token ?? null} />;
+}
+
+/** Admin pages stay unmounted until a verified authenticator, when one exists, has been entered. */
+function AdminStepUp({ sessionKey }: { sessionKey: string | null }) {
+  const { signOut } = useAuth();
+  const [gate, setGate] = useState<AdminMfaGateState | null>(null);
+  const [nonce, setNonce] = useState(0);
+
+  useEffect(() => {
+    let cancel = false;
+    setGate(null);
+    void loadAdminMfaGate().then((next) => {
+      if (!cancel) setGate(next);
+    });
+    return () => {
+      cancel = true;
+    };
+  }, [sessionKey, nonce]);
+
+  if (!gate) return <AuthLoadingScreen />;
+  if (gate.status === "allow") return <Outlet />;
+  if (gate.status === "blocked") {
+    return <AdminMfaBlocked onSignOut={() => void signOut()} />;
+  }
+  return (
+    <AdminMfaChallenge
+      factors={gate.factors}
+      onSignOut={() => void signOut()}
+      onVerify={async (factorId, code) => {
+        const result = await verifyAdminSignInCode(factorId, code);
+        if (!result.error) setNonce((current) => current + 1);
+        return result;
+      }}
+    />
+  );
 }

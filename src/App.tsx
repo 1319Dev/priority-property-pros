@@ -30,6 +30,7 @@ import { CustomerShell } from "./pages/app/CustomerShell";
 import { ProShell } from "./pages/app/ProShell";
 import { VerifierShell } from "./pages/app/VerifierShell";
 import { AdminShell } from "./pages/app/AdminShell";
+import { AdminTwoFactorPage } from "./pages/app/admin/AdminTwoFactorPage";
 import {
   AccountPage,
   CustomerHomePage,
@@ -181,6 +182,7 @@ export default function App() {
             <Route path="reviews" element={<AdminReviewsPage />} />
             <Route path="audit" element={<AdminAuditPage />} />
             <Route path="bookings" element={<AdminBookingsPage />} />
+            <Route path="security" element={<AdminTwoFactorPage />} />
             <Route path="account" element={<AccountPage />} />
             <Route path="account/notifications" element={<NotificationSettingsPage />} />
           </Route>
