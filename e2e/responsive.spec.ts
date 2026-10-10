@@ -260,3 +260,42 @@ test.describe("admin cleanup copy", () => {
     });
   }
 });
+
+const reviewWidths = [390, 768, 1280];
+
+test.describe("platform review moderation", () => {
+  for (const width of reviewWidths) {
+    test(`review reason at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: width < 768 ? 844 : 900 });
+      await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=admin#/app/admin/reviews", {
+        waitUntil: "domcontentloaded",
+      });
+      await page.evaluate(() => document.fonts.ready);
+      const reason = page.getByRole("textbox", { name: /Reason \(required\)/i });
+      await expect(reason).toBeVisible();
+      await expect(page.getByRole("button", { name: "Approve" })).toBeDisabled();
+      await reason.fill("Specific and on topic");
+      await expect(page.getByRole("button", { name: "Approve" })).toBeEnabled();
+      const box = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+      }));
+      expect(box.scrollWidth).toBeLessThanOrEqual(box.innerWidth + 1);
+      if (process.env.PPP_ADMIN_SCREENSHOTS) {
+        const name = width === 1280 ? "desktop" : width === 768 ? "tablet" : "phone";
+        await page.screenshot({
+          path: `/opt/cursor/artifacts/screenshots/pr-e-reviews-${name}.png`,
+          fullPage: true,
+        });
+        if (width === 1280) {
+          await page.getByRole("button", { name: "Reject" }).click();
+          await expect(page.getByRole("dialog", { name: "Reject this review?" })).toBeVisible();
+          await page.screenshot({
+            path: "/opt/cursor/artifacts/screenshots/pr-e-reviews-confirm.png",
+            fullPage: true,
+          });
+        }
+      }
+    });
+  }
+});
