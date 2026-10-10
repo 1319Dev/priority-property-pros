@@ -1,6 +1,6 @@
 -- Portfolio photo privacy checks. Raises on failure.
 -- Run after portfolio_photo_privacy_bootstrap.sql and
--- 20261010001728_portfolio_photo_privacy.sql. Each case uses
+-- 20261010014611_portfolio_photo_privacy.sql. Each case uses
 -- SET LOCAL ROLE and request.jwt.claims, then rolls back.
 
 -- Fixed ids (also used as storage folder names).
@@ -1223,7 +1223,7 @@ FROM public.contractor_portfolio;
 CREATE TEMP TABLE storage_snapshot ON COMMIT DROP AS
 SELECT id, bucket_id, name, owner, created_at, updated_at, metadata
 FROM storage.objects;
-\i supabase/migrations/20261010001728_portfolio_photo_privacy.sql
+\i supabase/migrations/20261010014611_portfolio_photo_privacy.sql
 DO $$
 DECLARE
   n integer;

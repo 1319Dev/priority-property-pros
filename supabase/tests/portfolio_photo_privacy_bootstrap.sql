@@ -1,7 +1,7 @@
 -- LOCAL TEST FIXTURE ONLY. Not a migration and not for production.
 -- Recreates the portfolio, profile, audit, and storage pieces described as the
 -- current production state, including the vulnerable contractor-docs policies,
--- so 20261010001728_portfolio_photo_privacy.sql can be applied on top.
+-- so 20261010014611_portfolio_photo_privacy.sql can be applied on top.
 -- Re-running this file puts those vulnerable policies back.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;

@@ -5,15 +5,15 @@ import { describe, expect, it } from "vitest";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const migration = readFileSync(
-  path.join(root, "supabase/migrations/20261010001728_portfolio_photo_privacy.sql"),
+  path.join(root, "supabase/migrations/20261010014611_portfolio_photo_privacy.sql"),
   "utf8",
 );
 const rollback = readFileSync(
-  path.join(root, "supabase/rollbacks/20261010001728_portfolio_photo_privacy_rollback.sql"),
+  path.join(root, "supabase/rollbacks/20261010014611_portfolio_photo_privacy_rollback.sql"),
   "utf8",
 );
 const partialRollback = readFileSync(
-  path.join(root, "supabase/rollbacks/20261010001728_portfolio_photo_privacy_partial_rollback.sql"),
+  path.join(root, "supabase/rollbacks/20261010014611_portfolio_photo_privacy_partial_rollback.sql"),
   "utf8",
 );
 const api = readFileSync(path.join(root, "src/lib/marketplace/api.ts"), "utf8");
