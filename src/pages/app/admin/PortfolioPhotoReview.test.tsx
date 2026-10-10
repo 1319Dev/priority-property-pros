@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -46,11 +46,24 @@ describe("Photo review", () => {
     expect(screen.getByText(/Oct 1, 2026/i)).toBeInTheDocument();
   });
 
-  it("shows nothing when a signed URL is not available", async () => {
+  it("shows a placeholder when the signed URL is missing", async () => {
     vi.mocked(marketplaceApi.signedContractorDocUrl).mockResolvedValue(null);
     render(<PortfolioPhotoReviewPanel />);
-    expect(await screen.findByText("Preview unavailable")).toBeInTheDocument();
+    expect(await screen.findByText("Photo unavailable")).toBeInTheDocument();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("replaces a broken thumbnail with the placeholder", () => {
+    render(
+      <PortfolioPhotoReviewList
+        items={[{ ...photo, imageUrl: "https://example.com/missing.jpg" }]}
+        onApprove={() => undefined}
+        onHide={() => undefined}
+      />,
+    );
+    fireEvent.error(screen.getByRole("img", { name: "Cedar fence repair" }));
+    expect(screen.getByText("Photo unavailable")).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "Cedar fence repair" })).not.toBeInTheDocument();
   });
 
   it("approves and hides from the list immediately", async () => {
@@ -77,6 +90,58 @@ describe("Photo review", () => {
     await waitFor(() => {
       expect(screen.queryByRole("heading", { name: "Northside Fence Co." })).not.toBeInTheDocument();
     });
+  });
+
+  it("loads the queue, signs the thumbnail, and drops the card on approve or hide", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<PortfolioPhotoReviewPanel />);
+    expect(await screen.findByRole("img", { name: "Cedar fence repair" })).toHaveAttribute(
+      "src",
+      "https://example.com/cedar.jpg",
+    );
+    expect(approvalsApi.adminListPortfolioReviewQueue).toHaveBeenCalledTimes(1);
+    expect(marketplaceApi.signedContractorDocUrl).toHaveBeenCalledWith(photo.storage_path);
+    await user.click(screen.getByRole("button", { name: /approve cedar fence repair/i }));
+    expect(approvalsApi.adminSetPortfolioPrivacy).toHaveBeenCalledWith("photo-1", "PUBLIC_SAFE");
+    await waitFor(() => {
+      expect(screen.getByText(/no photos waiting for review/i)).toBeInTheDocument();
+    });
+    unmount();
+
+    vi.mocked(approvalsApi.adminSetPortfolioPrivacy).mockClear();
+    render(<PortfolioPhotoReviewPanel />);
+    await user.click(await screen.findByRole("button", { name: /hide cedar fence repair/i }));
+    expect(approvalsApi.adminSetPortfolioPrivacy).toHaveBeenCalledWith("photo-1", "PRIVATE");
+    await waitFor(() => {
+      expect(screen.getByText(/no photos waiting for review/i)).toBeInTheDocument();
+    });
+  });
+
+  it("keeps the photo and shows a friendly message when the privacy RPC fails", async () => {
+    const user = userEvent.setup();
+    vi.mocked(approvalsApi.adminSetPortfolioPrivacy).mockRejectedValue(new Error("Could not update this photo."));
+    render(<PortfolioPhotoReviewPanel />);
+    await user.click(await screen.findByRole("button", { name: /approve cedar fence repair/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not update this photo.");
+    expect(screen.getByRole("heading", { name: "Northside Fence Co." })).toBeInTheDocument();
+  });
+
+  it("shows an error state when the queue RPC is missing and leaves approvals usable", async () => {
+    const user = userEvent.setup();
+    vi.mocked(approvalsApi.adminListPortfolioReviewQueue).mockRejectedValue(
+      new Error("Could not load photos waiting for review."),
+    );
+    render(
+      <MemoryRouter>
+        <AdminApprovalsPage />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByRole("heading", { name: "Contractor approvals" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: /photo review/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not load photos waiting for review.");
+    expect(screen.getByRole("heading", { name: "Contractor approvals" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Contractors" }));
+    expect(await screen.findByText("No pending applications")).toBeInTheDocument();
   });
 
   it("opens Photo review from contractor approvals and approves in place", async () => {

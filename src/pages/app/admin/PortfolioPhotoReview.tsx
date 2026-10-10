@@ -6,6 +6,7 @@ import { FormError } from "../../../lib/auth/AuthCard";
 import { formatApprovalDate } from "../../../lib/admin/approvals";
 import { adminListPortfolioReviewQueue, adminSetPortfolioPrivacy } from "../../../lib/admin/approvalsApi";
 import type { PortfolioPrivacyChoice, PortfolioReviewItem } from "../../../lib/admin/portfolioReview";
+import { PortfolioPhotoFrame } from "../../../components/marketplace/PortfolioPhotoFrame";
 import { signedContractorDocUrl } from "../../../lib/marketplace/api";
 
 type ReviewCard = PortfolioReviewItem & { imageUrl: string | null };
@@ -40,18 +41,11 @@ export function PortfolioPhotoReviewList({
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-600">Pending review</p>
             <h2 className="mt-1 font-display text-2xl font-semibold text-forest-800">{item.contractor_label}</h2>
             <p className="mt-1 text-sm text-ink-500">{formatApprovalDate(item.created_at)}</p>
-            {item.imageUrl ? (
-              <img
-                src={item.imageUrl}
-                alt={caption}
-                className="mt-3 h-48 w-full rounded-2xl object-cover sm:h-56"
-                onError={(event) => {
-                  event.currentTarget.remove();
-                }}
-              />
-            ) : (
-              <p className="mt-3 text-sm text-ink-500">Preview unavailable</p>
-            )}
+            <PortfolioPhotoFrame
+              src={item.imageUrl}
+              alt={caption}
+              className="mt-3 h-48 w-full rounded-2xl sm:h-56"
+            />
             <p className="mt-3 break-words text-sm font-semibold text-forest-800">{caption}</p>
             {item.description?.trim() ? (
               <p className="mt-1 break-words text-sm text-ink-700">{item.description}</p>

@@ -91,7 +91,7 @@ function asReviewItems(value: unknown): PortfolioReviewItem[] {
 
 export async function adminListPortfolioReviewQueue(): Promise<PortfolioReviewItem[]> {
   const { data, error } = await client().rpc("admin_list_portfolio_review_queue");
-  if (error) throw new Error(asError(error, "Could not load photos waiting for review."));
+  if (error) throw new Error("Could not load photos waiting for review.");
   return asReviewItems(data);
 }
 
@@ -105,7 +105,7 @@ export async function adminSetPortfolioPrivacy(
     p_state: state,
     p_note: note ?? null,
   });
-  if (error) throw new Error(asError(error, "Could not update this photo."));
+  if (error) throw new Error("Could not update this photo.");
 }
 
 export async function adminRequestContractorInfo(

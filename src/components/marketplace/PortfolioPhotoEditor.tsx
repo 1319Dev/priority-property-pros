@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { PORTFOLIO_REVIEW_NOTE, portfolioPrivacyLabel } from "../../lib/marketplace/portfolioPrivacy";
 import type { PortfolioPrivacyState } from "../../lib/marketplace/publicDirectory";
+import { PortfolioPhotoFrame } from "./PortfolioPhotoFrame";
 
 export type PortfolioEditorRow = {
   id: string;
@@ -60,16 +61,7 @@ export function PortfolioPhotoEditor({
                   </button>
                 ) : null}
               </div>
-              {row.imageUrl ? (
-                <img
-                  src={row.imageUrl}
-                  alt={row.title || "Portfolio photo"}
-                  className="mt-3 h-40 w-full rounded-2xl object-cover"
-                  onError={(event) => {
-                    event.currentTarget.remove();
-                  }}
-                />
-              ) : null}
+              <PortfolioPhotoFrame src={row.imageUrl} alt={row.title || "Portfolio photo"} />
               {editing ? (
                 <CaptionField initial={row.title} onSave={(title) => onSaveCaption(row.id, title)} />
               ) : null}

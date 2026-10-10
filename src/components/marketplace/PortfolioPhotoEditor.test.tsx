@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { PORTFOLIO_REVIEW_NOTE } from "../../lib/marketplace/portfolioPrivacy";
@@ -19,8 +19,13 @@ describe("Portfolio photo editor", () => {
     expect(screen.getByText("Pending review")).toBeInTheDocument();
     expect(screen.getByText("Approved")).toBeInTheDocument();
     expect(screen.getByText("Hidden")).toBeInTheDocument();
+    expect(screen.getAllByText("Photo unavailable")).toHaveLength(2);
     expect(screen.getAllByRole("img")).toHaveLength(1);
-    expect(screen.getByRole("img", { name: "Front gate" })).toHaveAttribute("src", "https://example.com/gate.jpg");
+    const photo = screen.getByRole("img", { name: "Front gate" });
+    expect(photo).toHaveAttribute("src", "https://example.com/gate.jpg");
+    fireEvent.error(photo);
+    expect(screen.queryByRole("img", { name: "Front gate" })).not.toBeInTheDocument();
+    expect(screen.getAllByText("Photo unavailable")).toHaveLength(3);
     expect(screen.queryByLabelText("Add portfolio photo")).not.toBeInTheDocument();
   });
 
