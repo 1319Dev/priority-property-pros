@@ -20,7 +20,8 @@ describe("admin error mapping", () => {
     vi.mocked(getSupabaseClient).mockReturnValue({ rpc, from: vi.fn() } as never);
 
     await expect(confirmBookingForTesting("booking-1")).rejects.toThrow("You need an admin sign-in to do that.");
-    await expect(cancelPendingBooking("booking-1")).rejects.toThrow("permission denied for table signup_fee_charges");
+    await expect(cancelPendingBooking("booking-1")).rejects.toThrow("Could not cancel the booking.");
+    await expect(cancelPendingBooking("booking-1")).rejects.not.toThrow(/signup_fee_charges/);
   });
 
   it("maps admin review reads without changing the public review error helper", async () => {
