@@ -137,7 +137,7 @@ dd a {
 .brand-loader-arc {
   transform-box: fill-box;
   transform-origin: center;
-  animation: brand-loader-arc-spin 1.2s linear infinite;
+  animation: brand-loader-arc-spin 1s linear infinite;
 }
 
 .brand-loader-skeleton {
