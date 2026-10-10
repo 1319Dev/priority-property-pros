@@ -94,6 +94,7 @@ describe("Find a Pro visibility", () => {
     const rpc = latestDirectoryRpc();
     expect(rpc).toMatch(/cp\.approval_status = 'APPROVED'/);
     expect(rpc).toMatch(/p\.account_status = 'ACTIVE'/);
+    expect(rpc).toMatch(/public\.signup_fee_is_satisfied\(cp\.profile_id\)/);
     expect(rpc).not.toMatch(/rating_count\s*>\s*0/);
     expect(rpc).not.toMatch(/business_name|website_url|license_number|avatar_url|p\.email|p\.phone|street_line/);
   });
