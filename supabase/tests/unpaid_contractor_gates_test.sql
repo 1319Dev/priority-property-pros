@@ -1,6 +1,9 @@
 -- Local regression for unpaid contractor gates.
--- Builds a minimal schema, applies supabase/migrations/20261012000003_unpaid_contractor_gates.sql,
--- and raises on failure. Not a production script. Does not call Stripe.
+-- Builds a minimal schema, installs the pre-migration production definitions from
+-- supabase/rollbacks/20261012000003_unpaid_contractor_gates_rollback.sql, applies
+-- supabase/migrations/20261012000003_unpaid_contractor_gates.sql, then checks
+-- migration -> rollback -> migration. Raises on failure. Not a production script.
+-- Does not call Stripe.
 --
 --   psql -d unpaid_gates -v ON_ERROR_STOP=1 -f supabase/tests/unpaid_contractor_gates_test.sql
 
@@ -15,6 +18,8 @@ CREATE TYPE public.account_type AS ENUM ('CUSTOMER', 'CONTRACTOR', 'VERIFIER', '
 CREATE TYPE public.account_status AS ENUM ('ACTIVE', 'PENDING', 'SUSPENDED', 'DISABLED', 'DELETED');
 CREATE TYPE public.approval_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED');
 CREATE TYPE public.signup_fee_status AS ENUM ('UNPAID', 'PAID', 'NOT_REQUIRED');
+CREATE TYPE public.portfolio_privacy_state AS ENUM ('PUBLIC_SAFE', 'PRIVATE', 'REVIEW_REQUIRED');
+CREATE TYPE public.credential_status AS ENUM ('NOT_SUBMITTED', 'PENDING', 'VERIFIED', 'REJECTED', 'EXPIRED');
 CREATE TYPE public.project_status AS ENUM (
   'DRAFT', 'POSTED', 'MATCHING', 'CONTRACTORS_RESPONDING', 'ESTIMATES_AVAILABLE', 'CONTRACTOR_SELECTED', 'CANCELLED'
 );
@@ -98,7 +103,7 @@ CREATE TABLE public.contractor_credentials (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   contractor_profile_id uuid NOT NULL REFERENCES public.contractor_profiles (id),
   kind text NOT NULL DEFAULT 'OTHER',
-  status text NOT NULL DEFAULT 'PENDING',
+  status public.credential_status NOT NULL DEFAULT 'PENDING',
   expires_at date
 );
 
@@ -108,7 +113,7 @@ CREATE TABLE public.contractor_portfolio (
   title text NOT NULL DEFAULT '',
   description text,
   sort_order integer NOT NULL DEFAULT 0,
-  privacy_state text NOT NULL DEFAULT 'REVIEW_REQUIRED'
+  privacy_state public.portfolio_privacy_state NOT NULL DEFAULT 'REVIEW_REQUIRED'
 );
 
 CREATE TABLE public.booking_reviews (
@@ -448,6 +453,93 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
     CREATE ROLE service_role NOLOGIN;
   END IF;
+END $$;
+
+-- Pre-migration production definitions. Snapshot pg_get_* before the gate migration.
+\ir ../rollbacks/20261012000003_unpaid_contractor_gates_rollback.sql
+
+CREATE TABLE public.test_pre_migration_defs (
+  object_kind text NOT NULL,
+  object_name text NOT NULL,
+  definition text NOT NULL,
+  PRIMARY KEY (object_kind, object_name)
+);
+
+INSERT INTO public.test_pre_migration_defs (object_kind, object_name, definition)
+SELECT 'function', p.proname, pg_get_functiondef(p.oid)
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname = 'public'
+  AND p.proname IN (
+    'contractor_is_directory_listed',
+    'list_public_directory_contractors',
+    'contractor_eligible_for_project',
+    'fill_project_opportunity_offers',
+    'enforce_signup_fee_on_project_connections',
+    'reserve_connection_checkout',
+    'fulfill_connection_fee_checkout',
+    'accept_opportunity'
+  );
+
+INSERT INTO public.test_pre_migration_defs (object_kind, object_name, definition)
+SELECT 'trigger', t.tgname, pg_get_triggerdef(t.oid, true)
+FROM pg_trigger t
+JOIN pg_class c ON c.oid = t.tgrelid
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public'
+  AND NOT t.tgisinternal
+  AND t.tgname IN (
+    'profiles_match_projects_on_account_status',
+    'project_connections_require_signup_fee'
+  );
+
+INSERT INTO public.test_pre_migration_defs (object_kind, object_name, definition)
+SELECT 'view', c.relname, pg_get_viewdef(c.oid, true)
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public'
+  AND c.relkind = 'v'
+  AND c.relname IN (
+    'contractor_public_profiles',
+    'contractor_public_areas',
+    'contractor_public_services',
+    'contractor_public_portfolio',
+    'contractor_public_ratings',
+    'contractor_public_reviews',
+    'contractor_verified_credential_badges'
+  );
+
+DO $$
+DECLARE
+  rec record;
+  got text;
+BEGIN
+  IF (SELECT count(*) FROM public.test_pre_migration_defs) <> 17 THEN
+    RAISE EXCEPTION 'expected 17 pre-migration definitions, got %',
+      (SELECT count(*) FROM public.test_pre_migration_defs);
+  END IF;
+  -- md5(prosrc) from live production pg_proc on 2026-10-10. Version-independent body check.
+  FOR rec IN
+    SELECT * FROM (VALUES
+      ('accept_opportunity', '1bfc60c0e7d7a5ab2e513e9541bce1f6'),
+      ('contractor_eligible_for_project', '52a9dcb075d01690ae6a372a3acc61b6'),
+      ('contractor_is_directory_listed', 'b81eed6b36cd3876af9d940ad11f856c'),
+      ('enforce_signup_fee_on_project_connections', 'ffbbfe7eeae4e428cd8f2e224480db33'),
+      ('fill_project_opportunity_offers', '5435bf4f4f024dcd36ed02cb85d60780'),
+      ('fulfill_connection_fee_checkout', '01c81ad2cf7a8523804c5388f30574c5'),
+      ('list_public_directory_contractors', 'b138be9f1439d61987daa266b4d8fad0'),
+      ('reserve_connection_checkout', '1289d89eeff8e99ae4ab0ce4a87e8b1e')
+    ) AS v(name, body_md5)
+  LOOP
+    SELECT md5(p.prosrc) INTO got
+    FROM pg_proc p
+    JOIN pg_namespace ns ON ns.oid = p.pronamespace
+    WHERE ns.nspname = 'public' AND p.proname = rec.name;
+    IF got IS DISTINCT FROM rec.body_md5 THEN
+      RAISE EXCEPTION 'prosrc is not the production definition for % (got %)', rec.name, got;
+    END IF;
+    RAISE NOTICE 'PASS: % prosrc matches production', rec.name;
+  END LOOP;
 END $$;
 
 \ir ../migrations/20261012000003_unpaid_contractor_gates.sql
@@ -989,6 +1081,79 @@ BEGIN
     PERFORM public.test_fail('re-enabling the fee left UNPAID listed');
   END IF;
   RAISE NOTICE 'PASS: signup_fee_enabled=false lets everyone through, and turning it back on hides UNPAID again';
+END $$;
+
+-- migration -> rollback. Definitions must match the pre-migration bootstrap.
+\ir ../rollbacks/20261012000003_unpaid_contractor_gates_rollback.sql
+
+DO $$
+DECLARE
+  rec record;
+  current_def text;
+  mismatches text := '';
+  matched int := 0;
+BEGIN
+  FOR rec IN
+    SELECT * FROM public.test_pre_migration_defs
+    ORDER BY object_kind, object_name
+  LOOP
+    IF rec.object_kind = 'function' THEN
+      SELECT pg_get_functiondef(p.oid) INTO current_def
+      FROM pg_proc p
+      JOIN pg_namespace ns ON ns.oid = p.pronamespace
+      WHERE ns.nspname = 'public' AND p.proname = rec.object_name;
+    ELSIF rec.object_kind = 'trigger' THEN
+      SELECT pg_get_triggerdef(t.oid, true) INTO current_def
+      FROM pg_trigger t
+      JOIN pg_class c ON c.oid = t.tgrelid
+      JOIN pg_namespace ns ON ns.oid = c.relnamespace
+      WHERE ns.nspname = 'public' AND NOT t.tgisinternal AND t.tgname = rec.object_name;
+    ELSE
+      SELECT pg_get_viewdef(c.oid, true) INTO current_def
+      FROM pg_class c
+      JOIN pg_namespace ns ON ns.oid = c.relnamespace
+      WHERE ns.nspname = 'public' AND c.relname = rec.object_name AND c.relkind = 'v';
+    END IF;
+    IF current_def IS DISTINCT FROM rec.definition THEN
+      mismatches := mismatches || rec.object_kind || ' ' || rec.object_name || E'\n';
+    ELSE
+      matched := matched + 1;
+      RAISE NOTICE 'IDENTICAL % %', rec.object_kind, rec.object_name;
+    END IF;
+  END LOOP;
+  IF mismatches <> '' THEN
+    RAISE EXCEPTION 'rollback definitions differ from the pre-migration bootstrap: %', mismatches;
+  END IF;
+  IF matched <> 17 THEN
+    RAISE EXCEPTION 'expected 17 identical definitions, compared %', matched;
+  END IF;
+  RAISE NOTICE 'PASS: rollback pg_get_functiondef, trigger, and view definitions match the pre-migration bootstrap (17 objects)';
+END $$;
+
+-- Re-apply the migration. The unpaid gate must be back; NOT_REQUIRED stays eligible.
+\ir ../migrations/20261012000003_unpaid_contractor_gates.sql
+
+DO $$
+BEGIN
+  IF public.contractor_is_directory_listed('af55cdfe-b3aa-421d-84b3-0411d9d7e3b6') THEN
+    PERFORM public.test_fail('re-applied migration left UNPAID directory listed');
+  END IF;
+  IF public.contractor_eligible_for_project(
+    '40000000-0000-4000-8000-000000000001',
+    'af55cdfe-b3aa-421d-84b3-0411d9d7e3b6'
+  ) THEN
+    PERFORM public.test_fail('re-applied migration left UNPAID match-eligible');
+  END IF;
+  IF NOT public.contractor_is_directory_listed('a6208af2-2f61-41ca-bd4b-51f81fe61638') THEN
+    PERFORM public.test_fail('re-applied migration unlisted Plymate');
+  END IF;
+  IF NOT public.contractor_eligible_for_project(
+    '40000000-0000-4000-8000-000000000001',
+    'a6208af2-2f61-41ca-bd4b-51f81fe61638'
+  ) THEN
+    PERFORM public.test_fail('re-applied migration blocked Plymate');
+  END IF;
+  RAISE NOTICE 'PASS: re-applied migration after rollback; UNPAID gated, Plymate NOT_REQUIRED still listed and eligible';
 END $$;
 
 SELECT 'unpaid_contractor_gates_test: all assertions passed' AS result;
