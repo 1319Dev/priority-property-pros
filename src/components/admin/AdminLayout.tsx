@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { BrandLoader } from "../brand/BrandLoader";
 import { SUPPORT_EMAIL } from "../../data/brand";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopBar } from "./AdminTopBar";
@@ -83,7 +84,7 @@ export function AdminLayout({
       <div className="flex min-h-dvh min-w-0 flex-col md:pl-16 lg:pl-64">
         <AdminTopBar pathname={location.pathname} onOpenMenu={() => setDrawerOpen(true)} menuButtonRef={menuButtonRef} />
         <main id="main" className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:py-8">
-          {children ?? <Outlet />}
+          <Suspense fallback={<BrandLoader layout="section" label="Loading…" />}>{children ?? <Outlet />}</Suspense>
         </main>
         <p className="mx-auto w-full max-w-6xl px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-sm text-ink-500 sm:px-6">
           <a className="font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>

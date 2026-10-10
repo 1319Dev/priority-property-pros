@@ -7,7 +7,6 @@ import { ADMIN_NAV, adminBreadcrumbs, adminSearchHits } from "./adminNav";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
 describe("admin nav config", () => {
-  const adminApp = readFileSync(path.join(repoRoot, "src/pages/app/admin/AdminApp.tsx"), "utf8");
   const app = readFileSync(path.join(repoRoot, "src/App.tsx"), "utf8");
 
   it("only lists sections that have a route in the admin bundle", () => {
@@ -19,19 +18,19 @@ describe("admin nav config", () => {
       "/app/admin/security",
       "/app/admin/account",
     ]);
-    expect(adminApp).toContain('path="approvals"');
-    expect(adminApp).toContain('path="reviews"');
-    expect(adminApp).toContain('path="bookings"');
-    expect(adminApp).toContain('path="security"');
-    expect(adminApp).toContain('path="account"');
-    expect(adminApp).not.toMatch(/path="people"/);
-    expect(adminApp).not.toMatch(/path="audit"/);
-    expect(adminApp).toContain('<Route path="*" element={<Navigate to="/app/admin" replace />} />');
+    expect(app).toContain('path="approvals"');
+    expect(app).toContain('path="reviews"');
+    expect(app).toContain('path="bookings"');
+    expect(app).toContain('path="security"');
+    expect(app).toContain('path="account"');
+    expect(app).not.toMatch(/path="people"/);
+    expect(app).not.toMatch(/path="audit"/);
   });
 
   it("keeps the admin route tree out of the public bundle entry", () => {
-    expect(app).toMatch(/lazy\(\(\) => import\("\.\/pages\/app\/admin\/AdminApp"\)\)/);
-    expect(app).not.toMatch(/import \{ AdminShell \}/);
+    expect(app).toMatch(/lazy\(\(\) => import\("\.\/pages\/app\/AdminShell"\)/);
+    expect(app).toMatch(/lazy\(\(\) => import\("\.\/pages\/app\/AdminPages"\)/);
+    expect(app).not.toMatch(/^import \{ AdminShell \}/m);
     expect(app).not.toMatch(/from "\.\/pages\/app\/AdminPages"/);
   });
 
