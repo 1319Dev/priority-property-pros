@@ -134,6 +134,29 @@ describe("project messages UI", () => {
     });
   });
 
+  it("does not open another thread when the route ids are not real records", async () => {
+    listMyMessageThreads.mockResolvedValue([
+      {
+        thread_id: "thread-real",
+        project_id: "p1",
+        contractor_profile_id: "pro-1",
+        project_title: "Fence repair",
+        project_reference_number: 1004,
+        city: "Decatur",
+        state: "GA",
+        contractor_label: "Approved Fence Pro",
+        last_message_at: "2026-10-04T18:19:48.000Z",
+        last_preview: "Approved Fence Pro",
+        last_sender_id: "other",
+      },
+    ]);
+    renderAt("/app/pro/messages/x/y", <ProjectMessagesPage role="contractor" />);
+    expect(await screen.findByRole("heading", { name: "Conversation not found" })).toBeInTheDocument();
+    expect(ensureMessageThread).not.toHaveBeenCalled();
+    expect(screen.queryByRole("heading", { name: "Fence repair" })).not.toBeInTheDocument();
+    expect(screen.getByText("No message text yet")).toBeInTheDocument();
+  });
+
   it("explains that activation alone does not open a thread", async () => {
     renderAt("/app/customer/messages");
     expect(await screen.findByText(MESSAGES_EMPTY_BODY)).toBeInTheDocument();

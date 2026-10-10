@@ -10,6 +10,7 @@ import {
   CHANGE_ORDER_SAVE_ERROR,
   validateChangeOrderDraft,
 } from "../../lib/marketplace/changeOrders";
+import { changeOrderAmountLabel, changeOrderStatusLabel } from "../../lib/marketplace/contractorPolish";
 import { formatUsdFromCents } from "../../lib/marketplace/fees";
 import type { ChangeOrder } from "../../lib/marketplace/types";
 
@@ -85,7 +86,7 @@ export function ChangeOrderPanel({
         {orders.map((order) => (
           <li key={order.id} className="rounded-2xl border border-forest-800/10 bg-cream-100 px-4 py-3">
             <p className="font-semibold">
-              {formatUsdFromCents(order.amount_delta_cents)} · {order.status.replaceAll("_", " ")}
+              {changeOrderAmountLabel(order.amount_delta_cents, formatUsdFromCents)} · {changeOrderStatusLabel(order.status)}
             </p>
             <p>{order.description}</p>
             {role === "contractor" && order.status === "CUSTOMER_APPROVED" && !order.contractor_acked_at ? (

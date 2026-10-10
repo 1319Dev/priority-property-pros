@@ -5,6 +5,7 @@ import { useAuth } from "../../lib/auth/useAuth";
 import { accountSettingsPath } from "../../lib/auth/roles";
 import type { InAppNotification } from "../../lib/notifications/api";
 import { useNotifications } from "../../lib/notifications/useNotifications";
+import { noticeBody, noticeProjectLine } from "../../lib/marketplace/contractorPolish";
 import { NARROW_NOTIFICATION_QUERY, dropdownRightInset } from "./notificationPanelLayout";
 
 export type NotificationBellPreview = {
@@ -102,6 +103,12 @@ export function NotificationBell({ preview: previewProp }: { preview?: Notificat
   const panelId = useId();
   const titleId = useId();
   const settingsTo = `${accountSettingsPath(account_type, account_status)}/notifications`;
+  const historyTo =
+    account_type === "CONTRACTOR"
+      ? "/app/pro/notifications"
+      : account_type === "CUSTOMER"
+        ? "/app/customer/notifications"
+        : settingsTo;
 
   useEffect(() => {
     if (!open) return undefined;
@@ -230,7 +237,9 @@ export function NotificationBell({ preview: previewProp }: { preview?: Notificat
       </div>
       <ul className="min-h-0 overflow-y-auto overscroll-contain">
         {items.length === 0 ? (
-          <li className="px-4 py-8 text-sm text-ink-500">You're all caught up.</li>
+          <li className="px-4 py-8 text-sm text-ink-500">
+            {preview || live.ready ? (live.loadError && !preview ? live.loadError : "You're all caught up.") : "Loading notifications…"}
+          </li>
         ) : (
           items.map((item) => (
             <li key={item.id} className="border-b border-forest-800/5 last:border-b-0">
@@ -248,13 +257,33 @@ export function NotificationBell({ preview: previewProp }: { preview?: Notificat
                   </span>
                   {!item.readAt ? <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-gold-500" aria-hidden="true" /> : null}
                 </span>
-                <span className="break-words text-sm leading-snug text-ink-500">{item.body}</span>
+                {noticeProjectLine({
+                  project_title: item.projectTitle,
+                  reference_number: item.referenceNumber,
+                }) ? (
+                  <span className="break-words text-sm font-medium text-forest-800">
+                    {noticeProjectLine({
+                      project_title: item.projectTitle,
+                      reference_number: item.referenceNumber,
+                    })}
+                  </span>
+                ) : null}
+                {noticeBody(item.title, item.body) ? (
+                  <span className="break-words text-sm leading-snug text-ink-500">{noticeBody(item.title, item.body)}</span>
+                ) : null}
                 <span className="text-xs text-ink-300">{relativeTime(item.createdAt)}</span>
               </Link>
             </li>
           ))
         )}
       </ul>
+      <Link
+        to={historyTo}
+        className="shrink-0 border-t border-forest-800/10 px-4 py-3 text-center text-sm font-semibold text-forest-800 hover:bg-cream-100"
+        onClick={() => setOpen(false)}
+      >
+        Notification history
+      </Link>
       <Link
         to={account_type ? settingsTo : "/notifications"}
         className="shrink-0 border-t border-forest-800/10 px-4 py-3 text-center text-sm font-semibold text-forest-800 hover:bg-cream-100"

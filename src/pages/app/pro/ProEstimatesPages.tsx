@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import { JobReference } from "../../../components/marketplace/JobReference";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
-import { HumanStatus } from "../../../components/ui/StatusBanner";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
 import { deleteEstimate, fetchMyEstimates, fetchMyNotifications, markNotificationRead, type ContractorEstimateListItem } from "../../../lib/marketplace/api";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
+import { friendlyTimestamp, noticeBody, noticeProjectLine } from "../../../lib/marketplace/contractorPolish";
+import { listMyMessageThreads } from "../../../lib/marketplace/messagingApi";
 import { messageNotificationHref } from "../../../lib/marketplace/messaging";
 import { notificationPath } from "../../../lib/notifications/policy";
 import {
@@ -43,7 +44,6 @@ export function ProEstimatesPage() {
   useEffect(() => {
     if (!user) return;
     void reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return (
@@ -51,8 +51,8 @@ export function ProEstimatesPage() {
       <header>
         <h1 className="font-display text-4xl font-semibold text-forest-800">My Estimates</h1>
         <p className="mt-2 text-sm text-ink-700">
-          Track what you sent. Opening this list does not mark an estimate as viewed by the customer.
-          Delete removes an unsent draft. Withdraw keeps a sent estimate in history.
+          Track what you sent. Opening this list does not mark an estimate as viewed.
+          Delete an unsent draft from its card. Withdraw keeps a sent estimate in history when you open that estimate.
         </p>
       </header>
       <FormError message={error} />
@@ -168,18 +168,37 @@ export function EstimateStatusChip({
   const extra =
     status === "viewed" && viewedAt ? ` · ${formatViewedTimestamp(viewedAt)}` : "";
   const prefix = status === "viewed" ? "👁 " : status === "accepted" ? "✓ " : "";
-  return <HumanStatus label={`${prefix}${label}${extra}`} />;
+  return (
+    <span className="inline-flex min-h-8 items-center rounded-full bg-cream-100 px-3 text-xs font-semibold text-forest-800">
+      {prefix}
+      {label}
+      {extra}
+    </span>
+  );
 }
 
 export function ProNotificationsList() {
   const { user } = useAuth();
   const [rows, setRows] = useState<Awaited<ReturnType<typeof fetchMyNotifications>>>([]);
+  const [projects, setProjects] = useState<Record<string, { title: string; reference: number | null }>>({});
 
   useEffect(() => {
     if (!user) return;
     void fetchMyNotifications()
       .then(setRows)
       .catch(() => setRows([]));
+    void listMyMessageThreads()
+      .then((threads) => {
+        setProjects(
+          Object.fromEntries(
+            threads.map((thread) => [
+              thread.project_id,
+              { title: thread.project_title, reference: thread.project_reference_number ?? null },
+            ]),
+          ),
+        );
+      })
+      .catch(() => undefined);
   }, [user]);
 
   const visible = rows.filter((row) => row.kind !== "message.received");
@@ -198,6 +217,23 @@ export function ProNotificationsList() {
                   payload: row.payload ?? {},
                   accountType: "CONTRACTOR",
                 });
+          const known = typeof row.payload?.project_id === "string" ? projects[row.payload.project_id] : undefined;
+          const context = noticeProjectLine({
+            ...row.payload,
+            project_title:
+              (typeof row.payload?.project_title === "string" && row.payload.project_title) || known?.title,
+            project_reference_number: row.payload?.project_reference_number ?? row.payload?.reference_number ?? known?.reference,
+          });
+          const body = noticeBody(row.title, row.body);
+          const when = friendlyTimestamp(row.created_at);
+          const inner = (
+            <>
+              <p className="font-semibold text-forest-800">{row.title}</p>
+              {context ? <p className="text-forest-800">{context}</p> : null}
+              {body ? <p className="text-ink-700">{body}</p> : null}
+              {when ? <p className="text-xs text-ink-500">{when}</p> : null}
+            </>
+          );
           return (
           <li key={row.id}>
             {messageHref ? (
@@ -208,8 +244,7 @@ export function ProNotificationsList() {
                   if (!row.read_at) void markNotificationRead(row.id);
                 }}
               >
-                <p className="font-semibold text-forest-800">{row.title}</p>
-                <p className="text-ink-700">{row.body}</p>
+                {inner}
               </Link>
             ) : (
             <button
@@ -225,8 +260,7 @@ export function ProNotificationsList() {
                 }
               }}
             >
-              <p className="font-semibold text-forest-800">{row.title}</p>
-              <p className="text-ink-700">{row.body}</p>
+              {inner}
             </button>
             )}
           </li>

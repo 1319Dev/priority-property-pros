@@ -28,7 +28,8 @@ export function AuthProvider({ children }) {
       avatar_url: null,
       account_type: accountType,
       account_status: "ACTIVE",
-      signup_fee_status: "NOT_REQUIRED",
+      signup_fee_status: accountType === "CONTRACTOR" ? "PAID" : "NOT_REQUIRED",
+      signup_fee_paid_at: accountType === "CONTRACTOR" ? "2026-03-12T15:00:00.000Z" : null,
       created_at: "2026-01-01T00:00:00Z",
       updated_at: "2026-01-01T00:00:00Z",
     };
@@ -44,7 +45,7 @@ export function AuthProvider({ children }) {
       profile,
       account_type: accountType,
       account_status: "ACTIVE",
-      signup_fee_status: "NOT_REQUIRED",
+      signup_fee_status: accountType === "CONTRACTOR" ? "PAID" : "NOT_REQUIRED",
       signup_fee_enabled: false,
       signIn: noop,
       signUp: async () => ({ error: null, needsEmailConfirm: false }),

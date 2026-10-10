@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../../lib/auth/useAuth";
+import { notificationCategoryDescription } from "../../lib/marketplace/contractorPolish";
 import {
   NOTIFICATION_CATEGORIES,
   NOTIFICATION_CATEGORY_COPY,
@@ -75,6 +77,7 @@ export function NotificationSettings({
   mode?: "live" | "preview";
   forceIosGuide?: boolean;
 }) {
+  const { account_type } = useAuth();
   const [rows, setRows] = useState<PreferenceRecord[]>(startingPreferences);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -216,7 +219,9 @@ export function NotificationSettings({
           return (
             <li key={row.category} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
               <h2 className="font-semibold text-forest-800">{copy.label}</h2>
-              <p className="mt-1 text-sm leading-relaxed text-ink-500">{copy.description}</p>
+              <p className="mt-1 text-sm leading-relaxed text-ink-500">
+                {notificationCategoryDescription(row.category, account_type)}
+              </p>
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {CHANNELS.map((channel) => (
                   <div key={channel.key} className="flex items-center justify-between gap-3 sm:flex-col sm:items-start">

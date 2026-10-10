@@ -7,6 +7,7 @@ import {
   type MessageThreadSummary,
   type ProjectMessage,
 } from "./messaging";
+import { isUuid } from "./recordId";
 
 function client() {
   const supabase = getSupabaseClient();
@@ -22,6 +23,7 @@ export async function listMyMessageThreads(): Promise<MessageThreadSummary[]> {
 }
 
 export async function ensureMessageThread(projectId: string, contractorProfileId: string): Promise<string> {
+  if (!isUuid(projectId) || !isUuid(contractorProfileId)) throw new Error("We couldn't find that conversation.");
   const { data, error } = await client().rpc("ensure_message_thread", {
     p_project_id: projectId,
     p_contractor_profile_id: contractorProfileId,

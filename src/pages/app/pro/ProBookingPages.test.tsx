@@ -6,9 +6,10 @@ import type { BookingContactAccess } from "../../../lib/marketplace/types";
 
 describe("Project Contact section", () => {
   it("shows a professional locked message with no empty contact fields", () => {
-    render(<ProjectContactSection entitled={false} shared={false} contact={null} />);
+    render(<ProjectContactSection view={{ state: "locked" }} />);
     expect(screen.getByRole("heading", { name: /project contact/i })).toBeInTheDocument();
     expect(screen.getByText(/project contact is locked/i)).toBeInTheDocument();
+    expect(screen.queryByText(/clicking connect/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^phone$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^email$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^street$/i)).not.toBeInTheDocument();
@@ -16,8 +17,9 @@ describe("Project Contact section", () => {
   });
 
   it("hides street, phone, and email when the connection is unlocked but the customer has not shared", () => {
-    render(<ProjectContactSection entitled shared={false} contact={null} />);
+    render(<ProjectContactSection view={{ state: "waiting" }} />);
     expect(screen.getByText(/has not shared contact yet/i)).toBeInTheDocument();
+    expect(screen.queryByText(/share my contact/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^phone$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^email$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^street$/i)).not.toBeInTheDocument();
@@ -26,13 +28,14 @@ describe("Project Contact section", () => {
   it("shows street, phone, and email after the customer shares", () => {
     render(
       <ProjectContactSection
-        entitled
-        shared
-        contact={{ name: "Pat Lee", street: "12 Oak St", phone: "404-555-0100", email: "pat@example.com" }}
+        view={{
+          state: "shared",
+          contact: { name: "Pat Lee", street: "12 Oak St", phone: "404-555-0100", email: "pat@example.com" },
+        }}
       />,
     );
     expect(screen.getByText("12 Oak St")).toBeInTheDocument();
-    expect(screen.getByText("404-555-0100")).toBeInTheDocument();
+    expect(screen.getByText("(404) 555-0100")).toBeInTheDocument();
     expect(screen.getByText("pat@example.com")).toBeInTheDocument();
     expect(screen.queryByText(/project contact is locked/i)).not.toBeInTheDocument();
   });

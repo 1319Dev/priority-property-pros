@@ -176,9 +176,10 @@ export function contractorHiredLandingPath(input: {
     if (resolved) return hiredJobPath(resolved);
     return isSafeRecordId(projectId) ? hiredJobByProjectPath(projectId) : "/app/pro/jobs";
   }
-  if (input.kind === "message.received" || input.kind === "contact.shared") {
+  if (input.kind === "contact.shared") {
     const resolved = bookingId ?? fromBookings;
     if (resolved) return hiredJobPath(resolved);
   }
+  if (input.kind === "message.received") return input.path;
   return input.path;
 }

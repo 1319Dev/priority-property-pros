@@ -1,18 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { ChangeOrderPanel } from "../../../components/marketplace/ChangeOrderPanel";
 import { JobReference } from "../../../components/marketplace/JobReference";
-import { Button } from "../../../components/ui/Button";
+import { Button, ButtonLink } from "../../../components/ui/Button";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
 import {
   completeBooking,
   confirmBookingHired,
-  expireStalePendingBookings,
   fetchBooking,
-  fetchBookingContactAccess,
   fetchBookingJobContact,
   fetchBookingReviews,
   fetchChangeOrders,
@@ -21,23 +20,35 @@ import {
   fetchEstimateItems,
   fetchMyBookings,
   fetchProject,
-  fetchProjectSummaries,
   proposeChangeOrder,
   respondChangeOrder,
   startBooking,
   submitBookingReview,
   updateBookingReview,
 } from "../../../lib/marketplace/api";
-import { BOOKING_STATUS_LABELS, contactAccessRowAllowsReveal, paymentsComingSoonCopy, privateContactLockedCopy } from "../../../lib/marketplace/bookings";
-import { SHARE_CONTACT_WAITING_COPY, jobContactWasShared } from "../../../lib/marketplace/contactShare";
+import { BOOKING_STATUS_LABELS, paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
+import {
+  CONTRACTOR_CONTACT_LOCKED_COPY,
+  CONTRACTOR_CONTACT_WAITING_COPY,
+  MARK_COMPLETE_BODY,
+  MARK_COMPLETE_CANCEL,
+  MARK_COMPLETE_CONFIRM,
+  MARK_COMPLETE_TITLE,
+  customerPlaceLine,
+  formatPhoneDisplay,
+  projectContactFromRpc,
+  type ProjectContactView,
+} from "../../../lib/marketplace/contractorPolish";
 import { JobThreadPanel } from "../../../components/marketplace/JobThreadPanel";
+import { HiredJobsPanel } from "../../../components/marketplace/HiredJobsPanel";
 import { HiredJobStatusChip } from "../../../components/marketplace/HiredJobsSection";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { startComparisonLabel } from "../../../lib/marketplace/estimateComparison";
 import { customerFirstNameFromLabel, hiredJobChip, hiredJobNextStep, hiredJobPath, isSafeRecordId } from "../../../lib/marketplace/hiredJobs";
-import { isMutuallyHired, bookingListHiredLabel } from "../../../lib/marketplace/hired";
+import { friendlyNotFound, isQueryableId } from "../../../lib/marketplace/recordId";
+import { isMutuallyHired } from "../../../lib/marketplace/hired";
 import { listMyMessageThreads } from "../../../lib/marketplace/messagingApi";
-import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type BookingContactAccess, type BookingReview, type BookingStatus, type ChangeOrder, type EstimateItemKind } from "../../../lib/marketplace/types";
+import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type BookingReview, type BookingStatus, type ChangeOrder, type EstimateItemKind } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
 import { HiredConfirmationCard, ProfileReviewForm } from "../../../components/marketplace/HiredConfirmation";
 
@@ -45,109 +56,51 @@ function statusLabel(status: string) {
   return BOOKING_STATUS_LABELS[status as BookingStatus] ?? status.replaceAll("_", " ");
 }
 
-export type ProjectContactFields = {
-  name?: string;
-  street?: string;
-  phone?: string;
-  email?: string;
-};
-
-export function ProjectContactSection({
-  entitled,
-  shared,
-  contact,
-}: {
-  entitled: boolean;
-  shared: boolean;
-  contact: ProjectContactFields | null;
-}) {
+export function ProjectContactSection({ view }: { view: ProjectContactView }) {
   return (
     <section className="rounded-3xl border border-forest-800/10 px-5 py-4 text-sm">
       <h2 className="font-display text-2xl text-forest-800">Project Contact</h2>
-      {entitled && shared && contact ? (
+      {view.state === "shared" ? (
         <dl className="mt-3 space-y-2">
           <div>
             <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Name</dt>
-            <dd className="mt-1 font-semibold text-forest-800">{contact.name || "Not provided"}</dd>
+            <dd className="mt-1 font-semibold text-forest-800">{view.contact.name || "Not provided"}</dd>
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Street</dt>
-            <dd className="mt-1 font-semibold text-forest-800">{contact.street || "Not provided"}</dd>
+            <dd className="mt-1 font-semibold text-forest-800">{view.contact.street || "Not provided"}</dd>
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Phone</dt>
-            <dd className="mt-1 font-semibold text-forest-800">{contact.phone || "Not provided"}</dd>
+            <dd className="mt-1 font-semibold text-forest-800">{formatPhoneDisplay(view.contact.phone) || "Not provided"}</dd>
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Email</dt>
-            <dd className="mt-1 font-semibold text-forest-800">{contact.email || "Not provided"}</dd>
+            <dd className="mt-1 font-semibold text-forest-800">{view.contact.email || "Not provided"}</dd>
           </div>
         </dl>
-      ) : entitled ? (
-        <p className="mt-3 leading-relaxed text-ink-700">{SHARE_CONTACT_WAITING_COPY}</p>
+      ) : view.state === "waiting" ? (
+        <p className="mt-3 leading-relaxed text-ink-700">{CONTRACTOR_CONTACT_WAITING_COPY}</p>
       ) : (
-        <p className="mt-3 leading-relaxed text-ink-700">{privateContactLockedCopy()}</p>
+        <p className="mt-3 leading-relaxed text-ink-700">{CONTRACTOR_CONTACT_LOCKED_COPY}</p>
       )}
     </section>
   );
 }
 
 export function ProBookingsPage() {
-  const { user } = useAuth();
-  const [rows, setRows] = useState<Booking[]>([]);
-  const [references, setReferences] = useState<Record<string, number | null | undefined>>({});
-  const [titles, setTitles] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!user) return;
-    void expireStalePendingBookings()
-      .then(() => fetchContractorProfileByUser(user.id))
-      .then((profile) => {
-        if (!profile) throw new Error("Contractor profile missing.");
-        return fetchMyBookings("contractor", profile.id);
-      })
-      .then(async (data) => {
-        const bookings = data as Booking[];
-        setRows(bookings);
-        const summaries = await fetchProjectSummaries(bookings.map((row) => row.project_id)).catch(() => []);
-        setTitles(Object.fromEntries(summaries.map((project) => [project.id, project.title || "Project"])));
-        setReferences(Object.fromEntries(summaries.map((project) => [project.id, project.reference_number])));
-      })
-      .catch((err: Error) => setError(err.message));
-  }, [user]);
-
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
-      <p className="text-sm text-ink-700">
-        Exact street, phone, and email stay hidden until a paid $4.99 connection entitlement. You are paid directly by the customer. Priority Property Pros does not charge for the job.
-      </p>
-      <FormError message={error} />
-      {rows.length === 0 ? (
-        <EmptyState title="No bookings" body="When a customer selects you, a pending booking appears here." />
-      ) : (
-        <ul className="space-y-3">
-          {rows.map((row) => {
-            const hiredLabel = bookingListHiredLabel({
-              bookingStatus: row.status,
-              customerHiredAt: row.customer_hired_at,
-              contractorHiredAt: row.contractor_hired_at,
-            });
-            return (
-            <li key={row.id}>
-              <Link to={hiredJobPath(row.id)} className="block rounded-3xl border border-forest-800/10 px-5 py-4">
-                <p className="font-semibold text-forest-800">{titles[row.project_id] || "Project"}</p>
-                <JobReference value={references[row.project_id]} copy={false} />
-                <p className="text-sm text-ink-500">{hiredLabel ?? statusLabel(row.status)}</p>
-                {hiredLabel ? <p className="text-sm text-ink-500">{statusLabel(row.status)}</p> : null}
-                <p className="text-sm text-ink-500">{formatUsdFromCents(row.billable_amount_cents || row.amount_cents)}</p>
-              </Link>
-            </li>
-            );
-          })}
-        </ul>
-      )}
+      <header>
+        <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
+        <p className="mt-2 max-w-xl text-sm text-ink-700">
+          Hired jobs are listed under Jobs. This page stays available and shows the same list.
+        </p>
+      </header>
+      <ButtonLink to="/app/pro/opportunities?tab=hired" variant="outline">
+        Open Hired jobs
+      </ButtonLink>
+      <HiredJobsPanel showHeading={false} />
     </div>
   );
 }
@@ -159,15 +112,15 @@ export function ProBookingDetailPage() {
   const [title, setTitle] = useState("");
   const [referenceNumber, setReferenceNumber] = useState<number | null>(null);
   const [cityZip, setCityZip] = useState("");
-  const [contact, setContact] = useState<ProjectContactFields | null>(null);
-  const [contactShared, setContactShared] = useState(false);
-  const [contactAccess, setContactAccess] = useState<BookingContactAccess | null>(null);
+  const [contactView, setContactView] = useState<ProjectContactView>({ state: "locked" });
+  const [completeOpen, setCompleteOpen] = useState(false);
   const [orders, setOrders] = useState<ChangeOrder[]>([]);
   const [reviews, setReviews] = useState<BookingReview[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [rating, setRating] = useState("5");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
   const [customerLabel, setCustomerLabel] = useState("Customer");
   const [estimateLines, setEstimateLines] = useState<Array<{ id: string; label: string }>>([]);
   const [estimateMeta, setEstimateMeta] = useState<{ total: number; notes: string | null; timeline: string; start: string } | null>(null);
@@ -203,35 +156,33 @@ export function ProBookingDetailPage() {
       setEstimateMeta(null);
       setEstimateLines([]);
     }
-    const access = await fetchBookingContactAccess(row.id).catch(() => null);
-    setContactAccess(access);
-    if (contactAccessRowAllowsReveal(access)) {
+    try {
       const payload = await fetchBookingJobContact(row.id);
-      if (jobContactWasShared(payload)) {
-        const name = [payload.first_name, payload.last_name].filter((part) => typeof part === "string" && part).join(" ");
-        setContactShared(true);
-        setContact({
-          name,
-          street: [payload.street_line1, payload.street_line2].filter(Boolean).join(", "),
-          phone: String(payload.phone ?? ""),
-          email: String(payload.email ?? ""),
-        });
-      } else {
-        setContactShared(false);
-        setContact(null);
-      }
-    } else {
-      setContactShared(false);
-      setContact(null);
+      setContactView(projectContactFromRpc(payload));
+    } catch {
+      setContactView({ state: "locked" });
     }
   }
 
   useEffect(() => {
-    void reload().catch((err: Error) => setError(err.message));
+    if (!isQueryableId(bookingId)) return;
+    setReady(false);
+    void reload()
+      .catch((err: Error) => setError(friendlyNotFound(err.message, "We couldn't open that job.")))
+      .finally(() => setReady(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId]);
 
-  if (!booking) return error ? <p className="text-ink-500">{error}</p> : <BrandLoader layout="section" />;
+  if (!isQueryableId(bookingId)) {
+    return <EmptyState title="Job not found" body="Check the link, or open the job from Hired jobs." />;
+  }
+  if (!ready || !booking) {
+    return error && ready ? (
+      <EmptyState title="Job not found" body={friendlyNotFound(error, "We couldn't open that job.")} />
+    ) : (
+      <BrandLoader layout="section" label="Loading job" />
+    );
+  }
   const pending = booking.status === "PENDING" || booking.status === "AWAITING_PAYMENT";
   const chip = hiredJobChip({
     bookingStatus: booking.status,
@@ -252,9 +203,7 @@ export function ProBookingDetailPage() {
       {chip ? <HiredJobStatusChip chip={chip} /> : <p className="text-sm text-ink-500">{statusLabel(booking.status)}</p>}
       <h1 className="font-display text-4xl font-semibold text-forest-800">{title}</h1>
       <JobReference value={referenceNumber} />
-      <p className="text-sm text-ink-700">
-        {customerLabel} · {cityOnly}
-      </p>
+      <p className="text-sm text-ink-700">{customerPlaceLine(customerLabel, cityOnly)}</p>
       <p className="text-sm font-semibold text-forest-800">Next: {nextStep}</p>
       <FormError message={error} />
       {pending ? <p className="rounded-3xl bg-cream-100 px-5 py-4 text-sm font-semibold">{paymentsComingSoonCopy()}</p> : null}
@@ -279,9 +228,7 @@ export function ProBookingDetailPage() {
         <p className="font-semibold">Approximate location</p>
         <p>{cityZip}</p>
         <p className="mt-3">Job {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
-        <p className="text-ink-500">
-          PPP does not take a percentage of this job. Project payment is between you and the customer. {paymentsComingSoonCopy()}
-        </p>
+        <p className="text-ink-500">{paymentsComingSoonCopy()}</p>
       </section>
       {estimateMeta ? (
         <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm" aria-label="Estimate">
@@ -297,12 +244,13 @@ export function ProBookingDetailPage() {
           {estimateMeta.notes ? <p className="mt-3">{estimateMeta.notes}</p> : null}
         </section>
       ) : null}
-      <JobThreadPanel projectId={booking.project_id} contractorProfileId={booking.contractor_profile_id} customerLabel={customerLabel} />
-      <ProjectContactSection
-        entitled={contactAccessRowAllowsReveal(contactAccess)}
-        shared={contactShared}
-        contact={contact}
+      <JobThreadPanel
+        projectId={booking.project_id}
+        contractorProfileId={booking.contractor_profile_id}
+        customerLabel={customerLabel}
+        contactShared={contactView.state === "shared"}
       />
+      <ProjectContactSection view={contactView} />
       {booking.status === "CONFIRMED" ? (
         <Button
           type="button"
@@ -319,16 +267,6 @@ export function ProBookingDetailPage() {
           Start job
         </Button>
       ) : null}
-      {booking.status === "IN_PROGRESS" ? (
-        <Button
-          type="button"
-          className="min-h-14 w-full"
-          onClick={() => void completeBooking(booking.id).then(reload).catch((err: Error) => setError(err.message))}
-        >
-          Mark complete
-        </Button>
-      ) : null}
-
       {(booking.status === "CONFIRMED" || booking.status === "IN_PROGRESS") && (
         <ChangeOrderPanel
           role="contractor"
@@ -344,6 +282,34 @@ export function ProBookingDetailPage() {
           }}
         />
       )}
+      {booking.status === "IN_PROGRESS" ? (
+        <Button type="button" variant="outline" className="min-h-14 w-full" onClick={() => setCompleteOpen(true)}>
+          Mark complete
+        </Button>
+      ) : null}
+      <ConfirmDialog
+        open={completeOpen}
+        title={MARK_COMPLETE_TITLE}
+        body={MARK_COMPLETE_BODY}
+        confirmLabel={MARK_COMPLETE_CONFIRM}
+        cancelLabel={MARK_COMPLETE_CANCEL}
+        tone="primary"
+        busy={busy}
+        onClose={() => {
+          if (!busy) setCompleteOpen(false);
+        }}
+        onConfirm={() => {
+          setBusy(true);
+          void completeBooking(booking.id)
+            .then(() => {
+              toast.push("Job marked complete.");
+              setCompleteOpen(false);
+              return reload();
+            })
+            .catch((err: Error) => setError(err.message))
+            .finally(() => setBusy(false));
+        }}
+      />
       <ProfileReviewForm
         role="contractor"
         bookingStatus={booking.status}

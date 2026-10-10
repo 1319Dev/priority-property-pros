@@ -212,6 +212,7 @@ export const thread = {
   last_read_at: null,
   booking_id: "book-1",
   opportunity_id: "opp-1",
+  project_reference_number: project.reference_number,
 };
 
 export const messages = [

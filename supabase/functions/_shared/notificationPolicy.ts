@@ -246,12 +246,13 @@ export function notificationPath(input: {
   const opportunityId = segment(input.payload.opportunity_id) ?? (input.kind === "opportunity.offered" ? segment(input.entityId) : null);
 
   if (input.kind === "message.received" && projectId && contractorId) {
-    if (proRoot && bookingId) return `/app/pro/jobs/${bookingId}`;
     const root = proRoot ? "/app/pro" : "/app/customer";
     return `${root}/messages/${projectId}/${contractorId}`;
   }
   if (input.kind === "contact.shared" && projectId && contractorId) {
-    return `/app/pro/messages/${projectId}/${contractorId}`;
+    if (proRoot && bookingId) return `/app/pro/jobs/${bookingId}`;
+    const root = proRoot ? "/app/pro" : "/app/customer";
+    return `${root}/messages/${projectId}/${contractorId}`;
   }
   if (input.kind === "question.asked") {
     return projectId ? `/app/customer/projects/${projectId}` : "/app/customer/projects";

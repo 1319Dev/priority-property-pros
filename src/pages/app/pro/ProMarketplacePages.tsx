@@ -31,12 +31,14 @@ import {
   fetchOrCreateEstimate,
   fetchOpportunity,
   fetchMyOpportunities,
+  fetchMyBookings,
   fetchProjectBooking,
   fetchProjectConnectionAvailability,
   fetchConnectionFeeCheckoutFlags,
   fetchMyProjectConnections,
   startConnectionCheckout,
   fetchProjectNotices,
+  fetchProjectSummaries,
   fetchProjectAnswers,
   fetchProjectPhotos,
   fetchServiceCategories,
@@ -87,7 +89,9 @@ import {
   runContractorConnect,
 } from "../../../lib/marketplace/contractorJobActions";
 import {
+  canSubmitFrom,
   contractorEstimateDestructiveAction,
+  contractorEstimateStatusLabel,
   DELETE_ESTIMATE_BODY,
   DELETE_ESTIMATE_CONFIRM,
   DELETE_ESTIMATE_LABEL,
@@ -101,9 +105,11 @@ import {
 import { PHOTO_OCR_RISK_NOTE, PHOTO_REPORT_LABEL } from "../../../lib/marketplace/photoSafety";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../hooks/useToast";
-import { PRO_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
+import { HISTORY_JOBS_COPY, hiredProjectIdSet } from "../../../lib/marketplace/contractorPolish";
+import { friendlyNotFound, isQueryableId } from "../../../lib/marketplace/recordId";
 import { ProNotificationsList } from "./ProEstimatesPages";
 import { HiredJobsPanel } from "../../../components/marketplace/HiredJobsPanel";
+import { hiredJobChip } from "../../../lib/marketplace/hiredJobs";
 import { InboxHomeCards } from "../../../components/marketplace/InboxHomeCards";
 
 export function ProHomePage() {
@@ -117,20 +123,15 @@ export function ProHomePage() {
       </header>
       <HiredJobsPanel />
       <p className="max-w-xl text-ink-700">
-          Respond to nearby jobs and track estimates. You cannot approve or verify yourself. Browse anonymized
-          opportunities first. Pay $4.99 only when you choose to connect — that does not guarantee a hire.
-          The $4.99 Connection Fee is non-refundable.
-          Exact address unlocks only after a paid connection entitlement or an admin unlock. Submitting an estimate
-          is never charged.
-          {` ${PRO_DASHBOARD_PRICING_NOTE}`}
-        </p>
+        Respond to nearby jobs and track your estimates. Browsing is free until you choose to connect.
+      </p>
       <div className="flex flex-wrap gap-3">
         <ButtonLink to="/app/pro/profile">Manage Profile</ButtonLink>
         <ButtonLink to="/app/pro/estimates" variant="outline">
           My Estimates
         </ButtonLink>
         <ButtonLink to="/app/pro/opportunities?tab=open" variant="outline">
-          Opportunities
+          Open jobs
         </ButtonLink>
       </div>
       <InboxHomeCards role="contractor" />
@@ -234,7 +235,6 @@ export function ProOnboardingPage() {
       <p className="text-sm text-ink-700">
         Customers see an anonymized public card (trade and general area). Business name, logos, license numbers, and
         contact stay private until a homeowner hires you through Priority Property Pros.
-        {` ${PRO_DASHBOARD_PRICING_NOTE}`}
       </p>
       <FormError message={error} />
       <TextInput label="Business name" value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
@@ -422,6 +422,13 @@ function PortfolioBlock({
   );
 }
 
+function historyStatusLabel(status: string, projectStatus?: string | null): string {
+  if (projectStatus === "CANCELLED") return "Cancelled";
+  if (status === "PASSED") return "Passed";
+  if (status === "WITHDRAWN") return "Withdrawn";
+  return OPPORTUNITY_STATUS_LABELS[status as keyof typeof OPPORTUNITY_STATUS_LABELS] ?? "Closed";
+}
+
 type JobsTab = "hired" | "open" | "history";
 
 export function OpportunitiesPage() {
@@ -430,6 +437,8 @@ export function OpportunitiesPage() {
   const [tab, setTab] = useState<JobsTab>(initialTab);
   const { user } = useAuth();
   const [rows, setRows] = useState<OpportunityRow[]>([]);
+  const [hiredProjects, setHiredProjects] = useState<Set<string>>(new Set());
+  const [recovered, setRecovered] = useState<Record<string, { title?: string; reference_number?: number | null }>>({});
   const [error, setError] = useState<string | null>(null);
   const [passId, setPassId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -440,11 +449,26 @@ export function OpportunitiesPage() {
     return fetchContractorProfileByUser(user.id)
       .then((profile) => {
         if (!profile) throw new Error("Contractor profile missing.");
-        return fetchMyOpportunities(profile.id);
+        return Promise.all([
+          fetchMyOpportunities(profile.id),
+          fetchMyBookings("contractor", profile.id).catch(() => []),
+        ]);
       })
-      .then((next) => {
+      .then(([next, bookings]) => {
         setRows(next);
+        setHiredProjects(hiredProjectIdSet(bookings as Parameters<typeof hiredProjectIdSet>[0]));
         setError(null);
+        const missing = next.filter((row) => !row.projects?.title).map((row) => row.project_id);
+        if (missing.length === 0) return;
+        return fetchProjectSummaries(missing)
+          .then((summaries) => {
+            setRecovered(
+              Object.fromEntries(
+                summaries.map((project) => [project.id, { title: project.title, reference_number: project.reference_number }]),
+              ),
+            );
+          })
+          .catch(() => undefined);
       });
   }
 
@@ -456,7 +480,9 @@ export function OpportunitiesPage() {
 
   const active = rows.filter((row) => row.status === "AVAILABLE" || row.status === "ACCEPTED");
   const history = rows.filter((row) => row.status !== "AVAILABLE" && row.status !== "ACCEPTED");
-  const live = active.filter((row) => row.projects?.status !== "CANCELLED");
+  const live = active.filter(
+    (row) => row.projects?.status !== "CANCELLED" && !hiredProjects.has(row.project_id),
+  );
   const historyRows = history
     .filter((row) => row.projects?.status === "CANCELLED" || row.status === "CLOSED" || row.status === "PASSED")
     .slice(0, 8);
@@ -486,7 +512,8 @@ export function OpportunitiesPage() {
         ))}
       </div>
       {tab === "hired" ? <HiredJobsPanel showHeading={false} /> : null}
-      {tab !== "hired" ? <p className="text-sm text-ink-700">{JOBS_STREET_HELPER_COPY}</p> : null}
+      {tab === "open" ? <p className="text-sm text-ink-700">{JOBS_STREET_HELPER_COPY}</p> : null}
+      {tab === "history" ? <p className="text-sm text-ink-700">{HISTORY_JOBS_COPY}</p> : null}
       <FormError message={error} />
       {tab === "open" && live.length === 0 ? (
         <EmptyState title="No open jobs" body="Nearby matching jobs will land here. You can browse anonymized opportunities at no charge. At most three paid connections per project. Cancelled jobs leave this list." />
@@ -494,10 +521,12 @@ export function OpportunitiesPage() {
       {tab === "open" && live.length > 0 ? (
         <ul className="space-y-3">
           {live.map((row) => {
-            const showPass = canContractorEndJob({
-              opportunityStatus: row.status,
-              projectStatus: row.projects?.status,
-            });
+            const showPass =
+              !hiredProjects.has(row.project_id) &&
+              canContractorEndJob({
+                opportunityStatus: row.status,
+                projectStatus: row.projects?.status,
+              });
             return (
               <li key={row.id} className="rounded-3xl border border-forest-800/10 px-5 py-4">
                 <HumanStatus label={OPPORTUNITY_STATUS_LABELS[row.status]} />
@@ -530,18 +559,27 @@ export function OpportunitiesPage() {
         <section className="space-y-3">
           <h2 className="font-display text-2xl text-forest-800">History</h2>
           <ul className="space-y-3">
-            {historyRows.map((row) => (
+            {historyRows.map((row) => {
+              const recoveredRow = recovered[row.project_id];
+              const title = row.projects?.title?.trim() || recoveredRow?.title?.trim() || opportunityListTitle(row);
+              const reference = row.projects?.reference_number ?? recoveredRow?.reference_number;
+              return (
               <li key={row.id}>
                 <Link to={`/app/pro/opportunities/${row.id}`} className="block rounded-3xl border border-forest-800/10 px-5 py-4">
-                  <HumanStatus label={row.projects?.status === "CANCELLED" ? "Cancelled" : OPPORTUNITY_STATUS_LABELS[row.status]} />
-                  <p className="mt-2 font-semibold text-forest-800">{opportunityListTitle(row)}</p>
-                  <JobReference value={row.projects?.reference_number} copy={false} />
+                  <HumanStatus label={historyStatusLabel(row.status, row.projects?.status)} />
+                  <p className="mt-2 font-semibold text-forest-800">{title}</p>
+                  <JobReference value={reference} copy={false} />
                   {row.status === "PASSED" ? (
-                    <p className="mt-1 text-sm text-ink-500">You passed on this job. It is no longer actionable for you.</p>
+                    <p className="mt-1 text-sm text-ink-500">
+                      {title === "Passed job" && reference == null
+                        ? "You passed on this job. The project title is no longer available."
+                        : "You passed on this job. It is no longer actionable for you."}
+                    </p>
                   ) : null}
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </section>
       ) : null}
@@ -596,16 +634,31 @@ export function OpportunityDetailPage() {
   async function reload() {
     const opp = await fetchOpportunity(opportunityId);
     setRow(opp);
-    const [photoRows, projectAnswers, spots, mine, selectedBooking] = await Promise.all([
+    const [photoRows, projectAnswers, spots, mine, selectedBooking, mineBookings] = await Promise.all([
       fetchProjectPhotos(opp.project_id),
       fetchProjectAnswers(opp.project_id),
       fetchProjectConnectionAvailability(opp.project_id).catch(() => null),
       fetchMyProjectConnections(opp.project_id).catch(() => []),
       fetchProjectBooking(opp.project_id).catch(() => null),
+      user
+        ? fetchContractorProfileByUser(user.id)
+            .then((profile) => (profile ? fetchMyBookings("contractor", profile.id) : []))
+            .catch(() => [])
+        : Promise.resolve([]),
     ]);
     setAvailability(spots);
     setMyConnection(mine[0] ?? null);
-    setBooking(selectedBooking);
+    const hiredBooking =
+      (mineBookings as Booking[]).find(
+        (item) =>
+          item.project_id === opp.project_id &&
+          hiredJobChip({
+            bookingStatus: item.status,
+            customerHiredAt: item.customer_hired_at,
+            contractorHiredAt: item.contractor_hired_at,
+          }),
+      ) ?? null;
+    setBooking(hiredBooking ?? selectedBooking);
     setAnswers(projectAnswers);
     if (opp.projects?.category_id) setQuestions(await fetchServiceQuestions(opp.projects.category_id));
     setQa(await fetchEstimateQuestions(opp.project_id, opp.id));
@@ -621,11 +674,15 @@ export function OpportunityDetailPage() {
   }
 
   useEffect(() => {
-    void reload().catch((err: Error) => setError(err.message));
+    if (!isQueryableId(opportunityId)) return;
+    void reload().catch((err: Error) => setError(friendlyNotFound(err.message, "We couldn't open that job.")));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opportunityId]);
 
-  if (!row) return error ? <ErrorState message={error} /> : <LoadingState label="Loading job" />;
+  if (!isQueryableId(opportunityId)) {
+    return <EmptyState title="Job not found" body="Check the link, or open it from Jobs." />;
+  }
+  if (!row) return error ? <ErrorState message={friendlyNotFound(error, "We couldn't open that job.")} /> : <LoadingState label="Loading job" />;
   const project = row.projects;
   const cancelled = project?.status === "CANCELLED";
   const spotsLabel = availability
@@ -642,12 +699,25 @@ export function OpportunityDetailPage() {
     reservedUntil: myConnection?.reserved_until ?? null,
     checkoutEnabled: availability?.checkout_enabled === true,
   });
-  const showConnectionCta = !cancelled && opportunityAllowsConnectCta(row.status);
-  const showDecline = canContractorEndJob({
-    opportunityStatus: row.status,
-    projectStatus: project?.status,
-    connectionStatus: myConnection?.status ?? null,
-  });
+  const hiredHere = Boolean(
+    booking &&
+      hiredJobChip({
+        bookingStatus: booking.status,
+        customerHiredAt: booking.customer_hired_at,
+        contractorHiredAt: booking.contractor_hired_at,
+      }),
+  );
+  const connectedHere = connectionUiState === "connected";
+  const showConnectionCta = !cancelled && !hiredHere && !connectedHere && opportunityAllowsConnectCta(row.status);
+  const showSpots = !cancelled && !hiredHere && !connectedHere;
+  const showDecline =
+    !hiredHere &&
+    !connectedHere &&
+    canContractorEndJob({
+      opportunityStatus: row.status,
+      projectStatus: project?.status,
+      connectionStatus: myConnection?.status ?? null,
+    });
 
   return (
     <div className="space-y-6">
@@ -667,8 +737,14 @@ export function OpportunityDetailPage() {
       <section className="rounded-3xl border border-forest-800/10 px-5 py-4 text-sm">
         <p>{project?.description}</p>
         <p className="mt-2 font-semibold">Approximate location</p>
-        <p>{[project?.city, project?.state].filter(Boolean).join(", ")}</p>
-        <p className="text-ink-500">{OPPORTUNITY_CONTACT_LOCKED_COPY}</p>
+        <p>{[project?.city, project?.state].filter(Boolean).join(", ") || "Approximate location not listed"}</p>
+        {hiredHere || connectedHere ? (
+          <p className="text-ink-500">
+            Phone, email, and street are on the job page. They stay hidden until the customer shares them.
+          </p>
+        ) : (
+          <p className="text-ink-500">{OPPORTUNITY_CONTACT_LOCKED_COPY}</p>
+        )}
         <p className="mt-2">{project?.timing ? TIMING_LABELS[project.timing] : ""}</p>
         {project?.budget_min_cents != null || project?.budget_max_cents != null ? (
           <p className="mt-2">
@@ -677,13 +753,13 @@ export function OpportunityDetailPage() {
             {project.budget_max_cents != null ? formatUsdFromCents(project.budget_max_cents) : "open"}
           </p>
         ) : null}
-        <p className="mt-3 font-semibold text-forest-800">{spotsLabel}</p>
+        {showSpots ? <p className="mt-3 font-semibold text-forest-800">{spotsLabel}</p> : null}
         {showConnectionCta ? <p className="mt-2 text-sm font-medium text-forest-800">{CONNECT_SINGLE_STEP_COPY}</p> : null}
       </section>
       <div className="grid grid-cols-2 gap-2">
         {photos.map((photo) => (
           <figure key={photo.id} className="space-y-1">
-            <img src={photo.url} alt="" className="h-28 w-full rounded-2xl object-cover" />
+            <img src={photo.url} alt="Project photo" className="h-28 w-full rounded-2xl object-cover" />
             <button
               type="button"
               className="inline-flex min-h-11 items-center text-xs font-semibold text-forest-800"
@@ -868,6 +944,7 @@ export function EstimateBuilderPage() {
   const [unit, setUnit] = useState("");
   const [totalCents, setTotalCents] = useState(0);
   const [referenceNumber, setReferenceNumber] = useState<number | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   async function load() {
     if (!user) return;
@@ -897,18 +974,34 @@ export function EstimateBuilderPage() {
     available_from?: string | null;
     valid_until?: string | null;
   }) {
-    if (!estimateId) return;
+    if (!estimateId || !canSubmitFrom(status)) return;
     void updateEstimateDetails(estimateId, patch).catch((err: Error) => setError(err.message));
   }
 
   useEffect(() => {
-    void load().catch((err: Error) => setError(err.message));
+    if (!isQueryableId(opportunityId)) return;
+    setLoaded(false);
+    void load()
+      .catch((err: Error) => setError(friendlyNotFound(err.message, "We couldn't open that estimate.")))
+      .finally(() => setLoaded(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opportunityId, user]);
+
+  if (!isQueryableId(opportunityId)) {
+    return <EmptyState title="Estimate not found" body="Open the estimate from My Estimates." />;
+  }
+  if (!loaded) return <LoadingState label="Loading estimate" />;
+  const editable = canSubmitFrom(status);
 
   return (
     <div className="mx-auto max-w-xl space-y-6" data-pwa-form="estimate">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Estimate</h1>
+      <p className="text-sm font-semibold text-forest-800">{contractorEstimateStatusLabel(status)}</p>
+      {!editable ? (
+        <p className="text-sm text-ink-700">
+          This estimate is {contractorEstimateStatusLabel(status).toLowerCase()}. It can no longer be edited.
+        </p>
+      ) : null}
       <JobReference value={referenceNumber} />
       <p className="text-sm text-ink-700">
         Line totals are computed for you. Submitting an estimate is never charged. PPP does not take a percentage of
@@ -922,68 +1015,75 @@ export function EstimateBuilderPage() {
               {ESTIMATE_ITEM_KIND_LABELS[(item.kind as EstimateItemKind) ?? "CUSTOM"]}: {item.label} · {item.quantity}{" "}
               {item.unit_label || "each"} × {formatUsdFromCents(item.unit_cents)} = {formatUsdFromCents(item.line_total_cents)}
             </span>
-            <button
-              type="button"
-              className="min-h-11 shrink-0 font-semibold text-danger-600"
-              onClick={() => void deleteEstimateItem(item.id).then(load).catch((err: Error) => setError(err.message))}
-            >
-              Remove
-            </button>
+            {editable ? (
+              <button
+                type="button"
+                className="min-h-11 shrink-0 font-semibold text-danger-600"
+                aria-label={`Remove ${item.label}`}
+                onClick={() => void deleteEstimateItem(item.id).then(load).catch((err: Error) => setError(err.message))}
+              >
+                Remove
+              </button>
+            ) : null}
           </li>
         ))}
       </ul>
-      <label className="block">
-        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
-          Line type
-        </span>
-        <select
-          className="min-h-14 w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4"
-          value={kind}
-          onChange={(e) => setKind(e.target.value as EstimateItemKind)}
-        >
-          {ESTIMATE_ITEM_KINDS.map((itemKind) => (
-            <option key={itemKind} value={itemKind}>
-              {ESTIMATE_ITEM_KIND_LABELS[itemKind]}
-            </option>
-          ))}
-        </select>
-      </label>
-      <TextInput label="Line item" value={label} onChange={(e) => setLabel(e.target.value)} />
-      <TextInput label="Quantity" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} />
-      <TextInput
-        label="Unit"
-        hint="hours, each, sq ft, and so on"
-        value={unitLabel}
-        onChange={(e) => setUnitLabel(e.target.value)}
-      />
-      <TextInput label="Unit price (USD)" inputMode="decimal" value={unit} onChange={(e) => setUnit(e.target.value)} />
-      <Button
-        type="button"
-        variant="outline"
-        className="min-h-14 w-full"
-        disabled={!estimateId}
-        onClick={() => {
-          const unitCents = dollarsToCents(unit);
-          if (!estimateId || !label || unitCents == null) return;
-          void addEstimateItem({
-            estimate_id: estimateId,
-            label,
-            quantity: Number(qty) || 1,
-            unit_cents: unitCents,
-            kind,
-            unit_label: unitLabel || "each",
-            sort_order: items.length,
-          })
-            .then(() => {
-              setLabel("");
-              setUnit("");
-              return load();
-            })
-            .catch((err: Error) => setError(err.message));
-        }}
-      >
-        Add line
-      </Button>
+      {editable ? (
+        <>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
+              Line type
+            </span>
+            <select
+              className="min-h-14 w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4"
+              value={kind}
+              onChange={(e) => setKind(e.target.value as EstimateItemKind)}
+            >
+              {ESTIMATE_ITEM_KINDS.map((itemKind) => (
+                <option key={itemKind} value={itemKind}>
+                  {ESTIMATE_ITEM_KIND_LABELS[itemKind]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <TextInput label="Line item" value={label} onChange={(e) => setLabel(e.target.value)} />
+          <TextInput label="Quantity" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} />
+          <TextInput
+            label="Unit"
+            hint="hours, each, sq ft, and so on"
+            value={unitLabel}
+            onChange={(e) => setUnitLabel(e.target.value)}
+          />
+          <TextInput label="Unit price (USD)" inputMode="decimal" value={unit} onChange={(e) => setUnit(e.target.value)} />
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-14 w-full"
+            disabled={!estimateId}
+            onClick={() => {
+              const unitCents = dollarsToCents(unit);
+              if (!estimateId || !label || unitCents == null) return;
+              void addEstimateItem({
+                estimate_id: estimateId,
+                label,
+                quantity: Number(qty) || 1,
+                unit_cents: unitCents,
+                kind,
+                unit_label: unitLabel || "each",
+                sort_order: items.length,
+              })
+                .then(() => {
+                  setLabel("");
+                  setUnit("");
+                  return load();
+                })
+                .catch((err: Error) => setError(err.message));
+            }}
+          >
+            Add line
+          </Button>
+        </>
+      ) : null}
       <div className="rounded-3xl border border-forest-800/10 px-4 py-3 text-sm">
         <p>Total {formatUsdFromCents(totalCents)}</p>
         <p className="text-ink-500">No PPP percentage is taken from this estimate. Connection is a separate $4.99 choice.</p>
@@ -992,6 +1092,7 @@ export function EstimateBuilderPage() {
         label="Duration (hours)"
         inputMode="decimal"
         value={duration}
+        disabled={!editable}
         onChange={(e) => setDuration(e.target.value)}
         onBlur={() => saveDetails({ duration_hours: duration ? Number(duration) : null })}
       />
@@ -999,6 +1100,7 @@ export function EstimateBuilderPage() {
         label="Available from"
         type="date"
         value={availableFrom}
+        readOnly={!editable}
         onChange={(e) => setAvailableFrom(e.target.value)}
         onBlur={() => saveDetails({ available_from: availableFrom || null })}
       />
@@ -1006,6 +1108,7 @@ export function EstimateBuilderPage() {
         label="Estimate expires"
         type="date"
         value={validUntil}
+        readOnly={!editable}
         onChange={(e) => setValidUntil(e.target.value)}
         onBlur={() => saveDetails({ valid_until: validUntil || null })}
       />
@@ -1014,6 +1117,7 @@ export function EstimateBuilderPage() {
         <textarea
           className="w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4 py-3"
           rows={3}
+          readOnly={!editable}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           onBlur={() => saveDetails({ notes })}
@@ -1021,6 +1125,7 @@ export function EstimateBuilderPage() {
         <span className="mt-1.5 block text-sm text-ink-500">{PRE_HIRE_CONTACT_HINT}</span>
       </label>
       <div className="sticky bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-20 flex flex-col gap-3 bg-cream-50/95 py-3 sm:flex-row lg:bottom-4">
+        {editable ? (
         <Button
           type="button"
           className="min-h-14 flex-1"
@@ -1037,6 +1142,7 @@ export function EstimateBuilderPage() {
         >
           Submit estimate
         </Button>
+        ) : null}
         {contractorEstimateDestructiveAction(status) === "withdraw" ? (
           <Button
             type="button"

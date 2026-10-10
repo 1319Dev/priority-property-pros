@@ -5,11 +5,9 @@ import { contractorHiredLandingPath, type HiredBookingRef } from "../marketplace
 import { getSupabaseClient } from "../supabase/client";
 import {
   listInAppNotifications,
-  listNotificationPreferences,
   markAllNotificationsRead,
   markNotificationRead,
   type InAppNotification,
-  type PreferenceRecord,
 } from "./api";
 
 function withHiredJobLinks(notes: InAppNotification[], bookings: readonly HiredBookingRef[]): InAppNotification[] {
@@ -18,7 +16,11 @@ function withHiredJobLinks(notes: InAppNotification[], bookings: readonly HiredB
     path: contractorHiredLandingPath({
       kind: note.kind,
       path: note.path,
-      payload: { project_id: note.projectId ?? undefined },
+      payload: {
+        project_id: note.projectId ?? undefined,
+        booking_id: note.bookingId ?? undefined,
+        contractor_profile_id: note.contractorProfileId ?? undefined,
+      },
       bookings,
     }),
   }));
@@ -30,15 +32,13 @@ export function useNotifications(options?: { enabled?: boolean }) {
   const { user, account_type } = useAuth();
   const enabled = (options?.enabled ?? true) && Boolean(user);
   const [items, setItems] = useState<InAppNotification[]>([]);
-  const [preferences, setPreferences] = useState<PreferenceRecord[] | null>(null);
+  const [ready, setReady] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!enabled) return;
     try {
-      const [notes, prefs] = await Promise.all([
-        listInAppNotifications(account_type),
-        listNotificationPreferences(),
-      ]);
+      const notes = await listInAppNotifications(account_type);
       let nextNotes = notes;
       if (account_type === "CONTRACTOR" && user) {
         try {
@@ -52,9 +52,11 @@ export function useNotifications(options?: { enabled?: boolean }) {
         }
       }
       setItems(nextNotes);
-      setPreferences(prefs);
+      setLoadError(null);
     } catch {
-      setItems((current) => current);
+      setLoadError("Couldn't load notifications.");
+    } finally {
+      setReady(true);
     }
   }, [account_type, enabled, user]);
 
@@ -98,14 +100,7 @@ export function useNotifications(options?: { enabled?: boolean }) {
     };
   }, [enabled, load, user]);
 
-  const visible = useMemo(
-    () =>
-      items.filter((item) => {
-        const pref = preferences?.find((row) => row.category === item.category);
-        return pref ? pref.in_app : true;
-      }),
-    [items, preferences],
-  );
+  const visible = useMemo(() => items, [items]);
   const unread = visible.filter((item) => !item.readAt).length;
 
   async function markRead(id: string) {
@@ -128,5 +123,5 @@ export function useNotifications(options?: { enabled?: boolean }) {
     }
   }
 
-  return { items: visible, unread, markRead, markAllRead, refresh: load };
+  return { items: visible, unread, ready, loadError, markRead, markAllRead, refresh: load };
 }

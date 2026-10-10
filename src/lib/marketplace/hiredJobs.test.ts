@@ -130,13 +130,29 @@ describe("hired job cards", () => {
       }),
     ).toBe("/app/customer/bookings/book-1");
     expect(
+      notificationPath({
+        kind: "contact.shared",
+        entityId: null,
+        payload: { project_id: "proj-1", contractor_profile_id: "pro-1", booking_id: "book-1" },
+        accountType: "CONTRACTOR",
+      }),
+    ).toBe("/app/pro/jobs/book-1");
+    expect(
+      notificationPath({
+        kind: "message.received",
+        entityId: null,
+        payload: { project_id: "proj-1", contractor_profile_id: "pro-1", booking_id: "book-1" },
+        accountType: "CONTRACTOR",
+      }),
+    ).toBe("/app/pro/messages/proj-1/pro-1");
+    expect(
       contractorHiredLandingPath({
         kind: "message.received",
         path: "/app/pro/messages/proj-1/pro-1",
         payload: { project_id: "proj-1", contractor_profile_id: "pro-1" },
         bookings: [{ id: "book-1", project_id: "proj-1", status: "IN_PROGRESS" }],
       }),
-    ).toBe("/app/pro/jobs/book-1");
+    ).toBe("/app/pro/messages/proj-1/pro-1");
     expect(
       contractorHiredLandingPath({
         kind: "message.received",

@@ -17,7 +17,7 @@ export const SHARE_CONTACT_DONE_BODY =
   "This pro can see the name, phone, email, and address below.";
 
 export const SHARE_CONTACT_WAITING_COPY =
-  "This customer has not shared contact yet. Phone, email, and street stay hidden until they use Share my contact & address.";
+  "The customer has not shared contact yet. Phone, email, and street stay hidden until they choose to share.";
 
 export const SHARE_CONTACT_LOCKED_BODY =
   "Sharing stays locked until the $4.99 connection is unlocked for this contractor on this project.";

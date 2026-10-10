@@ -6,9 +6,10 @@ import { useAuth } from "../../lib/auth/useAuth";
 import { deleteOwnAccount } from "../../lib/auth/deleteAccount";
 import { FormError } from "../../lib/auth/AuthCard";
 import { getSupabaseClient } from "../../lib/supabase/client";
-import { PRO_DASHBOARD_PRICING_NOTE } from "../../data/pricing";
 import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
-import { ACCOUNT_ROLE_NOTE, CUSTOMER_ACTIVATION_NOTE, CUSTOMER_PAYS_DIRECTLY } from "../../lib/marketplace/customerCopy";
+import { CUSTOMER_ACTIVATION_NOTE, CUSTOMER_PAYS_DIRECTLY } from "../../lib/marketplace/customerCopy";
+import { accountRoleNote, activationStatusLine } from "../../lib/marketplace/contractorPolish";
+import { SIGNUP_FEE_ACTIVATE_PATH } from "../../lib/signupFee/constants";
 import { accountStatusLabel, accountTypeLabel } from "../../lib/marketplace/statusLabels";
 import { accountSettingsPath } from "../../lib/auth/roles";
 
@@ -27,6 +28,10 @@ export function AccountPage() {
   const [lastName, setLastName] = useState(profile?.last_name ?? "");
   const [phone, setPhone] = useState(profile?.phone ?? "");
   const hidePricing = useHidePlatformPricing();
+  const activation = activationStatusLine({
+    status: profile?.signup_fee_status,
+    paidAt: profile?.signup_fee_paid_at,
+  });
 
   return (
     <div className="max-w-lg space-y-6">
@@ -77,13 +82,25 @@ export function AccountPage() {
         <Row label="Email" value={user?.email ?? profile?.email ?? "—"} />
         <Row label="Role" value={accountTypeLabel(account_type)} />
         <Row label="Status" value={accountStatusLabel(account_status)} />
+        <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
+          <dt className="font-semibold uppercase tracking-[0.14em] text-gold-700">Activation</dt>
+          <dd className="min-w-0 break-words text-ink-900">
+            {activation.text.replace(/^Activation: /, "")}
+            {activation.showActivate ? (
+              <>
+                {" "}
+                <Link to={SIGNUP_FEE_ACTIVATE_PATH} className="font-semibold text-forest-800 underline">
+                  Activate
+                </Link>
+              </>
+            ) : null}
+          </dd>
+        </div>
       </dl>
       <p className="text-sm text-ink-500">
-        {ACCOUNT_ROLE_NOTE}
-        {account_type === "CUSTOMER"
-          ? `${hidePricing ? "" : ` ${CUSTOMER_ACTIVATION_NOTE}`} ${CUSTOMER_PAYS_DIRECTLY}`
-          : ""}
-        {account_type === "CONTRACTOR" ? ` ${PRO_DASHBOARD_PRICING_NOTE}` : ""}
+        {accountRoleNote(account_type)}
+        {account_type === "CUSTOMER" && !hidePricing ? ` ${CUSTOMER_ACTIVATION_NOTE}` : ""}
+        {account_type === "CUSTOMER" ? ` ${CUSTOMER_PAYS_DIRECTLY}` : ""}
       </p>
       <Link
         to={
@@ -105,7 +122,7 @@ export function AccountPage() {
       >
         Sign out
       </button>
-      <section className="border-t border-forest-800/10 pt-8">
+      <section className="mt-10 border-t border-forest-800/10 pt-10">
         <h2 className="text-sm font-semibold text-ink-500">Delete account</h2>
         <p className="mt-2 text-sm leading-relaxed text-ink-500">
           Permanently close this account and remove your profile. This cannot be undone.

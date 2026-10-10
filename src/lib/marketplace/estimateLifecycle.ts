@@ -1,5 +1,6 @@
 import type { EstimateStatus, ProjectStatus } from "./types";
 import { unauthorizedPayloadLeaksPrivateContact } from "./bookings";
+import { friendlyTimestamp } from "./contractorPolish";
 import { comparisonDisplayOrder } from "./flows";
 
 /** Product "Sent" is stored as SENT (new) or SUBMITTED (legacy Phase 3). */
@@ -318,10 +319,7 @@ export function contractorCanReadEstimate(actorContractorId: string | null, esti
 }
 
 export function formatViewedTimestamp(iso: string | null): string | null {
-  if (!iso) return null;
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleString();
+  return friendlyTimestamp(iso);
 }
 
 export function lifecyclePayloadLeaksContact(payload: Record<string, unknown> | null | undefined): boolean {

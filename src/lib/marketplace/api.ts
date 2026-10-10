@@ -6,6 +6,7 @@ import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./pr
 import { detectContactLeak } from "./contactLeak";
 import { projectInsertForPost, runProjectSubmit } from "./projectPost";
 import { isMissingReferenceColumn, parseProjectReference } from "./projectReference";
+import { friendlyNotFound, isUuid } from "./recordId";
 import {
   customerFacingConnectionCheckoutError,
   CONNECTION_RECONCILE_CUSTOMER_ERROR,
@@ -43,7 +44,11 @@ function client() {
 }
 
 function asError(error: { message: string } | null, fallback: string): string {
-  return error?.message || fallback;
+  return friendlyNotFound(error?.message, fallback);
+}
+
+function requireUuid(id: string, fallback: string) {
+  if (!isUuid(id)) throw new Error(fallback);
 }
 
 function rejectContactLeak(text: string | null | undefined) {
@@ -120,6 +125,7 @@ export async function fetchMyCustomerProject(id: string): Promise<Project> {
 }
 
 export async function fetchProject(id: string): Promise<Project> {
+  requireUuid(id, "Project not found.");
   const { data, error } = await client().from("projects").select("*").eq("id", id).maybeSingle();
   if (error || !data) throw new Error(asError(error, "Project not found."));
   return data as Project;
@@ -495,6 +501,7 @@ export async function fetchMyBookings(role: "customer" | "contractor", id: strin
 }
 
 export async function fetchBooking(id: string) {
+  requireUuid(id, "Booking not found.");
   const { data, error } = await client().from("bookings").select("*").eq("id", id).single();
   if (error || !data) throw new Error(asError(error, "Booking not found."));
   return data;
@@ -619,6 +626,7 @@ export async function confirmBookingHired(bookingId: string): Promise<RpcJson> {
 }
 
 export async function fetchBookingJobContact(bookingId: string): Promise<RpcJson> {
+  requireUuid(bookingId, "Contact is still locked.");
   const { data, error } = await client().rpc("booking_job_contact", { p_booking_id: bookingId });
   if (error) throw new Error(asError(error, "Contact is still locked."));
   return (data ?? {}) as RpcJson;
@@ -785,6 +793,7 @@ export async function findAdminBookingsByReference(raw: string): Promise<{
 }
 
 export async function fetchOpportunity(id: string) {
+  requireUuid(id, "Opportunity not found.");
   const embedded = await selectOpportunityEmbed((select) =>
     client().from("opportunities").select(select).eq("id", id).maybeSingle(),
   );

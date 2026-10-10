@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { ContractorAvatar } from "../../../components/media/ContractorAvatar";
 import { PortfolioExample } from "../../../components/media/PortfolioExample";
 import { PortfolioPhotoEditor } from "../../../components/marketplace/PortfolioPhotoEditor";
-import { Button, ButtonLink } from "../../../components/ui/Button";
+import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/Input";
 import { HumanStatus, StatusBanner } from "../../../components/ui/StatusBanner";
 import { FormError } from "../../../lib/auth/AuthCard";
@@ -28,12 +29,12 @@ import {
   upsertContractorArea,
 } from "../../../lib/marketplace/api";
 import { centsToDollarString, dollarsToCents } from "../../../lib/marketplace/fees";
-import { MANAGE_PROFILE_SECTIONS, showManageProfile, verifiedBadgeVisible } from "../../../lib/marketplace/profileManage";
+import { CREDENTIALS_EMPTY, PROFILE_NUDGE, serviceAreaBaseZip } from "../../../lib/marketplace/contractorPolish";
+import { showManageProfile, verifiedBadgeVisible } from "../../../lib/marketplace/profileManage";
 import { ServiceRadiusEditor } from "../../../components/marketplace/ServiceRadiusEditor";
 import { prepareServiceAreaSave, previewServiceRadius } from "../../../lib/marketplace/serviceAreaApi";
 import { contractorAreaSummary } from "../../../lib/marketplace/serviceRadius";
 import type { ServiceCategory } from "../../../lib/marketplace/types";
-import { PRO_DASHBOARD_PRICING_NOTE } from "../../../data/pricing";
 import { useToast } from "../../../hooks/useToast";
 import { ProOnboardingPage } from "./ProMarketplacePages";
 
@@ -87,6 +88,7 @@ export function ManageProfileView() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [badges, setBadges] = useState<{ id: string; label: string; status: string }[]>([]);
   const [credentials, setCredentials] = useState<Awaited<ReturnType<typeof fetchCredentials>>>([]);
+  const [ready, setReady] = useState(false);
 
   async function load() {
     if (!user) return;
@@ -116,7 +118,7 @@ export function ManageProfileView() {
     if (area) {
       setAreaId(area.id);
       setZips((area.zip_codes ?? []).join(", "));
-      setCenterZip(area.center_zip ?? "");
+      setCenterZip(serviceAreaBaseZip(area));
       setRadius(area.radius_miles?.toString() ?? "");
       setAreaLabel(area.label);
     }
@@ -129,7 +131,10 @@ export function ManageProfileView() {
   }
 
   useEffect(() => {
-    void load().catch((err: Error) => setError(err.message));
+    setReady(false);
+    void load()
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setReady(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -204,7 +209,11 @@ export function ManageProfileView() {
   }
 
   async function saveArea() {
-    if (!contractorId) return;
+    if (!ready || !contractorId) return;
+    if (!centerZip.trim()) {
+      setError("Enter a base ZIP before saving the service area.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -259,18 +268,20 @@ export function ManageProfileView() {
 
   const serviceNames = categories.filter((c) => selected.includes(c.id)).map((c) => c.name);
 
+  if (!ready) return error ? <p className="text-sm text-ink-700">{error}</p> : <BrandLoader layout="section" label="Loading profile" />;
+
   return (
     <div className="mx-auto max-w-xl space-y-5">
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Your Pro Profile</h1>
-        <p className="mt-2 text-sm text-ink-700">
-          Update the public card customers see. Onboarding answers stay on file.
-          {` ${PRO_DASHBOARD_PRICING_NOTE}`}
-        </p>
-        <ButtonLink to="/app/pro/account" variant="ghost" size="sm" className="mt-2 px-0">
-          Account
-        </ButtonLink>
+        <p className="mt-2 text-sm text-ink-700">Update the public card customers see. Onboarding answers stay on file.</p>
+        {!photoUrl || !headline.trim() || !bio.trim() ? (
+          <p className="mt-3 rounded-2xl bg-gold-500/15 px-4 py-3 text-sm text-forest-950">{PROFILE_NUDGE}</p>
+        ) : null}
+        <Link to="/app/pro/account" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-forest-800 underline">
+          Account settings
+        </Link>
       </header>
       <FormError message={error} />
       {approved ? (
@@ -298,10 +309,19 @@ export function ManageProfileView() {
             <h2 className="font-display text-2xl text-forest-800">Accepting Work</h2>
             <p className="text-sm text-ink-700">{accepting ? "You are open to new jobs." : "New matching is paused. Historical estimates stay."}</p>
           </div>
-          <label className="flex min-h-12 items-center gap-2 text-sm font-semibold">
-            <input type="checkbox" checked={accepting} onChange={() => void toggleAccepting()} />
+          <button
+            type="button"
+            role="switch"
+            aria-checked={accepting}
+            aria-label="Accepting work"
+            onClick={() => void toggleAccepting()}
+            className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold ${
+              accepting ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-ink-700"
+            }`}
+          >
+            <span className={`h-3 w-3 rounded-full ${accepting ? "bg-gold-500" : "bg-ink-300"}`} aria-hidden="true" />
             {accepting ? "On" : "Off"}
-          </label>
+          </button>
         </div>
       </section>
 
@@ -346,7 +366,7 @@ export function ManageProfileView() {
           </div>
         ) : (
           <div className="space-y-1 text-sm text-ink-700">
-            <p className="font-semibold text-forest-800">{businessName || "Your business"}</p>
+            <p className="font-semibold text-forest-800">{businessName.trim() || "Your business"}</p>
             <p>{website || "No website yet."}</p>
           </div>
         )}
@@ -403,8 +423,16 @@ export function ManageProfileView() {
               Save services
             </Button>
           </div>
+        ) : serviceNames.length ? (
+          <ul className="flex flex-wrap gap-2">
+            {serviceNames.map((name) => (
+              <li key={name} className="rounded-full bg-cream-100 px-3 py-1 text-sm font-semibold text-forest-800">
+                {name}
+              </li>
+            ))}
+          </ul>
         ) : (
-          <p className="text-sm text-ink-700">{serviceNames.length ? serviceNames.join(" · ") : "No services selected."}</p>
+          <p className="text-sm text-ink-700">No services selected.</p>
         )}
       </SectionCard>
 
@@ -470,6 +498,7 @@ export function ManageProfileView() {
         <p className="text-sm text-ink-700">
           Changing a verified license, insurance, or document marks that credential pending re-verification. Your approved status stays.
         </p>
+        {credentials.length === 0 ? <p className="mt-3 text-sm text-ink-700">{CREDENTIALS_EMPTY}</p> : null}
         <ul className="mt-3 space-y-2 text-sm">
           {credentials.map((cred) => (
             <li key={cred.id} className="rounded-2xl bg-cream-100 px-3 py-2">
@@ -515,23 +544,18 @@ export function ManageProfileView() {
         <dl className="mt-3 space-y-2 text-sm">
           <div className="flex justify-between gap-4">
             <dt className="text-ink-500">Approval</dt>
-            <dd className="font-semibold">{approved ? "APPROVED" : "Pending"} — not editable</dd>
+            <dd className="font-semibold">{approved ? "Approved" : "Pending"}</dd>
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-ink-500">Account</dt>
-            <dd className="font-semibold">ACTIVE status is admin-controlled</dd>
+            <dd className="font-semibold">Active</dd>
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-ink-500">Verification badges</dt>
-            <dd className="font-semibold">{badges.length ? badges.map((b) => b.label).join(", ") : "None"} — not self-assignable</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-ink-500">Marketplace fee</dt>
-            <dd className="font-semibold">Platform-configured — not editable</dd>
+            <dd className="font-semibold">{badges.length ? badges.map((b) => b.label).join(", ") : "None"}</dd>
           </div>
         </dl>
       </section>
-      <p className="sr-only">{MANAGE_PROFILE_SECTIONS.map((s) => s.title).join(", ")}</p>
     </div>
   );
 }
@@ -637,18 +661,23 @@ function PortfolioManage({
   onError: (message: string) => void;
 }) {
   const [rows, setRows] = useState<Awaited<ReturnType<typeof fetchPortfolioEditorRows>>>([]);
+  const [loaded, setLoaded] = useState(false);
   function reload() {
     return fetchPortfolioEditorRows(contractorId).then(setRows);
   }
   useEffect(() => {
-    void reload().catch((err: Error) => onError(err.message));
+    setLoaded(false);
+    void reload()
+      .catch((err: Error) => onError(err.message))
+      .finally(() => setLoaded(true));
     // reload closes over contractorId; onError is stable enough for this screen.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contractorId, onError]);
   return (
-    <SectionCard title="Portfolio" actionLabel="Manage Photos" editing={editing} onEdit={onEdit}>
-      {rows.length === 0 ? <PortfolioExample /> : null}
-      <PortfolioPhotoEditor
+    <SectionCard title="Portfolio" actionLabel="Manage Photos" editing={editing && loaded} onEdit={loaded ? onEdit : () => undefined}>
+      {!loaded ? <p className="text-sm text-ink-500">Loading photos…</p> : null}
+      {loaded && rows.length === 0 ? <PortfolioExample /> : null}
+      {loaded ? <PortfolioPhotoEditor
         rows={rows}
         editing={editing}
         onAddFile={(file) => {
@@ -676,7 +705,7 @@ function PortfolioManage({
             .then(() => reload())
             .catch((err: Error) => onError(err.message));
         }}
-      />
+      /> : null}
     </SectionCard>
   );
 }
