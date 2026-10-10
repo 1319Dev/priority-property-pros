@@ -260,3 +260,47 @@ test.describe("admin cleanup copy", () => {
     });
   }
 });
+
+const adminOverviewWidths = [320, 390, 768, 1024, 1280];
+
+test.describe("admin overview stays within the viewport", () => {
+  for (const width of adminOverviewWidths) {
+    test(`overview at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: width < 768 ? 844 : 900 });
+      await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=admin#/app/admin", {
+        waitUntil: "domcontentloaded",
+      });
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
+      await expect(page.getByText("$14.98").first()).toBeVisible();
+      await expect(page.getByText("Not set up yet").first()).toBeVisible();
+      await expect(page.getByRole("link", { name: /Email prioritypropertypros@gmail.com/i })).toHaveAttribute(
+        "href",
+        "mailto:prioritypropertypros@gmail.com",
+      );
+      const box = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+      }));
+      expect(box.scrollWidth).toBeLessThanOrEqual(box.innerWidth + 1);
+      if (process.env.PPP_ADMIN_SCREENSHOTS && (width === 390 || width === 768 || width === 1280)) {
+        const name = width === 1280 ? "desktop" : width === 768 ? "tablet" : "phone";
+        await page.screenshot({
+          path: `/opt/cursor/artifacts/screenshots/pr-c-overview-${name}.png`,
+          fullPage: true,
+        });
+      }
+    });
+  }
+
+  test("include-test switch responds to the keyboard", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=admin#/app/admin", {
+      waitUntil: "domcontentloaded",
+    });
+    const toggle = page.getByRole("checkbox", { name: "Include test accounts" });
+    await toggle.focus();
+    await page.keyboard.press("Space");
+    await expect(page.getByText("$24.97").first()).toBeVisible();
+  });
+});

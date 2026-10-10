@@ -540,3 +540,125 @@ export async function deletePortfolioItem() {
 export async function uploadContractorDoc() {
   return "user/portfolio/new.jpg";
 }
+
+// Harness stand-in for the 10 Oct 2026 audit counts with test accounts excluded.
+// These are not a live database query.
+function overviewMetric(value, definition) {
+  return { value, status: "available", definition };
+}
+function overviewUnavailable(definition) {
+  return { value: null, status: "unavailable", definition };
+}
+
+export async function fetchAdminDashboardSummary(includeTest) {
+  const homeowners = includeTest ? 2 : 1;
+  const revenue = includeTest ? 2497 : 1498;
+  const posted = includeTest ? 2 : 1;
+  return {
+    generatedAt: "2026-10-10T22:31:00.000Z",
+    includeTest: Boolean(includeTest),
+    timezone: "America/Chicago",
+    revenueNote: "Gross activation and Connect fees only, before Stripe fees. Net revenue is not stored.",
+    metrics: {
+      homeowners: overviewMetric(homeowners, "profiles where account_type is CUSTOMER and account_status is not DELETED"),
+      contractors: overviewMetric(2, "contractor profiles that are not deleted"),
+      active_approved_contractors: overviewMetric(2, "approval APPROVED and account ACTIVE"),
+      awaiting_approval: overviewMetric(0, "approval PENDING"),
+      identity_review_required: overviewMetric(0, "identity review required"),
+      projects_posted: overviewMetric(posted, "projects with posted_at"),
+      projects_open: overviewMetric(0, "open project statuses"),
+      awaiting_estimates: overviewMetric(0, "open projects with no estimate"),
+      marked_hired: overviewMetric(1, "bookings marked hired by both sides"),
+      completed: overviewMetric(0, "bookings completed"),
+      revenue_month_cents: overviewMetric(revenue, "gross cents this Chicago month"),
+      revenue_lifetime_cents: overviewMetric(revenue, "gross lifetime cents"),
+      revenue_net_cents: overviewUnavailable("Stripe fees are not stored"),
+      pending_photo_approvals: overviewMetric(0, "portfolio photos in review"),
+      platform_reviews_pending: overviewMetric(0, "platform reviews pending"),
+      content_reports_30d: overviewMetric(1, "reports in the last 30 days"),
+      disputed_bookings: overviewMetric(0, "bookings disputed"),
+      checkouts_completed: overviewMetric(2, "livemode checkouts paid or consumed"),
+      checkouts_expired: overviewMetric(0, "livemode checkouts expired"),
+      checkouts_open: overviewMetric(0, "livemode checkouts still open"),
+      support_tickets: overviewUnavailable("No support ticket table"),
+      card_declines: overviewUnavailable("Card declines are not recorded"),
+    },
+  };
+}
+
+export async function fetchAdminNeedsAttention() {
+  return {
+    generatedAt: "2026-10-10T22:31:00.000Z",
+    includeTest: false,
+    mfa: "missing",
+    items: [
+      {
+        kind: "content_reports_30d",
+        count: 1,
+        severity: "medium",
+        link: null,
+        note: "Reports received in the last 30 days. There is no resolve status yet, and no admin screen for them",
+      },
+      {
+        kind: "admin_mfa_missing",
+        count: 1,
+        severity: "medium",
+        link: "/app/admin/security",
+        note: "Two-factor is not enrolled on this admin account. Enforcement stays off until you turn it on",
+      },
+    ],
+  };
+}
+
+export async function fetchAdminRecentActivity() {
+  return [
+    {
+      occurredAt: "2026-10-10T15:00:00.000Z",
+      kind: "project.posted",
+      label: "Project posted",
+      jobReference: "PPP-1004",
+      subjectLabel: "Owen",
+      ownerActivity: true,
+      cursor: "2026-10-10 15:00:00.000000|project.posted|11111111-1111-1111-1111-111111111111",
+    },
+  ];
+}
+
+export async function fetchAdminDashboardTrends() {
+  return {
+    granularity: "day",
+    from: "2026-09-11",
+    to: "2026-10-10",
+    revenueNote: "Gross cents from livemode activation and Connect fees. Not a card-decline series.",
+    checkoutNote: "Completed means paid or consumed. Expired is an abandoned Checkout, not a recorded card decline.",
+    cardDeclinesUnavailable: true,
+    buckets: [
+      {
+        start: "2026-10-04",
+        revenueCents: 0,
+        signupsCustomer: 0,
+        signupsContractor: 0,
+        homeownersCumulative: 1,
+        contractorsCumulative: 2,
+        projectsPosted: 0,
+        hires: 0,
+        completions: 0,
+        checkoutsCompleted: 0,
+        checkoutsExpired: 0,
+      },
+      {
+        start: "2026-10-10",
+        revenueCents: 1498,
+        signupsCustomer: 0,
+        signupsContractor: 0,
+        homeownersCumulative: 1,
+        contractorsCumulative: 2,
+        projectsPosted: 1,
+        hires: 1,
+        completions: 0,
+        checkoutsCompleted: 2,
+        checkoutsExpired: 0,
+      },
+    ],
+  };
+}
