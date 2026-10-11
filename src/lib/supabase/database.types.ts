@@ -34,6 +34,7 @@ export type Database = {
           signup_fee_status?: import("../signupFee/constants").SignupFeeStatus;
           signup_fee_paid_at?: string | null;
           signup_fee_charge_id?: string | null;
+          age_18_affirmed_at?: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -154,6 +155,7 @@ export type Database = {
           is_current: boolean;
           audience: "ALL" | "CONTRACTOR";
           published: boolean;
+          published_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -164,6 +166,7 @@ export type Database = {
           is_current?: boolean;
           audience?: "ALL" | "CONTRACTOR";
           published?: boolean;
+          published_at?: string | null;
         };
         Update: {
           title?: string;
@@ -171,6 +174,7 @@ export type Database = {
           is_current?: boolean;
           audience?: "ALL" | "CONTRACTOR";
           published?: boolean;
+          published_at?: string | null;
         };
         Relationships: [];
       };

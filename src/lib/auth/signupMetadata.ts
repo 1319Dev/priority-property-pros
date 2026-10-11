@@ -12,6 +12,7 @@ export function buildSignupMetadata(input: SignUpInput): Record<string, string> 
     phone: (input.phone ?? "").trim(),
     accepted_terms: input.acceptedTerms ? "true" : "false",
     accepted_agreement_versions: agreementVersionPayload(accountType),
+    ...(input.affirmedAge18 ? { affirmed_age_18: "true" } : {}),
     business_name: (input.businessName ?? "").trim(),
     primary_trade: (input.primaryTrade ?? "").trim(),
     service_area: (input.serviceArea ?? "").trim(),

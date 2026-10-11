@@ -12,8 +12,8 @@ export function SignupAgreementLabel({
   const required = requiredAgreements(accountType);
   const fee =
     accountType === "CONTRACTOR"
-      ? " The $9.99 account activation fee and the $4.99 Connection Fee are non-refundable."
-      : " The $9.99 account activation fee is non-refundable.";
+      ? " The $9.99 account activation fee and the $4.99 Connection Fee are generally non-refundable once the applicable service is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception."
+      : " The $9.99 account activation fee is generally non-refundable once account activation is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.";
   const extra = LEGAL_DOCUMENTS.filter((doc) => !required.some((item) => item.slug === doc.slug));
 
   return (

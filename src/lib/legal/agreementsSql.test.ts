@@ -55,7 +55,17 @@ describe("legal agreement acceptance migration", () => {
 
   it("requires acceptance only after the setting is on, and keeps signup and sign-in rows apart", () => {
     expect(sql).toMatch(/RAISE EXCEPTION 'terms_not_accepted'/);
+    expect(sql).toMatch(/RAISE EXCEPTION 'age_18_required'/);
     expect(sql).toMatch(/RAISE EXCEPTION 'agreement_version_mismatch'/);
+    expect(sql).toMatch(/RAISE EXCEPTION 'terms_acceptance_required'/);
+    expect(sql).toMatch(/published_at = coalesce\(published_at, now\(\)\)/);
+    expect(sql).toMatch(/age_18_affirmed_at/);
+    expect(sql).toMatch(/BEFORE INSERT ON public\.projects/);
+    expect(sql).toMatch(/BEFORE INSERT ON public\.estimates/);
+    expect(sql).toMatch(/BEFORE INSERT ON public\.project_messages/);
+    expect(sql).toMatch(/BEFORE INSERT ON public\.project_connections/);
+    expect(sql).not.toMatch(/BEFORE INSERT ON public\.signup_fee/);
+    expect(sql).not.toMatch(/BEFORE INSERT ON public\.connection_fee/);
     expect(sql).toMatch(/IF NOT public\.legal_acceptance_required\(\) THEN\s+RETURN;/);
     expect(sql).toMatch(
       /IF public\.legal_acceptance_required\(\) THEN\s+PERFORM public\.assert_signup_agreement_versions\(meta, safe_type\);/,
@@ -93,6 +103,10 @@ describe("legal agreement acceptance migration", () => {
     expect(path.basename(rollbackPath)).toBe("20261018000001_legal_agreement_acceptance_rollback.sql");
     expect(rollback).toMatch(/20261018000001_legal_agreement_acceptance\.sql/);
     expect(rollback).not.toMatch(/20261015000001/);
+    expect(rollback).toMatch(/DROP FUNCTION IF EXISTS public\.enforce_current_terms_for_new_marketplace_action\(\)/);
+    expect(rollback).toMatch(/DROP TRIGGER IF EXISTS projects_enforce_current_terms ON public\.projects/);
+    expect(rollback).toMatch(/DROP COLUMN IF EXISTS published_at/);
+    expect(rollback).toMatch(/DROP COLUMN IF EXISTS age_18_affirmed_at/);
     expect(rollback).toMatch(/DROP FUNCTION IF EXISTS public\.legal_acceptance_required\(\)/);
     expect(rollback).toMatch(/DROP FUNCTION IF EXISTS public\.set_legal_acceptance_required\(boolean\)/);
     expect(rollback).toMatch(/CREATE OR REPLACE FUNCTION public\.handle_new_user\(\)/);

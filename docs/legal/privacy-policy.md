@@ -1,8 +1,8 @@
 # Privacy Policy
 
-> Draft for owner review. This is not legal advice. Have a Texas attorney review it before anyone relies on it and before it is published. These pages stay off prioritypropertypros.com until the owner approves the wording and turns them on. This draft does not change the live signup record until the new database migration is applied. Do not apply that migration until the wording is approved.
+This is not legal advice.
 
-Effective date: [OWNER DECISION: the calendar date this policy takes effect]
+Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
 
 ## Plain-language summary
 
@@ -11,26 +11,26 @@ Effective date: [OWNER DECISION: the calendar date this policy takes effect]
 - Card numbers are entered at Stripe. PPP does not store card numbers. PPP stores payment metadata for the $9.99 activation and the $4.99 Connect.
 - The site is hosted as a static site on GitHub Pages. Accounts, database, files, and login are on Supabase. Email goes through Resend. Web push goes through the browser’s push service. There is no advertising tracker in the current site.
 - PPP does not sell personal information.
-- You can delete your account from the account screen. Agreement acceptances go with the profile. An audit entry and Stripe’s own payment record can remain, as described below.
-- The service is not for children. The minimum age is an owner decision, and the form does not ask for a birthday today.
+- You can delete your account from the account screen. Agreement acceptances go with the profile. An audit entry and Stripe’s own payment record can remain, as described below. The product does not include an in-app export.
+- The marketplace is for people 18 or older. The signup form does not ask for a date of birth.
 - A Priority Help chat is not part of the product. If it launches, an AI provider would be an extra processor. That is marked conditional below.
-- Texas privacy rights and general US practices are described below. A Texas attorney should confirm how the Texas Data Privacy and Security Act applies.
+- Texas privacy rights and general US practices are described below.
 
-The [Terms of Use](/terms) are part of the same agreement, along with the [Refund & Cancellation Policy](/refunds), the [Community Guidelines](/community-guidelines), and the [Review & Content Guidelines](/content-guidelines). Contractor accounts also accept the [Contractor Participation Terms](/contractor-terms).
+The [Terms of Service](/terms) are part of the same agreement, along with the [Refund & Cancellation Policy](/refunds), the [Community Guidelines](/community-guidelines), and the [Review & Content Guidelines](/content-guidelines). Contractor accounts also accept the [Contractor Participation Terms](/contractor-terms).
 
 ## 1. Who this policy covers
 
 Priority Property Pros LLC (“PPP,” “we”) operates prioritypropertypros.com. This policy describes personal information the marketplace handles for customers (homeowners and businesses), contractors, and the admins who run the site. The verifier role exists in the database and is not a public signup. This policy does not describe a verifier inspecting your home.
 
-The contact address in the product is [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
-
-[OWNER DECISION: provide a mailing address if you want one published. This draft does not invent a street address.]
+The contact published on the site is [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). This policy does not publish a street address.
 
 ## 2. Information the product collects
 
 **Account.** Name, email, password (stored by Supabase Auth, not in the PPP application tables), phone if you add one, and whether you are a customer or a contractor. A contractor also adds a business name, trade, and service area at signup, and can later add a headline, bio, years of experience, website, job-size range, service radius or ZIP list, a profile photo, contractor-provided license or insurance fields, and credentials. Those credential fields are what the contractor typed. PPP does not treat them as a license check, an insurance check, a bond, or a background check.
 
-**Agreement records.** The signup checkbox is on the form. While the platform setting `legal_acceptance_required` is off, PPP does not reject a new account for these drafts and does not prompt existing accounts. After that setting is turned on, a new signup stores one row per current document with the version, the time, a source of signup, and a short user-agent string (up to 180 characters). An existing account is prompted at the next sign-in. Accepting then stores a separate row with a source of sign-in, the version, and the time. The version number is copied from the current agreement on the server. The prompt does not hide projects, messages, or other account data, and accepting does not delete older rows or the account.
+**Age affirmation.** The form does not ask for a date of birth. When the platform setting `legal_acceptance_required` is on, signup asks you to affirm that you are 18 or older, and PPP stores the time of that affirmation on the profile (`age_18_affirmed_at`). While that setting is off, signup does not require the affirmation and does not store it.
+
+**Agreement records.** The signup checkbox is on the form. While `legal_acceptance_required` is off, PPP does not reject a new account for these versions and does not prompt existing accounts. After that setting is turned on, a new signup stores one row per current document with the version, the time, a source of signup, and a short user-agent string (up to 180 characters). An existing account is prompted at the next sign-in. Accepting then stores a separate row with a source of sign-in, the version, and the time. The version number is copied from the current agreement on the server. The prompt does not hide projects, messages, or other account information. If you do not accept, you can still view that information and delete the account. The product does not include an in-app export. While the setting is on, new marketplace actions are refused until you accept. Accepting does not delete older rows or the account.
 
 **Projects.** Title, description, project type, city, state, ZIP, timing, optional budget, and photos of the work. The street and precise coordinates are stored in a private location record, not on the public project. An unposted wizard draft stays in that browser tab (session storage) until you post. Photos in an unposted draft are not kept if you reload the tab.
 
@@ -44,7 +44,7 @@ The contact address in the product is [support@prioritypropertypros.com](mailto:
 
 **Notifications.** Your on/off choices for in-app, push, and email. If you turn on web push, PPP stores the push endpoint (an https address), the browser encryption keys for that subscription, a user-agent string, and when it was last used.
 
-**Reports and admin records.** A contractor can report a project photo. PPP stores the reporter, the target, and the reason. Admins record reasons when they approve or reject a marketplace review, and when they grant or revoke contact access. Those reasons go to an audit log. The review reason is not shown on the public review.
+**Reports and admin records.** A contractor can report a project photo. PPP stores the reporter, the target, and the reason. Admins record reasons when they approve or reject a marketplace review, and when they grant or revoke contact access. Those reasons go to an audit log. The review reason is not shown on the public review. Reports sent by email to support@prioritypropertypros.com are handled in that mailbox. The site does not have a separate in-app complaint center.
 
 **Support.** The contact page opens an email in your own mail app to support@prioritypropertypros.com. PPP does not store that form on its servers.
 
@@ -63,6 +63,7 @@ PPP uses this information to:
 - deliver in-app notices, web push, and email you have not turned off
 - moderate marketplace reviews and portfolio photos
 - detect obvious pre-connection contact details so people do not skip the Connection Fee
+- record acceptance of the current agreements, and the 18-or-older affirmation, when that requirement is on
 - delete an account when you ask, and keep an audit record of that deletion
 - fix errors and keep the service secure
 
@@ -111,23 +112,25 @@ PPP keeps account and project information while the account is open and the mark
 
 When you delete your account, you type DELETE. The product then deletes the login and the rows tied to that account, including that person’s bookings, connections, and estimates, and it removes files stored under that account in project photos and contractor documents. Agreement-acceptance rows are removed with the profile. The $9.99 charge rows tied to the profile are removed with it. Processor event rows can remain with the profile id cleared. It also writes an audit entry that the account was deleted. References you left on someone else’s record, such as an approval you performed, are cleared off that record rather than deleting the other person’s account. You cannot delete the last active admin account.
 
-Stripe keeps the payment record under Stripe’s policy. PPP cannot delete the card data it never stored. Deleting an account does not refund the $9.99 or a $4.99 Connection Fee.
+Stripe keeps the payment record under Stripe’s policy. PPP cannot delete the card data it never stored. Deleting an account does not by itself refund the $9.99 or a $4.99 Connection Fee. Refund exceptions are in the [Refund & Cancellation Policy](/refunds).
 
-The product does not publish a separate multi-year retention table. There is no fixed “we keep everything for X years” rule in the software. An acceptance row stays while the account stays, including older versions you accepted before a later one.
+The product does not publish a separate multi-year retention table. There is no fixed “we keep everything for X years” rule in the software. An acceptance row stays while the account stays, including older versions you accepted before a later one. The 18-or-older affirmation time stays on the profile until the account is deleted.
 
 ## 9. Your choices and your rights
 
-You can update profile and notification settings in the app, turn push and email categories off, unsubscribe from a notification email, and delete your account as described in the [Terms of Use](/terms).
+You can update profile and notification settings in the app, turn push and email categories off, unsubscribe from a notification email, and delete your account as described in the [Terms of Service](/terms).
 
-This policy is written for people in the United States, including Texas. The Texas Data Privacy and Security Act (TDPSA) gives covered businesses’ consumers the right to access, correct, delete, and obtain a copy of personal data, and to opt out of sale, targeted advertising, and certain profiling. PPP does not sell personal data and does not run targeted advertising or ad profiling. A Texas attorney should confirm whether the TDPSA’s revenue and volume thresholds make PPP a covered business. You may email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) to ask for access, a correction, a copy, or deletion either way. PPP will not discriminate against you for asking. If PPP denies a request, you may reply to that email and ask for another look.
+The product does not include an in-app export or a download of your personal information. You can still view the account information the product shows you, and you can email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) to ask for access, a correction, a copy, or deletion.
 
-PPP will respond within the time the law that applies to the request requires. This draft does not invent a shorter promise.
+This policy is written for people in the United States, including Texas. The Texas Data Privacy and Security Act (TDPSA) gives consumers of a covered business the right to access, correct, delete, and obtain a copy of personal data, and to opt out of sale, targeted advertising, and certain profiling. PPP does not sell personal data and does not run targeted advertising or ad profiling. You may email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) to ask for access, a correction, a copy, or deletion. PPP will not discriminate against you for asking. If PPP denies a request, you may reply to that email and ask for another look.
+
+PPP will respond within the time the law that applies to the request requires.
+
+If you decline an updated version of the agreements, you can still view your account information and delete your account. While acceptance of the current versions is required, new marketplace actions stay unavailable until you accept. That limit does not apply while `legal_acceptance_required` is off.
 
 ## 10. Children
 
-The marketplace is for adults hiring and doing property work. It is not directed to children.
-
-[OWNER DECISION: set the minimum age. This draft proposes that people under 18 may not create an account. The signup form does not ask for a date of birth and does not block an under-18 signup today. Do not treat this draft as a working age gate.]
+The marketplace is for adults hiring and doing property work. It is not directed to children. You must be 18 or older to create an account. The signup form does not ask for a date of birth. When `legal_acceptance_required` is on, the form asks you to affirm that you are 18 or older and the server records the time. While that setting is off, the form does not require the affirmation and does not reject a signup for it.
 
 ## 11. Security
 
@@ -135,7 +138,7 @@ The site is served over HTTPS. Database access for signed-in users goes through 
 
 ## 12. Changes
 
-PPP will post an updated policy on this page and change the effective date at the top. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates. The new version becomes the agreement PPP can require only after `legal_acceptance_required` is turned on. Until then, the server does not reject a signup for these drafts. After it is on, a new signup must accept the current version or the server will not create the account, and that acceptance is stored as a signup. If you already have an account, the next sign-in asks you to accept, and that acceptance is stored separately as a sign-in, with the version and the time. You can still view your data before you do. Nothing is deleted.
+PPP will post an updated policy on this page. The effective date of a version is its publication date, stored as `published_at` when that version is published. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates. The new version becomes the agreement PPP can require only after `legal_acceptance_required` is turned on. Until then, the server does not reject a signup for these versions. After it is on, a new signup must accept the current version or the server will not create the account, and that acceptance is stored as a signup. If you already have an account, the next sign-in asks you to accept, and that acceptance is stored separately as a sign-in, with the version and the time. You can still view your information and delete your account before you accept. Nothing is deleted because you have not yet accepted.
 
 ## 13. Contact
 

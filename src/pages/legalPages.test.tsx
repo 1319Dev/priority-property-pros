@@ -47,7 +47,7 @@ describe("draft legal pages", () => {
     }
   });
 
-  it("renders every draft with the attorney notice and the product rules", () => {
+  it("renders every document with the product rules and without a publish-review demand", () => {
     const pages = [
       TermsPage,
       PrivacyPage,
@@ -65,8 +65,14 @@ describe("draft legal pages", () => {
       })
       .join("\n");
     expect(combined).toMatch(/this is not legal advice/i);
-    expect(combined).toMatch(/texas attorney/i);
+    expect(combined).not.toMatch(/texas attorney/i);
+    expect(combined).not.toMatch(/OWNER DECISION/);
+    expect(combined).not.toMatch(/before it is published/i);
     expect(combined).toMatch(/Effective date:/);
+    expect(combined).toMatch(/18 or older/);
+    expect(combined).toMatch(/Montgomery County, Texas/);
+    expect(combined).toMatch(/do not require arbitration/i);
+    expect(combined).toMatch(/duplicate charge/i);
     expect(combined).toMatch(/\$9\.99/);
     expect(combined).toMatch(/\$4\.99/);
     expect(combined).toMatch(/including a later project/i);
@@ -99,24 +105,25 @@ describe("draft legal pages", () => {
     expect(screen.queryByText(/this is not legal advice/i)).not.toBeInTheDocument();
   });
 
-  it("lists the owner decisions the drafts still need", () => {
+  it("keeps owner decisions and a street address out of the public documents", () => {
     const legalDir = path.join(repoRoot, "docs/legal");
     const combined = readdirSync(legalDir)
       .filter((name) => name.endsWith(".md"))
       .map((name) => readFileSync(path.join(legalDir, name), "utf8"))
       .join("\n");
-    for (const phrase of [
-      "Effective date: [OWNER DECISION:",
-      "provide a mailing address",
-      "set the minimum age",
-      "choose arbitration or the courts",
-      "choose the governing law and the Texas county for venue",
-    ]) {
-      expect(combined).toContain(phrase);
-    }
+    expect(combined).not.toMatch(/OWNER DECISION/);
+    expect(combined).not.toMatch(/attorney/i);
+    expect(combined).not.toMatch(/this draft/i);
+    expect(combined).toMatch(/the date this version is published/);
+    expect(combined).toMatch(/18 or older/);
+    expect(combined).toMatch(/do not require arbitration/i);
+    expect(combined).toMatch(/Montgomery County, Texas/);
+    expect(combined).toMatch(/These terms do not require those disputes to be filed in Montgomery County/);
+    expect(combined).toMatch(/reject_signup_or_connection_fee_refund/);
     expect(combined).not.toContain("confirm the legal refund policy");
     expect(combined).toMatch(/The \$9\.99 account activation fee is non-refundable/);
     expect(combined).toMatch(/The \$4\.99 Connection Fee is non-refundable/);
+    expect(combined).toMatch(/unless expressly stated otherwise/);
     expect(combined).not.toMatch(/sk_live_/);
     expect(combined).not.toMatch(/\d{1,5}\s+[A-Za-z]+\s+(Street|Avenue|Road)/);
   });
@@ -137,17 +144,17 @@ describe("draft legal pages", () => {
 
   it("names every required agreement on both signup forms and links them only when published", () => {
     const unpublished = renderPage(<SignupAgreementLabel accountType="CUSTOMER" published={false} />);
-    expect(unpublished.container.textContent).toMatch(/Terms of Use/);
+    expect(unpublished.container.textContent).toMatch(/Terms of Service/);
     expect(unpublished.container.textContent).toMatch(/Privacy Policy/);
     expect(unpublished.container.textContent).toMatch(/Refund & Cancellation Policy/);
     expect(unpublished.container.textContent).toMatch(/non-refundable/);
     expect(unpublished.container.textContent).not.toMatch(/Contractor Participation Terms/);
-    expect(screen.queryByRole("link", { name: /terms of use/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /terms of service/i })).not.toBeInTheDocument();
     unpublished.unmount();
 
     renderPage(<SignupAgreementLabel accountType="CONTRACTOR" published />);
     expect(screen.getByRole("link", { name: /contractor participation terms/i })).toHaveAttribute("href", "/contractor-terms");
     expect(screen.getByRole("link", { name: /refund & cancellation policy/i })).toHaveAttribute("href", "/refunds");
-    expect(screen.getByText(/\$4\.99 Connection Fee are non-refundable/i)).toBeInTheDocument();
+    expect(screen.getByText(/\$4\.99 Connection Fee are generally non-refundable/i)).toBeInTheDocument();
   });
 });

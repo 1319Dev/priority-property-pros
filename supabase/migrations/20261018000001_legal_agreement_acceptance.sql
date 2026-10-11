@@ -1,20 +1,31 @@
--- Legal agreement versions for owner review.
+-- Legal agreement versions.
 -- Version 20261018000001. 20261015000001 is already used on main by
 -- paid_connection_booking_contact.
 -- NOT APPLIED. Do not run this against the hosted database until the owner
--- approves the wording in docs/legal/ and a Texas attorney has reviewed it.
--- Applying it does NOT replace the current Terms of Use or Privacy Policy and
--- does NOT require acceptance. platform_settings.legal_acceptance_required
--- is inserted as 0. Service role may later call set_legal_acceptance_required(true)
--- after the pages are live. That call does not change payment flags, Stripe
--- functions, or delete account data.
--- Draft rows stay is_current = false and published = false, so the Data API
--- does not serve them. The website routes stay off unless
+-- approves publication. Applying it does NOT publish the pages and does NOT
+-- turn acceptance on. platform_settings.legal_acceptance_required is inserted
+-- as 0. Service role may later call set_legal_acceptance_required(true) after
+-- the pages are live. That call sets published and published_at on these
+-- versions. It does not change payment flags, Stripe functions, or delete
+-- account data. Calling it with false sets the flag to 0 and does not clear
+-- published_at.
+-- Rows stay is_current = false and published = false until that enable call,
+-- so the Data API does not serve them. The website routes stay off unless
 -- VITE_PUBLISH_LEGAL_PAGES is the string true.
 
 ALTER TABLE public.agreements
   ADD COLUMN audience text NOT NULL DEFAULT 'ALL',
-  ADD COLUMN published boolean NOT NULL DEFAULT false;
+  ADD COLUMN published boolean NOT NULL DEFAULT false,
+  ADD COLUMN published_at timestamptz;
+
+COMMENT ON COLUMN public.agreements.published_at IS
+  'Effective date. Set to now() inside set_legal_acceptance_required(true) when this version is published, and only if it is still null. Disabling the setting does not clear it.';
+
+ALTER TABLE public.profiles
+  ADD COLUMN age_18_affirmed_at timestamptz;
+
+COMMENT ON COLUMN public.profiles.age_18_affirmed_at IS
+  'Time of an 18-or-older affirmation recorded at signup, and only when legal_acceptance_required is on. The signup form does not collect a date of birth. While the setting is off, signup is not rejected for a missing affirmation and this column stays null.';
 
 ALTER TABLE public.agreements
   DROP CONSTRAINT IF EXISTS agreements_audience_check;
@@ -110,35 +121,33 @@ ON CONFLICT (key) DO NOTHING;
 INSERT INTO public.agreements (slug, title, version, body, is_current, audience, published)
 VALUES (
   'terms-of-use',
-  'Terms of Use',
+  'Terms of Service',
   3,
   $ppp_legal_terms_of_use$
-# Terms of Use
+# Terms of Service
 
-> Draft for owner review. This is not legal advice. Have a Texas attorney review it before anyone relies on it and before it is published. These pages stay off prioritypropertypros.com until the owner approves the wording and turns them on. This draft does not change the live signup record until the new database migration is applied. Do not apply that migration until the wording is approved.
+This is not legal advice.
 
-Effective date: [OWNER DECISION: the calendar date these terms take effect]
+Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
 
 ## Plain-language summary
 
 - Who performs the work, and who is responsible for the job, is in Independent Marketplace and Contractor Responsibility below.
-- Homeowners and businesses post projects. Matched contractors are offered those jobs. A project can have up to three connection slots.
-- Customers and contractors pay a one-time $9.99 account activation when Stripe Checkout for that fee is turned on. It is not a monthly fee. The site says this fee is non-refundable.
-- A contractor pays $4.99 to Connect on a project, including a later project with someone they have worked with before. That unlocks messaging for that pair and the customer’s choice to share contact details. It does not promise that the customer will hire that contractor. The site says this fee is non-refundable.
+- Homeowners and businesses post projects. Matched contractors are offered those jobs. A project can have up to three connection slots occupied at the same time.
+- Customers and contractors pay a one-time $9.99 account activation when Stripe Checkout for that fee is turned on. It is not a monthly fee. The fee is generally non-refundable once account activation is delivered, with the exceptions in the Refund & Cancellation Policy.
+- A contractor pays $4.99 to Connect on a project, including a later project with someone they have worked with before. That unlocks messaging for that pair and the customer’s choice to share contact details. It does not promise that the customer will hire that contractor. The fee is generally non-refundable once that connection is delivered, with the same exceptions.
 - The customer pays the contractor directly for the work. PPP does not collect that payment and does not take a percentage of it.
 - PPP does not state that a contractor is licensed, insured, bonded, or background-checked. Admin approval is not that kind of check.
-- The signup form asks for acceptance of these documents. PPP does not reject a new account for that acceptance while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup is refused unless the current versions were accepted, and an existing account is asked to accept at the next sign-in. Existing accounts can still view their data. Nothing is deleted. Signup acceptances and later sign-in acceptances are stored separately, each with the document version and the time.
-- Several items are still the owner’s call. Each one is labeled OWNER DECISION.
+- You must be 18 or older to create an account.
+- The signup form asks for acceptance of these documents. PPP does not reject a new account for that acceptance while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup is refused unless the current versions were accepted, and an existing account is asked to accept at the next sign-in. Existing accounts can still view their information and delete the account. While the setting is on, declining the current versions limits new marketplace actions. Nothing is deleted because someone has not yet accepted. Signup acceptances and later sign-in acceptances are stored separately, each with the document version and the time.
 
-These Terms of Use, the [Privacy Policy](/privacy), the [Refund & Cancellation Policy](/refunds), the [Community Guidelines](/community-guidelines), and the [Review & Content Guidelines](/content-guidelines) are one agreement. Contractor accounts also accept the [Contractor Participation Terms](/contractor-terms).
+These Terms of Service, the [Privacy Policy](/privacy), the [Refund & Cancellation Policy](/refunds), the [Community Guidelines](/community-guidelines), and the [Review & Content Guidelines](/content-guidelines) are one agreement. Contractor accounts also accept the [Contractor Participation Terms](/contractor-terms).
 
 ## 1. Who we are
 
-Priority Property Pros LLC (“PPP,” “we,” “us”) operates the Priority Property Pros marketplace at prioritypropertypros.com. PPP is a Texas limited liability company. The product is a home-services marketplace focused on the Conroe and Montgomery County area, with room to grow across Texas. Matching uses the project ZIP and the trades and service area a contractor enters. It is not a hard fence around one county.
+Priority Property Pros LLC (“PPP,” “we,” “us”) operates the Priority Property Pros marketplace at prioritypropertypros.com. PPP is a Texas limited liability company. The product is a home-services marketplace focused on the Conroe and Montgomery County area, with room to grow across Texas and, later, nationwide. Matching uses the project ZIP and the trades and service area a contractor enters. It is not a hard fence around one county.
 
-The only contact address the product publishes today is [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
-
-[OWNER DECISION: provide a mailing address if you want one in these terms. The product has no street address on file. This draft does not invent one.]
+The contact published on the site is [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). These terms do not publish a street address.
 
 ## Independent Marketplace and Contractor Responsibility
 
@@ -156,21 +165,23 @@ Priority Property Pros is not a party to agreements between homeowners and contr
 
 Nothing in these Terms excludes liability that cannot legally be excluded or limits any rights or remedies provided by applicable law.
 
+PPP provides marketplace technology and connection services. Contractors are responsible for their workmanship, their employees, their subcontractors, the licenses the law or the customer requires, their insurance obligations, safety, permits, warranties, and damage they cause. Homeowners are responsible for selecting contractors, reviewing estimates, and agreeing to the project terms. PPP does not guarantee a contractor’s performance, qualifications, or the outcome of a job.
+
 The customer pays the contractor directly for any job cost. PPP does not collect that payment, hold it, escrow it, or take a percentage of it. PPP does not claim, and these terms do not mean, that a contractor is licensed, insured, bonded, or background-checked. Contractor rules that sit on top of this section are in the [Contractor Participation Terms](/contractor-terms).
 
 ## 3. Accounts and acceptance
 
 You may sign up as a customer or as a contractor. A customer account is how homeowners and businesses post projects. Admin and verifier accounts are not offered on the public signup form. The verifier role exists in the database. These terms do not say a verifier inspected or certified any work.
 
-The signup form has a required checkbox. Checking it is your agreement to the documents that apply to that account. While `legal_acceptance_required` is off, the server still creates the account and records acceptance of the shorter terms already in the product. It does not reject the account for these drafts. After that setting is turned on, the server refuses to create the account if that acceptance is missing or if the versions you accepted are not the current versions. On a signup that is recorded under the setting, PPP stores, for each document, the agreement version, the time, a source of signup, and a short user-agent string of up to 180 characters. PPP does not trust the browser to pick the version number that gets stored. The database copies the version from the current agreement row.
+The signup form has a required checkbox. Checking it is your agreement to the documents that apply to that account. Links to these Terms of Service and the Privacy Policy are on that form when the legal pages are published. While `legal_acceptance_required` is off, the server still creates the account and records acceptance of the shorter terms already in the product. It does not reject the account for these versions. After that setting is turned on, the server refuses to create the account if that acceptance is missing or if the versions you accepted are not the current versions. On a signup that is recorded under the setting, PPP stores, for each document, the agreement version, the time, a source of signup, and a short user-agent string of up to 180 characters. PPP does not trust the browser to pick the version number that gets stored. The database copies the version from the current agreement row.
 
-If you already have an account when the setting is turned on, the next sign-in shows a prompt asking you to accept the current versions. That prompt does not hide your projects, messages, bookings, or other account data, and it does not delete anything. Accepting writes a separate sign-in record with the version and the time. It does not replace or delete an older acceptance.
+If you already have an account when the setting is turned on, the next sign-in shows a prompt asking you to accept the current versions. That prompt does not hide your projects, messages, bookings, or other account information, and it does not delete anything. Accepting writes a separate sign-in record with the version and the time. It does not replace or delete an older acceptance.
 
-You agree to give accurate information and to keep your login to yourself. Passwords on the form must be at least 8 characters. Email confirmation is part of signup when the auth service asks for it. A contractor is not matched to jobs until the account is active and an admin has approved the contractor profile. Paying the $9.99 activation fee does not approve a contractor and does not reveal anyone’s contact details.
+If you decline the updated versions, you can still view your account information and delete your account. The product does not include an in-app export of your data. While the setting is on, new marketplace actions are refused until you accept: posting a project, sending an estimate, sending a project message, or creating a project connection. Viewing what is already there, marking a message read, and deleting the account stay available. While the setting is off, those new actions are not refused for these versions.
 
-You must be old enough to use the service.
+You agree to give accurate information and to keep your login to yourself. Passwords on the form must be at least 8 characters. Email confirmation is part of signup when the auth service asks for it. A contractor is not matched to jobs until the account is active and an admin has approved the contractor profile. Paying the $9.99 activation fee does not approve a contractor, does not reveal anyone’s contact details, and does not start a job.
 
-[OWNER DECISION: set the minimum age. This draft proposes that people under 18 may not create an account. The signup form does not ask for a date of birth and does not block an under-18 signup today.]
+You must be 18 or older to create an account. When `legal_acceptance_required` is on, the signup form asks you to affirm that, and the server records the time of that affirmation. The form does not ask for a date of birth. While that setting is off, the form does not require the affirmation and does not reject a signup for it.
 
 PPP may refuse, suspend, or disable an account. Account statuses used in the product include active, pending, suspended, disabled, and deleted. A pending account can look around. Matching waits on an active, approved contractor.
 
@@ -178,10 +189,10 @@ PPP may refuse, suspend, or disable an account. Account statuses used in the pro
 
 Two platform fees exist. Both are in US dollars. The customer’s browser does not set the price. Refunds and cancellations are in the [Refund & Cancellation Policy](/refunds). That policy is part of these terms.
 
-- **Account activation: $9.99, one time.** Customers and contractors pay it. It is not $9.99 a month. There is no monthly charge to keep an account. Admin and verifier accounts are not charged this fee. The site states that this fee is non-refundable. Checkout is Stripe Checkout, and only when PPP has turned that checkout on. A success page does not mark the fee paid by itself. The server has to verify the Stripe payment.
-- **Connection Fee: $4.99 per project connection.** The contractor pays it, and only when that contractor chooses to Connect. A later project with the same customer, including Hire Again, is a new project connection and is another $4.99. There is no bid fee and no rehire waiver in the connection checkout. Customers do not pay a PPP Connection Fee. The site states that this fee is non-refundable. Clicking Connect does not unlock anything by itself. Contact and messaging stay locked until the server verifies the $4.99 payment.
+- **Account activation: $9.99, one time.** Customers and contractors pay it. It is not $9.99 a month. There is no monthly charge to keep an account. Admin and verifier accounts are not charged this fee. It purchases account activation only. It does not approve a contractor, unlock contact, or start a job. Checkout is Stripe Checkout, and only when PPP has turned that checkout on. The service is delivered when the server verifies the Stripe Checkout session and marks the fee paid. A success page does not mark the fee paid by itself. Once that service is delivered, the fee is generally non-refundable, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
+- **Connection Fee: $4.99 per project connection.** The contractor pays it, and only when that contractor chooses to Connect. A later project with the same customer, including Hire Again, is a new project connection and is another $4.99. There is no bid fee and no rehire waiver in the connection checkout. Customers do not pay a PPP Connection Fee. It purchases messaging for that customer and that contractor on that project, and the customer’s option to share contact details. It does not promise a hire. Clicking Connect is not delivery. The service is delivered when the server verifies the payment and unlocks that connection. An abandoned unpaid Connect checkout can release its reserved slot after 30 minutes (1,800 seconds, unless that server setting is changed). Releasing an unpaid reservation is not a charge and is not delivery. Once the connection is delivered, the fee is generally non-refundable, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
 
-While either checkout is turned off, PPP does not charge that fee. A connection that is not verified as paid does not unlock messaging or contact.
+While either checkout is turned off, PPP does not charge that fee. A connection that is not verified as paid does not unlock messaging or contact. A charge that does not unlock the service it was meant to buy can be flagged `needs_refund`. That flag is not a refund.
 
 Card numbers are entered on Stripe’s page. PPP does not store card numbers. PPP stores payment metadata such as the checkout session id, the payment intent id, the amount, and whether the fee was paid.
 
@@ -191,7 +202,7 @@ A customer posts a project: the kind of work, a description, city, state, ZIP, t
 
 PPP offers the project to matched contractors in the trade and service area. Up to three contractors can occupy connection slots on that project at the same time. The cap is the server setting `max_participating_contractors`, which is 3. If a contractor passes, that offer can go to the next eligible contractor. More than three people can be offered the job over its life. No more than three occupy a slot at once.
 
-A customer can stop new connections. Pros already connected can still message. A customer can decline an estimate, cancel a project when the product allows it, and choose who to hire. Choosing a pro starts a booking. Both sides confirm Hired before that booking is a mutual hire. PPP does not rank a “best” estimate.
+A customer can stop new connections. Pros already connected can still message. A customer can decline an estimate, cancel a project when the product allows it, and choose who to hire. Choosing a pro starts a booking. Both sides confirm Hired before that booking is a mutual hire. PPP does not rank a “best” estimate and does not choose the contractor for the homeowner.
 
 The $4.99 Connection Fee is for that project connection. It is not a promise that the customer will hire that contractor.
 
@@ -220,23 +231,25 @@ After a legitimate Connect between those two people, ordinary contact may be sha
 
 Job reviews, marketplace reviews, portfolio photos, and project photos follow the [Review & Content Guidelines](/content-guidelines). Day-to-day conduct follows the [Community Guidelines](/community-guidelines). Both are part of these terms.
 
-A job review can be edited for 30 days after it is posted. Marketplace reviews are moderated. Portfolio photos are not public until an admin approves them. On an estimate or a booking, a customer can choose “Don't match me with this pro again.” Future projects skip that pro. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros. A customer review of 3 stars or less also keeps that pro off future projects until the customer unblocks them.
+A job review can be edited for 30 days after it is posted. Marketplace reviews are moderated. Portfolio photos are not public until an admin approves them. On an estimate or a booking, a customer can choose “Don't match me with this pro again.” Future projects skip that pro. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros. A customer review of 3 stars or less also keeps that pro off future projects until the customer unblocks them. Raising that review to 4 or 5 stars does not remove the block.
+
+Reports of fraud or impersonation, harassment or threats, misleading profiles, suspected fake reviews, serious contractor misconduct, and rule violations follow the Community Guidelines. Reviewing a report is not a guarantee of workmanship, not an assumption of responsibility for the job, and not a decision of a construction dispute.
 
 ## 9. Notifications
 
 PPP can notify you in the app, by web push, and by email. Email is sent through Resend. Web push uses your browser’s push service. You can turn categories on or off. Those categories cover new jobs, messages, connections, estimates, bookings, change orders, reviews, and account notices. In-app notices start on. Email starts on for most of those categories. Push starts off until you turn it on. On an iPhone, push needs the site added to the Home Screen (iOS 16.4 or later). Message emails are limited to one per conversation every 15 minutes, and only while the message is still unread. Email can include an unsubscribe link.
 
-## 10. Disputes between customers and contractors
+## 10. Disputes
 
-Job disputes are covered in Independent Marketplace and Contractor Responsibility. PPP does not pay either party for the job. A booking can be marked Disputed in the product. That status does not mean PPP has decided who is right, and it does not refund a platform fee. Platform fees are covered only by the Refund & Cancellation Policy.
+Job disputes between a homeowner and a contractor are covered in Independent Marketplace and Contractor Responsibility. Those disputes are ordinarily between them. PPP is not automatically a party to litigation about workmanship, payments for the work, property damage, delays, or warranties. The court and venue for a dispute between a homeowner and a contractor follow the law that applies to that dispute and any enforceable agreement between them. These terms do not require those disputes to be filed in Montgomery County.
 
-[OWNER DECISION: choose arbitration or the courts. This draft does not require arbitration, a class-action waiver, or a jury waiver. It leaves disputes about these terms to whatever forum you select here.]
+A booking can be marked Disputed in the product. That status does not mean PPP has decided who is right, and it does not refund a platform fee. Platform fees are covered only by the Refund & Cancellation Policy.
 
-[OWNER DECISION: choose the governing law and the Texas county for venue. PPP is a Texas limited liability company. This draft does not pick a county or a court.]
+Disputes that are directly with PPP about these terms or the marketplace service are governed by Texas law where that choice is permitted. The proposed venue for those disputes is Montgomery County, Texas, where that venue is legally enforceable. These terms do not require arbitration. They do not waive a class action, a jury, or any consumer right or mandatory protection that the law does not allow a business to waive. Nothing in this section limits the sentence in Independent Marketplace and Contractor Responsibility that preserves liability and remedies the law does not allow these terms to exclude.
 
 ## 11. Closing your account
 
-You can delete your own account from the account screen. You must type DELETE to confirm. What is removed, and what can remain, is described in the [Privacy Policy](/privacy). Deleting your account does not refund a platform fee. You cannot delete the last active admin account. The screen tells you deletion cannot be undone.
+You can delete your own account from the account screen. You must type DELETE to confirm. What is removed, and what can remain, is described in the [Privacy Policy](/privacy). Deleting your account does not by itself refund a platform fee. You cannot delete the last active admin account. The screen tells you deletion cannot be undone. Declining updated terms does not remove this deletion right.
 
 ## 12. Admins
 
@@ -256,9 +269,9 @@ Responsibility for the work, and liability these terms do not exclude, is in Ind
 
 ## 15. Changes
 
-PPP will post updated terms on this page and change the effective date at the top. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates.
+PPP will post updated terms on this page. The effective date of a version is its publication date, stored as `published_at` when that version is published. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates.
 
-A new version can be made the current row when PPP turns `legal_acceptance_required` on. Until that setting is on, these drafts are stored but are not the required acceptance. After it is on, new signups must accept the current version or the account is not created. Existing users are prompted on the next sign-in, as section 3 describes, and are not locked out of viewing their data. The version, the time, and whether the row was a signup or a later sign-in are the record of what was accepted.
+A new version can be made the current published row when PPP turns `legal_acceptance_required` on. Until that setting is on, these versions are stored but are not the required acceptance, and their `published` flag stays off. After it is on, new signups must accept the current version or the account is not created. Existing users are prompted on the next sign-in, as section 3 describes. They are not locked out of viewing their information or deleting the account. While the setting is on, new marketplace actions wait on acceptance of the current versions. The version, the time, and whether the row was a signup or a later sign-in are the record of what was accepted.
 
 ## 16. Contact
 
@@ -280,9 +293,9 @@ VALUES (
   $ppp_legal_privacy_policy$
 # Privacy Policy
 
-> Draft for owner review. This is not legal advice. Have a Texas attorney review it before anyone relies on it and before it is published. These pages stay off prioritypropertypros.com until the owner approves the wording and turns them on. This draft does not change the live signup record until the new database migration is applied. Do not apply that migration until the wording is approved.
+This is not legal advice.
 
-Effective date: [OWNER DECISION: the calendar date this policy takes effect]
+Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
 
 ## Plain-language summary
 
@@ -291,26 +304,26 @@ Effective date: [OWNER DECISION: the calendar date this policy takes effect]
 - Card numbers are entered at Stripe. PPP does not store card numbers. PPP stores payment metadata for the $9.99 activation and the $4.99 Connect.
 - The site is hosted as a static site on GitHub Pages. Accounts, database, files, and login are on Supabase. Email goes through Resend. Web push goes through the browser’s push service. There is no advertising tracker in the current site.
 - PPP does not sell personal information.
-- You can delete your account from the account screen. Agreement acceptances go with the profile. An audit entry and Stripe’s own payment record can remain, as described below.
-- The service is not for children. The minimum age is an owner decision, and the form does not ask for a birthday today.
+- You can delete your account from the account screen. Agreement acceptances go with the profile. An audit entry and Stripe’s own payment record can remain, as described below. The product does not include an in-app export.
+- The marketplace is for people 18 or older. The signup form does not ask for a date of birth.
 - A Priority Help chat is not part of the product. If it launches, an AI provider would be an extra processor. That is marked conditional below.
-- Texas privacy rights and general US practices are described below. A Texas attorney should confirm how the Texas Data Privacy and Security Act applies.
+- Texas privacy rights and general US practices are described below.
 
-The [Terms of Use](/terms) are part of the same agreement, along with the [Refund & Cancellation Policy](/refunds), the [Community Guidelines](/community-guidelines), and the [Review & Content Guidelines](/content-guidelines). Contractor accounts also accept the [Contractor Participation Terms](/contractor-terms).
+The [Terms of Service](/terms) are part of the same agreement, along with the [Refund & Cancellation Policy](/refunds), the [Community Guidelines](/community-guidelines), and the [Review & Content Guidelines](/content-guidelines). Contractor accounts also accept the [Contractor Participation Terms](/contractor-terms).
 
 ## 1. Who this policy covers
 
 Priority Property Pros LLC (“PPP,” “we”) operates prioritypropertypros.com. This policy describes personal information the marketplace handles for customers (homeowners and businesses), contractors, and the admins who run the site. The verifier role exists in the database and is not a public signup. This policy does not describe a verifier inspecting your home.
 
-The contact address in the product is [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
-
-[OWNER DECISION: provide a mailing address if you want one published. This draft does not invent a street address.]
+The contact published on the site is [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). This policy does not publish a street address.
 
 ## 2. Information the product collects
 
 **Account.** Name, email, password (stored by Supabase Auth, not in the PPP application tables), phone if you add one, and whether you are a customer or a contractor. A contractor also adds a business name, trade, and service area at signup, and can later add a headline, bio, years of experience, website, job-size range, service radius or ZIP list, a profile photo, contractor-provided license or insurance fields, and credentials. Those credential fields are what the contractor typed. PPP does not treat them as a license check, an insurance check, a bond, or a background check.
 
-**Agreement records.** The signup checkbox is on the form. While the platform setting `legal_acceptance_required` is off, PPP does not reject a new account for these drafts and does not prompt existing accounts. After that setting is turned on, a new signup stores one row per current document with the version, the time, a source of signup, and a short user-agent string (up to 180 characters). An existing account is prompted at the next sign-in. Accepting then stores a separate row with a source of sign-in, the version, and the time. The version number is copied from the current agreement on the server. The prompt does not hide projects, messages, or other account data, and accepting does not delete older rows or the account.
+**Age affirmation.** The form does not ask for a date of birth. When the platform setting `legal_acceptance_required` is on, signup asks you to affirm that you are 18 or older, and PPP stores the time of that affirmation on the profile (`age_18_affirmed_at`). While that setting is off, signup does not require the affirmation and does not store it.
+
+**Agreement records.** The signup checkbox is on the form. While `legal_acceptance_required` is off, PPP does not reject a new account for these versions and does not prompt existing accounts. After that setting is turned on, a new signup stores one row per current document with the version, the time, a source of signup, and a short user-agent string (up to 180 characters). An existing account is prompted at the next sign-in. Accepting then stores a separate row with a source of sign-in, the version, and the time. The version number is copied from the current agreement on the server. The prompt does not hide projects, messages, or other account information. If you do not accept, you can still view that information and delete the account. The product does not include an in-app export. While the setting is on, new marketplace actions are refused until you accept. Accepting does not delete older rows or the account.
 
 **Projects.** Title, description, project type, city, state, ZIP, timing, optional budget, and photos of the work. The street and precise coordinates are stored in a private location record, not on the public project. An unposted wizard draft stays in that browser tab (session storage) until you post. Photos in an unposted draft are not kept if you reload the tab.
 
@@ -324,7 +337,7 @@ The contact address in the product is [support@prioritypropertypros.com](mailto:
 
 **Notifications.** Your on/off choices for in-app, push, and email. If you turn on web push, PPP stores the push endpoint (an https address), the browser encryption keys for that subscription, a user-agent string, and when it was last used.
 
-**Reports and admin records.** A contractor can report a project photo. PPP stores the reporter, the target, and the reason. Admins record reasons when they approve or reject a marketplace review, and when they grant or revoke contact access. Those reasons go to an audit log. The review reason is not shown on the public review.
+**Reports and admin records.** A contractor can report a project photo. PPP stores the reporter, the target, and the reason. Admins record reasons when they approve or reject a marketplace review, and when they grant or revoke contact access. Those reasons go to an audit log. The review reason is not shown on the public review. Reports sent by email to support@prioritypropertypros.com are handled in that mailbox. The site does not have a separate in-app complaint center.
 
 **Support.** The contact page opens an email in your own mail app to support@prioritypropertypros.com. PPP does not store that form on its servers.
 
@@ -343,6 +356,7 @@ PPP uses this information to:
 - deliver in-app notices, web push, and email you have not turned off
 - moderate marketplace reviews and portfolio photos
 - detect obvious pre-connection contact details so people do not skip the Connection Fee
+- record acceptance of the current agreements, and the 18-or-older affirmation, when that requirement is on
 - delete an account when you ask, and keep an audit record of that deletion
 - fix errors and keep the service secure
 
@@ -391,23 +405,25 @@ PPP keeps account and project information while the account is open and the mark
 
 When you delete your account, you type DELETE. The product then deletes the login and the rows tied to that account, including that person’s bookings, connections, and estimates, and it removes files stored under that account in project photos and contractor documents. Agreement-acceptance rows are removed with the profile. The $9.99 charge rows tied to the profile are removed with it. Processor event rows can remain with the profile id cleared. It also writes an audit entry that the account was deleted. References you left on someone else’s record, such as an approval you performed, are cleared off that record rather than deleting the other person’s account. You cannot delete the last active admin account.
 
-Stripe keeps the payment record under Stripe’s policy. PPP cannot delete the card data it never stored. Deleting an account does not refund the $9.99 or a $4.99 Connection Fee.
+Stripe keeps the payment record under Stripe’s policy. PPP cannot delete the card data it never stored. Deleting an account does not by itself refund the $9.99 or a $4.99 Connection Fee. Refund exceptions are in the [Refund & Cancellation Policy](/refunds).
 
-The product does not publish a separate multi-year retention table. There is no fixed “we keep everything for X years” rule in the software. An acceptance row stays while the account stays, including older versions you accepted before a later one.
+The product does not publish a separate multi-year retention table. There is no fixed “we keep everything for X years” rule in the software. An acceptance row stays while the account stays, including older versions you accepted before a later one. The 18-or-older affirmation time stays on the profile until the account is deleted.
 
 ## 9. Your choices and your rights
 
-You can update profile and notification settings in the app, turn push and email categories off, unsubscribe from a notification email, and delete your account as described in the [Terms of Use](/terms).
+You can update profile and notification settings in the app, turn push and email categories off, unsubscribe from a notification email, and delete your account as described in the [Terms of Service](/terms).
 
-This policy is written for people in the United States, including Texas. The Texas Data Privacy and Security Act (TDPSA) gives covered businesses’ consumers the right to access, correct, delete, and obtain a copy of personal data, and to opt out of sale, targeted advertising, and certain profiling. PPP does not sell personal data and does not run targeted advertising or ad profiling. A Texas attorney should confirm whether the TDPSA’s revenue and volume thresholds make PPP a covered business. You may email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) to ask for access, a correction, a copy, or deletion either way. PPP will not discriminate against you for asking. If PPP denies a request, you may reply to that email and ask for another look.
+The product does not include an in-app export or a download of your personal information. You can still view the account information the product shows you, and you can email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) to ask for access, a correction, a copy, or deletion.
 
-PPP will respond within the time the law that applies to the request requires. This draft does not invent a shorter promise.
+This policy is written for people in the United States, including Texas. The Texas Data Privacy and Security Act (TDPSA) gives consumers of a covered business the right to access, correct, delete, and obtain a copy of personal data, and to opt out of sale, targeted advertising, and certain profiling. PPP does not sell personal data and does not run targeted advertising or ad profiling. You may email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) to ask for access, a correction, a copy, or deletion. PPP will not discriminate against you for asking. If PPP denies a request, you may reply to that email and ask for another look.
+
+PPP will respond within the time the law that applies to the request requires.
+
+If you decline an updated version of the agreements, you can still view your account information and delete your account. While acceptance of the current versions is required, new marketplace actions stay unavailable until you accept. That limit does not apply while `legal_acceptance_required` is off.
 
 ## 10. Children
 
-The marketplace is for adults hiring and doing property work. It is not directed to children.
-
-[OWNER DECISION: set the minimum age. This draft proposes that people under 18 may not create an account. The signup form does not ask for a date of birth and does not block an under-18 signup today. Do not treat this draft as a working age gate.]
+The marketplace is for adults hiring and doing property work. It is not directed to children. You must be 18 or older to create an account. The signup form does not ask for a date of birth. When `legal_acceptance_required` is on, the form asks you to affirm that you are 18 or older and the server records the time. While that setting is off, the form does not require the affirmation and does not reject a signup for it.
 
 ## 11. Security
 
@@ -415,7 +431,7 @@ The site is served over HTTPS. Database access for signed-in users goes through 
 
 ## 12. Changes
 
-PPP will post an updated policy on this page and change the effective date at the top. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates. The new version becomes the agreement PPP can require only after `legal_acceptance_required` is turned on. Until then, the server does not reject a signup for these drafts. After it is on, a new signup must accept the current version or the server will not create the account, and that acceptance is stored as a signup. If you already have an account, the next sign-in asks you to accept, and that acceptance is stored separately as a sign-in, with the version and the time. You can still view your data before you do. Nothing is deleted.
+PPP will post an updated policy on this page. The effective date of a version is its publication date, stored as `published_at` when that version is published. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates. The new version becomes the agreement PPP can require only after `legal_acceptance_required` is turned on. Until then, the server does not reject a signup for these versions. After it is on, a new signup must accept the current version or the server will not create the account, and that acceptance is stored as a signup. If you already have an account, the next sign-in asks you to accept, and that acceptance is stored separately as a sign-in, with the version and the time. You can still view your information and delete your account before you accept. Nothing is deleted because you have not yet accepted.
 
 ## 13. Contact
 
@@ -435,49 +451,51 @@ VALUES (
   $ppp_legal_refund_cancellation$
 # Refund & Cancellation Policy
 
-> Draft for owner review. This is not legal advice. Have a Texas attorney review it before anyone relies on it and before it is published. These pages stay off prioritypropertypros.com until the owner approves the wording and turns them on. This draft does not change the live signup record until the new database migration is applied. Do not apply that migration until the wording is approved.
+This is not legal advice.
 
-Effective date: [OWNER DECISION: the calendar date this policy takes effect]
+Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
 
-PPP does not require acceptance of this draft while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their data, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete an account or a payment record.
+PPP does not require acceptance of this version while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their information and delete the account, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete an account or a payment record.
 
 ## Plain-language summary
 
-- The $9.99 account activation is a one-time fee for customers and contractors. The website says it is non-refundable. It is not a monthly subscription.
-- The $4.99 Connection Fee is what a contractor pays to connect on one project. A rehire on a new project is another connection and another $4.99. The website says this fee is non-refundable, including if nobody is hired or the project is cancelled.
-- This app does not send refunds to Stripe. Card data is entered at Stripe. PPP does not store card numbers.
+- The $9.99 account activation is a one-time fee for customers and contractors. It buys account activation. It is delivered when the server verifies the Stripe payment and marks the fee paid. It is not a monthly subscription. It does not approve a contractor, unlock contact, or start a job.
+- The $4.99 Connection Fee is what a contractor pays to connect on one project. It buys messaging for that pair and the customer’s option to share contact. It is delivered when the server verifies the payment and unlocks that connection. A rehire on a new project is another connection and another $4.99. Clicking Connect is not delivery.
+- Once the applicable service is delivered, the fee is generally non-refundable, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
+- This app does not send refunds to Stripe. Until a refund workflow is approved, an exception is handled manually in the Stripe Dashboard by the owner. Card data is entered at Stripe. PPP does not store card numbers.
 - PPP does not collect the payment for the work. Cancelling a job does not create a PPP refund of that job payment, because PPP never held it.
-- Cancelling a project does not refund a platform fee and does not make PPP a party to the job. Job responsibility is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
+- Cancelling a project does not refund a delivered platform fee and does not make PPP a party to the job. Job responsibility is in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).
 
-This policy is part of the [Terms of Use](/terms). The [Privacy Policy](/privacy) describes payment records.
+This policy is part of the [Terms of Service](/terms). The [Privacy Policy](/privacy) describes payment records.
 
 ## 1. The two platform fees
 
-PPP charges only these platform fees. Amounts are set on the server in US dollars. The browser does not choose the price.
+PPP charges only these platform fees. Amounts are set on the server in US dollars. The browser does not choose the price. There is no monthly subscription and no commission on the job.
 
-**Account activation, $9.99, one time.** Customers and contractors each pay it once to open an account, and only when PPP has turned on Stripe Checkout for that fee. It is not $9.99 a month. There is no monthly charge to keep an account. Admin and verifier accounts are not charged. A success page does not mark the fee paid. The server checks the Stripe Checkout session, the price, and the amount before it marks the account paid.
+**Account activation, $9.99, one time.** Customers and contractors each pay it once to open an account, and only when PPP has turned on Stripe Checkout for that fee. It is not $9.99 a month. There is no monthly charge to keep an account. Admin and verifier accounts are not charged. It purchases account activation only. It does not approve a contractor, unlock anyone’s contact details, or start a job. A success page does not mark the fee paid. The service is delivered when the server checks the Stripe Checkout session, the price, and the amount, and marks the account paid.
 
-**Connection Fee, $4.99 per project connection.** The contractor pays it only by choosing Connect, and only when that checkout is turned on. Customers do not pay a PPP Connection Fee. There is no bid fee. Submitting an estimate is not a separate PPP fee. Paying does not guarantee a hire, a reply, or that the work will happen.
+**Connection Fee, $4.99 per project connection.** The contractor pays it only by choosing Connect, and only when that checkout is turned on. Customers do not pay a PPP Connection Fee. There is no bid fee. Submitting an estimate is not a separate PPP fee. It purchases connection access for that project: messaging with that customer, and the customer’s option to share contact details. It does not buy the job, a reply, or a promise that the work will happen. Clicking Connect is not delivery. The service is delivered when the server verifies the payment and unlocks that connection.
 
 **Rehires.** Hire Again lists contractors a customer has finished a job with and starts a new project. That new project is a new connection. The contractor pays $4.99 again to Connect on it. A past connection does not waive the fee. The connection checkout does not apply a rehire discount.
 
-While a checkout is turned off, PPP does not charge that fee. An unpaid or unverified connection does not unlock messaging or contact sharing.
+While a checkout is turned off, PPP does not charge that fee. An unpaid or unverified connection does not unlock messaging or contact sharing. An abandoned unpaid Connect checkout can release a reserved slot after 30 minutes (1,800 seconds, unless that server setting is changed). Releasing an unpaid reservation is not a charge and is not a refund.
 
-## 2. These fees are non-refundable
+## 2. When a delivered fee stays paid
 
-The public site, the signup form, and the Terms of Use stored for the current product say both fees are non-refundable. This policy states that same rule:
+Once the applicable service is delivered, the fee is generally non-refundable:
 
-- The $9.99 account activation fee is non-refundable.
-- The $4.99 Connection Fee is non-refundable.
-- There is no refund if the contractor is not hired, the customer chooses someone else, the customer cancels, the contractor changes their mind, the contractor passes after paying, or the parties later decide not to do the work.
-- A Connection Fee on a rehire is non-refundable on the same terms.
-- Closing your account does not refund either fee.
+- The $9.99 account activation fee is non-refundable once account activation is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
+- The $4.99 Connection Fee is non-refundable once that connection is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
+- Delivery of account activation is the server marking the fee paid after it verifies the Stripe Checkout session. Delivery of a connection is the server unlocking that connection after it verifies the payment.
+- There is no refund under this general rule if the contractor is not hired, the customer chooses someone else, the customer cancels, the contractor changes their mind after the connection is delivered, the contractor passes after paying, or the parties later decide not to do the work.
+- A Connection Fee on a rehire follows the same rule.
+- Closing your account does not by itself refund either fee.
 
-The application has no refund button for these fees and does not call Stripe to create a refund. A database function that exists only as a dead end always raises an error and cannot issue a refund. Stripe Dashboard actions, if any, are outside this app. This policy does not promise that PPP will make one.
+A charge that does not deliver the service it was meant to buy — account activation not marked paid, or a connection not unlocked — is an erroneous charge for purposes of this policy. The product can flag that row `needs_refund`. Flagging a row is not a refund.
 
-If a charge is taken but the connection or activation is not unlocked, the product can flag that row for an operator. Flagging a row is not a refund. This app still does not send the refund.
+The application has no refund button for these fees and does not call Stripe to create a refund. The database function `reject_signup_or_connection_fee_refund()` always raises an error and cannot issue a refund. Until a refund workflow is approved, a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception is handled manually in the Stripe Dashboard by the owner. That manual step is outside this app. This policy does not promise that the app will send the refund.
 
-Nothing in this policy takes away a right that a Texas or federal law does not let a business waive. A Texas attorney should review this section before it is published. The product copy today is the non-refundable rule above. This draft does not add a goodwill-refund program.
+Nothing in this policy takes away a right that a Texas or federal law does not let a business waive.
 
 ## 3. Stripe
 
@@ -487,17 +505,15 @@ PPP does not use Stripe to collect, hold, or refund the customer’s payment for
 
 ## 4. Cancelling a project or a booking
 
-A customer can decline an estimate, stop new connections, and cancel a project when the product allows that status change. Pros already connected can still message. Cancelling a project does not refund a Connection Fee a contractor already paid for that project, and it does not refund the $9.99 activation.
+A customer can decline an estimate, stop new connections, and cancel a project when the product allows that status change. Pros already connected can still message. Cancelling a project does not refund a Connection Fee that was already delivered for that project, and it does not refund a delivered $9.99 activation, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
 
-A contractor can pass on an unpaid offer. Passing frees that slot for another contractor. Passing after a paid Connect does not refund the $4.99.
+A contractor can pass on an unpaid offer. Passing frees that slot for another contractor. Passing after a delivered Connect does not refund the $4.99 under the general rule in section 2.
 
-A booking can move to Cancelled from the statuses the product allows. A completed booking is not cancelled by that same control. Cancelling a booking cancels the marketplace record of the hire. It does not move the job payment, because that payment is not in PPP. Cancellation terms for the work itself are covered in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
-
-An abandoned Connect checkout can release a reserved slot after a server timeout (30 minutes unless that setting is changed). Releasing an unpaid reservation is not a charge and is not a refund.
+A booking can move to Cancelled from the statuses the product allows. A completed booking is not cancelled by that same control. Cancelling a booking cancels the marketplace record of the hire. It does not move the job payment, because that payment is not in PPP. Cancellation terms for the work itself are covered in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).
 
 ## 5. Job payment and job disputes
 
-The customer pays the contractor directly for the job. PPP does not invoice that amount, does not take a percentage, and does not refund it. Who resolves a dispute about the work is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
+The customer pays the contractor directly for the job. PPP does not invoice that amount, does not take a percentage, and does not refund it. Who resolves a dispute about the work is in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).
 
 A booking status of Disputed, when it is set, is a label on the marketplace record. It is not a PPP ruling and it is not a refund of the $9.99 or the $4.99.
 
@@ -519,25 +535,26 @@ VALUES (
   $ppp_legal_community_guidelines$
 # Community Guidelines
 
-> Draft for owner review. This is not legal advice. Have a Texas attorney review it before anyone relies on it and before it is published. These pages stay off prioritypropertypros.com until the owner approves the wording and turns them on. This draft does not change the live signup record until the new database migration is applied. Do not apply that migration until the wording is approved.
+This is not legal advice.
 
-Effective date: [OWNER DECISION: the calendar date these guidelines take effect]
+Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
 
-PPP does not require acceptance of this draft while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their data, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete an account.
+PPP does not require acceptance of this version while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their information and delete the account, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete an account.
 
 ## Plain-language summary
 
 - Be accurate, be lawful, and use the marketplace for real home-service projects.
 - Do not swap phone numbers, email addresses, or street addresses to skip the $4.99 Connection Fee.
 - Do not harass people, post someone else’s private information, or pretend PPP did the work.
+- You can report fraud, impersonation, harassment, threats, misleading profiles, suspected fake reviews, serious contractor misconduct, and rule violations. PPP may review a report. A review is not a decision about the construction work.
 - PPP can warn, suspend, or close an account. One automatic text block is not an automatic permanent ban.
-- Job responsibility is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
+- Job responsibility is in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).
 
-These guidelines are part of the [Terms of Use](/terms). Reviews and photos also follow the [Review & Content Guidelines](/content-guidelines).
+These guidelines are part of the [Terms of Service](/terms). Reviews and photos also follow the [Review & Content Guidelines](/content-guidelines).
 
 ## 1. Who this covers
 
-These guidelines cover customers, contractors, and anyone else using a Priority Property Pros account. Who performs the work is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms). Contractor accounts also follow the [Contractor Participation Terms](/contractor-terms). These guidelines do not mean PPP has licensed, insured, bonded, or background-checked a contractor.
+These guidelines cover customers, contractors, and anyone else using a Priority Property Pros account. Who performs the work is in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms). Contractor accounts also follow the [Contractor Participation Terms](/contractor-terms). These guidelines do not mean PPP has licensed, insured, bonded, or background-checked a contractor.
 
 ## 2. Honest use
 
@@ -563,7 +580,7 @@ Before a paid Connect, do not put a phone number, email address, website, social
 
 After a paid Connect, the customer may share their own contact and project address with that contractor through the share control. Do not publish the other person’s phone, email, or street on a public page or in a review. The message box still rejects phone numbers, email addresses, and street addresses.
 
-There is no refund of a Connection Fee because a message was blocked or an account was warned for this rule. See the [Refund & Cancellation Policy](/refunds).
+A blocked message or a warning for this rule does not, by itself, refund a Connection Fee that was already delivered. See the [Refund & Cancellation Policy](/refunds).
 
 ## 4. How you treat people
 
@@ -571,15 +588,32 @@ Do not harass, threaten, or discriminate against another person through the mark
 
 On an estimate or a booking, a customer can choose “Don't match me with this pro again.” Future projects skip that pro. Work already underway stays as it is, and a paid Connection Fee stays paid. The customer can undo that from Blocked pros. A customer review of 3 stars or less also keeps that pro off future projects until the customer unblocks them. Raising that review to 4 or 5 stars does not remove the block. You can also cancel a project when the product allows it, stop new connections, and email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
-## 5. Enforcement
+## 5. Reports
 
-PPP may remove content, reject a contractor application, or suspend, disable, or close an account when these guidelines or the Terms of Use are broken, or when the use looks harmful or fraudulent. The product does not promise a particular number of warnings. For contact-swapping, the intended path is a warning, then suspension or termination for repeated abuse, not an automatic permanent ban on a single detection. Suspension is an admin action. The text filter itself only rejects the text.
+A homeowner or other account holder can report:
 
-Enforcement is not a finding that someone is licensed, insured, bonded, or background-checked, and it is not a promise that every violation will be caught.
+- fraud or impersonation
+- harassment or threats
+- a misleading profile
+- a suspected fake review
+- serious contractor misconduct
+- a violation of these guidelines or the Terms of Service
 
-## 6. Contact
+Send the report by email to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). The site does not have a separate in-app complaint center. A contractor can also report a project photo in the product. That report stores the reporter, the target, and the reason. An admin can read photo reports. Marketplace reviews can be rejected with a written reason of 3 to 500 characters. That reason is stored in the audit log and is not shown on the public review. An admin can suspend, disable, or close an account.
 
-Report a marketplace problem to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Job-site disputes are covered in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
+PPP may review a report, ask for more information, moderate the content, suspend an account, or remove a contractor from the marketplace. PPP keeps the report and the decision in its records. PPP does not publish the other person’s private information in a public decision. A person who wants another look can reply to the support email. PPP does not promise to investigate every report or to resolve every report.
+
+Reviewing a report is not a guarantee of workmanship, not an assumption of responsibility for the job, and not arbitration of a construction dispute. Disputes about the work stay in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).
+
+## 6. Enforcement
+
+PPP may remove content, reject a contractor application, or suspend, disable, or close an account when these guidelines or the Terms of Service are broken, or when the use looks harmful or fraudulent. The product does not promise a particular number of warnings. For contact-swapping, the intended path is a warning, then suspension or termination for repeated abuse, not an automatic permanent ban on a single detection. Suspension is an admin action. The text filter itself only rejects the text.
+
+Enforcement is not a finding that someone is licensed, insured, bonded, or background-checked, and it is not a promise that every violation will be caught. It is also not a ruling on a job-site dispute.
+
+## 7. Contact
+
+Report a marketplace problem to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Job-site disputes are covered in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).
 $ppp_legal_community_guidelines$,
   false,
   'ALL',
@@ -595,11 +629,11 @@ VALUES (
   $ppp_legal_review_content$
 # Review & Content Guidelines
 
-> Draft for owner review. This is not legal advice. Have a Texas attorney review it before anyone relies on it and before it is published. These pages stay off prioritypropertypros.com until the owner approves the wording and turns them on. This draft does not change the live signup record until the new database migration is applied. Do not apply that migration until the wording is approved.
+This is not legal advice.
 
-Effective date: [OWNER DECISION: the calendar date these guidelines take effect]
+Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
 
-PPP does not require acceptance of this draft while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their data, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete a review, a photo, or an account.
+PPP does not require acceptance of this version while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their information and delete the account, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete a review, a photo, or an account.
 
 ## Plain-language summary
 
@@ -608,8 +642,9 @@ PPP does not require acceptance of this draft while the platform setting `legal_
 - Portfolio photos stay in review until an admin approves them. Public pages do not show the original file.
 - Do not put phone numbers, email addresses, or street addresses in reviews or public text.
 - A review is not a statement that PPP licensed, insured, bonded, or background-checked anyone.
+- Suspected fake reviews and other content reports follow the Community Guidelines. Moderating content is not a decision about the construction work.
 
-These guidelines are part of the [Terms of Use](/terms). Conduct rules are in the [Community Guidelines](/community-guidelines).
+These guidelines are part of the [Terms of Service](/terms). Conduct rules and reports are in the [Community Guidelines](/community-guidelines).
 
 ## 1. Two different reviews
 
@@ -629,13 +664,13 @@ Profile text, estimates, and messages follow the same contact rule as the [Commu
 
 ## 3. What content does not mean
 
-A review, a star rating, a portfolio caption, or an “Approved platform profile” badge is not a PPP inspection of the work. It is not a statement that the contractor is licensed, insured, bonded, or background-checked. Contractor-provided license or insurance fields stay contractor-provided. PPP does not currently verify licenses, insurance, or workmanship.
+A review, a star rating, a portfolio caption, or an “Approved platform profile” badge is not a PPP inspection of the work. It is not a statement that the contractor is licensed, insured, bonded, or background-checked. Contractor-provided license or insurance fields stay contractor-provided. PPP does not currently verify licenses, insurance, or workmanship. Who is responsible for the work is in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).
 
 A customer review of 3 stars or less keeps that pro off the customer’s future projects until the customer unblocks them. Editing that review up to 4 or 5 stars does not remove the block. On an estimate or a booking, the customer can also choose “Don't match me with this pro again.” Future projects skip that pro. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros. You may still decline an estimate, stop new connections, and cancel a project when the product allows it.
 
 ## 4. Moderation
 
-PPP may refuse, edit display of, or remove content that breaks these guidelines, the Community Guidelines, or the Terms of Use, including by rejecting a marketplace review or hiding a photo. Moderation is not a ruling on a job dispute and it does not refund a $9.99 activation or a $4.99 Connection Fee.
+PPP may refuse, edit display of, or remove content that breaks these guidelines, the Community Guidelines, or the Terms of Service, including by rejecting a marketplace review or hiding a photo. Reports of suspected fake reviews, misleading profiles, and other marketplace misconduct are in the [Community Guidelines](/community-guidelines). Moderation is not a ruling on a job dispute, not a guarantee of workmanship, and it does not refund a delivered $9.99 activation or a delivered $4.99 Connection Fee.
 
 ## 5. Contact
 
@@ -655,24 +690,24 @@ VALUES (
   $ppp_legal_contractor_participation$
 # Contractor Participation Terms
 
-> Draft for owner review. This is not legal advice. Have a Texas attorney review it before anyone relies on it and before it is published. These pages stay off prioritypropertypros.com until the owner approves the wording and turns them on. This draft does not change the live signup record until the new database migration is applied. Do not apply that migration until the wording is approved.
+This is not legal advice.
 
-Effective date: [OWNER DECISION: the calendar date these terms take effect]
+Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
 
 ## Plain-language summary
 
-- How you relate to Priority Property Pros is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms). These terms do not repeat that section.
+- How you relate to Priority Property Pros, including responsibility for the work, is in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms). These terms do not repeat that section.
 - PPP does not state that you are licensed, insured, bonded, or background-checked. Putting a license or insurance note on your profile does not mean PPP verified it.
-- You pay the $9.99 one-time activation, then $4.99 each time you choose to Connect, including when a past customer posts a new project and you connect again. The site says both fees are non-refundable.
+- You pay the $9.99 one-time activation, then $4.99 each time you choose to Connect, including when a past customer posts a new project and you connect again. Each fee is generally non-refundable once that service is delivered, with the exceptions in the Refund & Cancellation Policy.
 - You choose which jobs to take. The customer pays you directly. PPP does not take a percentage of the job.
 
-These terms are part of the [Terms of Use](/terms) for contractor accounts. Customers can read them. Only contractor signups are asked to accept them, and only those acceptances are stored on contractor accounts. The [Refund & Cancellation Policy](/refunds) and the [Community Guidelines](/community-guidelines) also apply.
+These terms are part of the [Terms of Service](/terms) for contractor accounts. Customers can read them. Only contractor signups are asked to accept them, and only those acceptances are stored on contractor accounts. The [Refund & Cancellation Policy](/refunds) and the [Community Guidelines](/community-guidelines) also apply.
 
 ## 1. Independent business
 
-Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms) is the statement of your relationship to PPP. You may not present yourself as PPP, as employed by PPP, or as a crew PPP sent. PPP does not withhold employment taxes for you and does not set your hours.
+Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms) is the statement of your relationship to PPP, including responsibility for workmanship, employees, subcontractors, required licenses, insurance obligations, safety, permits, warranties, and damage you cause. These terms do not repeat that section. You may not present yourself as PPP, as employed by PPP, or as a crew PPP sent. PPP does not withhold employment taxes for you and does not set your hours.
 
-You are responsible for your own tools, helpers, taxes, permits, and the agreements you make with customers. Any license, insurance, or bond that the law or a customer requires is your obligation. PPP does not require proof of insurance in the product, and these terms do not add an insurance requirement. PPP also does not run a background-check program, and these terms do not create one.
+You are responsible for your own tools, helpers, taxes, and the agreements you make with customers. Any license, insurance, or bond that the law or a customer requires is your obligation, as that section of the Terms of Service describes. PPP does not require proof of insurance in the product, and these terms do not add an insurance requirement. PPP also does not run a background-check program, and these terms do not create one.
 
 ## 2. What PPP does not claim about you
 
@@ -686,7 +721,7 @@ Nothing on the site means you are licensed, insured, bonded, or background-check
 
 You pay a one-time $9.99 account activation when that Stripe Checkout is turned on. Then $0 a month. You pay $4.99 each time you choose to Connect on a project. That includes a new project from a customer you have worked with before. Hire Again does not waive the Connection Fee.
 
-The Connection Fee buys connection access for that project: messaging with that customer, and the customer’s option to share contact details. It does not buy the job. The customer may hire someone else or hire no one. The [Refund & Cancellation Policy](/refunds) says both the $9.99 and the $4.99 are non-refundable, including in those cases. This app does not issue those refunds.
+The Connection Fee buys connection access for that project: messaging with that customer, and the customer’s option to share contact details. It does not buy the job. The customer may hire someone else or hire no one. Account activation is delivered when the server verifies the Stripe payment and marks the fee paid. A connection is delivered when the server verifies the payment and unlocks that connection. Clicking Connect is not delivery. The [Refund & Cancellation Policy](/refunds) says both fees are generally non-refundable once the applicable service is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception. This app does not issue those refunds. Until a refund workflow is approved, an exception is handled manually in the Stripe Dashboard by the owner.
 
 You do not pay PPP a percentage of the job. The customer pays you directly for the work. PPP does not collect that payment.
 
@@ -700,11 +735,11 @@ After you pay $4.99 and the server verifies it, you and that customer can messag
 
 ## 5. Your work and your disputes
 
-You set your estimate in the product. Job responsibility is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms). A Disputed booking status is not a decision by PPP and is not a refund of the Connection Fee.
+You set your estimate in the product. Job responsibility, and disputes about the work, are in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms). A dispute between you and a customer about the work is ordinarily between the two of you. A Disputed booking status is not a decision by PPP and is not a refund of the Connection Fee. Reports about marketplace conduct are in the [Community Guidelines](/community-guidelines). Reviewing a report is not a decision about the work.
 
 ## 6. Acceptance
 
-Contractor signup uses the same checkbox as any other signup, and the checkbox names these Contractor Participation Terms. While `legal_acceptance_required` is off, the server does not reject the account for these drafts. After that setting is on, the server stores the version and the time as a signup acceptance, and a new contractor account is not created if the current version was not accepted. If these terms are updated after you already have an account, the next sign-in asks you to accept. That acceptance is stored separately as a sign-in, with its own version and time. You can still view your jobs, messages, and account data before you accept. Nothing is deleted.
+Contractor signup uses the same checkbox as any other signup, and the checkbox names these Contractor Participation Terms. You must be 18 or older. While `legal_acceptance_required` is off, the server does not reject the account for these versions and does not require the 18-or-older affirmation. After that setting is on, the server stores the version and the time as a signup acceptance, records the time of the age affirmation, and a new contractor account is not created if the current version was not accepted or the affirmation is missing. If these terms are updated after you already have an account, the next sign-in asks you to accept. That acceptance is stored separately as a sign-in, with its own version and time. You can still view your jobs, messages, and account information, and you can delete the account, before you accept. While the setting is on, new marketplace actions wait on that acceptance. Nothing is deleted because you have not yet accepted.
 $ppp_legal_contractor_participation$,
   false,
   'CONTRACTOR',
@@ -766,7 +801,9 @@ BEGIN
     AND is_current;
 
   UPDATE public.agreements
-  SET is_current = true
+  SET is_current = true,
+      published = true,
+      published_at = coalesce(published_at, now())
   WHERE (slug, version) IN (
     ('terms-of-use', 3),
     ('privacy-policy', 2),
@@ -782,7 +819,7 @@ REVOKE ALL ON FUNCTION public.set_legal_acceptance_required(boolean) FROM PUBLIC
 GRANT EXECUTE ON FUNCTION public.set_legal_acceptance_required(boolean) TO service_role;
 
 COMMENT ON FUNCTION public.set_legal_acceptance_required(boolean) IS
-  'Service role only. Turns legal_acceptance_required on or off. Enabling makes the draft agreement versions current. Disabling does not delete acceptances, profiles, projects, messages, reviews, photos, or payment rows, and does not change Stripe functions or fee flags.';
+  'Service role only. Turns legal_acceptance_required on or off. Enabling makes these agreement versions current, sets published, and sets published_at when it is still null. Disabling sets the flag to 0, does not clear published_at, and does not delete acceptances, profiles, projects, messages, reviews, photos, or payment rows, and does not change Stripe functions or fee flags.';
 
 CREATE OR REPLACE FUNCTION public.assert_signup_agreement_versions(
   meta jsonb,
@@ -805,6 +842,12 @@ BEGIN
     RAISE EXCEPTION 'terms_not_accepted'
       USING ERRCODE = 'P0001',
             HINT = 'Signup requires explicit acceptance of the current legal agreements.';
+  END IF;
+
+  IF coalesce(meta->>'affirmed_age_18', 'false') NOT IN ('true', '1', 'yes') THEN
+    RAISE EXCEPTION 'age_18_required'
+      USING ERRCODE = 'P0001',
+            HINT = 'Signup requires an affirmation that you are 18 or older. The form does not ask for a date of birth.';
   END IF;
 
   BEGIN
@@ -1032,7 +1075,8 @@ BEGIN
     phone,
     account_type,
     account_status,
-    signup_fee_status
+    signup_fee_status,
+    age_18_affirmed_at
   ) VALUES (
     NEW.id,
     coalesce(NEW.email, ''),
@@ -1041,7 +1085,13 @@ BEGIN
     nullif(meta->>'phone', ''),
     safe_type,
     initial_status,
-    initial_fee
+    initial_fee,
+    CASE
+      WHEN public.legal_acceptance_required()
+        AND coalesce(meta->>'affirmed_age_18', 'false') IN ('true', '1', 'yes')
+      THEN now()
+      ELSE NULL
+    END
   );
 
   IF safe_type = 'CONTRACTOR' THEN
@@ -1123,4 +1173,54 @@ $$;
 REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
 
 COMMENT ON FUNCTION public.handle_new_user() IS
-  'Creates the profile. Agreement enforcement runs only when legal_acceptance_required is on. When it is off, signup is not rejected and only the already-current terms and privacy rows are recorded if the checkbox was accepted. Does not hide or delete existing account data and does not change Stripe or fee flags.';
+  'Creates the profile. Agreement enforcement and the 18-or-older affirmation run only when legal_acceptance_required is on. When it is off, signup is not rejected and only the already-current terms and privacy rows are recorded if the checkbox was accepted. Does not hide or delete existing account data and does not change Stripe or fee flags.';
+
+CREATE OR REPLACE FUNCTION public.enforce_current_terms_for_new_marketplace_action()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.uid() IS NULL OR public.is_admin() OR NOT public.legal_acceptance_required() THEN
+    RETURN NEW;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM public.missing_current_agreements() LIMIT 1) THEN
+    RAISE EXCEPTION 'terms_acceptance_required'
+      USING ERRCODE = 'P0001',
+            HINT = 'Accept the current agreements before a new marketplace action. You can still view your account and delete it.';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+COMMENT ON FUNCTION public.enforce_current_terms_for_new_marketplace_action() IS
+  'BEFORE INSERT only. Raises terms_acceptance_required when legal_acceptance_required is on and the caller is missing a current agreement. Allows a null auth.uid() (service role) and admins. Does not block SELECT, updates, account deletion, or payment tables. Does not change Stripe functions or fee flags.';
+
+REVOKE ALL ON FUNCTION public.enforce_current_terms_for_new_marketplace_action() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS projects_enforce_current_terms ON public.projects;
+CREATE TRIGGER projects_enforce_current_terms
+  BEFORE INSERT ON public.projects
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_current_terms_for_new_marketplace_action();
+
+DROP TRIGGER IF EXISTS estimates_enforce_current_terms ON public.estimates;
+CREATE TRIGGER estimates_enforce_current_terms
+  BEFORE INSERT ON public.estimates
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_current_terms_for_new_marketplace_action();
+
+DROP TRIGGER IF EXISTS project_messages_enforce_current_terms ON public.project_messages;
+CREATE TRIGGER project_messages_enforce_current_terms
+  BEFORE INSERT ON public.project_messages
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_current_terms_for_new_marketplace_action();
+
+DROP TRIGGER IF EXISTS project_connections_enforce_current_terms ON public.project_connections;
+CREATE TRIGGER project_connections_enforce_current_terms
+  BEFORE INSERT ON public.project_connections
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_current_terms_for_new_marketplace_action();

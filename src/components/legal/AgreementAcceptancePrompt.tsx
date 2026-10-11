@@ -79,8 +79,10 @@ export function AgreementAcceptancePrompt({
       <div className="mx-auto w-full max-w-6xl space-y-3">
         <h2 className="font-display text-xl font-semibold text-forest-800">Please accept the current agreements</h2>
         <p>
-          A newer version is on file. You can keep viewing your projects, messages, bookings, and other account data
-          before you accept. This does not lock your account.
+          A newer version is on file. You can keep viewing your projects, messages, bookings, and other account
+          information, and you can delete your account. The product does not include an in-app export. Until you
+          accept, new marketplace actions stay unavailable: posting a project, sending an estimate, sending a project
+          message, or starting a connection. This does not delete anything.
         </p>
         <ul className="list-disc space-y-1 pl-5">
           {gaps.map((doc) => (

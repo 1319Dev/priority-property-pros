@@ -36,10 +36,10 @@ export const SIGNUP_FEE_CHECKOUT_LIVE_NOTE =
   "$9.99 one-time account activation. Non-refundable. Not a monthly subscription. After you verify your email, you will pay $9.99 to activate.";
 
 export const SIGNUP_TERMS_ACCEPTANCE =
-  `${agreementSentence("CUSTOMER")} The $9.99 account activation fee is non-refundable. PPP is a marketplace, not the contractor.`;
+  `${agreementSentence("CUSTOMER")} The $9.99 account activation fee is generally non-refundable once account activation is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception. PPP is a marketplace, not the contractor.`;
 
 export const CONTRACTOR_SIGNUP_TERMS_ACCEPTANCE =
-  `${agreementSentence("CONTRACTOR")} The $9.99 account activation fee and the $4.99 Connection Fee are non-refundable. PPP is a marketplace, not the contractor.`;
+  `${agreementSentence("CONTRACTOR")} The $9.99 account activation fee and the $4.99 Connection Fee are generally non-refundable once the applicable service is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception. PPP is a marketplace, not the contractor.`;
 
 export const PRICING_PAGE_TITLE = "Simple pricing. No percentage of your job.";
 

@@ -10,8 +10,13 @@
 -- 20261018000001 are removed so those draft rows can be deleted.
 
 DROP TRIGGER IF EXISTS agreement_acceptances_protect ON public.agreement_acceptances;
+DROP TRIGGER IF EXISTS projects_enforce_current_terms ON public.projects;
+DROP TRIGGER IF EXISTS estimates_enforce_current_terms ON public.estimates;
+DROP TRIGGER IF EXISTS project_messages_enforce_current_terms ON public.project_messages;
+DROP TRIGGER IF EXISTS project_connections_enforce_current_terms ON public.project_connections;
 
 DROP FUNCTION IF EXISTS public.protect_agreement_acceptance();
+DROP FUNCTION IF EXISTS public.enforce_current_terms_for_new_marketplace_action();
 DROP FUNCTION IF EXISTS public.legal_acceptance_required();
 DROP FUNCTION IF EXISTS public.set_legal_acceptance_required(boolean);
 DROP FUNCTION IF EXISTS public.assert_signup_agreement_versions(jsonb, public.account_type);
@@ -98,7 +103,11 @@ ALTER TABLE public.agreements
 
 ALTER TABLE public.agreements
   DROP COLUMN IF EXISTS audience,
-  DROP COLUMN IF EXISTS published;
+  DROP COLUMN IF EXISTS published,
+  DROP COLUMN IF EXISTS published_at;
+
+ALTER TABLE public.profiles
+  DROP COLUMN IF EXISTS age_18_affirmed_at;
 
 ALTER TABLE public.agreement_acceptances
   DROP CONSTRAINT IF EXISTS agreement_acceptances_source_check;

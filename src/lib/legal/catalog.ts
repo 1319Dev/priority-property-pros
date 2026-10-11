@@ -16,7 +16,7 @@ export type LegalDocument = {
 };
 
 export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
-  { slug: "terms-of-use", title: "Terms of Use", version: 3, path: "/terms", audience: "ALL" },
+  { slug: "terms-of-use", title: "Terms of Service", version: 3, path: "/terms", audience: "ALL" },
   { slug: "privacy-policy", title: "Privacy Policy", version: 2, path: "/privacy", audience: "ALL" },
   {
     slug: "refund-cancellation",

@@ -1,10 +1,10 @@
 # Review & Content Guidelines
 
-> Draft for owner review. This is not legal advice. Have a Texas attorney review it before anyone relies on it and before it is published. These pages stay off prioritypropertypros.com until the owner approves the wording and turns them on. This draft does not change the live signup record until the new database migration is applied. Do not apply that migration until the wording is approved.
+This is not legal advice.
 
-Effective date: [OWNER DECISION: the calendar date these guidelines take effect]
+Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
 
-PPP does not require acceptance of this draft while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their data, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete a review, a photo, or an account.
+PPP does not require acceptance of this version while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their information and delete the account, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete a review, a photo, or an account.
 
 ## Plain-language summary
 
@@ -13,8 +13,9 @@ PPP does not require acceptance of this draft while the platform setting `legal_
 - Portfolio photos stay in review until an admin approves them. Public pages do not show the original file.
 - Do not put phone numbers, email addresses, or street addresses in reviews or public text.
 - A review is not a statement that PPP licensed, insured, bonded, or background-checked anyone.
+- Suspected fake reviews and other content reports follow the Community Guidelines. Moderating content is not a decision about the construction work.
 
-These guidelines are part of the [Terms of Use](/terms). Conduct rules are in the [Community Guidelines](/community-guidelines).
+These guidelines are part of the [Terms of Service](/terms). Conduct rules and reports are in the [Community Guidelines](/community-guidelines).
 
 ## 1. Two different reviews
 
@@ -34,13 +35,13 @@ Profile text, estimates, and messages follow the same contact rule as the [Commu
 
 ## 3. What content does not mean
 
-A review, a star rating, a portfolio caption, or an “Approved platform profile” badge is not a PPP inspection of the work. It is not a statement that the contractor is licensed, insured, bonded, or background-checked. Contractor-provided license or insurance fields stay contractor-provided. PPP does not currently verify licenses, insurance, or workmanship.
+A review, a star rating, a portfolio caption, or an “Approved platform profile” badge is not a PPP inspection of the work. It is not a statement that the contractor is licensed, insured, bonded, or background-checked. Contractor-provided license or insurance fields stay contractor-provided. PPP does not currently verify licenses, insurance, or workmanship. Who is responsible for the work is in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).
 
 A customer review of 3 stars or less keeps that pro off the customer’s future projects until the customer unblocks them. Editing that review up to 4 or 5 stars does not remove the block. On an estimate or a booking, the customer can also choose “Don't match me with this pro again.” Future projects skip that pro. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros. You may still decline an estimate, stop new connections, and cancel a project when the product allows it.
 
 ## 4. Moderation
 
-PPP may refuse, edit display of, or remove content that breaks these guidelines, the Community Guidelines, or the Terms of Use, including by rejecting a marketplace review or hiding a photo. Moderation is not a ruling on a job dispute and it does not refund a $9.99 activation or a $4.99 Connection Fee.
+PPP may refuse, edit display of, or remove content that breaks these guidelines, the Community Guidelines, or the Terms of Service, including by rejecting a marketplace review or hiding a photo. Reports of suspected fake reviews, misleading profiles, and other marketplace misconduct are in the [Community Guidelines](/community-guidelines). Moderation is not a ruling on a job dispute, not a guarantee of workmanship, and it does not refund a delivered $9.99 activation or a delivered $4.99 Connection Fee.
 
 ## 5. Contact
 

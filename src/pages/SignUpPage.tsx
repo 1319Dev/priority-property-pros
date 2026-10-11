@@ -9,6 +9,7 @@ import { isPublicSignupType, requestsVerifierSignup } from "../lib/auth/roles";
 import type { PublicSignupType } from "../lib/auth/types";
 import { useAuth } from "../lib/auth/useAuth";
 import { SignupAgreementLabel } from "../components/legal/SignupAgreementLabel";
+import { fetchLegalAcceptanceRequired } from "../lib/legal/acceptanceApi";
 import {
   CONTRACTOR_SIGNUP_LEDE,
   CUSTOMER_SIGNUP_LEDE,
@@ -48,6 +49,8 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [ageGate, setAgeGate] = useState(false);
+  const [affirmedAge, setAffirmedAge] = useState(false);
   const [checkoutLive, setCheckoutLive] = useState(false);
   const [values, setValues] = useState({
     firstName: "",
@@ -70,6 +73,16 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
       cancelled = true;
     };
   }, [configured]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchLegalAcceptanceRequired().then((on) => {
+      if (!cancelled) setAgeGate(on);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (loading) return <BrandLoader layout="page" label="Loading…" />;
   const customerBecomingPro = account_type === "CUSTOMER" && accountType === "CONTRACTOR";
@@ -115,6 +128,8 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
       phone: values.phone,
       accountType,
       acceptedTerms: accepted,
+      affirmedAge18: ageGate ? affirmedAge : false,
+      ageAffirmationRequired: ageGate,
       businessName: values.businessName,
       primaryTrade: values.primaryTrade,
       serviceArea: values.serviceArea,
@@ -214,6 +229,18 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
               onChange={(e) => set("serviceArea", e.target.value)}
             />
           </>
+        ) : null}
+        {ageGate ? (
+          <label className="flex items-start gap-3 text-sm text-ink-700">
+            <input
+              type="checkbox"
+              className="mt-1 size-4 accent-forest-800"
+              checked={affirmedAge}
+              onChange={(e) => setAffirmedAge(e.target.checked)}
+              required
+            />
+            <span>I affirm that I am 18 or older.</span>
+          </label>
         ) : null}
         <label className="flex items-start gap-3 text-sm text-ink-700">
           <input

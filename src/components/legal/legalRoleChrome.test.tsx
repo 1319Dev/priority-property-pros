@@ -143,7 +143,7 @@ describe("legal chrome for each role", () => {
     gate.pagesOn = true;
     gate.fetchLegalAcceptanceRequired.mockResolvedValue(true);
     gate.fetchMissingAgreements.mockResolvedValue([
-      { slug: "terms-of-use", title: "Terms of Use", version: 3, path: "/terms", audience: "ALL" },
+      { slug: "terms-of-use", title: "Terms of Service", version: 3, path: "/terms", audience: "ALL" },
     ]);
     renderRole(
       "CUSTOMER",
@@ -155,7 +155,7 @@ describe("legal chrome for each role", () => {
     );
     expect(await screen.findByRole("heading", { name: /please accept the current agreements/i })).toBeInTheDocument();
     expect(screen.getByText("Kitchen project")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /terms of use/i })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: /terms of service/i })).toHaveAttribute("href", "/terms");
   });
 
   it("keeps the admin queue visible and prompts only when the setting is on", async () => {

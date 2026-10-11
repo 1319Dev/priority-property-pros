@@ -23,6 +23,7 @@ describe("signup metadata", () => {
     const versions = JSON.parse(meta.accepted_agreement_versions);
     expect(versions["terms-of-use"]).toBe(3);
     expect(versions["privacy-policy"]).toBe(2);
+    expect(meta.affirmed_age_18).toBeUndefined();
     expect(versions["refund-cancellation"]).toBe(1);
     expect(versions["contractor-participation"]).toBeUndefined();
   });
@@ -63,6 +64,20 @@ describe("signup metadata", () => {
     const versions = JSON.parse(meta.accepted_agreement_versions);
     expect(versions["contractor-participation"]).toBe(1);
     expect(versions["terms-of-use"]).toBe(3);
+  });
+
+  it("sends the age affirmation only when the signup form collected it", () => {
+    const meta = buildSignupMetadata({
+      email: "x@example.com",
+      password: "password12",
+      firstName: "Pat",
+      lastName: "Lee",
+      accountType: "CUSTOMER",
+      acceptedTerms: true,
+      affirmedAge18: true,
+      ageAffirmationRequired: true,
+    });
+    expect(meta.affirmed_age_18).toBe("true");
   });
 });
 

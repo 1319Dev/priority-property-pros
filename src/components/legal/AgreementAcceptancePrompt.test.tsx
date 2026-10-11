@@ -9,7 +9,7 @@ import { AgreementAcceptancePrompt } from "./AgreementAcceptancePrompt";
 
 const gap: LegalDocument = {
   slug: "terms-of-use",
-  title: "Terms of Use",
+  title: "Terms of Service",
   version: 3,
   path: "/terms",
   audience: "ALL",
@@ -91,7 +91,8 @@ describe("agreement acceptance prompt", () => {
 
     expect(await screen.findByRole("heading", { name: /please accept the current agreements/i })).toBeInTheDocument();
     expect(screen.getByText("Project data")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /terms of use/i })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: /terms of service/i })).toHaveAttribute("href", "/terms");
+    expect(screen.getByText(/delete your account/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^accept$/i })).toBeDisabled();
 
     await user.click(screen.getByRole("checkbox", { name: /i agree to the agreements listed above/i }));
