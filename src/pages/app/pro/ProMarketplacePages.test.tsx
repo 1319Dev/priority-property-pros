@@ -26,6 +26,7 @@ vi.mock("../../../lib/marketplace/api", async (importOriginal) => {
     ...actual,
     fetchContractorProfileByUser: vi.fn(),
     fetchMyOpportunities: vi.fn(),
+    fetchMyBookings: vi.fn(),
     endContractorJob: vi.fn(),
   };
 });
@@ -45,6 +46,8 @@ describe("contractor job detail UX", () => {
     expect(page).toMatch(/setError\(null\)/);
     expect(page).toMatch(/opportunityListTitle/);
     expect(page).toMatch(/CONNECT_SINGLE_STEP_COPY/);
+    expect(page).toMatch(/!hiredHere &&/);
+    expect(page).toMatch(/friendlyEndJobError/);
     expect(page).not.toMatch(/>\s*Participate\s*</);
     expect(page).not.toMatch(/Job ended\. History was kept/);
     expect(opportunityNextActions({ opportunityId: "o1", status: "AVAILABLE", projectStatus: "POSTED" })[0]?.label).toBe(
@@ -184,7 +187,9 @@ describe("Jobs page after passing a job", () => {
   beforeEach(() => {
     vi.mocked(marketplaceApi.fetchContractorProfileByUser).mockReset();
     vi.mocked(marketplaceApi.fetchMyOpportunities).mockReset();
+    vi.mocked(marketplaceApi.fetchMyBookings).mockReset();
     vi.mocked(marketplaceApi.endContractorJob).mockReset();
+    vi.mocked(marketplaceApi.fetchMyBookings).mockResolvedValue([]);
     vi.mocked(marketplaceApi.fetchContractorProfileByUser).mockResolvedValue({
       id: "pro-1",
       profile_id: "user-1",
@@ -232,5 +237,38 @@ describe("Jobs page after passing a job", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(marketplaceApi.endContractorJob).toHaveBeenCalledWith("opp-open");
     expect(marketplaceApi.fetchMyOpportunities).toHaveBeenCalled();
+  });
+
+  it("hides Pass on this job when the contractor is already hired", async () => {
+    vi.mocked(marketplaceApi.fetchMyBookings).mockResolvedValue([
+      {
+        id: "book-hired",
+        project_id: "proj-hired",
+        status: "IN_PROGRESS",
+        customer_hired_at: "2026-10-05T15:00:00.000Z",
+        contractor_hired_at: "2026-10-05T16:00:00.000Z",
+      },
+    ] as Awaited<ReturnType<typeof marketplaceApi.fetchMyBookings>>);
+    vi.mocked(marketplaceApi.fetchMyOpportunities).mockResolvedValue([
+      openRow,
+      {
+        ...openRow,
+        id: "opp-hired",
+        project_id: "proj-hired",
+        status: "ACCEPTED",
+        projects: {
+          ...openRow.projects,
+          id: "proj-hired",
+          title: "Hired fence",
+          status: "CONTRACTOR_SELECTED",
+        },
+      },
+    ]);
+    renderJobsPage();
+    await userEvent.click(await screen.findByRole("button", { name: "Open jobs" }));
+    expect(await screen.findByText("Kitchen faucet")).toBeInTheDocument();
+    expect(screen.queryByText("Hired fence")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: PASS_SKIP_LABEL })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /end this job/i })).not.toBeInTheDocument();
   });
 });

@@ -11,6 +11,7 @@ import {
   declineJobTitle,
   declineJobToast,
   endJobConfirmBody,
+  friendlyEndJobError,
   opportunityAllowsConnectCta,
   runContractorConnect,
   shouldAcceptOpportunityOnConnect,
@@ -137,6 +138,8 @@ describe("Pass on this job copy and plan", () => {
     expect(declineJobConfirmLabel(null)).toBe("Pass on this job");
     expect(declineJobButtonLabel("PAYMENT_DISABLED")).toBe("Pass on this job");
     expect(declineJobToast(null)).toBe(PASS_SKIP_TOAST);
+    expect(friendlyEndJobError("connection cannot be marked paid from the client")).toMatch(/\$4\.99 connection was not changed/);
+    expect(friendlyEndJobError("this job is already in a booking — complete it from Bookings")).toMatch(/Hired jobs/);
     expect(contractorDeclineUsesPassCopy("PAYMENT_DISABLED")).toBe(true);
     expect(END_JOB_BUTTON_LABEL).toBe("End this job");
   });
