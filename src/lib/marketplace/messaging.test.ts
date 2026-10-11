@@ -171,13 +171,13 @@ describe("message privacy", () => {
     expect(formatMessageDay("2026-10-05T08:00:00", now)).toBe("Oct 5");
     expect(inboxPreview("See you Monday.", true)).toBe("You: See you Monday.");
     expect(inboxPreview("On my way.", false)).toBe("On my way.");
-    expect(inboxPreview("Plymate Property Maintenance", false, "Plymate Property Maintenance")).toBe(
+    expect(inboxPreview("Plymate Property Maintenance", false)).toBe(
       "Plymate Property Maintenance",
     );
-    expect(inboxPreview("Plymate Property Maintenance", true, "Plymate Property Maintenance")).toBe(
+    expect(inboxPreview("Plymate Property Maintenance", true)).toBe(
       "You: Plymate Property Maintenance",
     );
-    expect(inboxPreview("   ", false, "Plymate Property Maintenance")).toBe("No messages yet");
+    expect(inboxPreview("   ", false)).toBe("No messages yet");
     expect(messageBubbleText("Plymate Property Maintenance")).toBe("Plymate Property Maintenance");
     expect(messageBubbleText("   ")).toBe(EMPTY_MESSAGE_BUBBLE);
     expect(messageBubbleText("")).not.toBe("Plymate Property Maintenance");

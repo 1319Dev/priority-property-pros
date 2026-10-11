@@ -304,11 +304,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
                   </span>
                   <span className="mt-1 flex items-center justify-between gap-2">
                     <span className="line-clamp-1 text-sm text-ink-500">
-                      {inboxPreview(
-                        thread.last_preview,
-                        thread.last_sender_is_viewer,
-                        thread.other_party_label || thread.contractor_label,
-                      )}
+                      {inboxPreview(thread.last_preview, thread.last_sender_is_viewer)}
                     </span>
                     {unread ? (
                       <span

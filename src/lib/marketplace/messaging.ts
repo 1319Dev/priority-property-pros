@@ -233,7 +233,7 @@ export function threadPlaceLabel(thread: Pick<MessageThreadSummary, "city" | "st
   return parts.length > 0 ? parts.join(", ") : null;
 }
 
-export function inboxPreview(preview: string | null | undefined, sentByViewer: boolean, _senderLabel?: string | null): string {
+export function inboxPreview(preview: string | null | undefined, sentByViewer: boolean): string {
   const text = (preview ?? "").replace(/\s+/g, " ").trim();
   if (!text) return "No messages yet";
   return sentByViewer ? `You: ${text}` : text;
