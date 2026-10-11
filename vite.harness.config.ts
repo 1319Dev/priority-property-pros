@@ -110,6 +110,17 @@ const swaps: Array<{ id: string; match: RegExp; real: string; names: string[] }>
     names: ["listInAppNotifications", "updateNotificationPreference", "markNotificationRead", "markAllNotificationsRead", "countMyPushSubscriptions"],
   },
   {
+    id: "\0ppp-dashboard-api",
+    match: /\/admin\/dashboardApi(?:\.ts)?$/,
+    real: path.resolve(rootDir, "src/lib/admin/dashboardApi.ts"),
+    names: [
+      "fetchAdminDashboardSummary",
+      "fetchAdminNeedsAttention",
+      "fetchAdminRecentActivity",
+      "fetchAdminDashboardTrends",
+    ],
+  },
+  {
     id: "\0ppp-approvals-api",
     match: /\/admin\/approvalsApi(?:\.ts)?$/,
     real: path.resolve(rootDir, "src/lib/admin/approvalsApi.ts"),

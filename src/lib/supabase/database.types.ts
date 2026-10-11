@@ -964,6 +964,24 @@ export type Database = {
     Functions: {
       is_admin: { Args: Record<string, never>; Returns: boolean };
       admin_mfa_required: { Args: Record<string, never>; Returns: boolean };
+      admin_dashboard_summary: { Args: { p_include_test?: boolean }; Returns: Json };
+      admin_needs_attention: { Args: { p_include_test?: boolean }; Returns: Json };
+      admin_recent_activity: {
+        Args: { p_limit?: number; p_cursor?: string | null; p_include_test?: boolean };
+        Returns: {
+          occurred_at: string;
+          kind: string;
+          label: string;
+          job_reference: string | null;
+          subject_label: string;
+          owner_activity: boolean;
+          cursor: string;
+        }[];
+      };
+      admin_dashboard_trends: {
+        Args: { p_granularity: string; p_from: string; p_to: string; p_include_test?: boolean };
+        Returns: Json;
+      };
       zip_service_area_preview: {
         Args: { p_zip: string; p_radius_miles: number };
         Returns: Json;

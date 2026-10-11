@@ -26,20 +26,10 @@ import {
 import type { BookingContactAccess } from "../../lib/marketplace/types";
 import { useToast } from "../../hooks/useToast";
 import { showTestingConfirmButton } from "../../lib/admin/testingConfirm";
+import { AdminOverviewPage } from "./admin/AdminOverviewPage";
 
 export function AdminHomePage() {
-  return (
-    <div className="space-y-6">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Admin</p>
-        <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Overview</h1>
-        <p className="mt-3 max-w-xl text-ink-700">
-          There is no public Admin registration. The first admin is promoted in the Supabase SQL editor. This
-          screen does not elevate anyone.
-        </p>
-      </header>
-    </div>
-  );
+  return <AdminOverviewPage />;
 }
 
 export { AdminApprovalDetailPage, AdminApprovalsPage } from "./admin/AdminApprovalsPages";
