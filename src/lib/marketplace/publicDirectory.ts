@@ -98,6 +98,7 @@ export type PublicSafeReview = {
   rating: number;
   body: string;
   demo?: boolean;
+  contractorResponse?: string;
 };
 
 export type PublicContractorCard = {
@@ -462,15 +463,21 @@ export function toPublicSafeReview(input: {
   demo?: boolean;
   customerName?: string | null;
   bookingId?: string | null;
+  contractorResponse?: string | null;
 }): PublicSafeReview | null {
   if (input.rating < 1 || input.rating > 5) return null;
   const raw = input.body?.trim().replace(/\s+/g, " ") ?? "";
   const body = raw && !publicTextLooksUnsafe(raw) ? (raw.length > 280 ? `${raw.slice(0, 277).trim()}…` : raw) : "Verified PPP review.";
+  const response = input.contractorResponse?.trim().replace(/\s+/g, " ") ?? "";
+  let contractorResponse = response && !publicTextLooksUnsafe(response) ? response.slice(0, 500) : undefined;
+  if (contractorResponse && input.customerName && contractorResponse.includes(input.customerName)) contractorResponse = undefined;
+  if (contractorResponse && input.bookingId && contractorResponse.includes(input.bookingId)) contractorResponse = undefined;
   const review: PublicSafeReview = {
     id: input.id,
     rating: input.rating,
     body: input.demo ? `${body} (Example review — not a real customer.)` : body,
     demo: input.demo,
+    ...(contractorResponse ? { contractorResponse } : {}),
   };
   const blob = JSON.stringify(review);
   if (input.customerName && blob.includes(input.customerName)) return { ...review, body: input.demo ? "Example review — not a real customer." : "Verified PPP review." };

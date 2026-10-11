@@ -11,9 +11,13 @@ import { FormError } from "../lib/auth/AuthCard";
 import { displayName } from "../lib/auth/roles";
 import { useAuth } from "../lib/auth/useAuth";
 import {
+  accountCanSubmitPlatformReview,
   PLATFORM_REVIEW_MAX_BODY,
+  PLATFORM_REVIEWS_ACTIVATION_REQUIRED,
   PLATFORM_REVIEWS_AUTH_REQUIRED,
   PLATFORM_REVIEWS_NOT_GOOGLE,
+  PLATFORM_REVIEWS_PENDING_SUCCESS,
+  type PlatformReview,
   type PublicPlatformReview,
 } from "../lib/marketplace/platformReviews";
 import {
@@ -26,9 +30,9 @@ import { PlatformReviewCard, ReviewsEmptyState, StarRating } from "../features/r
 
 export function ReviewsPage() {
   const configured = isSupabaseConfigured();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, signup_fee_status } = useAuth();
   const [reviews, setReviews] = useState<PublicPlatformReview[]>([]);
-  const [alreadyReviewed, setAlreadyReviewed] = useState(false);
+  const [ownReview, setOwnReview] = useState<PlatformReview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -54,7 +58,7 @@ export function ReviewsPage() {
       .then(([rows, own]) => {
         if (cancelled) return;
         setReviews(rows);
-        setAlreadyReviewed(Boolean(own));
+        setOwnReview(own);
       })
       .catch((err: unknown) => {
         if (!cancelled) setError(err instanceof Error ? err.message : "Could not load reviews.");
@@ -72,22 +76,11 @@ export function ReviewsPage() {
     try {
       const saved = await submitPlatformReview({
         viewerId: user?.id ?? null,
+        signupFeeStatus: signup_fee_status,
         draft: { display_name: display, city, rating, body },
       });
-      setAlreadyReviewed(true);
-      setSuccess("Thanks. Your review is now on the marketplace.");
-      setReviews((current) => {
-        if (current.some((row) => row.id === saved.id)) return current;
-        const publicRow: PublicPlatformReview = {
-          id: saved.id,
-          display_name: saved.display_name,
-          city: saved.city,
-          rating: saved.rating,
-          body: saved.body,
-          created_at: saved.created_at,
-        };
-        return [publicRow, ...current];
-      });
+      setOwnReview(saved);
+      setSuccess(saved.status === "APPROVED" ? "Thanks. Your review is on the marketplace." : PLATFORM_REVIEWS_PENDING_SUCCESS);
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : "Could not save your review.");
     } finally {
@@ -134,9 +127,20 @@ export function ReviewsPage() {
                 ) : null}
               </div>
             </div>
-          ) : alreadyReviewed ? (
+          ) : !accountCanSubmitPlatformReview(signup_fee_status) ? (
+            <div className="mt-4 space-y-3">
+              <p className="text-sm leading-relaxed text-ink-700">{PLATFORM_REVIEWS_ACTIVATION_REQUIRED}</p>
+              <ButtonLink to="/account/activate" className="min-h-11 w-full sm:w-auto">
+                Activate account
+              </ButtonLink>
+            </div>
+          ) : ownReview ? (
             <p className="mt-3 text-sm leading-relaxed text-ink-700">
-              You already left a review. Thank you — one review per account keeps this page honest.
+              {ownReview.status === "PENDING"
+                ? PLATFORM_REVIEWS_PENDING_SUCCESS
+                : ownReview.status === "REJECTED"
+                  ? "Your review was not published. One review per account keeps this page honest."
+                  : "You already left a review. Thank you — one review per account keeps this page honest."}
             </p>
           ) : (
             <form className="mt-5 space-y-4" onSubmit={(event) => void onSubmit(event)}>
@@ -200,8 +204,8 @@ export function ReviewsPage() {
               </label>
               <FormError message={formError} />
               {success ? <p className="text-sm font-semibold text-forest-800">{success}</p> : null}
-              <Button type="submit" disabled={busy}>
-                {busy ? "Saving…" : "Publish review"}
+              <Button type="submit" disabled={busy} className="min-h-11 w-full sm:w-auto">
+                {busy ? "Saving…" : "Submit review"}
               </Button>
             </form>
           )}

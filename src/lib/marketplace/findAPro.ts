@@ -215,11 +215,27 @@ export function publicPortfolioItems(
 }
 
 export function publicDirectoryReviews(
-  rows: Array<{ id: string; rating: number; body?: string | null; demo?: boolean; hidden?: boolean; verified?: boolean }>,
+  rows: Array<{
+    id: string;
+    rating: number;
+    body?: string | null;
+    demo?: boolean;
+    contractor_response?: string | null;
+    hidden?: boolean;
+    verified?: boolean;
+  }>,
 ): FindAProReview[] {
   const safe = rows
     .filter((row) => row.hidden !== true && row.verified !== false)
-    .map((row) => toPublicSafeReview({ id: row.id, rating: row.rating, body: row.body, demo: row.demo }))
+    .map((row) =>
+      toPublicSafeReview({
+        id: row.id,
+        rating: row.rating,
+        body: row.body,
+        demo: row.demo,
+        contractorResponse: row.contractor_response,
+      }),
+    )
     .filter((review): review is PublicSafeReview => Boolean(review));
   return publishableReviewSnippets(safe).map((review) => ({
     ...review,
