@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -172,7 +172,7 @@ describe("Delete account for each role at a phone width", () => {
     expect(dialog.textContent ?? "").not.toMatch(/\d+\s+\w+\s+(street|avenue|road|drive)/i);
     expect(dialog.textContent ?? "").not.toMatch(/deleted pro/i);
 
-    const password = screen.getByLabelText(/current password/i);
+    const password = within(dialog).getByLabelText(/current password/i);
     const confirmWord = screen.getByLabelText(/type delete/i);
     const confirm = screen.getByRole("button", { name: /delete my account/i });
     const keep = screen.getByRole("button", { name: /keep my account/i });
