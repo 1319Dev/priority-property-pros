@@ -42,6 +42,8 @@ describe("admin nav config", () => {
     expect(routes).toMatch(/lazy\(\(\) => import\("\.\.\/AdminPages"\)/);
     expect(app).not.toMatch(/^import \{ AdminShell \}/m);
     expect(app).not.toMatch(/from "\.\/pages\/app\/AdminPages"/);
+    expect(app).toContain('layout="inline" label="Loading admin…"');
+    expect(app).not.toContain('layout="page" label="Loading admin…"');
     expect(routes).toContain('import.meta.glob("./sections/*/routes.tsx"');
   });
 

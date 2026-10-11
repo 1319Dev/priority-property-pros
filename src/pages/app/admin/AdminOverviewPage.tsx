@@ -19,7 +19,9 @@ import {
 } from "../../../lib/admin/dashboardApi";
 import { friendlyAdminError } from "../../../lib/admin/friendlyAdminError";
 import { initialIncludeTest, AdminIncludeTestToggle } from "../../../components/admin/shell/AdminPageHeader";
+import { collapseActivity } from "../../../lib/admin/activityCollapse";
 import { formatCents, formatCentralTimestamp, trendQuery, type TrendPreset } from "../../../lib/admin/money";
+import { OVERVIEW_CARD_COPY } from "../../../lib/admin/overviewCardCopy";
 import { fetchPaymentsSummary, overlayNetRevenue } from "../../../lib/admin/paymentsApi";
 
 const FOREST = "var(--color-forest-800)";
@@ -116,6 +118,13 @@ export function AdminOverviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const generation = useRef(0);
+  const loaded = useRef({ summary: false, attention: false, rows: false, trends: false });
+  loaded.current = {
+    summary: summary != null,
+    attention: attention != null,
+    rows: rows != null,
+    trends: trends != null,
+  };
 
   useEffect(() => {
     const onFocus = () => setReloadKey((value) => value + 1);
@@ -128,13 +137,6 @@ export function AdminOverviewPage() {
     const nextGeneration = generation.current + 1;
     generation.current = nextGeneration;
     setLoading(true);
-    setSummary(null);
-    setAttention(null);
-    setRows(null);
-    setTrends(null);
-    setSummaryFailed(false);
-    setActivityFailed(false);
-    setTrendsFailed(false);
     setError(null);
     const range = trendQuery(preset);
     void Promise.allSettled([
@@ -155,13 +157,15 @@ export function AdminOverviewPage() {
           })
           .catch(() => undefined);
       } else {
-        setSummary(null);
-        setSummaryFailed(true);
+        if (!loaded.current.summary) {
+          setSummary(null);
+          setSummaryFailed(true);
+        }
         problems.push(readError(summaryResult.reason, "Could not load the overview."));
       }
       if (attentionResult.status === "fulfilled") setAttention(attentionResult.value.items);
       else {
-        setAttention(null);
+        if (!loaded.current.attention) setAttention(null);
         problems.push(readError(attentionResult.reason, "Could not load what needs attention."));
       }
       if (activityResult.status === "fulfilled") {
@@ -169,17 +173,21 @@ export function AdminOverviewPage() {
         setHasMore(activityResult.value.length === ADMIN_ACTIVITY_PAGE_SIZE);
         setActivityFailed(false);
       } else {
-        setRows(null);
-        setHasMore(false);
-        setActivityFailed(true);
+        if (!loaded.current.rows) {
+          setRows(null);
+          setHasMore(false);
+          setActivityFailed(true);
+        }
         problems.push(readError(activityResult.reason, "Could not load recent activity."));
       }
       if (trendsResult.status === "fulfilled") {
         setTrends(trendsResult.value);
         setTrendsFailed(false);
       } else {
-        setTrends(null);
-        setTrendsFailed(true);
+        if (!loaded.current.trends) {
+          setTrends(null);
+          setTrendsFailed(true);
+        }
         problems.push(readError(trendsResult.reason, "Could not load the trends."));
       }
       setError(problems.length > 0 ? [...new Set(problems)].join(" ") : null);
@@ -299,9 +307,12 @@ export function AdminOverviewPage() {
           </p>
         ) : (
           <ul className="space-y-2">
-            {rows.map((row) => (
+            {collapseActivity(rows).map((row) => (
               <li key={row.cursor} className="rounded-3xl border border-forest-800/10 px-4 py-3">
-                <p className="font-semibold text-forest-800">{row.label}</p>
+                <p className="font-semibold text-forest-800">
+                  {row.label}
+                  {row.count > 1 ? ` · ${row.count}` : ""}
+                </p>
                 <p className="text-sm text-ink-500">{formatCentralTimestamp(row.occurredAt)}</p>
                 <p className="mt-1 text-sm text-ink-700">
                   {row.jobReference ? (
@@ -454,6 +465,7 @@ function MetricCard({
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">{card.label}</p>
       <p className="mt-2 font-display text-3xl font-semibold text-forest-800">{text}</p>
       {definition ? <p className="sr-only">{definition}</p> : null}
+      {OVERVIEW_CARD_COPY[card.key] ? <p className="mt-1 text-xs text-ink-500">{OVERVIEW_CARD_COPY[card.key]}</p> : null}
       {card.grossNote && text !== "Not set up yet" && text !== "—" ? (
         <p className="mt-1 text-xs text-ink-500">Gross, before Stripe fees</p>
       ) : null}

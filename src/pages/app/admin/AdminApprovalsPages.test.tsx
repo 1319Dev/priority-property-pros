@@ -13,7 +13,8 @@ import {
   type ContractorApprovalItem,
 } from "../../../lib/admin/approvals";
 import { AdminShell } from "../AdminShell";
-import { AdminApprovalDetailPage, ApprovalDetailView, ApprovalsQueueView } from "./AdminApprovalsPages";
+import { mockAdminViewport } from "../../../test/adminViewport";
+import { AdminApprovalDetailPage, AdminApprovalsPage, ApprovalDetailView, ApprovalsQueueView } from "./AdminApprovalsPages";
 import * as approvalsApi from "../../../lib/admin/approvalsApi";
 
 vi.mock("../../../lib/admin/approvalsApi", () => ({
@@ -233,6 +234,48 @@ describe("Admin approvals queue UI", () => {
     expect(screen.getByRole("button", { name: /^approve$/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /request more information/i })).not.toBeInTheDocument();
+  });
+
+  it("shows the application on its own screen at 390px and beside the queue at 1280px", async () => {
+    vi.mocked(approvalsApi.listContractorApprovals).mockResolvedValue([pending]);
+    vi.mocked(approvalsApi.getContractorApproval).mockResolvedValue(pending);
+    mockAdminViewport(390);
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <MemoryRouter initialEntries={["/app/admin/approvals"]}>
+        <ToastProvider>
+          <Routes>
+            <Route path="/app/admin/approvals" element={<AdminApprovalsPage />}>
+              <Route index element={null} />
+              <Route path=":contractorProfileId" element={<AdminApprovalDetailPage />} />
+            </Route>
+          </Routes>
+        </ToastProvider>
+      </MemoryRouter>,
+    );
+    await user.click(await screen.findByRole("link", { name: "View Contractor" }));
+    expect(await screen.findByRole("heading", { name: "Peachtree Handy" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: /pending \(1\)/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /back to approvals/i })).toBeInTheDocument();
+    unmount();
+
+    mockAdminViewport(1280);
+    render(
+      <MemoryRouter initialEntries={["/app/admin/approvals/cp-1"]}>
+        <ToastProvider>
+          <Routes>
+            <Route path="/app/admin/approvals" element={<AdminApprovalsPage />}>
+              <Route index element={null} />
+              <Route path=":contractorProfileId" element={<AdminApprovalDetailPage />} />
+            </Route>
+          </Routes>
+        </ToastProvider>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByRole("region", { name: "Applications" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Application" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /pending \(1\)/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Peachtree Handy" })).toHaveLength(2);
   });
 
   it("hides decision buttons on an approved re-verify profile", () => {
