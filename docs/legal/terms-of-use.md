@@ -12,7 +12,7 @@ Effective date: [OWNER DECISION: the calendar date these terms take effect]
 - A contractor pays $4.99 to Connect on a project, including a later project with someone they have worked with before. That unlocks messaging for that pair and the customer’s choice to share contact details. It does not guarantee the job. The site says this fee is non-refundable.
 - The customer pays the contractor directly for the work. PPP does not collect that payment and does not take a percentage of it.
 - PPP does not state that a contractor is licensed, insured, bonded, or background-checked. Admin approval is not that kind of check.
-- New accounts are created only if the server records acceptance of the current agreement versions. People who already have accounts are asked to accept the next time they sign in. They can still view their data before they accept.
+- The signup form asks for acceptance of these documents. PPP does not reject a new account for that acceptance while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup is refused unless the current versions were accepted, and an existing account is asked to accept at the next sign-in. Existing accounts can still view their data. Nothing is deleted. Signup acceptances and later sign-in acceptances are stored separately, each with the document version and the time.
 - Several items are still the owner’s call. Each one is labeled OWNER DECISION.
 
 These Terms of Use, the [Privacy Policy](/privacy), the [Refund & Cancellation Policy](/refunds), the [Community Guidelines](/community-guidelines), and the [Review & Content Guidelines](/content-guidelines) are one agreement. Contractor accounts also accept the [Contractor Participation Terms](/contractor-terms).
@@ -37,9 +37,9 @@ Contractor accounts are independent businesses. The details are in the Contracto
 
 You may sign up as a customer or as a contractor. A customer account is how homeowners and businesses post projects. Admin and verifier accounts are not offered on the public signup form. The verifier role exists in the database. These terms do not say a verifier inspected or certified any work.
 
-The signup form has a required checkbox. Checking it is your agreement to the documents that apply to that account. The server refuses to create the account if that acceptance is missing or if the versions you accepted are not the current versions. On a successful signup, PPP stores, for each document, the agreement version and the time of acceptance, plus a short user-agent string of up to 180 characters. PPP does not trust the browser to pick the version number that gets stored. The database copies the version from the current agreement row.
+The signup form has a required checkbox. Checking it is your agreement to the documents that apply to that account. While `legal_acceptance_required` is off, the server still creates the account and records acceptance of the shorter terms already in the product. It does not reject the account for these drafts. After that setting is turned on, the server refuses to create the account if that acceptance is missing or if the versions you accepted are not the current versions. On a signup that is recorded under the setting, PPP stores, for each document, the agreement version, the time, a source of signup, and a short user-agent string of up to 180 characters. PPP does not trust the browser to pick the version number that gets stored. The database copies the version from the current agreement row.
 
-If you already have an account and a newer version is current, the next sign-in shows a prompt asking you to accept it. That prompt does not hide your projects, messages, bookings, or other account data. You can keep viewing them. Accepting writes the new version and a new timestamp. It does not delete the older acceptance.
+If you already have an account when the setting is turned on, the next sign-in shows a prompt asking you to accept the current versions. That prompt does not hide your projects, messages, bookings, or other account data, and it does not delete anything. Accepting writes a separate sign-in record with the version and the time. It does not replace or delete an older acceptance.
 
 You agree to give accurate information and to keep your login to yourself. Passwords on the form must be at least 8 characters. Email confirmation is part of signup when the auth service asks for it. A contractor is not matched to jobs until the account is active and an admin has approved the contractor profile. Paying the $9.99 activation fee does not approve a contractor and does not reveal anyone’s contact details.
 
@@ -64,7 +64,7 @@ Card numbers are entered on Stripe’s page. PPP does not store card numbers. PP
 
 A customer posts a project: the kind of work, a description, city, state, ZIP, timing, and an optional budget range. The street address and precise coordinates are stored separately and are not part of the public listing. Until you post, a draft can sit in that browser tab only. It is not saved on PPP’s servers until you post.
 
-PPP offers the project to matched contractors in the trade and service area. A project can have up to three occupying connection slots. If a contractor passes, the slot can go to the next contractor. PPP does not offer the same job to five contractors.
+PPP offers the project to matched contractors in the trade and service area. Up to three contractors can occupy connection slots on that project at the same time. The cap is the server setting `max_participating_contractors`, which is 3. If a contractor passes, that offer can go to the next eligible contractor. More than three people can be offered the job over its life. No more than three occupy a slot at once.
 
 A customer can stop new connections. Pros already connected can still message. A customer can decline an estimate, cancel a project when the product allows it, and choose who to hire. Choosing a pro starts a booking. Both sides confirm Hired before that booking is a mutual hire. PPP does not rank a “best” estimate.
 
@@ -133,7 +133,7 @@ To the extent the law allows, PPP is not liable for the other party’s work, pa
 
 PPP will post updated terms on this page and change the effective date at the top. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates.
 
-A new version becomes the current row in the agreements table. New signups must accept that version. Existing users are prompted on the next sign-in, as section 3 describes, and are not locked out of viewing their data. The version and timestamp stored for that acceptance are the record of what was accepted.
+A new version can be made the current row when PPP turns `legal_acceptance_required` on. Until that setting is on, these drafts are stored but are not the required acceptance. After it is on, new signups must accept the current version or the account is not created. Existing users are prompted on the next sign-in, as section 3 describes, and are not locked out of viewing their data. The version, the time, and whether the row was a signup or a later sign-in are the record of what was accepted.
 
 ## 16. Contact
 

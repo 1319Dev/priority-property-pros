@@ -2,28 +2,38 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../ui/Button";
 import { useAuth } from "../../lib/auth/useAuth";
-import { acceptCurrentAgreements, fetchMissingAgreements } from "../../lib/legal/acceptanceApi";
+import {
+  acceptCurrentAgreements,
+  fetchLegalAcceptanceRequired,
+  fetchMissingAgreements,
+} from "../../lib/legal/acceptanceApi";
 import type { LegalDocument } from "../../lib/legal/catalog";
 import { legalPagesPublished } from "../../lib/legal/publish";
 
 type LoadGaps = () => Promise<LegalDocument[] | null>;
 type Accept = () => Promise<{ error: string | null }>;
+type AcceptanceRequired = () => Promise<boolean>;
 
 /**
  * Asks an existing account to accept the current agreement versions.
- * Rendered beside the account's own pages. It does not replace them and it
- * does not redirect. If the check cannot run, nothing is shown.
+ * Shown only when the legal pages are published and legal_acceptance_required is on.
+ * Rendered beside the account's own pages. It does not replace them, redirect,
+ * or hide projects, messages, or bookings. If either check is off or cannot run,
+ * nothing is shown.
  */
 export function AgreementAcceptancePrompt({
   published = legalPagesPublished(),
+  acceptanceRequired = fetchLegalAcceptanceRequired,
   load = fetchMissingAgreements,
   accept = acceptCurrentAgreements,
 }: {
   published?: boolean;
+  acceptanceRequired?: AcceptanceRequired;
   load?: LoadGaps;
   accept?: Accept;
 }) {
   const { user } = useAuth();
+  const [required, setRequired] = useState(false);
   const [gaps, setGaps] = useState<LegalDocument[] | null>(null);
   const [checked, setChecked] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -31,19 +41,35 @@ export function AgreementAcceptancePrompt({
 
   useEffect(() => {
     if (!published || !user) {
+      setRequired(false);
       setGaps(null);
       return;
     }
     let cancel = false;
-    void load().then((rows) => {
-      if (!cancel) setGaps(rows);
-    });
+    void acceptanceRequired()
+      .then((on) => {
+        if (cancel) return;
+        setRequired(on);
+        if (!on) {
+          setGaps(null);
+          return;
+        }
+        return load().then((rows) => {
+          if (!cancel) setGaps(rows);
+        });
+      })
+      .catch(() => {
+        if (!cancel) {
+          setRequired(false);
+          setGaps(null);
+        }
+      });
     return () => {
       cancel = true;
     };
-  }, [published, user, load]);
+  }, [published, user, acceptanceRequired, load]);
 
-  if (!published || !user || !gaps || gaps.length === 0) return null;
+  if (!published || !user || !required || !gaps || gaps.length === 0) return null;
 
   return (
     <section

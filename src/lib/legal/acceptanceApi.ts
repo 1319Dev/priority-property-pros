@@ -16,6 +16,18 @@ function asDocument(row: MissingRow): LegalDocument {
 }
 
 /**
+ * True only when platform_settings.legal_acceptance_required is on.
+ * Missing client, a missing function, or any error is off. Off must not prompt or lock.
+ */
+export async function fetchLegalAcceptanceRequired(): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+  const { data, error } = await supabase.rpc("legal_acceptance_required");
+  if (error || data !== true) return false;
+  return true;
+}
+
+/**
  * Current agreements this account has not accepted.
  * Returns null when the check cannot run (no client, or the migration is not applied).
  * A null result must not be treated as a lock.

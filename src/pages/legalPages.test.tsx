@@ -87,6 +87,8 @@ describe("draft legal pages", () => {
     expect(combined).toMatch(/Texas Data Privacy and Security Act/);
     expect(combined).toMatch(/Priority Help chat is not in the product today/);
     expect(combined).toMatch(/non-refundable/i);
+    expect(combined).toMatch(/that setting ships off/i);
+    expect(combined).toMatch(/stored separately as a sign-in/i);
     expect(combined).not.toMatch(/contractors are licensed, insured, and bonded/i);
     expect(combined).not.toMatch(/we background-check/i);
     expect(combined).not.toMatch(/must carry insurance/i);

@@ -181,6 +181,7 @@ export type Database = {
           profile_id: string;
           agreement_version: number;
           accepted_at: string;
+          acceptance_source: "signup" | "sign_in";
           user_agent: string | null;
         };
         Insert: {
@@ -188,6 +189,7 @@ export type Database = {
           profile_id: string;
           agreement_version?: number;
           accepted_at?: string;
+          acceptance_source?: "signup" | "sign_in";
           user_agent?: string | null;
         };
         Update: never;
@@ -971,6 +973,8 @@ export type Database = {
       };
     };
     Functions: {
+      legal_acceptance_required: { Args: Record<string, never>; Returns: boolean };
+      set_legal_acceptance_required: { Args: { p_enabled: boolean }; Returns: undefined };
       missing_current_agreements: {
         Args: Record<string, never>;
         Returns: { slug: string; title: string; version: number }[];

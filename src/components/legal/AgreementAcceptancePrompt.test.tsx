@@ -46,27 +46,45 @@ function renderPrompt(ui: ReactNode) {
 
 describe("agreement acceptance prompt", () => {
   it("stays hidden when the legal pages are unpublished", () => {
+    const acceptanceRequired = vi.fn<() => Promise<boolean>>().mockResolvedValue(true);
     const load = vi.fn();
     renderPrompt(
       <>
-        <AgreementAcceptancePrompt published={false} load={load} />
+        <AgreementAcceptancePrompt published={false} acceptanceRequired={acceptanceRequired} load={load} />
         <p>Project data</p>
       </>,
     );
     expect(screen.getByText("Project data")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: /please accept the current agreements/i })).not.toBeInTheDocument();
+    expect(acceptanceRequired).not.toHaveBeenCalled();
     expect(load).not.toHaveBeenCalled();
+  });
+
+  it("stays hidden when the platform setting is off", async () => {
+    const acceptanceRequired = vi.fn<() => Promise<boolean>>().mockResolvedValue(false);
+    const load = vi.fn<() => Promise<LegalDocument[] | null>>().mockResolvedValue([gap]);
+    renderPrompt(
+      <>
+        <AgreementAcceptancePrompt published acceptanceRequired={acceptanceRequired} load={load} />
+        <p>Project data</p>
+      </>,
+    );
+    expect(await screen.findByText("Project data")).toBeInTheDocument();
+    await waitFor(() => expect(acceptanceRequired).toHaveBeenCalled());
+    expect(load).not.toHaveBeenCalled();
+    expect(screen.queryByRole("heading", { name: /please accept the current agreements/i })).not.toBeInTheDocument();
   });
 
   it("asks for acceptance without hiding the account data", async () => {
     const user = userEvent.setup();
+    const acceptanceRequired = vi.fn<() => Promise<boolean>>().mockResolvedValue(true);
     const load = vi.fn<() => Promise<LegalDocument[] | null>>()
       .mockResolvedValueOnce([gap])
       .mockResolvedValueOnce([]);
     const accept = vi.fn().mockResolvedValue({ error: null });
     renderPrompt(
       <>
-        <AgreementAcceptancePrompt published load={load} accept={accept} />
+        <AgreementAcceptancePrompt published acceptanceRequired={acceptanceRequired} load={load} accept={accept} />
         <p>Project data</p>
       </>,
     );
@@ -87,14 +105,31 @@ describe("agreement acceptance prompt", () => {
   });
 
   it("does not block the page when the acceptance check cannot run", async () => {
+    const acceptanceRequired = vi.fn<() => Promise<boolean>>().mockResolvedValue(true);
     const load = vi.fn<() => Promise<LegalDocument[] | null>>().mockResolvedValue(null);
     renderPrompt(
       <>
-        <AgreementAcceptancePrompt published load={load} />
+        <AgreementAcceptancePrompt published acceptanceRequired={acceptanceRequired} load={load} />
         <p>Project data</p>
       </>,
     );
     expect(await screen.findByText("Project data")).toBeInTheDocument();
+    await waitFor(() => expect(load).toHaveBeenCalled());
+    expect(screen.queryByRole("heading", { name: /please accept the current agreements/i })).not.toBeInTheDocument();
+  });
+
+  it("does not block the page when the setting check fails", async () => {
+    const acceptanceRequired = vi.fn<() => Promise<boolean>>().mockRejectedValue(new Error("missing rpc"));
+    const load = vi.fn();
+    renderPrompt(
+      <>
+        <AgreementAcceptancePrompt published acceptanceRequired={acceptanceRequired} load={load} />
+        <p>Project data</p>
+      </>,
+    );
+    expect(await screen.findByText("Project data")).toBeInTheDocument();
+    await waitFor(() => expect(acceptanceRequired).toHaveBeenCalled());
+    expect(load).not.toHaveBeenCalled();
     expect(screen.queryByRole("heading", { name: /please accept the current agreements/i })).not.toBeInTheDocument();
   });
 });

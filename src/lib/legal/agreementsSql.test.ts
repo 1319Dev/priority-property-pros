@@ -19,13 +19,18 @@ function quotedBody(sql: string, slug: string): string {
 describe("legal agreement acceptance migration", () => {
   const sql = readFileSync(migrationPath, "utf8");
 
-  it("stores each draft as the current version and keeps the body unpublished", () => {
+  it("stores each draft unpublished and not current, with the setting off", () => {
     expect(sql).toMatch(/NOT APPLIED/);
+    expect(sql).toMatch(/'legal_acceptance_required',\s*\n\s*0,/);
     expect(sql).not.toMatch(/payments_live',\s*1/);
     expect(sql).not.toMatch(/charges_live',\s*1/);
     expect(sql).not.toMatch(/signup_fee_enabled',\s*1/);
     expect(sql).not.toMatch(/connection_fee_checkout_enabled',\s*1/);
-    expect(sql).not.toMatch(/stripe\.refunds|refunds\.create/);
+    expect(sql).not.toMatch(/stripe\.refunds|refunds\.create|\/v1\/refunds/);
+    expect(sql).not.toMatch(/DELETE FROM/);
+    const beforeBodies = sql.slice(0, sql.indexOf("-- LEGAL_BODY"));
+    expect(beforeBodies).not.toMatch(/UPDATE public\.agreements/);
+    expect(sql.match(/false,\n {2}'(?:ALL|CONTRACTOR)',\n {2}false/g)?.length).toBe(LEGAL_DOCUMENTS.length);
     for (const doc of LEGAL_DOCUMENTS) {
       const fileName =
         doc.slug === "terms-of-use"
@@ -47,20 +52,36 @@ describe("legal agreement acceptance migration", () => {
     expect(sql).toMatch(/false\n\);/);
   });
 
-  it("rejects signup without the current versions and records version plus timestamp", () => {
+  it("requires acceptance only after the setting is on, and keeps signup and sign-in rows apart", () => {
     expect(sql).toMatch(/RAISE EXCEPTION 'terms_not_accepted'/);
     expect(sql).toMatch(/RAISE EXCEPTION 'agreement_version_mismatch'/);
-    expect(sql).toMatch(/PERFORM public\.assert_signup_agreement_versions\(meta, safe_type\)/);
-    expect(sql).toMatch(/PERFORM public\.record_current_agreement_acceptances\(/);
+    expect(sql).toMatch(/IF NOT public\.legal_acceptance_required\(\) THEN\s+RETURN;/);
+    expect(sql).toMatch(
+      /IF public\.legal_acceptance_required\(\) THEN\s+PERFORM public\.assert_signup_agreement_versions\(meta, safe_type\);/,
+    );
+    expect(sql).toMatch(/PERFORM public\.record_current_agreement_acceptances\(\s*NEW\.id,/);
+    expect(sql).toMatch(/'signup'/);
+    expect(sql).toMatch(/'sign_in'/);
+    expect(sql).toMatch(/acceptance_source/);
+    expect(sql).toMatch(/agreement\.slug IN \('terms-of-use', 'privacy-policy'\)/);
     expect(sql).toMatch(/NEW\.agreement_version := current_version/);
     expect(sql).toMatch(/NEW\.accepted_at := now\(\)/);
     expect(sql).toMatch(/agreement acceptances are insert-only/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.legal_acceptance_required\(\) TO anon, authenticated, service_role/);
+    expect(sql).toMatch(
+      /REVOKE ALL ON FUNCTION public\.set_legal_acceptance_required\(boolean\) FROM PUBLIC, anon, authenticated/,
+    );
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.set_legal_acceptance_required\(boolean\) TO service_role/);
     expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.accept_current_agreements\(text\) TO authenticated/);
     expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.missing_current_agreements\(\) TO authenticated/);
     expect(sql).toMatch(
-      /REVOKE ALL ON FUNCTION public\.record_current_agreement_acceptances\(uuid, text, public\.account_type\) FROM PUBLIC, anon, authenticated/,
+      /REVOKE ALL ON FUNCTION public\.record_current_agreement_acceptances\(uuid, text, public\.account_type, text\) FROM PUBLIC, anon, authenticated/,
+    );
+    expect(sql).not.toMatch(
+      /REVOKE ALL ON FUNCTION public\.record_current_agreement_acceptances\(uuid, text, public\.account_type\) FROM/,
     );
     expect(sql).toMatch(/Does not block reads of projects, messages, or profiles/);
+    expect(sql).toMatch(/does not delete acceptances, profiles, projects, messages, reviews, photos, or payment rows/);
     expect(sql).not.toMatch(/CREATE POLICY[^;]*ON public\.profiles[^;]*agreement/i);
   });
 });

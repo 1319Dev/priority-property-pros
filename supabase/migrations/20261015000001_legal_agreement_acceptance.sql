@@ -1,11 +1,13 @@
 -- Legal agreement versions for owner review.
 -- NOT APPLIED. Do not run this against the hosted database until the owner
 -- approves the wording in docs/legal/ and a Texas attorney has reviewed it.
--- Applying it replaces the current Terms of Use and Privacy Policy rows and
--- requires new signups to accept the versions below. It does not flip
--- payments_live, charges_live, signup_fee_enabled, or connection_fee_checkout_enabled.
--- New rows stay published = false, so the Data API does not serve the draft
--- bodies until you set published = true. The website routes stay off unless
+-- Applying it does NOT replace the current Terms of Use or Privacy Policy and
+-- does NOT require acceptance. platform_settings.legal_acceptance_required
+-- is inserted as 0. Service role may later call set_legal_acceptance_required(true)
+-- after the pages are live. That call does not change payment flags, Stripe
+-- functions, or delete account data.
+-- Draft rows stay is_current = false and published = false, so the Data API
+-- does not serve them. The website routes stay off unless
 -- VITE_PUBLISH_LEGAL_PAGES is the string true.
 
 ALTER TABLE public.agreements
@@ -33,8 +35,21 @@ ALTER TABLE public.agreement_acceptances
 COMMENT ON COLUMN public.agreement_acceptances.agreement_version IS
   'Version copied from agreements at acceptance time. Insert-only. The client does not choose it.';
 
+ALTER TABLE public.agreement_acceptances
+  ADD COLUMN acceptance_source text NOT NULL DEFAULT 'signup';
+
+ALTER TABLE public.agreement_acceptances
+  DROP CONSTRAINT IF EXISTS agreement_acceptances_source_check;
+
+ALTER TABLE public.agreement_acceptances
+  ADD CONSTRAINT agreement_acceptances_source_check
+  CHECK (acceptance_source IN ('signup', 'sign_in'));
+
+COMMENT ON COLUMN public.agreement_acceptances.acceptance_source IS
+  'signup = recorded while creating the account. sign_in = recorded later for an existing account. Turning the gate off does not delete either row.';
+
 COMMENT ON COLUMN public.agreements.published IS
-  'When false, current drafts are not readable through the Data API. Signup still records them once this migration is applied.';
+  'When false, agreement text is not readable through the Data API. Draft rows also stay is_current = false until set_legal_acceptance_required(true).';
 
 CREATE OR REPLACE FUNCTION public.protect_agreement_acceptance()
 RETURNS trigger
@@ -81,10 +96,13 @@ CREATE POLICY agreements_select_current
   TO anon, authenticated
   USING (is_current AND published);
 
-UPDATE public.agreements
-SET is_current = false
-WHERE slug IN ('terms-of-use', 'privacy-policy')
-  AND is_current;
+INSERT INTO public.platform_settings (key, value_int, description)
+VALUES (
+  'legal_acceptance_required',
+  0,
+  '0 = do not require the draft legal agreements. Signup is not rejected for them, and existing accounts are not prompted. 1 = require the current draft versions after set_legal_acceptance_required(true). Does not change payment flags, delete rows, or hide account data.'
+)
+ON CONFLICT (key) DO NOTHING;
 
 -- LEGAL_BODY slug=terms-of-use version=3 file=docs/legal/terms-of-use.md
 INSERT INTO public.agreements (slug, title, version, body, is_current, audience, published)
@@ -107,7 +125,7 @@ Effective date: [OWNER DECISION: the calendar date these terms take effect]
 - A contractor pays $4.99 to Connect on a project, including a later project with someone they have worked with before. That unlocks messaging for that pair and the customer’s choice to share contact details. It does not guarantee the job. The site says this fee is non-refundable.
 - The customer pays the contractor directly for the work. PPP does not collect that payment and does not take a percentage of it.
 - PPP does not state that a contractor is licensed, insured, bonded, or background-checked. Admin approval is not that kind of check.
-- New accounts are created only if the server records acceptance of the current agreement versions. People who already have accounts are asked to accept the next time they sign in. They can still view their data before they accept.
+- The signup form asks for acceptance of these documents. PPP does not reject a new account for that acceptance while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup is refused unless the current versions were accepted, and an existing account is asked to accept at the next sign-in. Existing accounts can still view their data. Nothing is deleted. Signup acceptances and later sign-in acceptances are stored separately, each with the document version and the time.
 - Several items are still the owner’s call. Each one is labeled OWNER DECISION.
 
 These Terms of Use, the [Privacy Policy](/privacy), the [Refund & Cancellation Policy](/refunds), the [Community Guidelines](/community-guidelines), and the [Review & Content Guidelines](/content-guidelines) are one agreement. Contractor accounts also accept the [Contractor Participation Terms](/contractor-terms).
@@ -132,9 +150,9 @@ Contractor accounts are independent businesses. The details are in the Contracto
 
 You may sign up as a customer or as a contractor. A customer account is how homeowners and businesses post projects. Admin and verifier accounts are not offered on the public signup form. The verifier role exists in the database. These terms do not say a verifier inspected or certified any work.
 
-The signup form has a required checkbox. Checking it is your agreement to the documents that apply to that account. The server refuses to create the account if that acceptance is missing or if the versions you accepted are not the current versions. On a successful signup, PPP stores, for each document, the agreement version and the time of acceptance, plus a short user-agent string of up to 180 characters. PPP does not trust the browser to pick the version number that gets stored. The database copies the version from the current agreement row.
+The signup form has a required checkbox. Checking it is your agreement to the documents that apply to that account. While `legal_acceptance_required` is off, the server still creates the account and records acceptance of the shorter terms already in the product. It does not reject the account for these drafts. After that setting is turned on, the server refuses to create the account if that acceptance is missing or if the versions you accepted are not the current versions. On a signup that is recorded under the setting, PPP stores, for each document, the agreement version, the time, a source of signup, and a short user-agent string of up to 180 characters. PPP does not trust the browser to pick the version number that gets stored. The database copies the version from the current agreement row.
 
-If you already have an account and a newer version is current, the next sign-in shows a prompt asking you to accept it. That prompt does not hide your projects, messages, bookings, or other account data. You can keep viewing them. Accepting writes the new version and a new timestamp. It does not delete the older acceptance.
+If you already have an account when the setting is turned on, the next sign-in shows a prompt asking you to accept the current versions. That prompt does not hide your projects, messages, bookings, or other account data, and it does not delete anything. Accepting writes a separate sign-in record with the version and the time. It does not replace or delete an older acceptance.
 
 You agree to give accurate information and to keep your login to yourself. Passwords on the form must be at least 8 characters. Email confirmation is part of signup when the auth service asks for it. A contractor is not matched to jobs until the account is active and an admin has approved the contractor profile. Paying the $9.99 activation fee does not approve a contractor and does not reveal anyone’s contact details.
 
@@ -159,7 +177,7 @@ Card numbers are entered on Stripe’s page. PPP does not store card numbers. PP
 
 A customer posts a project: the kind of work, a description, city, state, ZIP, timing, and an optional budget range. The street address and precise coordinates are stored separately and are not part of the public listing. Until you post, a draft can sit in that browser tab only. It is not saved on PPP’s servers until you post.
 
-PPP offers the project to matched contractors in the trade and service area. A project can have up to three occupying connection slots. If a contractor passes, the slot can go to the next contractor. PPP does not offer the same job to five contractors.
+PPP offers the project to matched contractors in the trade and service area. Up to three contractors can occupy connection slots on that project at the same time. The cap is the server setting `max_participating_contractors`, which is 3. If a contractor passes, that offer can go to the next eligible contractor. More than three people can be offered the job over its life. No more than three occupy a slot at once.
 
 A customer can stop new connections. Pros already connected can still message. A customer can decline an estimate, cancel a project when the product allows it, and choose who to hire. Choosing a pro starts a booking. Both sides confirm Hired before that booking is a mutual hire. PPP does not rank a “best” estimate.
 
@@ -228,7 +246,7 @@ To the extent the law allows, PPP is not liable for the other party’s work, pa
 
 PPP will post updated terms on this page and change the effective date at the top. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates.
 
-A new version becomes the current row in the agreements table. New signups must accept that version. Existing users are prompted on the next sign-in, as section 3 describes, and are not locked out of viewing their data. The version and timestamp stored for that acceptance are the record of what was accepted.
+A new version can be made the current row when PPP turns `legal_acceptance_required` on. Until that setting is on, these drafts are stored but are not the required acceptance. After it is on, new signups must accept the current version or the account is not created. Existing users are prompted on the next sign-in, as section 3 describes, and are not locked out of viewing their data. The version, the time, and whether the row was a signup or a later sign-in are the record of what was accepted.
 
 ## 16. Contact
 
@@ -236,7 +254,7 @@ Questions about these terms: [prioritypropertypros@gmail.com](mailto:prioritypro
 
 Job payment, scheduling, and workmanship stay between the customer and the contractor. Email PPP for marketplace questions.
 $ppp_legal_terms_of_use$,
-  true,
+  false,
   'ALL',
   false
 );
@@ -280,7 +298,7 @@ The contact address in the product is [prioritypropertypros@gmail.com](mailto:pr
 
 **Account.** Name, email, password (stored by Supabase Auth, not in the PPP application tables), phone if you add one, and whether you are a customer or a contractor. A contractor also adds a business name, trade, and service area at signup, and can later add a headline, bio, years of experience, website, job-size range, service radius or ZIP list, a profile photo, contractor-provided license or insurance fields, and credentials. Those credential fields are what the contractor typed. PPP does not treat them as a license check, an insurance check, a bond, or a background check.
 
-**Agreement records.** When you check the signup box, or when you accept an updated set after sign-in, PPP stores one row per document: which version you accepted, the time, and a short user-agent string (up to 180 characters). The version number is copied from the current agreement on the server. The checkbox is required for a new account. People who already have accounts can still open their projects, messages, and other data before they accept a later version.
+**Agreement records.** The signup checkbox is on the form. While the platform setting `legal_acceptance_required` is off, PPP does not reject a new account for these drafts and does not prompt existing accounts. After that setting is turned on, a new signup stores one row per current document with the version, the time, a source of signup, and a short user-agent string (up to 180 characters). An existing account is prompted at the next sign-in. Accepting then stores a separate row with a source of sign-in, the version, and the time. The version number is copied from the current agreement on the server. The prompt does not hide projects, messages, or other account data, and accepting does not delete older rows or the account.
 
 **Projects.** Title, description, project type, city, state, ZIP, timing, optional budget, and photos of the work. The street and precise coordinates are stored in a private location record, not on the public project. An unposted wizard draft stays in that browser tab (session storage) until you post. Photos in an unposted draft are not kept if you reload the tab.
 
@@ -385,13 +403,13 @@ The site is served over HTTPS. Database access for signed-in users goes through 
 
 ## 12. Changes
 
-PPP will post an updated policy on this page and change the effective date at the top. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates. The new version becomes the current agreement. A new signup must accept it or the server will not create the account. If you already have an account, the next sign-in asks you to accept. You can still view your data before you do. Accepting stores the version and the time.
+PPP will post an updated policy on this page and change the effective date at the top. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates. The new version becomes the agreement PPP can require only after `legal_acceptance_required` is turned on. Until then, the server does not reject a signup for these drafts. After it is on, a new signup must accept the current version or the server will not create the account, and that acceptance is stored as a signup. If you already have an account, the next sign-in asks you to accept, and that acceptance is stored separately as a sign-in, with the version and the time. You can still view your data before you do. Nothing is deleted.
 
 ## 13. Contact
 
 Privacy questions and privacy requests: [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
 $ppp_legal_privacy_policy$,
-  true,
+  false,
   'ALL',
   false
 );
@@ -408,6 +426,8 @@ VALUES (
 > Draft for owner review. This is not legal advice. Have a Texas attorney review it before anyone relies on it and before it is published. These pages stay off prioritypropertypros.com until the owner approves the wording and turns them on. This draft does not change the live signup record until the new database migration is applied. Do not apply that migration until the wording is approved.
 
 Effective date: [OWNER DECISION: the calendar date this policy takes effect]
+
+PPP does not require acceptance of this draft while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their data, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete an account or a payment record.
 
 ## Plain-language summary
 
@@ -473,7 +493,7 @@ A booking status of Disputed, when it is set, is a label on the marketplace reco
 
 Questions about a platform fee: [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com). Include the account email and, if you have it, the project. Emailing does not by itself create a refund.
 $ppp_legal_refund_cancellation$,
-  true,
+  false,
   'ALL',
   false
 );
@@ -490,6 +510,8 @@ VALUES (
 > Draft for owner review. This is not legal advice. Have a Texas attorney review it before anyone relies on it and before it is published. These pages stay off prioritypropertypros.com until the owner approves the wording and turns them on. This draft does not change the live signup record until the new database migration is applied. Do not apply that migration until the wording is approved.
 
 Effective date: [OWNER DECISION: the calendar date these guidelines take effect]
+
+PPP does not require acceptance of this draft while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their data, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete an account.
 
 ## Plain-language summary
 
@@ -547,7 +569,7 @@ Enforcement is not a finding that someone is licensed, insured, bonded, or backg
 
 Report a marketplace problem to [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com). Job-site disputes stay between the customer and the contractor.
 $ppp_legal_community_guidelines$,
-  true,
+  false,
   'ALL',
   false
 );
@@ -564,6 +586,8 @@ VALUES (
 > Draft for owner review. This is not legal advice. Have a Texas attorney review it before anyone relies on it and before it is published. These pages stay off prioritypropertypros.com until the owner approves the wording and turns them on. This draft does not change the live signup record until the new database migration is applied. Do not apply that migration until the wording is approved.
 
 Effective date: [OWNER DECISION: the calendar date these guidelines take effect]
+
+PPP does not require acceptance of this draft while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their data, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete a review, a photo, or an account.
 
 ## Plain-language summary
 
@@ -605,7 +629,7 @@ PPP may refuse, edit display of, or remove content that breaks these guidelines,
 
 Questions about a review or a photo: [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
 $ppp_legal_review_content$,
-  true,
+  false,
   'ALL',
   false
 );
@@ -669,12 +693,85 @@ You set your estimate and your terms with the customer. PPP does not guarantee t
 
 ## 6. Acceptance
 
-Contractor signup requires the same explicit checkbox as any other signup, and the checkbox names these Contractor Participation Terms. The server stores the version and the time. If these terms are updated, the next sign-in asks you to accept the new version. You can still view your jobs, messages, and account data before you accept. A new contractor account is not created if the current version was not accepted.
+Contractor signup uses the same checkbox as any other signup, and the checkbox names these Contractor Participation Terms. While `legal_acceptance_required` is off, the server does not reject the account for these drafts. After that setting is on, the server stores the version and the time as a signup acceptance, and a new contractor account is not created if the current version was not accepted. If these terms are updated after you already have an account, the next sign-in asks you to accept. That acceptance is stored separately as a sign-in, with its own version and time. You can still view your jobs, messages, and account data before you accept. Nothing is deleted.
 $ppp_legal_contractor_participation$,
-  true,
+  false,
   'CONTRACTOR',
   false
 );
+
+CREATE OR REPLACE FUNCTION public.legal_acceptance_required()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT coalesce(
+    (SELECT value_int FROM public.platform_settings WHERE key = 'legal_acceptance_required'),
+    0
+  ) <> 0;
+$$;
+
+COMMENT ON FUNCTION public.legal_acceptance_required() IS
+  'True only when platform_settings.legal_acceptance_required is a non-zero integer. Missing or 0 is off. Does not expose other settings and does not grant access to profiles, messages, or payment rows.';
+
+REVOKE ALL ON FUNCTION public.legal_acceptance_required() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.legal_acceptance_required() TO anon, authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.set_legal_acceptance_required(p_enabled boolean)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  PERFORM public.require_service_role();
+
+  INSERT INTO public.platform_settings (key, value_int, description)
+  VALUES (
+    'legal_acceptance_required',
+    CASE WHEN coalesce(p_enabled, false) THEN 1 ELSE 0 END,
+    '0 = draft legal acceptance is not required. 1 = require the current approved agreement versions. Does not change payment flags or delete account data.'
+  )
+  ON CONFLICT (key) DO UPDATE
+  SET value_int = EXCLUDED.value_int
+  WHERE public.platform_settings.key = 'legal_acceptance_required';
+
+  IF NOT coalesce(p_enabled, false) THEN
+    RETURN;
+  END IF;
+
+  UPDATE public.agreements
+  SET is_current = false
+  WHERE slug IN (
+    'terms-of-use',
+    'privacy-policy',
+    'refund-cancellation',
+    'community-guidelines',
+    'review-content',
+    'contractor-participation'
+  )
+    AND is_current;
+
+  UPDATE public.agreements
+  SET is_current = true
+  WHERE (slug, version) IN (
+    ('terms-of-use', 3),
+    ('privacy-policy', 2),
+    ('refund-cancellation', 1),
+    ('community-guidelines', 1),
+    ('review-content', 1),
+    ('contractor-participation', 1)
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.set_legal_acceptance_required(boolean) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.set_legal_acceptance_required(boolean) TO service_role;
+
+COMMENT ON FUNCTION public.set_legal_acceptance_required(boolean) IS
+  'Service role only. Turns legal_acceptance_required on or off. Enabling makes the draft agreement versions current. Disabling does not delete acceptances, profiles, projects, messages, reviews, photos, or payment rows, and does not change Stripe functions or fee flags.';
 
 CREATE OR REPLACE FUNCTION public.assert_signup_agreement_versions(
   meta jsonb,
@@ -689,6 +786,10 @@ DECLARE
   rec record;
   raw_version text;
 BEGIN
+  IF NOT public.legal_acceptance_required() THEN
+    RETURN;
+  END IF;
+
   IF coalesce(meta->>'accepted_terms', 'false') NOT IN ('true', '1', 'yes') THEN
     RAISE EXCEPTION 'terms_not_accepted'
       USING ERRCODE = 'P0001',
@@ -732,7 +833,8 @@ $$;
 CREATE OR REPLACE FUNCTION public.record_current_agreement_acceptances(
   p_profile_id uuid,
   p_user_agent text,
-  p_account_type public.account_type
+  p_account_type public.account_type,
+  p_source text
 )
 RETURNS integer
 LANGUAGE plpgsql
@@ -746,19 +848,25 @@ BEGIN
     RAISE EXCEPTION 'profile id is required';
   END IF;
 
+  IF p_source IS DISTINCT FROM 'signup' AND p_source IS DISTINCT FROM 'sign_in' THEN
+    RAISE EXCEPTION 'invalid agreement acceptance source';
+  END IF;
+
   INSERT INTO public.agreement_acceptances (
     agreement_id,
     profile_id,
     user_agent,
     agreement_version,
-    accepted_at
+    accepted_at,
+    acceptance_source
   )
   SELECT
     agreement.id,
     p_profile_id,
     nullif(left(coalesce(p_user_agent, ''), 180), ''),
     agreement.version,
-    now()
+    now(),
+    p_source
   FROM public.agreements AS agreement
   WHERE agreement.is_current
     AND (
@@ -785,6 +893,10 @@ BEGIN
     RAISE EXCEPTION 'sign in required';
   END IF;
 
+  IF NOT public.legal_acceptance_required() THEN
+    RETURN '[]'::jsonb;
+  END IF;
+
   SELECT profile.account_type
   INTO account
   FROM public.profiles AS profile
@@ -794,7 +906,7 @@ BEGIN
     RAISE EXCEPTION 'profile not found';
   END IF;
 
-  PERFORM public.record_current_agreement_acceptances(auth.uid(), p_user_agent, account);
+  PERFORM public.record_current_agreement_acceptances(auth.uid(), p_user_agent, account, 'sign_in');
 
   RETURN (
     SELECT coalesce(
@@ -802,7 +914,8 @@ BEGIN
         jsonb_build_object(
           'slug', agreement.slug,
           'version', acceptance.agreement_version,
-          'accepted_at', acceptance.accepted_at
+          'accepted_at', acceptance.accepted_at,
+          'acceptance_source', acceptance.acceptance_source
         )
         ORDER BY agreement.slug
       ),
@@ -812,6 +925,7 @@ BEGIN
     JOIN public.agreements AS agreement ON agreement.id = acceptance.agreement_id
     WHERE acceptance.profile_id = auth.uid()
       AND agreement.is_current
+      AND acceptance.acceptance_source = 'sign_in'
       AND (
         agreement.audience = 'ALL'
         OR (agreement.audience = 'CONTRACTOR' AND account = 'CONTRACTOR')
@@ -830,6 +944,10 @@ AS $$
 BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'sign in required';
+  END IF;
+
+  IF NOT public.legal_acceptance_required() THEN
+    RETURN;
   END IF;
 
   RETURN QUERY
@@ -852,13 +970,13 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.missing_current_agreements() IS
-  'Lists current agreements this account has not accepted. Does not block reads of projects, messages, or profiles.';
+  'Lists current agreements this account has not accepted, and only when legal_acceptance_required is on. Returns no rows when the setting is off. Does not block reads of projects, messages, or profiles and does not delete anything.';
 
 COMMENT ON FUNCTION public.accept_current_agreements(text) IS
-  'Records the current agreement versions and timestamps for auth.uid(). Does not change account_status or hide data.';
+  'Records a sign-in acceptance of the current versions and timestamps for auth.uid() when legal_acceptance_required is on. Does nothing when the setting is off. Does not change account_status, hide data, or delete rows.';
 
 REVOKE ALL ON FUNCTION public.assert_signup_agreement_versions(jsonb, public.account_type) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.record_current_agreement_acceptances(uuid, text, public.account_type) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.record_current_agreement_acceptances(uuid, text, public.account_type, text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.accept_current_agreements(text) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.missing_current_agreements() FROM PUBLIC, anon;
 
@@ -879,7 +997,9 @@ DECLARE
 BEGIN
   meta := coalesce(NEW.raw_user_meta_data, '{}'::jsonb);
   safe_type := public.permitted_signup_account_type(meta->>'account_type');
-  PERFORM public.assert_signup_agreement_versions(meta, safe_type);
+  IF public.legal_acceptance_required() THEN
+    PERFORM public.assert_signup_agreement_versions(meta, safe_type);
+  END IF;
 
   IF safe_type = 'CUSTOMER' AND NEW.email_confirmed_at IS NOT NULL THEN
     initial_status := 'ACTIVE';
@@ -943,11 +1063,34 @@ BEGIN
     );
   END IF;
 
-  PERFORM public.record_current_agreement_acceptances(
-    NEW.id,
-    nullif(left(coalesce(meta->>'user_agent', ''), 180), ''),
-    safe_type
-  );
+  IF public.legal_acceptance_required() THEN
+    PERFORM public.record_current_agreement_acceptances(
+      NEW.id,
+      nullif(left(coalesce(meta->>'user_agent', ''), 180), ''),
+      safe_type,
+      'signup'
+    );
+  ELSIF coalesce(meta->>'accepted_terms', 'false') IN ('true', '1', 'yes') THEN
+    INSERT INTO public.agreement_acceptances (
+      agreement_id,
+      profile_id,
+      user_agent,
+      agreement_version,
+      accepted_at,
+      acceptance_source
+    )
+    SELECT
+      agreement.id,
+      NEW.id,
+      nullif(left(coalesce(meta->>'user_agent', ''), 180), ''),
+      agreement.version,
+      now(),
+      'signup'
+    FROM public.agreements AS agreement
+    WHERE agreement.is_current
+      AND agreement.slug IN ('terms-of-use', 'privacy-policy')
+    ON CONFLICT (agreement_id, profile_id) DO NOTHING;
+  END IF;
 
   PERFORM public.write_audit_log(
     NEW.id,
@@ -957,7 +1100,8 @@ BEGIN
     jsonb_build_object(
       'account_type', safe_type,
       'requested_account_type', meta->>'account_type',
-      'signup_fee_status', initial_fee
+      'signup_fee_status', initial_fee,
+      'legal_acceptance_required', public.legal_acceptance_required()
     )
   );
 
@@ -968,4 +1112,4 @@ $$;
 REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
 
 COMMENT ON FUNCTION public.handle_new_user() IS
-  'Creates the profile and records current agreement versions. Raises terms_not_accepted or agreement_version_mismatch and rolls the signup back when acceptance is missing or stale. Does not hide existing accounts'' data.';
+  'Creates the profile. Agreement enforcement runs only when legal_acceptance_required is on. When it is off, signup is not rejected and only the already-current terms and privacy rows are recorded if the checkbox was accepted. Does not hide or delete existing account data and does not change Stripe or fee flags.';

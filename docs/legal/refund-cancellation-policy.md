@@ -4,6 +4,8 @@
 
 Effective date: [OWNER DECISION: the calendar date this policy takes effect]
 
+PPP does not require acceptance of this draft while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their data, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete an account or a payment record.
+
 ## Plain-language summary
 
 - The $9.99 account activation is a one-time fee for customers and contractors. The website says it is non-refundable. It is not a monthly subscription.
