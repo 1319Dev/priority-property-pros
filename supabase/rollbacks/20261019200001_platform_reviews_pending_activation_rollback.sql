@@ -1,5 +1,8 @@
 -- Restores auto-approve on insert and the admin UPDATE (status) grant.
+-- Drops admin_moderation_step_up(). Does not restore PR #90 or PR #110 function bodies.
 -- Does not change existing platform_reviews rows, booking_reviews, or payments.
+
+DROP FUNCTION IF EXISTS public.admin_moderation_step_up();
 
 CREATE OR REPLACE FUNCTION public.protect_platform_review()
 RETURNS trigger

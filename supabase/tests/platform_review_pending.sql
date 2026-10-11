@@ -285,6 +285,116 @@ BEGIN
   END;
 END $$;
 
+-- Sacrificial row for delete composition with PR #90 (null uid) and signed-in non-admins.
+INSERT INTO public.profiles (id, signup_fee_status)
+VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'PAID')
+ON CONFLICT (id) DO UPDATE SET signup_fee_status = EXCLUDED.signup_fee_status;
+
+DO $$
+BEGIN
+  PERFORM set_config('test.uid', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', true);
+  EXECUTE 'SET LOCAL ROLE authenticated';
+  INSERT INTO public.platform_reviews (id, user_id, display_name, city, rating, body)
+  VALUES (
+    'ffffffff-ffff-ffff-ffff-ffffffffffff',
+    'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+    'Cascade',
+    'Conroe',
+    5,
+    'This row exists only so delete rules can be proved.'
+  );
+END $$;
+
+-- While PR #110's assert function is present and raising, admin moderation must not change the row.
+CREATE OR REPLACE FUNCTION public.assert_admin_sensitive_step_up()
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RAISE EXCEPTION 'admin step-up required' USING ERRCODE = 'P0001';
+END;
+$$;
+
+DO $$
+DECLARE
+  v_status text;
+BEGIN
+  PERFORM set_config('test.uid', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', true);
+  BEGIN
+    PERFORM public.admin_set_platform_review_status(
+      'cccccccc-cccc-cccc-cccc-cccccccccccc',
+      'APPROVED',
+      'Looks consistent with the completed job'
+    );
+    RAISE EXCEPTION 'admin rpc ran without step-up';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT ILIKE '%admin step-up required%' THEN
+        RAISE EXCEPTION 'unexpected step-up failure: %', SQLERRM;
+      END IF;
+  END;
+
+  SELECT status::text INTO v_status
+  FROM public.platform_reviews
+  WHERE id = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+  IF v_status IS DISTINCT FROM 'PENDING' THEN
+    RAISE EXCEPTION 'step-up failure changed the review to %', v_status;
+  END IF;
+
+  BEGIN
+    DELETE FROM public.platform_reviews
+    WHERE id = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+    RAISE EXCEPTION 'admin delete ran without step-up';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT ILIKE '%admin step-up required%' THEN
+        RAISE EXCEPTION 'unexpected delete step-up failure: %', SQLERRM;
+      END IF;
+  END;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.platform_reviews WHERE id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+  ) THEN
+    RAISE EXCEPTION 'step-up failure deleted the review';
+  END IF;
+END $$;
+
+DROP FUNCTION public.assert_admin_sensitive_step_up();
+
+-- Signed-in non-admins cannot delete. A null uid can, matching account-deletion cascade.
+DO $$
+BEGIN
+  PERFORM set_config('test.uid', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', true);
+  BEGIN
+    DELETE FROM public.platform_reviews
+    WHERE id = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+    RAISE EXCEPTION 'signed-in non-admin was allowed to delete';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT ILIKE '%only an admin can delete%' THEN
+        RAISE EXCEPTION 'unexpected non-admin delete denial: %', SQLERRM;
+      END IF;
+  END;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.platform_reviews WHERE id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+  ) THEN
+    RAISE EXCEPTION 'non-admin delete removed the row';
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  PERFORM set_config('test.uid', '', true);
+  DELETE FROM public.platform_reviews
+  WHERE id = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+  IF EXISTS (
+    SELECT 1 FROM public.platform_reviews WHERE id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+  ) THEN
+    RAISE EXCEPTION 'null-uid delete did not remove the row';
+  END IF;
+END $$;
+
 -- Reject without a usable reason fails. Reject with a reason is audited.
 DO $$
 BEGIN

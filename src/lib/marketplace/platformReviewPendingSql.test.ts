@@ -27,8 +27,13 @@ describe("platform review pending migration", () => {
     expect(migration).toMatch(/platform_review\.rejected/);
     expect(migration).toMatch(/a reason between 3 and 500 characters is required/);
     expect(migration).toMatch(/SET search_path = public/);
+    expect(migration).toMatch(/to_regprocedure\('public\.assert_admin_sensitive_step_up\(\)'\)/);
+    expect(migration).toMatch(/EXECUTE 'SELECT public\.assert_admin_sensitive_step_up\(\)'/);
+    expect(migration).toMatch(/PERFORM public\.admin_moderation_step_up\(\)/);
+    expect(migration).toMatch(/IF auth\.uid\(\) IS NULL THEN/);
     expect(migration).not.toMatch(/stripe|payment_intent|signup_fee_charges/i);
     expect(rollback).toMatch(/NEW\.status := 'APPROVED'/);
+    expect(rollback).toMatch(/DROP FUNCTION IF EXISTS public\.admin_moderation_step_up\(\)/);
     expect(rollback).toMatch(/GRANT UPDATE \(status\) ON TABLE public\.platform_reviews TO authenticated/);
     expect(rollback).not.toMatch(/DROP TABLE/i);
     expect(rollback).not.toMatch(/UPDATE public\.platform_reviews\s+SET status = 'APPROVED'/i);
@@ -44,5 +49,9 @@ describe("platform review pending migration", () => {
     expect(proof).toMatch(/short reject reason was accepted/);
     expect(proof).toMatch(/reject was not audited/);
     expect(proof).toMatch(/direct status update was allowed/);
+    expect(proof).toMatch(/admin step-up required/);
+    expect(proof).toMatch(/step-up failure changed the review/);
+    expect(proof).toMatch(/signed-in non-admin was allowed to delete/);
+    expect(proof).toMatch(/null-uid delete did not remove the row/);
   });
 });
