@@ -122,7 +122,7 @@ export function unauthorizedPayloadLeaksPrivateContact(
 }
 
 export function privateContactLockedCopy(): string {
-  return "Project contact is locked. Street, phone, and email stay hidden until this contractor has a paid $4.99 connection entitlement or an admin unlocks this specific record.";
+  return "Project contact is locked. A paid $4.99 connection entitlement opens messaging only. Street, phone, and email stay hidden until the customer shares them with this contractor, or an admin unlocks this specific record.";
 }
 
 /** Admin grant panel. Reads the access row. Does not grant or revoke. */
@@ -143,7 +143,7 @@ export function adminContactAccessIntro(
 }
 
 export function privateContactHintCopy(): string {
-  return "Stays private until a paid $4.99 connection entitlement or an admin unlock.";
+  return "Stays private until the customer shares it with a contractor who has a paid $4.99 connection entitlement, or an admin unlock.";
 }
 
 export function formatContactAccessState(

@@ -20,36 +20,43 @@ export const CONNECTION_COMPLETED_STATUSES: ProjectConnectionStatus[] = ["PAID",
 
 export const CONNECT_BUTTON_LABEL = "Connect — $4.99";
 
+/**
+ * The one sentence every Connect entry point shows before payment.
+ * $4.99 opens messaging. The customer alone decides when contact is shared.
+ */
+export const CONNECT_WHAT_YOU_GET_COPY =
+  "$4.99 opens messaging with this customer on this project. The customer decides if and when to share their phone, email, and exact address. Paying does not reveal them, and it does not guarantee a hire.";
+
 export const CONNECTED_LABEL = "Connected";
 
 export const CONNECTED_BODY =
   `Your $4.99 connection is active for this project only. ${CONNECTION_FEE_NON_REFUNDABLE} Phone, email, and street stay hidden until the customer shares them.`;
 
 export const CHECKOUT_PENDING_COPY =
-  `Checkout is in progress. Contact stays locked until the server verifies the $4.99 payment. ${CONNECTION_FEE_NON_REFUNDABLE}`;
+  `Checkout is in progress. Messaging opens after the server verifies the $4.99 payment. The customer then decides if and when to share phone, email, and exact address. ${CONNECTION_FEE_NON_REFUNDABLE}`;
 
 export const CONNECT_CONFIRM_TITLE = "Connect with this customer for $4.99?";
 
 export const CONNECT_CONFIRM_BODY =
-  "This purchases connection access to this customer. It does not guarantee a hire. Project payment is made directly between the homeowner or business and the contractor. PPP takes no percentage of the job.";
+  "This opens messaging with this customer on this project. The customer decides if and when to share their phone, email, and exact address. Paying does not reveal them. It does not guarantee a hire. Project payment is made directly between the homeowner or business and the contractor. PPP takes no percentage of the job.";
 
 export const CONNECT_CHECKOUT_CONFIRM_EXTRA =
-  "If checkout is available you will continue to a $4.99 payment page. Contact stays locked until the server verifies that payment. Returning from checkout does not unlock contact by itself.";
+  "If checkout is available you will continue to a $4.99 payment page. Messaging opens only after the server verifies that payment. Returning from checkout does not open it by itself.";
 
 export const CONNECT_PAYMENTS_OFF_COPY =
   "Connection requested. $4.99 checkout is temporarily unavailable. Contact stays locked until a verified $4.99 payment. Clicking Connect does not unlock contact.";
 
-/** Jobs list helper. Contact stays locked until the $4.99 connection is verified. */
+/** Jobs list helper. $4.99 opens messaging; the customer controls when contact is shared. */
 export const JOBS_STREET_HELPER_COPY =
-  "You'll see the approximate location only. The exact address stays hidden until you Connect for $4.99. Open the job to see details and Connect, or pass if it's not a fit so the job can go to another pro.";
+  "You'll see the approximate location only. Connecting for $4.99 opens messaging. The customer decides if and when to share the exact address, phone, and email. Open the job to see details and Connect, or pass if it's not a fit so the job can go to another pro.";
 
 export const OPPORTUNITY_CONTACT_LOCKED_COPY =
-  "Exact street, phone, email, name, and precise coordinates stay hidden until a paid $4.99 connection entitlement or an admin unlock. Clicking Connect does not unlock contact.";
+  "Exact street, phone, email, name, and precise coordinates stay hidden. Connecting for $4.99 opens messaging with the customer. The customer decides if and when to share their contact and exact address.";
 
-export const CONNECT_REDIRECTING_COPY = "Continuing to $4.99 checkout. Contact stays locked until payment is verified.";
+export const CONNECT_REDIRECTING_COPY = "Continuing to $4.99 checkout. Messaging opens after payment is verified. The customer decides when to share contact.";
 
 export const CONNECT_DOES_NOT_UNLOCK_COPY =
-  "Clicking Connect does not unlock name, phone, email, or exact street. The success page cannot grant access.";
+  "Clicking Connect or returning from checkout does not reveal the customer's name, phone, email, or exact street. After a verified $4.99 payment you can message the customer, and the customer decides if and when to share contact.";
 
 export const CONNECTION_FEE_NO_GUARANTEE = CONNECTION_FEE_NO_HIRE_GUARANTEE;
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ContractorAvatar } from "../../../components/media/ContractorAvatar";
 import { ContactSharePanel } from "../../../components/marketplace/ContactSharePanel";
 import { CustomerEstimateHomeCards } from "../../../components/marketplace/CustomerEstimateHomeCards";
@@ -73,6 +73,7 @@ import {
   customerLifecycleLabel,
   customerLifecycleState,
   customerNextActions,
+  dashboardCardActions,
   customerVisibleProjects,
   type CustomerDashboardTab,
 } from "../../../lib/marketplace/statusLabels";
@@ -152,10 +153,10 @@ export function CustomerHomePage() {
           return (
             <li key={project.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
               <HumanStatus label={customerLifecycleLabel(project.status, booking?.status ?? null)} />
-              <p className="mt-2 font-semibold text-forest-800">{project.title || "Project"}</p>
+              <ProjectCardTitle projectId={project.id} title={project.title} />
               <JobReference value={project.reference_number} />
               <div className="mt-3 flex min-w-0 flex-col gap-2 sm:flex-row">
-                {actions.slice(0, 2).map((action) => (
+                {dashboardCardActions(actions).map((action) => (
                   <ButtonLink key={action.label} to={action.to} variant={action.variant ?? "primary"} size="sm" className="w-full sm:w-auto">
                     {action.label}
                   </ButtonLink>
@@ -166,6 +167,17 @@ export function CustomerHomePage() {
         })}
       </ul>
     </div>
+  );
+}
+
+/** Project title on a dashboard or My Projects card. It always opens the project page. */
+function ProjectCardTitle({ projectId, title }: { projectId: string; title?: string | null }) {
+  return (
+    <p className="mt-2 font-semibold text-forest-800">
+      <Link to={`/app/customer/projects/${projectId}`} className="underline-offset-4 hover:underline focus-visible:underline">
+        {title || "Project"}
+      </Link>
+    </p>
   );
 }
 
@@ -267,7 +279,7 @@ export function CustomerProjectsPage() {
             return (
               <li key={project.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
                 <HumanStatus label={customerLifecycleLabel(project.status, booking?.status ?? null)} />
-                <p className="mt-2 font-semibold text-forest-800">{project.title || "Project"}</p>
+                <ProjectCardTitle projectId={project.id} title={project.title} />
                 <JobReference value={project.reference_number} />
                 {state === "cancelled" ? <p className="mt-1 text-sm text-ink-500">Cancelled</p> : null}
                 <div className="mt-3 flex min-w-0 flex-col gap-2">

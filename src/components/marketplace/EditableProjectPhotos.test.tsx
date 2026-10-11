@@ -12,6 +12,7 @@ describe("EditableProjectPhotos", () => {
     const onAdd = vi.fn();
     const { rerender } = render(<EditableProjectPhotos photos={[photo]} busy="upload" onRemove={onRemove} onAdd={onAdd} />);
     expect(screen.getByRole("status")).toHaveTextContent("Uploading…");
+    expect(screen.getByRole("img", { name: "Project photo" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Remove" })).toBeDisabled();
     expect(screen.getByLabelText("Add a photo")).toBeDisabled();
 
