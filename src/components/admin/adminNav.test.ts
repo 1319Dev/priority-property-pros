@@ -13,6 +13,7 @@ describe("admin nav config", () => {
   it("only lists sections that have a route in the admin bundle", () => {
     expect(ADMIN_NAV.map((item) => item.to)).toEqual([
       "/app/admin",
+      "/app/admin/homeowners",
       "/app/admin/approvals",
       "/app/admin/reviews",
       "/app/admin/bookings",
@@ -27,7 +28,7 @@ describe("admin nav config", () => {
     expect(routes).not.toMatch(/path="people"/);
     expect(routes).not.toMatch(/path="audit"/);
     expect(ADMIN_NAV_GROUPS).toEqual(["Overview", "People", "Marketplace", "Money", "Trust", "Account"]);
-    expect(adminNavByGroup("People")).toEqual([]);
+    expect(adminNavByGroup("People").map((item) => item.id)).toEqual(["homeowners"]);
     expect(adminNavByGroup("Money")).toEqual([]);
   });
 
