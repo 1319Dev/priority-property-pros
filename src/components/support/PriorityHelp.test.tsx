@@ -39,13 +39,15 @@ describe("Priority Help widget", () => {
     const user = userEvent.setup();
     const transport: HelpTransport = { request: vi.fn(async () => idle()) };
     renderHelp(<PriorityHelp transport={transport} />);
-    const launcher = screen.getByRole("button", { name: "Priority Help" });
+    const launcher = screen.getByRole("button", { name: "Priority Help AI assistant" });
     expect(launcher.className).toContain("bottom-[calc(6.25rem+env(safe-area-inset-bottom))]");
     expect(launcher.className).toContain("lg:bottom-6");
     expect(launcher.className).not.toContain("z-40");
 
     await user.click(launcher);
-    const dialog = await screen.findByRole("dialog", { name: "Priority Help" });
+    const dialog = await screen.findByRole("dialog", { name: "Priority Help AI assistant" });
+    expect(dialog).toHaveTextContent(/this chat is saved for support/i);
+    expect(dialog).toHaveTextContent(/don't send a card number or password/i);
     expect(dialog.className).toContain("motion-reduce:transition-none");
     expect(dialog.className).toContain("bottom-[calc(10.75rem+env(safe-area-inset-bottom))]");
     await waitFor(() => expect(screen.getByRole("textbox", { name: "Your message" })).toHaveFocus());
@@ -57,9 +59,9 @@ describe("Priority Help widget", () => {
     const user = userEvent.setup();
     const transport: HelpTransport = { request: vi.fn(async () => idle()) };
     renderHelp(<PriorityHelp transport={transport} />);
-    const launcher = screen.getByRole("button", { name: "Priority Help" });
+    const launcher = screen.getByRole("button", { name: "Priority Help AI assistant" });
     await user.click(launcher);
-    await screen.findByRole("dialog", { name: "Priority Help" });
+    await screen.findByRole("dialog", { name: "Priority Help AI assistant" });
     const talk = await screen.findByRole("button", { name: "Talk to Support" });
     await waitFor(() => expect(talk).toBeEnabled());
     talk.focus();
@@ -86,7 +88,7 @@ describe("Priority Help widget", () => {
       }),
     };
     renderHelp(<PriorityHelp transport={transport} />);
-    await user.click(screen.getByRole("button", { name: "Priority Help" }));
+    await user.click(screen.getByRole("button", { name: "Priority Help AI assistant" }));
     const box = await screen.findByRole("textbox", { name: "Your message" });
     await user.type(box, "What does activation cost?");
     await user.click(await screen.findByRole("button", { name: "Send" }));
@@ -122,7 +124,7 @@ describe("Priority Help widget", () => {
       }),
     };
     renderHelp(<PriorityHelp transport={transport} />);
-    await user.click(screen.getByRole("button", { name: "Priority Help" }));
+    await user.click(screen.getByRole("button", { name: "Priority Help AI assistant" }));
     expect(await screen.findByRole("status")).toHaveTextContent(/offline/i);
     expect(screen.getByRole("status")).not.toHaveTextContent(/your message is saved/i);
     expect(await screen.findByText(/Nobody is in this chat yet/i)).toBeInTheDocument();
@@ -137,7 +139,7 @@ describe("Priority Help widget", () => {
   it("hides the launcher on the admin layout and mounts it on public and dashboard shells", () => {
     const transport: HelpTransport = { request: vi.fn(async () => idle()) };
     const { unmount } = renderHelp(<PriorityHelp transport={transport} />, "/app/admin/approvals");
-    expect(screen.queryByRole("button", { name: "Priority Help" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Priority Help AI assistant" })).not.toBeInTheDocument();
     unmount();
 
     renderHelp(
@@ -145,7 +147,7 @@ describe("Priority Help widget", () => {
         <AppShell />
       </AuthContext.Provider>,
     );
-    expect(screen.getByRole("button", { name: "Priority Help" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Priority Help AI assistant" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "App" })).toBeInTheDocument();
   });
 
@@ -157,7 +159,7 @@ describe("Priority Help widget", () => {
         </MemoryRouter>
       </AuthContext.Provider>,
     );
-    expect(screen.getByRole("button", { name: "Priority Help" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Priority Help AI assistant" })).toBeInTheDocument();
     expect(screen.getAllByRole("navigation", { name: "Dashboard" }).length).toBeGreaterThan(0);
 
     const request = vi.fn(async () => idle({ messages: [{ id: "old", role: "assistant", body: "Activation is $9.99.", createdAt: "" }] }));
@@ -175,7 +177,7 @@ describe("Priority Help widget", () => {
   it("keeps the honeypot out of the tab order", async () => {
     const user = userEvent.setup();
     renderHelp(<PriorityHelp transport={{ request: vi.fn(async () => idle()) }} />);
-    await user.click(screen.getByRole("button", { name: "Priority Help" }));
+    await user.click(screen.getByRole("button", { name: "Priority Help AI assistant" }));
     await screen.findByRole("dialog");
     const trap = document.querySelector('input[name="company_website"]');
     expect(trap).toHaveAttribute("aria-hidden", "true");

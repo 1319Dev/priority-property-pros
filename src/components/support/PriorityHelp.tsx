@@ -239,10 +239,14 @@ export function PriorityHelp({
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         aria-haspopup="dialog"
+        aria-label="Priority Help AI assistant"
         onClick={() => setOpen((value) => !value)}
       >
         <BrandMark decorative className="h-7 w-7 shrink-0" />
         <span className="font-display text-base font-semibold tracking-tight">Priority Help</span>
+        <span className="rounded-full bg-gold-400/25 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-gold-300">
+          AI
+        </span>
       </button>
       {open ? (
         <div
@@ -257,8 +261,11 @@ export function PriorityHelp({
             <div className="flex min-w-0 items-center gap-2">
               <BrandMark decorative className="h-8 w-8 shrink-0" />
               <div className="min-w-0">
-                <h2 id={titleId} className="truncate font-display text-lg font-semibold">
+                <h2 id={titleId} className="font-display text-lg font-semibold leading-tight">
                   Priority Help
+                  <span className="mt-0.5 block font-sans text-xs font-semibold uppercase tracking-[0.14em] text-gold-300">
+                    AI assistant
+                  </span>
                 </h2>
                 {reference ? <p className="text-xs text-gold-300">Reference {reference}</p> : null}
               </div>
@@ -276,6 +283,10 @@ export function PriorityHelp({
           </div>
           <p role="status" className="border-b border-forest-800/10 bg-cream-100 px-4 py-2 text-sm text-forest-800">
             {availabilityNotice(availability, humanJoined, Boolean(reference) || messages.some((message) => message.role === "customer"))}
+          </p>
+          <p className="border-b border-forest-800/10 px-4 py-2 text-xs leading-relaxed text-ink-600">
+            This chat is saved for support. Don&apos;t send a card number or password. AI answers can be wrong. A person
+            joins only after you choose Talk to Support and someone takes the conversation.
           </p>
           <div role="log" aria-live="polite" aria-relevant="additions" aria-label="Priority Help messages" className="min-h-24 flex-1 space-y-3 overflow-y-auto px-4 py-3">
             {messages.length === 0 ? (
@@ -365,7 +376,7 @@ function MessageBubble({ message }: { message: HelpMessage }) {
     return <p className="text-center text-xs text-ink-500">{safeSupportText(message.role, message.body)}</p>;
   }
   const mine = message.role === "customer";
-  const label = mine ? "You" : message.role === "admin" ? "Support" : "Priority Help";
+  const label = mine ? "You" : message.role === "admin" ? "Support" : "AI";
   return (
     <div className={cn("flex", mine ? "justify-end" : "justify-start")}>
       <div
