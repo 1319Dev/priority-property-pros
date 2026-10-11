@@ -395,8 +395,9 @@ describe("project messages UI", () => {
     // Shared: no "does not show" line above the card, and no "customer chooses" hint.
     expect(screen.queryByText(/contact box/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/this thread does not show phone, email, or street/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/customer chooses when to share contact/i)).not.toBeInTheDocument();
+    // The composer hint updates in an effect after the contact card loads; wait for it before checking.
     expect(await screen.findByText(/customer already shared contact with you/i)).toBeInTheDocument();
+    expect(screen.queryByText(/customer chooses when to share contact/i)).not.toBeInTheDocument();
     expect(screen.queryByText("9367188184")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /share my contact/i })).not.toBeInTheDocument();
   });

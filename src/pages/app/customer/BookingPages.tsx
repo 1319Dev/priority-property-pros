@@ -25,9 +25,11 @@ import {
   fetchProject,
   fetchPublicContractor,
   proposeChangeOrder,
+  reportBookingReview,
   respondChangeOrder,
   startBooking,
   submitBookingReview,
+  submitBookingReviewResponse,
   updateBookingReview,
   type RpcJson,
 } from "../../../lib/marketplace/api";
@@ -41,6 +43,7 @@ import { useToast } from "../../../hooks/useToast";
 import { ContactSharePanel } from "../../../components/marketplace/ContactSharePanel";
 import { BlockContractorControl } from "../../../components/marketplace/BlockContractorControl";
 import { HiredConfirmationCard, ProfileReviewForm } from "../../../components/marketplace/HiredConfirmation";
+import { BookingReviewPartySection } from "../../../components/marketplace/BookingReviewPartySection";
 
 function statusLabel(status: string) {
   return BOOKING_STATUS_LABELS[status as BookingStatus] ?? status.replaceAll("_", " ");
@@ -300,6 +303,12 @@ export function CustomerBookingDetailPage() {
       {reviewVisible ? null : (
         <BlockContractorControl contractorProfileId={booking.contractor_profile_id} bookingId={booking.id} />
       )}
+      <BookingReviewPartySection
+        role="customer"
+        reviews={reviews}
+        onReport={(reviewId, reason) => reportBookingReview(reviewId, reason).then(() => undefined)}
+        onRespond={(reviewId, body) => submitBookingReviewResponse(reviewId, body).then(() => reload())}
+      />
       <ProfileReviewForm
         role="customer"
         bookingStatus={booking.status}

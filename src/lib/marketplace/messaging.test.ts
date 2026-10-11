@@ -141,6 +141,15 @@ describe("message privacy", () => {
       body: "Monday works.",
       created_at: "2026-10-05T12:00:00Z",
     });
+    expect(
+      sanitizeProjectMessage({
+        id: "m2",
+        thread_id: "t1",
+        sender_profile_id: null,
+        body: "Monday works.",
+        created_at: "2026-10-05T12:00:00Z",
+      })?.sender_profile_id,
+    ).toBeNull();
   });
 
   it("keeps new-message notifications free of contact fields", () => {
@@ -234,6 +243,17 @@ describe("message privacy", () => {
     const namedBodies = named.filter((item) => item.kind === "message").map((item) => item.body);
     expect(namedBodies).toEqual([EMPTY_MESSAGE_BUBBLE, "Plymate Property Maintenance"]);
     expect(named.find((item) => item.id === "blank")?.senderLabel).toBe("Plymate Property Maintenance");
+    const deleted = layoutThreadMessages({
+      viewerId: "me",
+      otherLabel: "Pat",
+      now,
+      messages: [{ id: "d", sender_profile_id: null, body: "Still here", created_at: "2026-10-08T12:03:00" }],
+    });
+    expect(deleted.find((item) => item.kind === "message")).toMatchObject({
+      senderLabel: "Deleted account",
+      mine: false,
+      body: "Still here",
+    });
   });
 
   it("tells people a thread opens after a pro connects, not from activation or Hired", () => {
