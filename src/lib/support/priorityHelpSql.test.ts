@@ -79,6 +79,11 @@ describe("Priority Help migration contract", () => {
     expect(body).toMatch(/does not verify the contractor's work/);
     expect(body).toMatch(/does not resolve construction disputes/);
     expect(body).toMatch(/generally non-refundable once/);
+    expect(body).toMatch(/marks the fee paid, not when the checkout page succeeds/);
+    expect(body).toMatch(/unlocks that connection/);
+    expect(body).not.toMatch(/activation checkout succeeds/);
+    expect(body).not.toMatch(/Connect checkout succeeds/);
+    expect(body).not.toMatch(/that checkout succeeds/);
     expect(body).toMatch(/duplicate charge/);
     expect(body).toMatch(/erroneous charge/);
     expect(body).toMatch(/legally required refund/);

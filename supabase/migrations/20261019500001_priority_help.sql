@@ -1948,7 +1948,7 @@ Homeowners and contractors both create an account and confirm their email.
 
 A one-time account activation applies to homeowners and to contractors. The amount is the live signup fee (currently $9.99 when signup_fee_cents is 999 and signup_fee_enabled is on). It is charged once through Stripe Checkout. It is not a subscription and it is not a commission.
 
-The activation service is delivered when activation checkout succeeds. That purchase is the right to use the paid marketplace: a homeowner can post a project into matching, and a contractor can use the paid parts of the account. The assistant must quote the live signup_fee_cents value it was given, not a remembered number.
+The activation service is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds. That purchase is the right to use the paid marketplace: a homeowner can post a project into matching, and a contractor can use the paid parts of the account. The assistant must quote the live signup_fee_cents value it was given, not a remembered number.
 
 Once that service is delivered, the activation fee is generally non-refundable. This chat cannot see whether a specific person has paid, and it cannot mark an account paid.
   $md$,
@@ -1998,8 +1998,8 @@ There is no platform commission on the estimate. Any percentage shown in an old 
   $md$
 Two public fees exist. There is no subscription and no commission on the job.
 
-1. One-time account activation for homeowners and contractors. Live amount is signup_fee_cents (currently $9.99). The activation service is delivered when activation checkout succeeds.
-2. Contractor Connect, also called the contact unlock. Live amount is connection_fee_cents (currently $4.99). The contractor pays it to unlock contact on one project. The Connect service is delivered when Connect checkout succeeds and contact for that project is unlocked.
+1. One-time account activation for homeowners and contractors. Live amount is signup_fee_cents (currently $9.99). The activation service is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds.
+2. Contractor Connect, also called the contact unlock. Live amount is connection_fee_cents (currently $4.99). The contractor pays it to unlock contact on one project. The Connect service is delivered when the server verifies that payment and unlocks that connection.
 
 Job payments through the platform are not live. Priority Property Pros does not take a cut of the contractor's price. Workmanship payments are between the homeowner and the contractor.
 
@@ -2088,11 +2088,11 @@ FROM (
     ),
     (
       'No refund from chat',
-      'Activation and Connect fees are generally non-refundable once the service is delivered. I cannot start a refund from this chat. A duplicate charge, an erroneous charge, a legally required refund, or an approved exception has to be reviewed by a person. I will not promise a refund.'
+      'Activation is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds. Connect is delivered when the server verifies that payment and unlocks that connection. Activation and Connect fees are generally non-refundable once the service is delivered. I cannot start a refund from this chat. A duplicate charge, an erroneous charge, a legally required refund, or an approved exception has to be reviewed by a person. I will not promise a refund.'
     ),
     (
       'Pricing',
-      'Account activation is a one-time fee for homeowners and contractors. It is delivered when activation checkout succeeds. Connect is a one-time fee a contractor pays to unlock contact on a project. It is delivered when that checkout succeeds. There is no subscription and no commission. Both fees are generally non-refundable once delivered. I will confirm the live amounts in settings before I quote them.'
+      'Account activation is a one-time fee for homeowners and contractors. It is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds. Connect is a one-time fee a contractor pays to unlock contact on a project. It is delivered when the server verifies that payment and unlocks that connection. There is no subscription and no commission. Both fees are generally non-refundable once delivered. I will confirm the live amounts in settings before I quote them.'
     ),
     (
       'Complaint report',

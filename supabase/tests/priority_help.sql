@@ -634,6 +634,25 @@ SELECT public._ph_ok(
   AND EXISTS (
     SELECT 1 FROM public.support_kb_articles
     WHERE status = 'PUBLISHED'
+      AND body_md ILIKE '%marks the fee paid, not when the checkout page succeeds%'
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.support_kb_articles
+    WHERE status = 'PUBLISHED' AND body_md ILIKE '%unlocks that connection%'
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM public.support_kb_articles
+    WHERE body_md ILIKE '%activation checkout succeeds%'
+       OR body_md ILIKE '%Connect checkout succeeds%'
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM public.support_canned_responses
+    WHERE body_md ILIKE '%activation checkout succeeds%'
+       OR body_md ILIKE '%that checkout succeeds%'
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.support_kb_articles
+    WHERE status = 'PUBLISHED'
       AND body_md ILIKE '%duplicate charge%'
       AND body_md ILIKE '%erroneous charge%'
       AND body_md ILIKE '%legally required refund%'
