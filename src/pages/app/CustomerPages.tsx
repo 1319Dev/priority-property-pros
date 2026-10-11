@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChangePasswordCard } from "../../components/account/ChangePasswordCard";
 import { DeleteAccountDialog } from "../../components/account/DeleteAccountDialog";
@@ -15,7 +15,8 @@ import { FormError } from "../../lib/auth/AuthCard";
 import { getSupabaseClient } from "../../lib/supabase/client";
 import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 import { CUSTOMER_ACTIVATION_NOTE, CUSTOMER_PAYS_DIRECTLY } from "../../lib/marketplace/customerCopy";
-import { accountRoleNote, activationStatusLine } from "../../lib/marketplace/contractorPolish";
+import { accountRoleNote } from "../../lib/marketplace/contractorPolish";
+import { accountActivationText, fetchMyPaidActivationAt } from "../../lib/billing/proBilling";
 import { SIGNUP_FEE_ACTIVATE_PATH } from "../../lib/signupFee/constants";
 import { accountStatusLabel, accountTypeLabel } from "../../lib/marketplace/statusLabels";
 import { accountSettingsPath } from "../../lib/auth/roles";
@@ -45,9 +46,26 @@ export function AccountPage() {
   const canChangeEmail = account_type === "CUSTOMER" || account_type === "CONTRACTOR";
   const pendingEmail = user?.new_email?.trim() || null;
   const hidePricing = useHidePlatformPricing();
-  const activation = activationStatusLine({
+  const [paidChargeAt, setPaidChargeAt] = useState<string | null>(null);
+  useEffect(() => {
+    if (!profile?.id) return;
+    let stop = false;
+    void fetchMyPaidActivationAt(profile.id)
+      .then((at) => {
+        if (!stop) setPaidChargeAt(at);
+      })
+      .catch(() => undefined);
+    return () => {
+      stop = true;
+    };
+  }, [profile?.id]);
+  // The profile flag alone said "Not required" for waived accounts; say what it means,
+  // and let a live $9.99 charge on file win over the flag.
+  const activation = accountActivationText({
+    accountType: account_type,
     status: profile?.signup_fee_status,
     paidAt: profile?.signup_fee_paid_at,
+    paidChargeAt,
   });
 
   return (
@@ -103,7 +121,7 @@ export function AccountPage() {
         <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
           <dt className="font-semibold uppercase tracking-[0.14em] text-gold-700">Activation</dt>
           <dd className="min-w-0 break-words text-ink-900">
-            {activation.text.replace(/^Activation: /, "")}
+            {activation.text}
             {activation.showActivate ? (
               <>
                 {" "}

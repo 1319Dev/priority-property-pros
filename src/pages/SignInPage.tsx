@@ -4,6 +4,7 @@ import { BrandLoader } from "../components/brand/BrandLoader";
 import { Button } from "../components/ui/Button";
 import { TextInput } from "../components/ui/Input";
 import { dashboardPath } from "../lib/auth/publicEntry";
+import { roleReturnPath } from "../lib/auth/roles";
 import { AuthCard, FormError } from "../lib/auth/AuthCard";
 import { safeReturnPath } from "../lib/auth/sessionReturn";
 import { signInFieldErrors } from "../lib/auth/signInError";
@@ -27,14 +28,13 @@ export function SignInPage() {
 
   if (loading) return <BrandLoader layout="page" label="Loading…" />;
   if (user && account_type) {
-    const next =
-      from ||
-      dashboardPath({
-        accountType: account_type,
-        accountStatus: account_status,
-        signupFeeEnabled: signup_fee_enabled,
-        signupFeeStatus: signup_fee_status,
-      });
+    const home = dashboardPath({
+      accountType: account_type,
+      accountStatus: account_status,
+      signupFeeEnabled: signup_fee_enabled,
+      signupFeeStatus: signup_fee_status,
+    });
+    const next = roleReturnPath(from, account_type, home);
     return <Navigate to={next} replace />;
   }
 
