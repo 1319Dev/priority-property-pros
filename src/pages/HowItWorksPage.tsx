@@ -8,10 +8,10 @@ import { JOB_PAYMENT_PLAIN } from "../data/pricing";
 import { useHidePlatformPricing } from "../lib/auth/platformPricing";
 
 const CONNECT_WITH_FEE =
-  "Up to three local independents can connect for $4.99 each. We invite the next matched pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited. Connecting does not guarantee a hire. The $4.99 Connection Fee is generally non-refundable once delivered, except duplicate or erroneous charges, refunds required by law, or approved exceptions.";
+  "Up to three local independents can connect for $4.99 each. We invite matched pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited. Connecting does not guarantee a hire. The $4.99 Connection Fee is non-refundable.";
 
 const CONNECT_WITHOUT_FEE =
-  "Up to three local independents can connect. We invite the next matched pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited.";
+  "Up to three local independents can connect. We invite matched pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited.";
 
 const steps = [
   {

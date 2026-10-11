@@ -5,7 +5,7 @@ import { JOB_PAYMENT_PLAIN } from "../../data/pricing";
 import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 
 const CONNECT_STEP_WITH_FEE =
-  "Independent contractors browse anonymized opportunities. Up to three can connect for $4.99 each. Connecting does not guarantee a hire. The $4.99 Connection Fee is generally non-refundable once delivered, except duplicate or erroneous charges, refunds required by law, or approved exceptions.";
+  "Independent contractors browse anonymized opportunities. Up to three can connect for $4.99 each. Connecting does not guarantee a hire. The $4.99 Connection Fee is non-refundable.";
 
 const CONNECT_STEP_WITHOUT_FEE =
   "Independent contractors browse anonymized opportunities. Up to three can connect. You choose who to hire.";

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { COMPANY_NAME, PRODUCT_NAME, SUPPORT_EMAIL } from "../../data/brand";
+import { COMPANY_NAME, PRODUCT_NAME } from "../../data/brand";
 import { FIND_A_PRO_NAV_LABEL, FIND_A_PRO_PATH } from "../../lib/marketplace/findAPro";
 import { SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
 import { authAwarePostPath, dashboardPath, showContractorSignup } from "../../lib/auth/publicEntry";
@@ -41,11 +41,6 @@ export function Footer() {
             {` `}
             {COMPANY_NAME} is not the contractor, not a franchise, and not affiliated with Angi or Thumbtack.
             {hidePricing ? "" : ` ${SIGNUP_FEE_PUBLIC_NOTE}`}
-          </p>
-          <p className="mt-4">
-            <a className="text-sm font-semibold text-gold-300 underline" href={`mailto:${SUPPORT_EMAIL}`}>
-              {SUPPORT_EMAIL}
-            </a>
           </p>
         </div>
         <nav aria-label="Footer">

@@ -8,7 +8,7 @@ import { useAuth } from "../lib/auth/useAuth";
 import { CONTRACTOR_CTA, CUSTOMER_CTA } from "../data/brand";
 import {
   CONNECTION_FEE,
-  CONNECTION_FEE_NO_HIRE_PLAIN,
+  CONNECTION_FEE_NO_HIRE_GUARANTEE,
   CONNECTION_FEE_PER_LABEL,
   CONTRACTOR_SIGNUP_HEADLINE,
   HOMEOWNER_BUSINESS_HEADING,
@@ -21,9 +21,12 @@ import {
   PRICING_PRIMARY,
   PRICING_SECONDARY,
   PRO_PRICING_SUMMARY,
+  PLATFORM_FEES_NON_REFUNDABLE,
   SIGNUP_FEE,
+  SIGNUP_FEE_NON_REFUNDABLE,
+  SIGNUP_FEE_NOT_MONTHLY,
   SIGNUP_FEE_ONE_TIME_LABEL,
-  SIGNUP_FEE_ONE_TIME_PLAIN,
+  SIGNUP_FEE_PUBLIC_NOTE,
 } from "../data/pricing";
 
 export function PricingPage() {
@@ -66,7 +69,8 @@ export function PricingPage() {
             <p className="mt-1 text-lg font-semibold uppercase tracking-[0.08em] text-gold-300">
               {SIGNUP_FEE_ONE_TIME_LABEL}
             </p>
-            <p className="mt-3 text-sm leading-relaxed text-cream-200">{SIGNUP_FEE_ONE_TIME_PLAIN}</p>
+            <p className="mt-3 text-sm leading-relaxed text-cream-200">{SIGNUP_FEE_NOT_MONTHLY}</p>
+            <p className="mt-2 text-sm font-semibold text-gold-300">{SIGNUP_FEE_NON_REFUNDABLE}</p>
           </article>
           <article className="rounded-3xl border border-forest-800/15 bg-cream-50 px-5 py-6">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">
@@ -79,7 +83,7 @@ export function PricingPage() {
               {CONNECTION_FEE_PER_LABEL}
             </p>
             <p className="mt-3 text-sm leading-relaxed text-ink-700">{PRICING_PRIMARY}</p>
-            <p className="mt-2 text-sm leading-relaxed text-ink-700">{CONNECTION_FEE_NO_HIRE_PLAIN}</p>
+            <p className="mt-2 text-sm leading-relaxed text-ink-700">{CONNECTION_FEE_NO_HIRE_GUARANTEE}</p>
           </article>
         </div>
 
@@ -119,10 +123,11 @@ export function PricingPage() {
             {CONTRACTOR_CTA}
           </ContractorEntryLink>
         </div>
-        <p className="mt-4 text-xs leading-relaxed text-ink-500">
+        <p className="mt-4 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
+        <p className="mt-2 text-xs leading-relaxed text-ink-500">
           PPP is a technology marketplace that facilitates connections. PPP does not employ contractors, perform the
           work, guarantee hiring or workmanship, process project payments, or take a percentage of project payment
-          under this model.
+          under this model. {PLATFORM_FEES_NON_REFUNDABLE}
         </p>
       </Container>
     </section>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { projectPhotoAlt } from "../../lib/marketplace/projectPhotoAlt";
 
 export type GalleryPhoto = { id: string; url: string };
 
@@ -20,15 +21,15 @@ export function ProjectPhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
       <h2 className="font-display text-2xl text-forest-800">Photos</h2>
       {photos.length === 0 ? <p className="text-sm text-ink-500">No photos yet.</p> : null}
       <ul className="grid grid-cols-2 gap-2">
-        {photos.map((photo) => (
+        {photos.map((photo, index) => (
           <li key={photo.id}>
             <button
               type="button"
               className="block w-full overflow-hidden rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-800"
-              aria-label="Enlarge photo"
+              aria-label={`Enlarge ${projectPhotoAlt(index, photos.length).toLowerCase()}`}
               onClick={() => setOpenId(photo.id)}
             >
-              <img src={photo.url} alt="" className="h-28 w-full object-cover sm:h-36" />
+              <img src={photo.url} alt={projectPhotoAlt(index, photos.length)} className="h-28 w-full object-cover sm:h-36" />
             </button>
           </li>
         ))}
@@ -48,7 +49,10 @@ export function ProjectPhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
           >
             Close
           </button>
-          <img src={open.url} alt="Project photo" className="max-h-[calc(100dvh-6rem)] w-full object-contain" />
+          <img
+            src={open.url}
+            alt={projectPhotoAlt(photos.indexOf(open), photos.length)}
+            className="max-h-[calc(100dvh-6rem)] w-full object-contain" />
         </div>
       ) : null}
     </section>

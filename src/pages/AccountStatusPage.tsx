@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/Button";
-import { SUPPORT_EMAIL } from "../data/brand";
+import { CONTACT_LINK_LABEL, CONTACT_PATH } from "../data/brand";
 import { AuthCard } from "../lib/auth/AuthCard";
 import { useAuth } from "../lib/auth/useAuth";
 
@@ -20,10 +20,10 @@ export function AccountStatusPage() {
       <p className="text-ink-700">{messages[status] ?? messages.PENDING}</p>
       <p className="text-sm text-ink-500">{user?.email}</p>
       <p className="text-sm text-ink-700">
-        Contact support at{" "}
-        <a className="font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
-          {SUPPORT_EMAIL}
-        </a>
+        Need help?{" "}
+        <Link className="font-semibold text-forest-800 underline" to={CONTACT_PATH}>
+          {CONTACT_LINK_LABEL}
+        </Link>
         .
       </p>
       <div className="flex flex-col gap-3 sm:flex-row">

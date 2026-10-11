@@ -13,7 +13,10 @@ import {
   desktopEnterSends,
   formatInboxTime,
   formatMessageDay,
+  EMPTY_MESSAGE_BUBBLE,
   inboxPreview,
+  messageBubbleText,
+  threadContactNotice,
   layoutThreadMessages,
   messageNotificationHref,
   newMessageFromLabel,
@@ -118,6 +121,8 @@ describe("message privacy", () => {
       business_name: "Secret LLC",
     });
     expect(thread?.project_title).toBe("Fence repair");
+    expect(thread?.unread_count).toBe(0);
+    expect(sanitizeThreadSummary({ ...thread, unread_count: "2" })?.unread_count).toBe(2);
     expect(JSON.stringify(thread)).not.toMatch(/404|pat@example|Oak Street|Secret LLC/);
 
     const message = sanitizeProjectMessage({
@@ -136,6 +141,15 @@ describe("message privacy", () => {
       body: "Monday works.",
       created_at: "2026-10-05T12:00:00Z",
     });
+    expect(
+      sanitizeProjectMessage({
+        id: "m2",
+        thread_id: "t1",
+        sender_profile_id: null,
+        body: "Monday works.",
+        created_at: "2026-10-05T12:00:00Z",
+      })?.sender_profile_id,
+    ).toBeNull();
   });
 
   it("keeps new-message notifications free of contact fields", () => {
@@ -166,7 +180,21 @@ describe("message privacy", () => {
     expect(formatMessageDay("2026-10-05T08:00:00", now)).toBe("Oct 5");
     expect(inboxPreview("See you Monday.", true)).toBe("You: See you Monday.");
     expect(inboxPreview("On my way.", false)).toBe("On my way.");
-    expect(inboxPreview("Christopher", false, "Christopher")).toBe("No message text yet");
+    expect(inboxPreview("Plymate Property Maintenance", false)).toBe(
+      "Plymate Property Maintenance",
+    );
+    expect(inboxPreview("Plymate Property Maintenance", true)).toBe(
+      "You: Plymate Property Maintenance",
+    );
+    expect(inboxPreview("   ", false)).toBe("No messages yet");
+    expect(messageBubbleText("Plymate Property Maintenance")).toBe("Plymate Property Maintenance");
+    expect(messageBubbleText("   ")).toBe(EMPTY_MESSAGE_BUBBLE);
+    expect(messageBubbleText("")).not.toBe("Plymate Property Maintenance");
+    expect(threadContactNotice(false)).toBe("This thread does not show phone, email, or street.");
+    expect(threadContactNotice(true)).toMatch(/contact box/i);
+    expect(threadContactNotice(true)).not.toMatch(/does not show phone/i);
+    expect(threadContactNotice(true, true)).toBeNull();
+    expect(threadContactNotice(false, true)).toBeNull();
     expect(deriveUnread({ lastMessageAt: "2026-10-08T12:00:00Z", lastSenderIsViewer: false, lastReadAt: null })).toBe(1);
     expect(deriveUnread({ lastMessageAt: "2026-10-08T12:00:00Z", lastSenderIsViewer: true, lastReadAt: null })).toBe(0);
     expect(
@@ -198,6 +226,34 @@ describe("message privacy", () => {
     });
     expect(laid.filter((item) => item.kind === "day").map((item) => item.label)).toEqual(["Today"]);
     expect(laid.filter((item) => item.kind === "message").map((item) => item.showLabel)).toEqual([true, false, true]);
+    const named = layoutThreadMessages({
+      viewerId: "me",
+      otherLabel: "Plymate Property Maintenance",
+      now,
+      messages: [
+        { id: "blank", sender_profile_id: "pro", body: "   ", created_at: "2026-10-08T12:00:00" },
+        {
+          id: "named",
+          sender_profile_id: "pro",
+          body: "Plymate Property Maintenance",
+          created_at: "2026-10-08T12:01:00",
+        },
+      ],
+    });
+    const namedBodies = named.filter((item) => item.kind === "message").map((item) => item.body);
+    expect(namedBodies).toEqual([EMPTY_MESSAGE_BUBBLE, "Plymate Property Maintenance"]);
+    expect(named.find((item) => item.id === "blank")?.senderLabel).toBe("Plymate Property Maintenance");
+    const deleted = layoutThreadMessages({
+      viewerId: "me",
+      otherLabel: "Pat",
+      now,
+      messages: [{ id: "d", sender_profile_id: null, body: "Still here", created_at: "2026-10-08T12:03:00" }],
+    });
+    expect(deleted.find((item) => item.kind === "message")).toMatchObject({
+      senderLabel: "Deleted account",
+      mine: false,
+      body: "Still here",
+    });
   });
 
   it("tells people a thread opens after a pro connects, not from activation or Hired", () => {

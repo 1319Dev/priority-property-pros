@@ -13,6 +13,8 @@ export type AuthContextValue = {
   account_status: AccountStatus | null;
   signup_fee_status: SignupFeeStatus | null;
   signup_fee_enabled: boolean;
+  /** Set when a previous session ended without the person choosing Sign out. */
+  sessionNotice?: "expired" | null;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (input: SignUpInput) => Promise<{ error: string | null; needsEmailConfirm: boolean }>;
   signOut: () => Promise<void>;
@@ -20,6 +22,8 @@ export type AuthContextValue = {
   requestPasswordReset: (email: string) => Promise<{ error: string | null; status?: number | null }>;
   updatePassword: (password: string) => Promise<{ error: string | null }>;
   resendVerification: (email: string) => Promise<{ error: string | null }>;
+  /** Present on the live provider. Optional so older test fixtures still type-check. */
+  requestEmailChange?: (nextEmail: string, currentPassword: string) => Promise<{ error: string | null }>;
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

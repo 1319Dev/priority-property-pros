@@ -1,5 +1,4 @@
 import { JOB_PAYMENT_PLAIN } from "../../data/pricing";
-import { SUPPORT_EMAIL } from "../../data/brand";
 
 /** One plain sentence. Use at most once on a customer page. */
 export const CUSTOMER_PAYS_DIRECTLY = JOB_PAYMENT_PLAIN;
@@ -41,14 +40,33 @@ export const SELECTED_BOOKING_COPY = "You selected this pro. Open the booking to
 
 export const HIRED_BOOKING_COPY = "You and this pro both confirmed Hired.";
 
+export const SELECTED_WAITING_PRO_COPY = "You confirmed Hired. Waiting for this pro to confirm in the booking.";
+
+export const SELECTED_HIRED_COPY = `${HIRED_BOOKING_COPY} Open the booking for job details.`;
+
+/** Copy on the selected estimate row. It follows the booking, so it never asks for a confirmation already given. */
+export function selectedHireCopy(booking?: {
+  status?: string | null;
+  customer_hired_at?: string | null;
+  contractor_hired_at?: string | null;
+} | null): string {
+  if (!booking) return SELECTED_BOOKING_COPY;
+  const both = Boolean(booking.customer_hired_at && booking.contractor_hired_at);
+  if (both || booking.status === "CONFIRMED" || booking.status === "IN_PROGRESS" || booking.status === "COMPLETED") {
+    return SELECTED_HIRED_COPY;
+  }
+  if (booking.customer_hired_at) return SELECTED_WAITING_PRO_COPY;
+  return SELECTED_BOOKING_COPY;
+}
+
 export const WIZARD_PERSIST_NOTE =
   "Nothing is saved until you hit Post. What you type stays in this browser tab. Photos need to be added again if you reload the page.";
 
 export const POST_BLOCKED_REASON = "Add a title, a project type, and a ZIP code before posting.";
 
-export const CUSTOMER_SUPPORT_LINE = `Questions? Email ${SUPPORT_EMAIL}`;
+export const CUSTOMER_SUPPORT_LINE = "Questions? Use the Contact us page.";
 
-export const APP_CONTACT_LINE = SUPPORT_EMAIL;
+export const APP_CONTACT_LINE = "Contact us";
 
 export const HIRE_AGAIN_INTRO =
   "Pros you have finished a job with. Post a new project when you want to work with them again.";

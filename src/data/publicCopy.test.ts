@@ -13,6 +13,10 @@ import {
   MONTHLY_PRICE,
   PLATFORM_FEES_NON_REFUNDABLE,
   PRICING_FAQ,
+  CONTRACTOR_ACCOUNT_DIFFERENCE,
+  CUSTOMER_ACCOUNT_DIFFERENCE,
+  SIGNUP_BEFORE_CHECKOUT,
+  SIGNUP_BEFORE_CHECKOUT_NOT_LIVE,
   SIGNUP_FEE_CHECKOUT_NOTE,
   SIGNUP_FEE_NON_REFUNDABLE,
   SIGNUP_FEE_NOT_MONTHLY,
@@ -104,21 +108,24 @@ describe("public pricing copy", () => {
   });
 
   it("states that signup and connection fees are non-refundable", () => {
-    expect(SIGNUP_FEE_NON_REFUNDABLE).toMatch(
-      /\$9\.99 account activation fee is generally non-refundable once delivered, except duplicate or erroneous charges, refunds required by law, or approved exceptions/i,
-    );
-    expect(CONNECTION_FEE_NON_REFUNDABLE).toMatch(
-      /\$4\.99 Connection Fee is generally non-refundable once delivered, except duplicate or erroneous charges, refunds required by law, or approved exceptions/i,
-    );
+    expect(SIGNUP_FEE_NON_REFUNDABLE).toMatch(/\$9\.99 account activation fee is non-refundable/i);
+    expect(CONNECTION_FEE_NON_REFUNDABLE).toMatch(/\$4\.99 Connection Fee is non-refundable/i);
     expect(PLATFORM_FEES_NON_REFUNDABLE).toMatch(/non-refundable/i);
     expect(CONNECTION_FEE_NO_HIRE_GUARANTEE).toMatch(/non-refundable/i);
     expect(SIGNUP_FEE_PUBLIC_NOTE).toMatch(/non-refundable/i);
     expect(SIGNUP_FEE_CHECKOUT_NOTE).toMatch(/non-refundable/i);
+    expect(SIGNUP_BEFORE_CHECKOUT).toMatch(/\$9\.99 account activation fee is non-refundable/i);
+    expect(SIGNUP_BEFORE_CHECKOUT).toMatch(/does not charge you/i);
+    expect(SIGNUP_BEFORE_CHECKOUT).toMatch(/\$4\.99 Connection Fee/);
+    expect(SIGNUP_BEFORE_CHECKOUT_NOT_LIVE).toMatch(/Checkout is not live yet/);
+    expect(SIGNUP_BEFORE_CHECKOUT_NOT_LIVE).toMatch(/non-refundable/i);
+    expect(CUSTOMER_ACCOUNT_DIFFERENCE).toMatch(/no PPP Connection Fee/i);
+    expect(CONTRACTOR_ACCOUNT_DIFFERENCE).toMatch(/\$4\.99 only when you choose to connect/);
+    expect(CONTRACTOR_ACCOUNT_DIFFERENCE).toMatch(/does not guarantee a hire/i);
     expect(SIGNUP_TERMS_ACCEPTANCE).toMatch(/non-refundable/i);
     const refundFaq = PRICING_FAQ.find((item) => /refundable/i.test(item.question));
     expect(refundFaq).toBeDefined();
-    expect(refundFaq?.answer).toMatch(/both fees are generally non-refundable once delivered/i);
-    expect(refundFaq?.answer).toMatch(/duplicate or erroneous charges, refunds required by law, or approved exceptions/i);
+    expect(refundFaq?.answer).toMatch(/both fees are non-refundable/i);
     expect(refundFaq?.answer).toMatch(/does not guarantee a hire/i);
   });
 
