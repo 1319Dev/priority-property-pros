@@ -333,6 +333,14 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
     expect(screen.getAllByRole("link", { name: /^faq$/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /^contact$/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /leave a review/i }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("link", { name: /^terms$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^privacy$/i })).not.toBeInTheDocument();
+  });
+
+  it("keeps draft terms and privacy off the site until the build flag is on", () => {
+    renderApp("/terms");
+    expect(screen.getByRole("heading", { name: /that page is not on this site/i })).toBeInTheDocument();
+    expect(screen.queryByText(/this is not legal advice/i)).not.toBeInTheDocument();
   });
 
   it("redirects old WordPress /services and /about paths", () => {

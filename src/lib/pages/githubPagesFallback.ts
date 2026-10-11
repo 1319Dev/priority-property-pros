@@ -31,6 +31,8 @@ export const GITHUB_PAGES_SPA_ROUTES = [
   "/post-project",
   "/trust",
   "/notifications",
+  "/terms",
+  "/privacy",
   "/app/customer",
   "/app/pro",
   "/app/verifier",

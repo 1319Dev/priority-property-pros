@@ -6,6 +6,7 @@ import { authAwarePostPath, dashboardPath, showContractorSignup } from "../../li
 import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 import { useAuth } from "../../lib/auth/useAuth";
 import { Logo } from "../brand/Logo";
+import { LegalFooterLinks } from "../legal/LegalFooterLinks";
 import { Container } from "../ui/Container";
 
 const footerLinks = [
@@ -119,9 +120,12 @@ export function Footer() {
         </nav>
       </Container>
       <div className="border-t border-cream-50/10">
-        <Container className="flex flex-col gap-2 py-5 text-xs text-cream-200 sm:flex-row sm:justify-between">
+        <Container className="flex flex-col gap-2 py-5 text-xs text-cream-200 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} {COMPANY_NAME}. All rights reserved.</p>
-          <p>A marketplace, not a crew.</p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <LegalFooterLinks linkClassName="inline-flex min-h-11 items-center text-cream-200 underline hover:text-gold-300" />
+            <p>A marketplace, not a crew.</p>
+          </div>
         </Container>
       </div>
     </footer>
