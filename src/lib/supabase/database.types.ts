@@ -967,6 +967,23 @@ export type Database = {
         Args: { p_review_id: string; p_status: string; p_reason: string };
         Returns: Json;
       };
+      admin_list_audit_log: {
+        Args: {
+          p_actor?: string | null;
+          p_action?: string | null;
+          p_from?: string | null;
+          p_to?: string | null;
+          p_reference?: string | null;
+          p_limit?: number;
+        };
+        Returns: {
+          occurred_at: string;
+          actor_role: string;
+          action: string;
+          job_reference: string | null;
+          summary: string | null;
+        }[];
+      };
       admin_mfa_required: { Args: Record<string, never>; Returns: boolean };
       admin_dashboard_summary: { Args: { p_include_test?: boolean }; Returns: Json };
       admin_needs_attention: { Args: { p_include_test?: boolean }; Returns: Json };

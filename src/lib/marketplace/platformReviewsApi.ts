@@ -1,4 +1,5 @@
 import { friendlyAdminError } from "../admin/friendlyAdminError";
+import { runSensitiveAdminCall } from "../auth/adminStepUp";
 import { getSupabaseClient } from "../supabase/client";
 import {
   accountCanSubmitPlatformReview,
@@ -107,10 +108,14 @@ export async function adminSetPlatformReviewStatus(
   if (trimmed.length < 3 || trimmed.length > 500) {
     throw new Error("Add a reason of at least 3 characters.");
   }
-  const { error } = await client().rpc("admin_set_platform_review_status", {
-    p_review_id: id,
-    p_status: status,
-    p_reason: trimmed,
-  });
-  if (error) throw new Error(friendlyAdminError(error, "Could not update that review."));
+  await runSensitiveAdminCall(
+    () =>
+      client().rpc("admin_set_platform_review_status", {
+        p_review_id: id,
+        p_status: status,
+        p_reason: trimmed,
+      }),
+    "Could not update that review.",
+    { requireData: false },
+  );
 }
