@@ -1,4 +1,5 @@
 import { friendlyAdminError } from "../admin/friendlyAdminError";
+import { runSensitiveAdminCall } from "../auth/adminStepUp";
 import { getSupabaseClient } from "../supabase/client";
 import type { Database, Json } from "../supabase/database.types";
 import { assertNoPreHireContact } from "./antiCircumvention";
@@ -656,20 +657,28 @@ export async function fetchBookingContactAccess(bookingId: string): Promise<Book
 }
 
 export async function adminGrantBookingContactAccess(bookingId: string, reason: string): Promise<RpcJson> {
-  const { data, error } = await client().rpc("admin_grant_booking_contact_access", {
-    p_booking_id: bookingId,
-    p_reason: reason,
-  });
-  if (error) throw new Error(friendlyAdminError(error, "Could not grant contact access."));
+  const data = await runSensitiveAdminCall(
+    () =>
+      client().rpc("admin_grant_booking_contact_access", {
+        p_booking_id: bookingId,
+        p_reason: reason,
+      }),
+    "Could not grant contact access.",
+    { requireData: false },
+  );
   return (data ?? {}) as RpcJson;
 }
 
 export async function adminRevokeBookingContactAccess(bookingId: string, reason: string): Promise<RpcJson> {
-  const { data, error } = await client().rpc("admin_revoke_booking_contact_access", {
-    p_booking_id: bookingId,
-    p_reason: reason,
-  });
-  if (error) throw new Error(friendlyAdminError(error, "Could not revoke contact access."));
+  const data = await runSensitiveAdminCall(
+    () =>
+      client().rpc("admin_revoke_booking_contact_access", {
+        p_booking_id: bookingId,
+        p_reason: reason,
+      }),
+    "Could not revoke contact access.",
+    { requireData: false },
+  );
   return (data ?? {}) as RpcJson;
 }
 
