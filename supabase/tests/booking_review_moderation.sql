@@ -310,6 +310,42 @@ BEGIN
   END IF;
 END $$;
 
+-- While PR #110's assert function is present and raising, hide must not change the row.
+-- The read-only admin list stays available.
+CREATE OR REPLACE FUNCTION public.assert_admin_sensitive_step_up()
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RAISE EXCEPTION 'admin step-up required' USING ERRCODE = 'P0001';
+END;
+$$;
+
+DO $$
+BEGIN
+  PERFORM set_config('test.uid', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', true);
+  IF public.admin_list_booking_reviews() IS NULL THEN
+    RAISE EXCEPTION 'admin list failed while step-up was required';
+  END IF;
+  BEGIN
+    PERFORM public.admin_hide_booking_review(
+      '11111111-1111-1111-1111-111111111111',
+      'The description names a gate that was not part of this job.'
+    );
+    RAISE EXCEPTION 'admin hide ran without step-up';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT ILIKE '%admin step-up required%' THEN
+        RAISE EXCEPTION 'unexpected step-up failure: %', SQLERRM;
+      END IF;
+  END;
+  IF (SELECT hidden_at FROM public.booking_reviews WHERE id = '11111111-1111-1111-1111-111111111111') IS NOT NULL THEN
+    RAISE EXCEPTION 'step-up failure hid the review';
+  END IF;
+END $$;
+
+DROP FUNCTION public.assert_admin_sensitive_step_up();
+
 DO $$
 BEGIN
   PERFORM set_config('test.uid', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', true);

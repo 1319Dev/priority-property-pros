@@ -28,6 +28,8 @@ describe("booking review moderation migration", () => {
     expect(migration).not.toMatch(/CREATE OR REPLACE FUNCTION public\.submit_booking_review\(/);
     expect(migration).not.toMatch(/CREATE OR REPLACE FUNCTION public\.update_booking_review\(/);
     expect(migration).not.toMatch(/apply_customer_low_rating_block/);
+    expect(migration).toMatch(/to_regprocedure\('public\.assert_admin_sensitive_step_up\(\)'\)/);
+    expect(migration).toMatch(/EXECUTE 'SELECT public\.assert_admin_sensitive_step_up\(\)'/);
     expect(migration).not.toMatch(/booking_review_edit_window_days/);
     expect(migration).not.toMatch(/stripe/i);
     expect(migration).not.toMatch(/payments_live/i);
@@ -46,7 +48,12 @@ describe("booking review moderation migration", () => {
     const hide = extractFunction(migration, "admin_hide_booking_review");
     expect(hide).not.toMatch(/rating\s*[<>=]/);
     expect(hide).toMatch(/booking_review_moderation_reason_is_rating_only/);
+    expect(hide).toMatch(/PERFORM public\.admin_moderation_step_up\(\)/);
     expect(hide).not.toMatch(/DELETE FROM/);
+
+    expect(extractFunction(migration, "admin_restore_booking_review")).toMatch(/PERFORM public\.admin_moderation_step_up\(\)/);
+    expect(extractFunction(migration, "admin_hide_booking_review_response")).toMatch(/PERFORM public\.admin_moderation_step_up\(\)/);
+    expect(extractFunction(migration, "admin_list_booking_reviews")).not.toMatch(/admin_moderation_step_up/);
 
     const listed = migration.slice(migration.indexOf("CREATE FUNCTION public.list_public_directory_reviews"));
     expect(listed).toMatch(/SELECT r\.id, r\.rating, r\.body, r\.contractor_response/);
@@ -54,6 +61,7 @@ describe("booking review moderation migration", () => {
   });
 
   it("rolls the public views back without deleting review rows", () => {
+    expect(rollback).toMatch(/DROP FUNCTION IF EXISTS public\.admin_moderation_step_up\(\)/);
     expect(rollback).toMatch(/DROP FUNCTION IF EXISTS public\.admin_hide_booking_review\(uuid, text\)/);
     expect(rollback).toMatch(/DROP FUNCTION IF EXISTS public\.list_public_directory_reviews\(uuid\)/);
     expect(rollback).toMatch(/DROP VIEW IF EXISTS public\.contractor_public_reviews/);

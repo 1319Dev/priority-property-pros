@@ -1,5 +1,9 @@
 -- Rolls back job-review moderation objects. Does not delete booking_reviews or content_reports.
+-- Drops admin_moderation_step_up(). The platform-review pending migration creates the same
+-- helper. If that migration is still applied, re-apply it after this rollback so its RPCs
+-- can still call the helper.
 
+DROP FUNCTION IF EXISTS public.admin_moderation_step_up();
 DROP FUNCTION IF EXISTS public.admin_list_booking_reviews();
 DROP FUNCTION IF EXISTS public.admin_hide_booking_review_response(uuid, text);
 DROP FUNCTION IF EXISTS public.admin_restore_booking_review(uuid, text);

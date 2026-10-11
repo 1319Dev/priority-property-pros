@@ -1,6 +1,11 @@
 -- Job-review moderation. Does not change submit_booking_review, update_booking_review,
 -- the 30-day edit window, the one-review-per-party rule, or the low-rating block.
+-- Draft PR #117 adds audit rows to booking review submit and to that block.
+-- This file does not replace those functions, so that audit survives either apply order.
 -- Hiding keeps the row. A low star rating is not a reason to hide.
+-- Admin hide, restore, and hide-response call admin_moderation_step_up(), which
+-- invokes assert_admin_sensitive_step_up() only when PR #110 has created it.
+-- The admin list RPC is read-only and does not call step-up.
 -- Does not change card charges, fee amounts, or hiring.
 
 ALTER TABLE public.booking_reviews
@@ -183,6 +188,29 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.admin_moderation_step_up()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- PR #110 migration 20261019000001 owns assert_admin_sensitive_step_up().
+  -- No-op until that function exists. When it exists, it is itself a no-op
+  -- while admin_mfa_required is 0. The same body is created by the platform-review
+  -- pending migration, so whichever file applies last leaves this helper in place.
+  IF to_regprocedure('public.assert_admin_sensitive_step_up()') IS NULL THEN
+    RETURN;
+  END IF;
+  EXECUTE 'SELECT public.assert_admin_sensitive_step_up()';
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.admin_moderation_step_up() FROM PUBLIC, anon, authenticated;
+
+COMMENT ON FUNCTION public.admin_moderation_step_up() IS
+  'Calls assert_admin_sensitive_step_up() when that function exists. No-op otherwise, so this migration can apply before or after PR #110.';
+
 CREATE OR REPLACE FUNCTION public.admin_hide_booking_review(p_review_id uuid, p_reason text)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -196,6 +224,7 @@ BEGIN
   IF NOT public.is_admin() THEN
     RAISE EXCEPTION 'not authorized' USING ERRCODE = '42501';
   END IF;
+  PERFORM public.admin_moderation_step_up();
   IF char_length(v_reason) < 20 OR char_length(v_reason) > 500 THEN
     RAISE EXCEPTION 'a moderation reason must be 20 to 500 characters' USING ERRCODE = '22023';
   END IF;
@@ -251,6 +280,7 @@ BEGIN
   IF NOT public.is_admin() THEN
     RAISE EXCEPTION 'not authorized' USING ERRCODE = '42501';
   END IF;
+  PERFORM public.admin_moderation_step_up();
   IF char_length(v_reason) < 20 OR char_length(v_reason) > 500 THEN
     RAISE EXCEPTION 'a moderation reason must be 20 to 500 characters' USING ERRCODE = '22023';
   END IF;
@@ -298,6 +328,7 @@ BEGIN
   IF NOT public.is_admin() THEN
     RAISE EXCEPTION 'not authorized' USING ERRCODE = '42501';
   END IF;
+  PERFORM public.admin_moderation_step_up();
   IF char_length(v_reason) < 20 OR char_length(v_reason) > 500 THEN
     RAISE EXCEPTION 'a moderation reason must be 20 to 500 characters' USING ERRCODE = '22023';
   END IF;
