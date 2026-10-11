@@ -2,9 +2,9 @@
 
 This is not legal advice.
 
-Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published. Until this version is published, it is not in effect.
 
-PPP does not require acceptance of this version while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their information and delete the account, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete an account or a payment record.
+PPP does not require acceptance of this version until these pages are published and that requirement is turned on. That requirement ships off. After it is turned on, a new account records the current version and the time. Someone who already has an account is asked at the next sign-in to accept the current versions and to affirm that they are 18 or older. That affirmation is a statement the person makes. It is not a verification of age. That later acceptance is stored separately from the acceptance recorded when the account was created. They can still view their information and delete the account. Turning the requirement on does not delete an account or a payment record.
 
 ## Plain-language summary
 

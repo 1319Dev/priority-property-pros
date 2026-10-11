@@ -25,7 +25,7 @@ ALTER TABLE public.profiles
   ADD COLUMN age_18_affirmed_at timestamptz;
 
 COMMENT ON COLUMN public.profiles.age_18_affirmed_at IS
-  'Time of an 18-or-older affirmation recorded at signup, and only when legal_acceptance_required is on. The signup form does not collect a date of birth. While the setting is off, signup is not rejected for a missing affirmation and this column stays null.';
+  'Time of an 18-or-older affirmation recorded at signup or on the later acceptance prompt, and only when legal_acceptance_required is on. The form does not collect a date of birth. This is an affirmation, not a verification of age. While the setting is off, signup is not rejected for a missing affirmation and this column stays null.';
 
 ALTER TABLE public.agreements
   DROP CONSTRAINT IF EXISTS agreements_audience_check;
@@ -128,7 +128,7 @@ VALUES (
 
 This is not legal advice.
 
-Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published. Until this version is published, it is not in effect.
 
 ## Plain-language summary
 
@@ -138,8 +138,8 @@ Effective date: the date this version is published. Priority Property Pros recor
 - A contractor pays $4.99 to Connect on a project, including a later project with someone they have worked with before. That unlocks messaging for that pair and the customer’s choice to share contact details. It does not promise that the customer will hire that contractor. The fee is generally non-refundable once that connection is delivered, with the same exceptions.
 - The customer pays the contractor directly for the work. PPP does not collect that payment and does not take a percentage of it.
 - PPP does not state that a contractor is licensed, insured, bonded, or background-checked. Admin approval is not that kind of check.
-- You must be 18 or older to create an account.
-- The signup form asks for acceptance of these documents. PPP does not reject a new account for that acceptance while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup is refused unless the current versions were accepted, and an existing account is asked to accept at the next sign-in. Existing accounts can still view their information and delete the account. While the setting is on, declining the current versions limits new marketplace actions. Nothing is deleted because someone has not yet accepted. Signup acceptances and later sign-in acceptances are stored separately, each with the document version and the time.
+- You must be 18 or older to create an account. That is an affirmation you make, not a verification of your age.
+- The signup form asks for acceptance of these documents. PPP does not reject a new account for these versions until these pages are published and that requirement is turned on. That requirement ships off. After it is turned on, a new account is refused unless the current versions were accepted and you affirmed that you are 18 or older. An existing account is asked at the next sign-in to accept the current versions and to make that same affirmation. Existing accounts can still view their information and delete the account. While the requirement is on, declining the current versions limits new marketplace actions. Nothing is deleted because someone has not yet accepted. The acceptance recorded at that later sign-in is stored separately from the acceptance recorded when the account was created. Each one keeps the document version and the time.
 
 These Terms of Service, the [Privacy Policy](/privacy), the [Refund & Cancellation Policy](/refunds), the [Community Guidelines](/community-guidelines), and the [Review & Content Guidelines](/content-guidelines) are one agreement. Contractor accounts also accept the [Contractor Participation Terms](/contractor-terms).
 
@@ -173,15 +173,15 @@ The customer pays the contractor directly for any job cost. PPP does not collect
 
 You may sign up as a customer or as a contractor. A customer account is how homeowners and businesses post projects. Admin and verifier accounts are not offered on the public signup form. The verifier role exists in the database. These terms do not say a verifier inspected or certified any work.
 
-The signup form has a required checkbox. Checking it is your agreement to the documents that apply to that account. Links to these Terms of Service and the Privacy Policy are on that form when the legal pages are published. While `legal_acceptance_required` is off, the server still creates the account and records acceptance of the shorter terms already in the product. It does not reject the account for these versions. After that setting is turned on, the server refuses to create the account if that acceptance is missing or if the versions you accepted are not the current versions. On a signup that is recorded under the setting, PPP stores, for each document, the agreement version, the time, a source of signup, and a short user-agent string of up to 180 characters. PPP does not trust the browser to pick the version number that gets stored. The database copies the version from the current agreement row.
+The signup form has a required checkbox. Checking it is your agreement to the documents that apply to that account. Links to these Terms of Service and the Privacy Policy are on that form when the legal pages are published. Until these pages are published and the requirement to accept these versions is turned on, the server still creates the account and records acceptance of the shorter terms already in the product. It does not reject the account for these versions, and it does not ask for an age affirmation. After that requirement is turned on, the server refuses to create the account if that acceptance is missing, if the versions you accepted are not the current versions, or if you did not affirm that you are 18 or older. PPP stores, for each document, the agreement version and the time. PPP copies the version from the current agreement. It does not use a version number chosen only in the browser.
 
-If you already have an account when the setting is turned on, the next sign-in shows a prompt asking you to accept the current versions. That prompt does not hide your projects, messages, bookings, or other account information, and it does not delete anything. Accepting writes a separate sign-in record with the version and the time. It does not replace or delete an older acceptance.
+If you already have an account when the requirement is turned on, the next sign-in shows a prompt asking you to accept the current versions and to affirm that you are 18 or older. Accounts created before the requirement is on are not asked for that affirmation until this prompt. The prompt does not hide your projects, messages, bookings, or other account information, and it does not delete anything. Accepting writes a separate acceptance with the version and the time, and it records the time of the age affirmation if one was not already on the account. It does not replace or delete an older acceptance.
 
-If you decline the updated versions, you can still view your account information and delete your account. The product does not include an in-app export of your data. While the setting is on, new marketplace actions are refused until you accept: posting a project, sending an estimate, sending a project message, or creating a project connection. Viewing what is already there, marking a message read, and deleting the account stay available. While the setting is off, those new actions are not refused for these versions.
+If you decline the updated versions, you can still view your account information and delete your account. The product does not include an in-app export of your data. While the requirement is on, new marketplace actions are refused until you accept: posting a project, sending an estimate, sending a project message, or creating a project connection. Viewing what is already there, marking a message read, and deleting the account stay available. While the requirement is off, those new actions are not refused for these versions.
 
 You agree to give accurate information and to keep your login to yourself. Passwords on the form must be at least 8 characters. Email confirmation is part of signup when the auth service asks for it. A contractor is not matched to jobs until the account is active and an admin has approved the contractor profile. Paying the $9.99 activation fee does not approve a contractor, does not reveal anyone’s contact details, and does not start a job.
 
-You must be 18 or older to create an account. When `legal_acceptance_required` is on, the signup form asks you to affirm that, and the server records the time of that affirmation. The form does not ask for a date of birth. While that setting is off, the form does not require the affirmation and does not reject a signup for it.
+You must be 18 or older to create an account. That is an affirmation you make. It is not a verification of your age, a date of birth, or an identity document. The form does not ask for a date of birth. Until the requirement to accept these versions is turned on, the form does not require the affirmation and does not reject a signup for it. After that requirement is on, a new signup asks for the affirmation and PPP records the time. An existing account is asked for the same affirmation on the sign-in prompt described above.
 
 PPP may refuse, suspend, or disable an account. Account statuses used in the product include active, pending, suspended, disabled, and deleted. A pending account can look around. Matching waits on an active, approved contractor.
 
@@ -223,7 +223,7 @@ Before that share, a contractor offered the job can see an approximate location 
 
 You agree not to use PPP to exchange contact details in order to hire off the platform and skip the Connection Fee. The [Community Guidelines](/community-guidelines) are part of that promise. Before a paid connection, the product rejects obvious phone numbers, email addresses, websites, social handles, QR codes, and exact street addresses in project text, profiles, estimates, and messages.
 
-The Trust page states the enforcement PPP intends: a warning, suspension, or termination for repeated abuse, and not an automatic permanent ban on a single detection. The product enforces this by rejecting the text. Suspension or closure of an account is an admin action. The scanner is not a surveillance program, and it does not catch every disguise.
+The Trust page states the enforcement PPP intends: a warning, suspension, or termination for repeated abuse, and not an automatic permanent ban on a single detection. The product enforces this by rejecting the text. Suspension or closure of an account is an admin action. That check is not a surveillance program, and it does not catch every disguise.
 
 After a legitimate Connect between those two people, ordinary contact may be shared through the share control in section 6. That does not let you publish the other person’s contact on a public page.
 
@@ -231,7 +231,9 @@ After a legitimate Connect between those two people, ordinary contact may be sha
 
 Job reviews, marketplace reviews, portfolio photos, and project photos follow the [Review & Content Guidelines](/content-guidelines). Day-to-day conduct follows the [Community Guidelines](/community-guidelines). Both are part of these terms.
 
-A job review can be edited for 30 days after it is posted. Marketplace reviews are moderated. Portfolio photos are not public until an admin approves them. On an estimate or a booking, a customer can choose “Don't match me with this pro again.” Future projects skip that pro. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros. A customer review of 3 stars or less also keeps that pro off future projects until the customer unblocks them. Raising that review to 4 or 5 stars does not remove the block.
+A job review can be edited for 30 days after it is posted. Marketplace reviews are moderated. Portfolio photos are not public until an admin approves them. After approval, public pages show that approved photo through a short-lived link. PPP does not currently remove location information a camera stored in the file, such as GPS coordinates.
+
+On an estimate or a booking, a customer can choose “Don't match me with this pro again.” That blocks the pro for that customer only. Matching skips that pro, the pro is left out of Hire Again, and the pro’s open, unaccepted offers on that customer’s other current projects close immediately. Paid connections and bookings are not changed. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros, and an admin can remove the block. A customer review of 3 stars or less creates the same kind of block. Raising that review to 4 or 5 stars does not remove it. A contractor’s review of a customer never creates a block.
 
 Reports of fraud or impersonation, harassment or threats, misleading profiles, suspected fake reviews, serious contractor misconduct, and rule violations follow the Community Guidelines. Reviewing a report is not a guarantee of workmanship, not an assumption of responsibility for the job, and not a decision of a construction dispute.
 
@@ -269,9 +271,9 @@ Responsibility for the work, and liability these terms do not exclude, is in Ind
 
 ## 15. Changes
 
-PPP will post updated terms on this page. The effective date of a version is its publication date, stored as `published_at` when that version is published. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates.
+PPP will post updated terms on this page. The effective date of a version is its publication date. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates.
 
-A new version can be made the current published row when PPP turns `legal_acceptance_required` on. Until that setting is on, these versions are stored but are not the required acceptance, and their `published` flag stays off. After it is on, new signups must accept the current version or the account is not created. Existing users are prompted on the next sign-in, as section 3 describes. They are not locked out of viewing their information or deleting the account. While the setting is on, new marketplace actions wait on acceptance of the current versions. The version, the time, and whether the row was a signup or a later sign-in are the record of what was accepted.
+A new version becomes the one PPP can require when these pages are published and the requirement to accept them is turned on. Until that requirement is on, these versions are not the required acceptance. After it is on, new accounts must accept the current version and affirm that they are 18 or older, or the account is not created. Existing users are prompted on the next sign-in, as section 3 describes, including that age affirmation. They are not locked out of viewing their information or deleting the account. While the requirement is on, new marketplace actions wait on acceptance of the current versions. The version and the time are the record of what was accepted. The acceptance from a later sign-in is stored separately from the acceptance recorded when the account was created.
 
 ## 16. Contact
 
@@ -295,7 +297,7 @@ VALUES (
 
 This is not legal advice.
 
-Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published. Until this version is published, it is not in effect.
 
 ## Plain-language summary
 
@@ -304,8 +306,8 @@ Effective date: the date this version is published. Priority Property Pros recor
 - Card numbers are entered at Stripe. PPP does not store card numbers. PPP stores payment metadata for the $9.99 activation and the $4.99 Connect.
 - The site is hosted as a static site on GitHub Pages. Accounts, database, files, and login are on Supabase. Email goes through Resend. Web push goes through the browser’s push service. There is no advertising tracker in the current site.
 - PPP does not sell personal information.
-- You can delete your account from the account screen. Agreement acceptances go with the profile. An audit entry and Stripe’s own payment record can remain, as described below. The product does not include an in-app export.
-- The marketplace is for people 18 or older. The signup form does not ask for a date of birth.
+- You can delete your account from the account screen. The login is removed. Some marketplace records stay with your name and contact cleared. Portfolio rows, credentials, messages, and older audit notes can remain, as described below. Stripe keeps its own payment records. PPP does not send Stripe a deletion notice. The product does not include an in-app export.
+- The marketplace is for people 18 or older. That is an affirmation you make, not a verification of your age. The signup form does not ask for a date of birth.
 - A Priority Help chat is not part of the product. If it launches, an AI provider would be an extra processor. That is marked conditional below.
 - Texas privacy rights and general US practices are described below.
 
@@ -321,9 +323,9 @@ The contact published on the site is [support@prioritypropertypros.com](mailto:s
 
 **Account.** Name, email, password (stored by Supabase Auth, not in the PPP application tables), phone if you add one, and whether you are a customer or a contractor. A contractor also adds a business name, trade, and service area at signup, and can later add a headline, bio, years of experience, website, job-size range, service radius or ZIP list, a profile photo, contractor-provided license or insurance fields, and credentials. Those credential fields are what the contractor typed. PPP does not treat them as a license check, an insurance check, a bond, or a background check.
 
-**Age affirmation.** The form does not ask for a date of birth. When the platform setting `legal_acceptance_required` is on, signup asks you to affirm that you are 18 or older, and PPP stores the time of that affirmation on the profile (`age_18_affirmed_at`). While that setting is off, signup does not require the affirmation and does not store it.
+**Age affirmation.** The form does not ask for a date of birth. Being 18 or older is an affirmation you make. It is not a verification of your age, a date of birth, or an identity document. Until these pages are published and the requirement to accept these versions is turned on, signup does not ask for the affirmation and does not store it. After that requirement is on, a new signup asks you to affirm that you are 18 or older, and PPP records the time of that affirmation. An account that already exists is asked for the same affirmation when it accepts the current versions at the next sign-in. Accounts created before the requirement is on are not asked until that prompt. Anyone who can call the signup service directly can send the affirmation flag. PPP records the statement. It does not check an identity document.
 
-**Agreement records.** The signup checkbox is on the form. While `legal_acceptance_required` is off, PPP does not reject a new account for these versions and does not prompt existing accounts. After that setting is turned on, a new signup stores one row per current document with the version, the time, a source of signup, and a short user-agent string (up to 180 characters). An existing account is prompted at the next sign-in. Accepting then stores a separate row with a source of sign-in, the version, and the time. The version number is copied from the current agreement on the server. The prompt does not hide projects, messages, or other account information. If you do not accept, you can still view that information and delete the account. The product does not include an in-app export. While the setting is on, new marketplace actions are refused until you accept. Accepting does not delete older rows or the account.
+**Agreement records.** The signup checkbox is on the form. Until the requirement to accept these versions is turned on, PPP does not reject a new account for these versions and does not prompt existing accounts. After that requirement is turned on, a new account stores one record per current document with the version and the time. An existing account is prompted at the next sign-in. Accepting then stores a separate record with the version and the time. The version number is copied from the current agreement. The prompt does not hide projects, messages, or other account information. If you do not accept, you can still view that information and delete the account. The product does not include an in-app export. While the requirement is on, new marketplace actions are refused until you accept. Accepting does not delete older records or the account.
 
 **Projects.** Title, description, project type, city, state, ZIP, timing, optional budget, and photos of the work. The street and precise coordinates are stored in a private location record, not on the public project. An unposted wizard draft stays in that browser tab (session storage) until you post. Photos in an unposted draft are not kept if you reload the tab.
 
@@ -331,7 +333,7 @@ The contact published on the site is [support@prioritypropertypros.com](mailto:s
 
 **Reviews.** For a job review: a rating from 1 to 5, the text, and the time it was posted or edited. For a marketplace review: rating, text, display name, and an optional city. Marketplace reviews are not Google reviews.
 
-**Photos.** Project photos and contractor portfolio photos, including the file stored in private storage and the caption. Portfolio photos are not public until an admin approves them. Public pages do not receive the original file or the original file name.
+**Photos.** Project photos and contractor portfolio photos, including the file stored in private storage and the caption. Portfolio photos are not public until an admin approves them. After approval, public pages show that approved photo through a short-lived link. The storage stays private, and the original file name is not published as a public address. PPP does not currently remove location information a camera stored in the file, such as GPS coordinates, so that information can travel with an approved photo.
 
 **Payments.** When Stripe Checkout is enabled, Stripe collects the card data. PPP stores the checkout session id, the payment intent id, the amount ($9.99 or $4.99), the currency, the status, and when it was paid. PPP does not store the card number. PPP does not collect the payment for the job itself.
 
@@ -364,7 +366,7 @@ PPP does not use this information to sell ads, and the current website does not 
 
 ## 4. Public and private
 
-**Public, or shown to visitors who are not logged in.** Approved contractor cards: a neutral trade-and-city label, categories, a general service area, years of experience if provided, a short description with contact details removed, aggregate PPP ratings when real reviews exist, generic credential badges, and approved portfolio captions. Approved marketplace reviews of PPP. The public card does not include the business name, personal name, phone, email, website, street, license number, or original photo file.
+**Public, or shown to visitors who are not logged in.** Approved contractor cards: a neutral trade-and-city label, categories, a general service area, years of experience if provided, a short description with contact details removed, aggregate PPP ratings when real reviews exist, generic credential badges, approved portfolio captions, and, once a portfolio photo is approved, that photo through a short-lived link. Approved marketplace reviews of PPP. The public card does not include the business name, personal name, phone, email, website, street, or license number. The original file name is not published as a public address. Location information a camera stored in an approved photo can still be in that file.
 
 **Shown to a matched contractor before Connect.** Project description and an approximate location. The jobs list can include city, state, and ZIP. The street, the customer’s phone, and the customer’s email stay hidden.
 
@@ -403,11 +405,25 @@ PPP does not sell personal information. PPP does not share it for targeted adver
 
 PPP keeps account and project information while the account is open and the marketplace needs it to show the job, the messages, and the reviews.
 
-When you delete your account, you type DELETE. The product then deletes the login and the rows tied to that account, including that person’s bookings, connections, and estimates, and it removes files stored under that account in project photos and contractor documents. Agreement-acceptance rows are removed with the profile. The $9.99 charge rows tied to the profile are removed with it. Processor event rows can remain with the profile id cleared. It also writes an audit entry that the account was deleted. References you left on someone else’s record, such as an approval you performed, are cleared off that record rather than deleting the other person’s account. You cannot delete the last active admin account.
+When you delete your account, you type DELETE. The product asks for your current password, or it accepts a sign-in from the last 10 minutes. Deletion is refused while you have an open dispute, a refund that is still unfinished, an active booking, or you are the last active admin.
 
-Stripe keeps the payment record under Stripe’s policy. PPP cannot delete the card data it never stored. Deleting an account does not by itself refund the $9.99 or a $4.99 Connection Fee. Refund exceptions are in the [Refund & Cancellation Policy](/refunds).
+The product then removes the login and the email address, and it clears the profile name, phone, and profile photo before the profile itself is deleted. It clears the street address and precise map coordinates on your projects. It deletes empty draft projects that have no booking, connection, estimate, offer, or message thread. It clears free-text reasons on refund rows, cancellation notes, and payment-schedule descriptions, and a category can remain in place of that text. It deletes content reports you filed, your reviews of the PPP marketplace, your notifications, push subscriptions, notification preferences, and blocks between you and a contractor. References you left on someone else’s record, such as an approval you performed, are cleared off that record rather than deleting the other person’s account.
 
-The product does not publish a separate multi-year retention table. There is no fixed “we keep everything for X years” rule in the software. An acceptance row stays while the account stays, including older versions you accepted before a later one. The 18-or-older affirmation time stays on the profile until the account is deleted.
+Files stored under your account in project photos and contractor documents are removed after that account update. That file cleanup can fail without undoing the deletion, so a file can remain.
+
+These records stay, with the link to your account removed:
+
+- Projects other than those empty drafts.
+- Bookings, connections, job reviews, change orders, and project messages. Message text stays, so the other person can still read what was written.
+- Payment, refund, and cancellation records, including amounts, status, dates, and the Stripe ids on those rows. The $9.99 activation charge stays in that same way, with the link to your account removed.
+- The record of which agreement version you accepted and when. It is kept with an opaque id, not on a live profile.
+- A contractor profile can remain under the name “Deleted Pro,” suspended and not accepting work, with the headline, bio, website, license note, insurance note, trade, and service-area text cleared.
+
+This deletion does not clear every row on that contractor profile. Portfolio photo rows, including titles, captions, and storage paths, credential rows, service rows, service-area rows, and the Stripe Connect account id are not cleared. The image files are part of the storage cleanup above. Project-photo rows on a project that is kept can still point at a file the cleanup tried to delete. Audit log entries can still contain an email address or an admin note from before the deletion.
+
+PPP does not send a deletion notice to Stripe, and PPP sends Stripe nothing as part of deletion. Stripe keeps its own payment, customer, and Checkout records under Stripe’s policy. PPP keeps the Stripe ids that refer to those records. PPP cannot delete card numbers it never stored. Deleting an account does not by itself refund the $9.99 or a $4.99 Connection Fee. Refund exceptions are in the [Refund & Cancellation Policy](/refunds).
+
+The product does not publish a separate multi-year retention table. There is no fixed “we keep everything for X years” rule in the software. An acceptance record can remain after the account is deleted, as this section describes. The time of an 18-or-older affirmation is stored on the profile and is removed when that profile is deleted.
 
 ## 9. Your choices and your rights
 
@@ -419,11 +435,11 @@ This policy is written for people in the United States, including Texas. The Tex
 
 PPP will respond within the time the law that applies to the request requires.
 
-If you decline an updated version of the agreements, you can still view your account information and delete your account. While acceptance of the current versions is required, new marketplace actions stay unavailable until you accept. That limit does not apply while `legal_acceptance_required` is off.
+If you decline an updated version of the agreements, you can still view your account information and delete your account. While acceptance of the current versions is required, new marketplace actions stay unavailable until you accept. That limit does not apply while the requirement to accept these versions is off.
 
 ## 10. Children
 
-The marketplace is for adults hiring and doing property work. It is not directed to children. You must be 18 or older to create an account. The signup form does not ask for a date of birth. When `legal_acceptance_required` is on, the form asks you to affirm that you are 18 or older and the server records the time. While that setting is off, the form does not require the affirmation and does not reject a signup for it.
+The marketplace is for adults hiring and doing property work. It is not directed to children. You must be 18 or older to create an account. That is an affirmation you make, not a verification of your age. The signup form does not ask for a date of birth. After the requirement to accept these versions is turned on, a new signup asks you to affirm that you are 18 or older and PPP records the time. An existing account is asked for the same affirmation when it accepts the current versions. While that requirement is off, the form does not require the affirmation and does not reject a signup for it.
 
 ## 11. Security
 
@@ -431,7 +447,7 @@ The site is served over HTTPS. Database access for signed-in users goes through 
 
 ## 12. Changes
 
-PPP will post an updated policy on this page. The effective date of a version is its publication date, stored as `published_at` when that version is published. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates. The new version becomes the agreement PPP can require only after `legal_acceptance_required` is turned on. Until then, the server does not reject a signup for these versions. After it is on, a new signup must accept the current version or the server will not create the account, and that acceptance is stored as a signup. If you already have an account, the next sign-in asks you to accept, and that acceptance is stored separately as a sign-in, with the version and the time. You can still view your information and delete your account before you accept. Nothing is deleted because you have not yet accepted.
+PPP will post an updated policy on this page. The effective date of a version is its publication date. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates. The new version becomes the agreement PPP can require only after the requirement to accept these versions is turned on. Until then, the server does not reject a signup for these versions. After it is on, a new account must accept the current version and affirm that the person is 18 or older, or the server will not create the account. If you already have an account, the next sign-in asks you to accept and to make that affirmation, and that acceptance is stored separately from the acceptance recorded when the account was created, with the version and the time. You can still view your information and delete your account before you accept. Nothing is deleted because you have not yet accepted.
 
 ## 13. Contact
 
@@ -453,9 +469,9 @@ VALUES (
 
 This is not legal advice.
 
-Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published. Until this version is published, it is not in effect.
 
-PPP does not require acceptance of this version while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their information and delete the account, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete an account or a payment record.
+PPP does not require acceptance of this version until these pages are published and that requirement is turned on. That requirement ships off. After it is turned on, a new account records the current version and the time. Someone who already has an account is asked at the next sign-in to accept the current versions and to affirm that they are 18 or older. That affirmation is a statement the person makes. It is not a verification of age. That later acceptance is stored separately from the acceptance recorded when the account was created. They can still view their information and delete the account. Turning the requirement on does not delete an account or a payment record.
 
 ## Plain-language summary
 
@@ -537,9 +553,9 @@ VALUES (
 
 This is not legal advice.
 
-Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published. Until this version is published, it is not in effect.
 
-PPP does not require acceptance of this version while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their information and delete the account, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete an account.
+PPP does not require acceptance of this version until these pages are published and that requirement is turned on. That requirement ships off. After it is turned on, a new account records the current version and the time. Someone who already has an account is asked at the next sign-in to accept the current versions and to affirm that they are 18 or older. That affirmation is a statement the person makes. It is not a verification of age. That later acceptance is stored separately from the acceptance recorded when the account was created. They can still view their information and delete the account. Turning the requirement on does not delete an account.
 
 ## Plain-language summary
 
@@ -586,7 +602,7 @@ A blocked message or a warning for this rule does not, by itself, refund a Conne
 
 Do not harass, threaten, or discriminate against another person through the marketplace. Do not send repeated unwanted contact after a project is cancelled or a connection is closed. Do not post another person’s private information.
 
-On an estimate or a booking, a customer can choose “Don't match me with this pro again.” Future projects skip that pro. Work already underway stays as it is, and a paid Connection Fee stays paid. The customer can undo that from Blocked pros. A customer review of 3 stars or less also keeps that pro off future projects until the customer unblocks them. Raising that review to 4 or 5 stars does not remove the block. You can also cancel a project when the product allows it, stop new connections, and email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+On an estimate or a booking, a customer can choose “Don't match me with this pro again.” That blocks the pro for that customer only. Matching skips that pro, the pro is left out of Hire Again, and the pro’s open, unaccepted offers on that customer’s other current projects close immediately. Paid connections and bookings are not changed. Work already underway stays as it is, and a paid Connection Fee stays paid. The customer can undo that from Blocked pros, and an admin can remove the block. A customer review of 3 stars or less creates the same kind of block. Raising that review to 4 or 5 stars does not remove it. A contractor’s review of a customer never creates a block. You can also cancel a project when the product allows it, stop new connections, and email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
 ## 5. Reports
 
@@ -631,15 +647,15 @@ VALUES (
 
 This is not legal advice.
 
-Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published. Until this version is published, it is not in effect.
 
-PPP does not require acceptance of this version while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their information and delete the account, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete a review, a photo, or an account.
+PPP does not require acceptance of this version until these pages are published and that requirement is turned on. That requirement ships off. After it is turned on, a new account records the current version and the time. Someone who already has an account is asked at the next sign-in to accept the current versions and to affirm that they are 18 or older. That affirmation is a statement the person makes. It is not a verification of age. That later acceptance is stored separately from the acceptance recorded when the account was created. They can still view their information and delete the account. Turning the requirement on does not delete a review, a photo, or an account.
 
 ## Plain-language summary
 
 - A review of a hired job is about that job, not a review of PPP. The author can edit it for 30 days.
 - A review of the PPP marketplace is separate. It is checked before it is public, and an admin can approve or reject it with a written reason.
-- Portfolio photos stay in review until an admin approves them. Public pages do not show the original file.
+- Portfolio photos stay in review until an admin approves them. After approval, public pages show that approved photo through a short-lived link. Location information a camera stored in the file, such as GPS coordinates, is not removed today.
 - Do not put phone numbers, email addresses, or street addresses in reviews or public text.
 - A review is not a statement that PPP licensed, insured, bonded, or background-checked anyone.
 - Suspected fake reviews and other content reports follow the Community Guidelines. Moderating content is not a decision about the construction work.
@@ -648,7 +664,7 @@ These guidelines are part of the [Terms of Service](/terms). Conduct rules and r
 
 ## 1. Two different reviews
 
-**Job reviews.** After both sides confirm Hired, either party can review the other. That review is not a review of the PPP marketplace, and it is not a Google review. The author can edit the stars or the text for 30 days after it is posted. That length is a server setting (`booking_review_edit_window_days`). If the setting is missing, the window is still 30 days. After the window closes, the edit control goes away. Public review text drops phone numbers, email addresses, and web addresses, and it drops a review body that contains that contractor’s business name or personal name.
+**Job reviews.** After both sides confirm Hired, either party can review the other. That review is not a review of the PPP marketplace, and it is not a Google review. The author can edit the stars or the text for 30 days after it is posted. After those 30 days, the edit control goes away. Public review text drops phone numbers, email addresses, and web addresses, and it drops a review body that contains that contractor’s business name or personal name.
 
 **Marketplace reviews.** A signed-in user can leave one review of Priority Property Pros itself. Those reviews are not Google reviews. They are checked for length, a rating from 1 to 5, and contact details, and then they are approved. An admin can later approve or reject one. Both decisions require a written reason of 3 to 500 characters. The reason is stored in the audit log and is not shown on the public review.
 
@@ -656,9 +672,9 @@ Stars and text must describe your own experience. Do not review a job you were n
 
 ## 2. Photos and other content
 
-Project photos should show the work area and should not include house numbers, faces, license plates, or contact details. PPP does not run image text recognition, so a photo can still contain something the text scanner would have blocked. A contractor viewing a project can report a photo. The report stores the reporter, the target, and the reason. An admin can read reports. The current screens do not include a separate admin inbox just for those reports.
+Project photos should show the work area and should not include house numbers, faces, license plates, or contact details. PPP does not run image text recognition, so a photo can still contain contact details that a text check would have blocked. A contractor viewing a project can report a photo. The report stores the reporter, the target, and the reason. An admin can read reports. The current screens do not include a separate admin inbox just for those reports.
 
-Portfolio photos start in review. They are not public until an admin marks them approved. Public pages show the approved caption with a generic illustration, not the original file, the file name, or the photo’s location metadata. An admin can hide a photo instead. PPP does not strip camera location data from the original file on the server. The original stays in private storage.
+Portfolio photos start in review. They are not public until an admin marks them approved. After approval, public pages show that approved photo through a short-lived link. The file stays in private storage, and the original file name is not published as a public address. An admin can hide a photo instead. PPP does not currently remove location information a camera stored in the file, such as GPS coordinates. Someone who can view the approved photo can receive that information with the file.
 
 Profile text, estimates, and messages follow the same contact rule as the [Community Guidelines](/community-guidelines). You keep ownership of what you submit. You give PPP permission to host and moderate it as the product actually does.
 
@@ -666,7 +682,7 @@ Profile text, estimates, and messages follow the same contact rule as the [Commu
 
 A review, a star rating, a portfolio caption, or an “Approved platform profile” badge is not a PPP inspection of the work. It is not a statement that the contractor is licensed, insured, bonded, or background-checked. Contractor-provided license or insurance fields stay contractor-provided. PPP does not currently verify licenses, insurance, or workmanship. Who is responsible for the work is in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).
 
-A customer review of 3 stars or less keeps that pro off the customer’s future projects until the customer unblocks them. Editing that review up to 4 or 5 stars does not remove the block. On an estimate or a booking, the customer can also choose “Don't match me with this pro again.” Future projects skip that pro. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros. You may still decline an estimate, stop new connections, and cancel a project when the product allows it.
+A customer review of 3 stars or less blocks that pro for that customer only. Matching skips that pro. The pro’s open, unaccepted offers on that customer’s other current projects close immediately. The pro is left out of Hire Again. Paid connections and bookings are not changed. Editing that review up to 4 or 5 stars does not remove the block. The customer can remove the block, and an admin can remove it. A contractor’s review of a customer never creates a block. On an estimate or a booking, the customer can also choose “Don't match me with this pro again,” which blocks that pro for that customer in the same way, including closing those open, unaccepted offers. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros. You may still decline an estimate, stop new connections, and cancel a project when the product allows it.
 
 ## 4. Moderation
 
@@ -692,7 +708,7 @@ VALUES (
 
 This is not legal advice.
 
-Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published. Until this version is published, it is not in effect.
 
 ## Plain-language summary
 
@@ -739,7 +755,7 @@ You set your estimate in the product. Job responsibility, and disputes about the
 
 ## 6. Acceptance
 
-Contractor signup uses the same checkbox as any other signup, and the checkbox names these Contractor Participation Terms. You must be 18 or older. While `legal_acceptance_required` is off, the server does not reject the account for these versions and does not require the 18-or-older affirmation. After that setting is on, the server stores the version and the time as a signup acceptance, records the time of the age affirmation, and a new contractor account is not created if the current version was not accepted or the affirmation is missing. If these terms are updated after you already have an account, the next sign-in asks you to accept. That acceptance is stored separately as a sign-in, with its own version and time. You can still view your jobs, messages, and account information, and you can delete the account, before you accept. While the setting is on, new marketplace actions wait on that acceptance. Nothing is deleted because you have not yet accepted.
+Contractor signup uses the same checkbox as any other signup, and the checkbox names these Contractor Participation Terms. You must be 18 or older. That is an affirmation you make, not a verification of your age. Until these pages are published and the requirement to accept these versions is turned on, the server does not reject the account for these versions and does not require the affirmation. After that requirement is on, the server stores the version and the time, records the time of the age affirmation, and a new contractor account is not created if the current version was not accepted or the affirmation is missing. If these terms are updated after you already have an account, the next sign-in asks you to accept the current versions and to affirm that you are 18 or older if you have not already done so. That later acceptance is stored separately from the acceptance recorded when the account was created, with its own version and time. You can still view your jobs, messages, and account information, and you can delete the account, before you accept. While the requirement is on, new marketplace actions wait on that acceptance. Nothing is deleted because you have not yet accepted.
 $ppp_legal_contractor_participation$,
   false,
   'CONTRACTOR',
@@ -934,7 +950,10 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.accept_current_agreements(p_user_agent text DEFAULT NULL)
+CREATE OR REPLACE FUNCTION public.accept_current_agreements(
+  p_user_agent text DEFAULT NULL,
+  p_affirmed_age_18 boolean DEFAULT false
+)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -942,6 +961,7 @@ SET search_path = public
 AS $$
 DECLARE
   account public.account_type;
+  affirmed_at timestamptz;
 BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'sign in required';
@@ -951,13 +971,26 @@ BEGIN
     RETURN '[]'::jsonb;
   END IF;
 
-  SELECT profile.account_type
-  INTO account
+  SELECT profile.account_type, profile.age_18_affirmed_at
+  INTO account, affirmed_at
   FROM public.profiles AS profile
   WHERE profile.id = auth.uid();
 
   IF account IS NULL THEN
     RAISE EXCEPTION 'profile not found';
+  END IF;
+
+  IF affirmed_at IS NULL AND p_affirmed_age_18 IS NOT TRUE THEN
+    RAISE EXCEPTION 'age_18_required'
+      USING ERRCODE = 'P0001',
+            HINT = 'Accepting the current agreements requires an affirmation that you are 18 or older. This is an affirmation, not a verification of age. The form does not ask for a date of birth.';
+  END IF;
+
+  IF p_affirmed_age_18 IS TRUE AND affirmed_at IS NULL THEN
+    UPDATE public.profiles
+    SET age_18_affirmed_at = now()
+    WHERE id = auth.uid()
+      AND age_18_affirmed_at IS NULL;
   END IF;
 
   PERFORM public.record_current_agreement_acceptances(auth.uid(), p_user_agent, account, 'sign_in');
@@ -1026,15 +1059,15 @@ $$;
 COMMENT ON FUNCTION public.missing_current_agreements() IS
   'Lists current agreements this account has not accepted, and only when legal_acceptance_required is on. Returns no rows when the setting is off. Does not block reads of projects, messages, or profiles and does not delete anything.';
 
-COMMENT ON FUNCTION public.accept_current_agreements(text) IS
-  'Records a sign-in acceptance of the current versions and timestamps for auth.uid() when legal_acceptance_required is on. Does nothing when the setting is off. Does not change account_status, hide data, or delete rows.';
+COMMENT ON FUNCTION public.accept_current_agreements(text, boolean) IS
+  'Records acceptance of the current versions for auth.uid() when legal_acceptance_required is on, and records an 18-or-older affirmation when the profile does not already have one. Raises age_18_required if that affirmation is missing. Does nothing when the setting is off. Does not change account_status, hide data, or delete rows. The affirmation is a statement, not a verification of age.';
 
 REVOKE ALL ON FUNCTION public.assert_signup_agreement_versions(jsonb, public.account_type) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.record_current_agreement_acceptances(uuid, text, public.account_type, text) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.accept_current_agreements(text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.accept_current_agreements(text, boolean) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.missing_current_agreements() FROM PUBLIC, anon;
 
-GRANT EXECUTE ON FUNCTION public.accept_current_agreements(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.accept_current_agreements(text, boolean) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.missing_current_agreements() TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -1118,7 +1151,7 @@ BEGIN
       onboarding_status
     ) VALUES (
       NEW.id,
-      nullif(meta->>'coverage_area', ''),
+      coalesce(meta->>'coverage_area', ''),
       nullif(meta->>'bio', ''),
       'IN_PROGRESS'
     );

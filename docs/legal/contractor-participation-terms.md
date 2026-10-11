@@ -2,7 +2,7 @@
 
 This is not legal advice.
 
-Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published. Until this version is published, it is not in effect.
 
 ## Plain-language summary
 
@@ -49,4 +49,4 @@ You set your estimate in the product. Job responsibility, and disputes about the
 
 ## 6. Acceptance
 
-Contractor signup uses the same checkbox as any other signup, and the checkbox names these Contractor Participation Terms. You must be 18 or older. While `legal_acceptance_required` is off, the server does not reject the account for these versions and does not require the 18-or-older affirmation. After that setting is on, the server stores the version and the time as a signup acceptance, records the time of the age affirmation, and a new contractor account is not created if the current version was not accepted or the affirmation is missing. If these terms are updated after you already have an account, the next sign-in asks you to accept. That acceptance is stored separately as a sign-in, with its own version and time. You can still view your jobs, messages, and account information, and you can delete the account, before you accept. While the setting is on, new marketplace actions wait on that acceptance. Nothing is deleted because you have not yet accepted.
+Contractor signup uses the same checkbox as any other signup, and the checkbox names these Contractor Participation Terms. You must be 18 or older. That is an affirmation you make, not a verification of your age. Until these pages are published and the requirement to accept these versions is turned on, the server does not reject the account for these versions and does not require the affirmation. After that requirement is on, the server stores the version and the time, records the time of the age affirmation, and a new contractor account is not created if the current version was not accepted or the affirmation is missing. If these terms are updated after you already have an account, the next sign-in asks you to accept the current versions and to affirm that you are 18 or older if you have not already done so. That later acceptance is stored separately from the acceptance recorded when the account was created, with its own version and time. You can still view your jobs, messages, and account information, and you can delete the account, before you accept. While the requirement is on, new marketplace actions wait on that acceptance. Nothing is deleted because you have not yet accepted.

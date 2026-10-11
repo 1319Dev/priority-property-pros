@@ -83,7 +83,9 @@ describe("legal agreement acceptance migration", () => {
       /REVOKE ALL ON FUNCTION public\.set_legal_acceptance_required\(boolean\) FROM PUBLIC, anon, authenticated/,
     );
     expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.set_legal_acceptance_required\(boolean\) TO service_role/);
-    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.accept_current_agreements\(text\) TO authenticated/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.accept_current_agreements\(text, boolean\) TO authenticated/);
+    expect(sql).toMatch(/p_affirmed_age_18/);
+    expect(sql).toMatch(/SET age_18_affirmed_at = now\(\)/);
     expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.missing_current_agreements\(\) TO authenticated/);
     expect(sql).toMatch(
       /REVOKE ALL ON FUNCTION public\.record_current_agreement_acceptances\(uuid, text, public\.account_type, text\) FROM PUBLIC, anon, authenticated/,

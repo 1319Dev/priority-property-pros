@@ -40,11 +40,18 @@ export async function fetchMissingAgreements(): Promise<LegalDocument[] | null> 
   return ((data ?? []) as MissingRow[]).map(asDocument);
 }
 
-/** Records the server's current versions and timestamps for this signed-in account. */
-export async function acceptCurrentAgreements(): Promise<{ error: string | null }> {
+/**
+ * Records the server's current versions and timestamps for this signed-in account.
+ * Also sends the 18-or-older affirmation. The server stores it only when the
+ * acceptance requirement is on and the profile does not already have one.
+ */
+export async function acceptCurrentAgreements(affirmedAge18 = true): Promise<{ error: string | null }> {
   const supabase = getSupabaseClient();
   if (!supabase) return { error: "Supabase is not configured yet." };
   const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent.slice(0, 180);
-  const { error } = await supabase.rpc("accept_current_agreements", { p_user_agent: userAgent });
+  const { error } = await supabase.rpc("accept_current_agreements", {
+    p_user_agent: userAgent,
+    p_affirmed_age_18: affirmedAge18,
+  });
   return { error: error?.message ?? null };
 }

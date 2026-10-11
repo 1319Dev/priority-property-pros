@@ -983,7 +983,10 @@ export type Database = {
         Args: Record<string, never>;
         Returns: { slug: string; title: string; version: number }[];
       };
-      accept_current_agreements: { Args: { p_user_agent?: string | null }; Returns: Json };
+      accept_current_agreements: {
+        Args: { p_user_agent?: string | null; p_affirmed_age_18?: boolean };
+        Returns: Json;
+      };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       admin_set_platform_review_status: {
         Args: { p_review_id: string; p_status: string; p_reason: string };

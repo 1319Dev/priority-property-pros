@@ -94,8 +94,11 @@ describe("agreement acceptance prompt", () => {
     expect(screen.getByRole("link", { name: /terms of service/i })).toHaveAttribute("href", "/terms");
     expect(screen.getByText(/delete your account/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^accept$/i })).toBeDisabled();
+    expect(screen.getByText(/not a verification of my age/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("checkbox", { name: /i agree to the agreements listed above/i }));
+    expect(screen.getByRole("button", { name: /^accept$/i })).toBeDisabled();
+    await user.click(screen.getByRole("checkbox", { name: /i affirm that i am 18 or older/i }));
     await user.click(screen.getByRole("button", { name: /^accept$/i }));
 
     expect(accept).toHaveBeenCalledOnce();

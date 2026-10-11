@@ -22,6 +22,7 @@ DROP FUNCTION IF EXISTS public.set_legal_acceptance_required(boolean);
 DROP FUNCTION IF EXISTS public.assert_signup_agreement_versions(jsonb, public.account_type);
 DROP FUNCTION IF EXISTS public.record_current_agreement_acceptances(uuid, text, public.account_type, text);
 DROP FUNCTION IF EXISTS public.accept_current_agreements(text);
+DROP FUNCTION IF EXISTS public.accept_current_agreements(text, boolean);
 DROP FUNCTION IF EXISTS public.missing_current_agreements();
 
 DROP POLICY IF EXISTS agreements_select_current ON public.agreements;

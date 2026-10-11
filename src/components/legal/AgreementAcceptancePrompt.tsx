@@ -36,6 +36,7 @@ export function AgreementAcceptancePrompt({
   const [required, setRequired] = useState(false);
   const [gaps, setGaps] = useState<LegalDocument[] | null>(null);
   const [checked, setChecked] = useState(false);
+  const [ageAffirmed, setAgeAffirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -103,10 +104,19 @@ export function AgreementAcceptancePrompt({
           />
           <span>I agree to the agreements listed above.</span>
         </label>
+        <label className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            className="mt-1 size-4 accent-forest-800"
+            checked={ageAffirmed}
+            onChange={(event) => setAgeAffirmed(event.target.checked)}
+          />
+          <span>I affirm that I am 18 or older. This is an affirmation, not a verification of my age.</span>
+        </label>
         {error ? <p className="text-red-800">{error}</p> : null}
         <Button
           type="button"
-          disabled={!checked || busy}
+          disabled={!checked || !ageAffirmed || busy}
           onClick={() => {
             setBusy(true);
             setError(null);
@@ -117,6 +127,7 @@ export function AgreementAcceptancePrompt({
                 return;
               }
               setChecked(false);
+              setAgeAffirmed(false);
               setGaps(await load());
               setBusy(false);
             });

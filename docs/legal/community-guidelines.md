@@ -2,9 +2,9 @@
 
 This is not legal advice.
 
-Effective date: the date this version is published. Priority Property Pros records that date as `published_at` on this agreement when this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published. Until this version is published, it is not in effect.
 
-PPP does not require acceptance of this version while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup records acceptance of the current version and the time as a signup. Someone who already has an account is prompted at the next sign-in, can still view their information and delete the account, and any acceptance is stored separately as a sign-in. Turning the setting on does not delete an account.
+PPP does not require acceptance of this version until these pages are published and that requirement is turned on. That requirement ships off. After it is turned on, a new account records the current version and the time. Someone who already has an account is asked at the next sign-in to accept the current versions and to affirm that they are 18 or older. That affirmation is a statement the person makes. It is not a verification of age. That later acceptance is stored separately from the acceptance recorded when the account was created. They can still view their information and delete the account. Turning the requirement on does not delete an account.
 
 ## Plain-language summary
 
@@ -51,7 +51,7 @@ A blocked message or a warning for this rule does not, by itself, refund a Conne
 
 Do not harass, threaten, or discriminate against another person through the marketplace. Do not send repeated unwanted contact after a project is cancelled or a connection is closed. Do not post another person’s private information.
 
-On an estimate or a booking, a customer can choose “Don't match me with this pro again.” Future projects skip that pro. Work already underway stays as it is, and a paid Connection Fee stays paid. The customer can undo that from Blocked pros. A customer review of 3 stars or less also keeps that pro off future projects until the customer unblocks them. Raising that review to 4 or 5 stars does not remove the block. You can also cancel a project when the product allows it, stop new connections, and email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+On an estimate or a booking, a customer can choose “Don't match me with this pro again.” That blocks the pro for that customer only. Matching skips that pro, the pro is left out of Hire Again, and the pro’s open, unaccepted offers on that customer’s other current projects close immediately. Paid connections and bookings are not changed. Work already underway stays as it is, and a paid Connection Fee stays paid. The customer can undo that from Blocked pros, and an admin can remove the block. A customer review of 3 stars or less creates the same kind of block. Raising that review to 4 or 5 stars does not remove it. A contractor’s review of a customer never creates a block. You can also cancel a project when the product allows it, stop new connections, and email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
 ## 5. Reports
 
