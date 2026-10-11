@@ -150,8 +150,12 @@ describe("Admin overview", () => {
   it("shows documented counts, integer revenue, and unavailable metrics", async () => {
     renderOverview();
     expect((await screen.findAllByText("$14.98")).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Not set up yet").length).toBeGreaterThanOrEqual(3);
-    expect(screen.getByRole("link", { name: /Email support@prioritypropertypros.com/i })).toHaveAttribute(
+    expect(screen.queryByText("Not set up yet")).not.toBeInTheDocument();
+    expect(screen.queryByText("Net revenue")).not.toBeInTheDocument();
+    expect(screen.queryByText("Card declines")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Card declines:/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Support tickets")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "support@prioritypropertypros.com" })).toHaveAttribute(
       "href",
       "mailto:support@prioritypropertypros.com",
     );
@@ -184,8 +188,8 @@ describe("Admin overview", () => {
     renderOverview();
     expect(await screen.findByText("Account flag updated · 2")).toBeInTheDocument();
     expect(screen.getAllByText("Account flag updated", { exact: false })).toHaveLength(1);
-    expect(screen.getByText("People with a customer account.")).toBeInTheDocument();
-    expect(screen.getByText("There is no ticket inbox yet. Write to support@prioritypropertypros.com.")).toBeInTheDocument();
+    expect(screen.getByText("Homeowner accounts, not counting deleted ones.")).toBeInTheDocument();
+    expect(screen.getByText(/Support requests arrive by email at/)).toBeInTheDocument();
     expect(screen.queryByText(/gmail/i)).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Refresh" }));
     expect(screen.getAllByText("$14.98").length).toBeGreaterThan(0);
@@ -258,7 +262,7 @@ describe("Admin overview", () => {
     expect(screen.getByText("Succeeded live fees minus stored refunds")).toBeInTheDocument();
     expect(screen.getAllByText("$14.98").length).toBeGreaterThan(0);
     expect(screen.getByText("$24.97")).toBeInTheDocument();
-    expect(screen.getAllByText("Not set up yet").length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText("Card declines")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /mark paid|refund/i })).not.toBeInTheDocument();
   });
 
@@ -271,5 +275,40 @@ describe("Admin overview", () => {
       const query = trendQuery("7d");
       expect(fetchAdminDashboardTrends).toHaveBeenCalledWith({ ...query, includeTest: false });
     });
+  });
+
+  it("shows plain sentences and never the database definitions, including the old support address", async () => {
+    fetchAdminDashboardSummary.mockResolvedValue({
+      ...summary,
+      metrics: {
+        ...summary.metrics,
+        homeowners: metric(1, "available", "profiles where account_type is CUSTOMER and account_status is not DELETED"),
+        revenue_lifetime_cents: metric(
+          1498,
+          "available",
+          "sum of amount_cents from livemode signup_fee_charges and connection_checkout_sessions in PAID or CONSUMED",
+        ),
+        support_tickets: metric(
+          null,
+          "unavailable",
+          "No support_tickets table. Support today is email to prioritypropertypros@gmail.com",
+        ),
+      },
+    });
+    const { container } = renderOverview();
+    await screen.findAllByText("$14.98");
+    expect(screen.getByText("Homeowner accounts, not counting deleted ones.")).toBeInTheDocument();
+    expect(screen.getByText("All activation and Connect fees paid, in live mode.")).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/account_type|amount_cents|livemode|signup_fee_charges|gmail/);
+  });
+
+  it("shows Net revenue once the database reports it", async () => {
+    fetchAdminDashboardSummary.mockResolvedValue({
+      ...summary,
+      metrics: { ...summary.metrics, revenue_net_cents: metric(123456, "available", "net") },
+    });
+    renderOverview();
+    expect(await screen.findByText("Net revenue")).toBeInTheDocument();
+    expect(screen.getByText("$1,234.56")).toBeInTheDocument();
   });
 });

@@ -123,7 +123,7 @@ describe("Admin approvals queue UI", () => {
     expect(screen.getByText("Peachtree Handy")).toBeInTheDocument();
     expect(screen.getByText("Pat Lee")).toBeInTheDocument();
     expect(screen.getByText("pat@example.com")).toBeInTheDocument();
-    expect(screen.getByText("404-555-0100")).toBeInTheDocument();
+    expect(screen.getByText("(404) 555-0100")).toBeInTheDocument();
     expect(screen.getByText("TV Mounting")).toBeInTheDocument();
     expect(screen.getByText(/30318/)).toBeInTheDocument();
     expect(screen.getByText(/sep 1, 2026/i)).toBeInTheDocument();
@@ -404,4 +404,66 @@ describe("Admin Approvals nav badge", () => {
       expect(screen.queryAllByLabelText("1 pending")).toHaveLength(0);
     });
   });
+
+  it("polish: formatted phone and money, no ACTIVE chip on a rejected application, plain empty state", async () => {
+    const rejected: ContractorApprovalItem = {
+      ...pending,
+      business_name: "Test Pros LLC",
+      phone: "9365550199",
+      approval_status: "REJECTED",
+      account_status: "ACTIVE",
+      min_job_cents: 50000,
+      max_job_cents: 3000000,
+    };
+    const { unmount } = render(
+      <MemoryRouter>
+        <ApprovalDetailView item={rejected} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("(936) 555-0199")).toBeInTheDocument();
+    expect(screen.getByText("$500.00 – $30,000.00")).toBeInTheDocument();
+    expect(screen.getAllByText("Rejected").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Active")).not.toBeInTheDocument();
+    unmount();
+
+    render(
+      <MemoryRouter>
+        <ApprovalDetailView item={{ ...rejected, approval_status: "APPROVED" }} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Active")).toBeInTheDocument();
+  });
+
+  it("polish: the empty queue explains approvals in plain words", () => {
+    render(
+      <MemoryRouter>
+        <ApprovalsQueueView
+          tab="PENDING"
+          counts={{ PENDING: 0, APPROVED: 0, REJECTED: 0, IDENTITY_REVIEW: 0, ALL: 0 }}
+          items={[]}
+          loading={false}
+          onTabChange={() => undefined}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText(/shows up here for review/)).toBeInTheDocument();
+    expect(screen.queryByText(/approval_status|self-served/)).not.toBeInTheDocument();
+  });
+
+  it("polish: the back link is a block-level tap target so it cannot sit on the header", async () => {
+    vi.mocked(approvalsApi.getContractorApproval).mockResolvedValue(pending);
+    render(
+      <MemoryRouter initialEntries={["/app/admin/approvals/cp-1"]}>
+        <ToastProvider>
+          <Routes>
+            <Route path="/app/admin/approvals/:contractorProfileId" element={<AdminApprovalDetailPage />} />
+          </Routes>
+        </ToastProvider>
+      </MemoryRouter>,
+    );
+    const back = await screen.findByRole("link", { name: "Back to approvals" });
+    expect(back.className).toMatch(/inline-flex/);
+    expect(back.className).toMatch(/min-h-11/);
+  });
 });
+
