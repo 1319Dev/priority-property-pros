@@ -116,6 +116,13 @@ export function AdminOverviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const generation = useRef(0);
+  const loaded = useRef({ summary: false, attention: false, rows: false, trends: false });
+  loaded.current = {
+    summary: summary != null,
+    attention: attention != null,
+    rows: rows != null,
+    trends: trends != null,
+  };
 
   useEffect(() => {
     const onFocus = () => setReloadKey((value) => value + 1);
@@ -142,7 +149,7 @@ export function AdminOverviewPage() {
         setSummary(summaryResult.value);
         setSummaryFailed(false);
       } else {
-        if (!summary) {
+        if (!loaded.current.summary) {
           setSummary(null);
           setSummaryFailed(true);
         }
@@ -150,7 +157,7 @@ export function AdminOverviewPage() {
       }
       if (attentionResult.status === "fulfilled") setAttention(attentionResult.value.items);
       else {
-        if (!attention) setAttention(null);
+        if (!loaded.current.attention) setAttention(null);
         problems.push(readError(attentionResult.reason, "Could not load what needs attention."));
       }
       if (activityResult.status === "fulfilled") {
@@ -158,7 +165,7 @@ export function AdminOverviewPage() {
         setHasMore(activityResult.value.length === ADMIN_ACTIVITY_PAGE_SIZE);
         setActivityFailed(false);
       } else {
-        if (!rows) {
+        if (!loaded.current.rows) {
           setRows(null);
           setHasMore(false);
           setActivityFailed(true);
@@ -169,7 +176,7 @@ export function AdminOverviewPage() {
         setTrends(trendsResult.value);
         setTrendsFailed(false);
       } else {
-        if (!trends) {
+        if (!loaded.current.trends) {
           setTrends(null);
           setTrendsFailed(true);
         }
