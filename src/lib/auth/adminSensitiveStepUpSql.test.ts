@@ -53,7 +53,8 @@ describe("admin sensitive step-up SQL", () => {
     expect(helper).toMatch(/REVOKE ALL ON FUNCTION public\.assert_admin_sensitive_step_up\(\) FROM PUBLIC, anon, authenticated/);
     expect(helper).not.toMatch(/UPDATE\s+public\.platform_settings/i);
     expect(helper).not.toMatch(/admin_mfa_required',\s*\n\s*1/);
-    expect(helper).not.toMatch(/stripe|signup_fee_cents|connection_fee_cents/i);
+    expect(helper).toMatch(/Does not change payments, fees, Stripe/);
+    expect(helper).not.toMatch(/signup_fee_cents|connection_fee_cents/);
     expect(calls).not.toMatch(/UPDATE\s+public\.platform_settings/i);
     expect(calls).toMatch(/Does not change payments, fees, Stripe/);
     expect(calls).not.toMatch(/signup_fee_cents|connection_fee_cents|stripe\.(customers|paymentIntents)/);

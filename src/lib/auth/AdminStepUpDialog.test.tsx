@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -30,6 +30,9 @@ import { registerAdminStepUpHandler, requestAdminStepUp } from "./adminStepUp";
 describe("admin step-up dialog", () => {
   beforeEach(() => {
     registerAdminStepUpHandler(null);
+    state.listFactors.mockReset();
+    state.challenge.mockReset();
+    state.verify.mockReset();
     state.listFactors.mockResolvedValue({
       data: {
         all: [
@@ -59,10 +62,14 @@ describe("admin step-up dialog", () => {
   it("accepts a code from the backup authenticator and continues", async () => {
     const user = userEvent.setup();
     render(<AdminStepUpHost />);
-    const pending = requestAdminStepUp();
+    let pending!: Promise<boolean>;
+    act(() => {
+      pending = requestAdminStepUp();
+    });
     expect(await screen.findByRole("combobox")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Confirm this admin action" })).toBeInTheDocument();
-    expect(screen.getByText(/last 15 minutes/i)).toBeInTheDocument();
+    expect(screen.getByText(/needs a code from the last 15 minutes/i)).toBeInTheDocument();
+    expect(screen.getByText(/backup authenticator works here too/i)).toBeInTheDocument();
 
     await user.selectOptions(screen.getByRole("combobox"), "backup");
     await user.type(screen.getByLabelText("6-digit code"), "654321");
@@ -80,7 +87,10 @@ describe("admin step-up dialog", () => {
   it("cancels without verifying", async () => {
     const user = userEvent.setup();
     render(<AdminStepUpHost />);
-    const pending = requestAdminStepUp();
+    let pending!: Promise<boolean>;
+    act(() => {
+      pending = requestAdminStepUp();
+    });
     await screen.findByRole("heading", { name: "Confirm this admin action" });
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     await expect(pending).resolves.toBe(false);

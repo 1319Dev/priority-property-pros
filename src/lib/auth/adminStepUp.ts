@@ -35,7 +35,7 @@ type RpcError = { message: string; code?: string } | null;
  * While admin MFA is off the database does not raise, so this returns the first result.
  */
 export async function runSensitiveAdminCall<T>(
-  invoke: () => Promise<{ data: T; error: RpcError }>,
+  invoke: () => PromiseLike<{ data: T; error: RpcError }>,
   fallback: string,
   options?: { requireData?: boolean },
 ): Promise<T> {
