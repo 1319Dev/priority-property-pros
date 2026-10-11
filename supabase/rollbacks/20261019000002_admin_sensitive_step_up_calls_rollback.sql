@@ -61,7 +61,7 @@ BEGIN
 
   RETURN public.contractor_approval_item(cp.id);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_reject_contractor(p_contractor_profile_id uuid, p_reason text DEFAULT NULL::text)
@@ -115,7 +115,7 @@ BEGIN
 
   RETURN public.contractor_approval_item(cp.id);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_request_contractor_info(p_contractor_profile_id uuid, p_message text)
@@ -171,7 +171,7 @@ BEGIN
 
   RETURN public.contractor_approval_item(cp.id);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_set_account_flag(p_profile_id uuid, p_flag text, p_note text DEFAULT NULL::text)
@@ -214,7 +214,7 @@ BEGIN
 
   RETURN jsonb_build_object('profile_id', p_profile_id, 'flag', v_flag);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_grant_booking_contact_access(p_booking_id uuid, p_reason text)
@@ -301,7 +301,7 @@ BEGIN
     'payments_live', false
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_revoke_booking_contact_access(p_booking_id uuid, p_reason text DEFAULT NULL::text)
@@ -380,7 +380,7 @@ BEGIN
     'payments_live', false
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_grant_connection_contact_access(p_connection_id uuid, p_reason text)
@@ -448,7 +448,7 @@ BEGIN
     'grant_source', access.grant_source
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_revoke_connection_contact_access(p_connection_id uuid, p_reason text DEFAULT NULL::text)
@@ -492,7 +492,7 @@ BEGIN
     'missing_row', access.id IS NULL
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_set_portfolio_privacy(p_item_id uuid, p_state portfolio_privacy_state, p_note text DEFAULT NULL::text)
@@ -543,7 +543,7 @@ BEGIN
     'storage_path', v_row.storage_path
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_set_platform_review_status(p_review_id uuid, p_status text, p_reason text)
@@ -588,7 +588,7 @@ BEGIN
 
   RETURN jsonb_build_object('id', v_row.id, 'status', v_row.status);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.protect_platform_review()
@@ -633,7 +633,8 @@ BEGIN
   END IF;
 
   IF TG_OP = 'DELETE' THEN
-    IF NOT public.is_admin() THEN
+    -- Keep PR #90's rule on rollback so account deletion still works.
+    IF auth.uid() IS NOT NULL AND NOT public.is_admin() THEN
       RAISE EXCEPTION 'only an admin can delete a platform review';
     END IF;
     RETURN OLD;
@@ -641,7 +642,7 @@ BEGIN
 
   RETURN NULL;
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.enforce_contractor_portfolio_privacy()
@@ -682,5 +683,5 @@ BEGIN
 
   RETURN NEW;
 END;
-$function$
+$function$;
 

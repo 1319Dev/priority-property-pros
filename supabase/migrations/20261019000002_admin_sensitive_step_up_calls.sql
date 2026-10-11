@@ -6,6 +6,10 @@
 -- The only added statement in each RPC is PERFORM public.assert_admin_sensitive_step_up()
 -- immediately after the existing is_admin() or admin_require() check.
 -- protect_platform_review adds that call on admin UPDATE and DELETE only.
+-- Its DELETE branch keeps PR #90's rule: a null auth.uid() (service-role purge or
+-- auth.users cascade during account deletion) may delete, before any admin check.
+-- PR #105 later replaces this trigger with its PENDING version, which keeps both
+-- the null-uid rule and the step-up call (through admin_moderation_step_up()).
 -- The insert path, including auto-approve, is unchanged.
 -- enforce_contractor_portfolio_privacy adds it when an admin changes privacy_state.
 -- auth.uid() null (service role) still returns before that check on portfolio photos.
@@ -72,7 +76,7 @@ BEGIN
 
   RETURN public.contractor_approval_item(cp.id);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_reject_contractor(p_contractor_profile_id uuid, p_reason text DEFAULT NULL::text)
@@ -127,7 +131,7 @@ BEGIN
 
   RETURN public.contractor_approval_item(cp.id);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_request_contractor_info(p_contractor_profile_id uuid, p_message text)
@@ -184,7 +188,7 @@ BEGIN
 
   RETURN public.contractor_approval_item(cp.id);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_set_account_flag(p_profile_id uuid, p_flag text, p_note text DEFAULT NULL::text)
@@ -228,7 +232,7 @@ BEGIN
 
   RETURN jsonb_build_object('profile_id', p_profile_id, 'flag', v_flag);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_grant_booking_contact_access(p_booking_id uuid, p_reason text)
@@ -316,7 +320,7 @@ BEGIN
     'payments_live', false
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_revoke_booking_contact_access(p_booking_id uuid, p_reason text DEFAULT NULL::text)
@@ -396,7 +400,7 @@ BEGIN
     'payments_live', false
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_grant_connection_contact_access(p_connection_id uuid, p_reason text)
@@ -465,7 +469,7 @@ BEGIN
     'grant_source', access.grant_source
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_revoke_connection_contact_access(p_connection_id uuid, p_reason text DEFAULT NULL::text)
@@ -510,7 +514,7 @@ BEGIN
     'missing_row', access.id IS NULL
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_set_portfolio_privacy(p_item_id uuid, p_state portfolio_privacy_state, p_note text DEFAULT NULL::text)
@@ -562,7 +566,7 @@ BEGIN
     'storage_path', v_row.storage_path
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_set_platform_review_status(p_review_id uuid, p_status text, p_reason text)
@@ -608,7 +612,7 @@ BEGIN
 
   RETURN jsonb_build_object('id', v_row.id, 'status', v_row.status);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.protect_platform_review()
@@ -654,6 +658,11 @@ BEGIN
   END IF;
 
   IF TG_OP = 'DELETE' THEN
+    -- PR #90 account deletion: service-role purge and the auth.users -> profiles
+    -- cascade run with no signed-in user. Same rule as PR #90 and PR #105.
+    IF auth.uid() IS NULL THEN
+      RETURN OLD;
+    END IF;
     IF NOT public.is_admin() THEN
       RAISE EXCEPTION 'only an admin can delete a platform review';
     END IF;
@@ -663,7 +672,7 @@ BEGIN
 
   RETURN NULL;
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.enforce_contractor_portfolio_privacy()
@@ -710,5 +719,5 @@ BEGIN
 
   RETURN NEW;
 END;
-$function$
+$function$;
 

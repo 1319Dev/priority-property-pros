@@ -246,3 +246,184 @@ SELECT public._sample_sensitive_admin_action();
 -- Put the test database flag back so a reused local database is not left enforcing.
 UPDATE public.platform_settings SET value_int = 0 WHERE key = 'admin_mfa_required';
 SELECT public._step_ok(NOT public.admin_mfa_required(), 'test flag restored to 0');
+
+-- ---------------------------------------------------------------------------
+-- Load 20261019000002 (the wrapped admin RPCs and triggers).
+-- Bodies reference production tables this test database does not have, so
+-- body checks are off while loading, the same way pg_dump restores functions.
+-- Only types used in signatures are stubbed.
+-- ---------------------------------------------------------------------------
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'portfolio_privacy_state') THEN
+    CREATE TYPE public.portfolio_privacy_state AS ENUM ('PENDING_REVIEW', 'PUBLIC_SAFE', 'PRIVATE');
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'platform_review_status') THEN
+    CREATE TYPE public.platform_review_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+  END IF;
+END $$;
+
+SET check_function_bodies = off;
+\ir ../migrations/20261019000002_admin_sensitive_step_up_calls.sql
+RESET check_function_bodies;
+
+SELECT public._step_ok(
+  (SELECT count(*) FROM pg_proc p
+   WHERE p.pronamespace = 'public'::regnamespace
+     AND p.proname IN (
+       'admin_approve_contractor', 'admin_reject_contractor', 'admin_request_contractor_info',
+       'admin_set_account_flag', 'admin_grant_booking_contact_access', 'admin_revoke_booking_contact_access',
+       'admin_grant_connection_contact_access', 'admin_revoke_connection_contact_access',
+       'admin_set_portfolio_privacy', 'admin_set_platform_review_status',
+       'protect_platform_review', 'enforce_contractor_portfolio_privacy')
+     AND position('assert_admin_sensitive_step_up()' IN pg_get_functiondef(p.oid)) > 0) = 12,
+  '000002 loaded and all 12 functions call the step-up assert'
+);
+
+-- Minimal stubs so admin_set_account_flag and the platform review trigger can run.
+CREATE OR REPLACE FUNCTION public.admin_require()
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_admin() THEN
+    RAISE EXCEPTION 'not authorized' USING ERRCODE = '42501';
+  END IF;
+END;
+$$;
+
+CREATE TABLE IF NOT EXISTS public.admin_account_flags (
+  profile_id uuid PRIMARY KEY,
+  flag text NOT NULL,
+  note text,
+  set_by uuid,
+  set_at timestamptz
+);
+
+CREATE TABLE IF NOT EXISTS public.audit_logs_stub (action text);
+CREATE OR REPLACE FUNCTION public.write_audit_log(p_actor uuid, p_action text, p_entity text, p_entity_id uuid, p_meta jsonb)
+RETURNS void
+LANGUAGE sql
+AS $$
+  INSERT INTO public.audit_logs_stub (action) VALUES (p_action);
+$$;
+
+CREATE TABLE IF NOT EXISTS public.platform_reviews (
+  id uuid PRIMARY KEY,
+  user_id uuid,
+  display_name text NOT NULL,
+  body text NOT NULL,
+  city text,
+  status public.platform_review_status NOT NULL DEFAULT 'APPROVED',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO public.platform_reviews (id, user_id, display_name, body) VALUES
+  ('e0000000-0000-4000-8000-000000000001', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'Ada', 'one'),
+  ('e0000000-0000-4000-8000-000000000002', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'Ada', 'two'),
+  ('e0000000-0000-4000-8000-000000000003', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'Ada', 'three'),
+  ('e0000000-0000-4000-8000-000000000004', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'Ada', 'four'),
+  ('e0000000-0000-4000-8000-000000000005', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'Ada', 'five');
+
+DROP TRIGGER IF EXISTS platform_reviews_protect ON public.platform_reviews;
+CREATE TRIGGER platform_reviews_protect
+  BEFORE INSERT OR UPDATE OR DELETE ON public.platform_reviews
+  FOR EACH ROW EXECUTE FUNCTION public.protect_platform_review();
+
+-- Enforcement OFF (production today): Garrett is not locked out.
+UPDATE public.platform_settings SET value_int = 0 WHERE key = 'admin_mfa_required';
+SELECT public._step_jwt('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'aal1', '[]'::jsonb);
+SELECT public._step_ok(
+  (public.admin_set_account_flag('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'TEST', 'off') ->> 'flag') = 'TEST',
+  'flag off: password-only admin can still set an account flag'
+);
+DELETE FROM public.platform_reviews WHERE id = 'e0000000-0000-4000-8000-000000000001';
+SELECT public._step_ok(
+  NOT EXISTS (SELECT 1 FROM public.platform_reviews WHERE id = 'e0000000-0000-4000-8000-000000000001'),
+  'flag off: password-only admin can still delete a review'
+);
+
+-- PR #90: account deletion purge has no signed-in user and must be allowed.
+SELECT public._step_clear();
+DELETE FROM public.platform_reviews WHERE id = 'e0000000-0000-4000-8000-000000000002';
+SELECT public._step_ok(
+  NOT EXISTS (SELECT 1 FROM public.platform_reviews WHERE id = 'e0000000-0000-4000-8000-000000000002'),
+  'flag off: null-uid account-deletion purge deletes the review'
+);
+
+-- Enforcement ON.
+UPDATE public.platform_settings SET value_int = 1 WHERE key = 'admin_mfa_required';
+
+SELECT public._step_clear();
+DELETE FROM public.platform_reviews WHERE id = 'e0000000-0000-4000-8000-000000000003';
+SELECT public._step_ok(
+  NOT EXISTS (SELECT 1 FROM public.platform_reviews WHERE id = 'e0000000-0000-4000-8000-000000000003'),
+  'flag on: null-uid account-deletion purge still deletes the review'
+);
+
+SELECT public._step_jwt('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aal2', '[]'::jsonb);
+SELECT public._step_raises(
+  $$DELETE FROM public.platform_reviews WHERE id = 'e0000000-0000-4000-8000-000000000004'$$,
+  'only an admin can delete a platform review'
+);
+
+-- Stale code: AAL2 session, but the newest TOTP is 16 minutes old.
+SELECT public._step_jwt(
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  'aal2',
+  jsonb_build_array(
+    jsonb_build_object('method', 'token_refresh', 'timestamp', floor(extract(epoch from now()))::bigint),
+    jsonb_build_object('method', 'totp', 'timestamp', floor(extract(epoch from now() - interval '16 minutes'))::bigint)
+  )
+);
+SELECT public._step_ok(public.is_admin(), 'stale-code session is still an admin');
+SELECT public._step_raises(
+  $$SELECT public.admin_set_account_flag('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'OWNER', 'stale')$$,
+  'admin step-up required'
+);
+SELECT public._step_ok(
+  (SELECT flag FROM public.admin_account_flags WHERE profile_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa') = 'TEST',
+  'stale code: account flag unchanged'
+);
+SELECT public._step_raises(
+  $$DELETE FROM public.platform_reviews WHERE id = 'e0000000-0000-4000-8000-000000000004'$$,
+  'admin step-up required'
+);
+SELECT public._step_raises(
+  $$UPDATE public.platform_reviews SET status = 'REJECTED' WHERE id = 'e0000000-0000-4000-8000-000000000004'$$,
+  'admin step-up required'
+);
+SELECT public._step_ok(
+  (SELECT status::text FROM public.platform_reviews WHERE id = 'e0000000-0000-4000-8000-000000000004') = 'APPROVED',
+  'stale code: review unchanged'
+);
+
+-- AAL1 admin with enforcement on is not an admin at all.
+SELECT public._step_jwt('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'aal1', '[]'::jsonb);
+SELECT public._step_raises(
+  $$SELECT public.admin_set_account_flag('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'OWNER', 'aal1')$$,
+  'not authorized'
+);
+
+-- Fresh code: AAL2 with a TOTP from 2 minutes ago.
+SELECT public._step_jwt(
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  'aal2',
+  jsonb_build_array(
+    jsonb_build_object('method', 'totp', 'timestamp', floor(extract(epoch from now() - interval '2 minutes'))::bigint)
+  )
+);
+SELECT public._step_ok(
+  (public.admin_set_account_flag('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'OWNER', 'fresh') ->> 'flag') = 'OWNER',
+  'fresh code: account flag set'
+);
+DELETE FROM public.platform_reviews WHERE id = 'e0000000-0000-4000-8000-000000000004';
+SELECT public._step_ok(
+  NOT EXISTS (SELECT 1 FROM public.platform_reviews WHERE id = 'e0000000-0000-4000-8000-000000000004'),
+  'fresh code: admin deletes the review'
+);
+
+UPDATE public.platform_settings SET value_int = 0 WHERE key = 'admin_mfa_required';
+SELECT public._step_clear();
+SELECT public._step_ok(NOT public.admin_mfa_required(), 'test flag restored to 0 after 000002 checks');
+SELECT 'loaded 20261019000002: flag off no lockout, null-uid purge allowed, stale code refused, fresh code accepted' AS admin_step_up_calls;

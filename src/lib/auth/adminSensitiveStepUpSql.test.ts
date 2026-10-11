@@ -90,6 +90,34 @@ describe("admin sensitive step-up SQL", () => {
     );
   });
 
+  it("ends every function body with a semicolon so the file runs as one script", () => {
+    for (const sql of [calls, callsRollback]) {
+      const creates = sql.match(/CREATE OR REPLACE FUNCTION/g) ?? [];
+      const ends = sql.match(/^\$function\$;/gm) ?? [];
+      expect(creates.length).toBe(12);
+      expect(ends.length).toBe(creates.length);
+      expect(sql).not.toMatch(/^\$function\$\s*$/m);
+    }
+  });
+
+  it("keeps the PR #90 null-uid delete rule for account deletion", () => {
+    const review = body(calls, "protect_platform_review");
+    const del = review.slice(review.indexOf("IF TG_OP = 'DELETE' THEN"));
+    const nullUid = del.indexOf("IF auth.uid() IS NULL THEN\n      RETURN OLD;");
+    expect(nullUid).toBeGreaterThan(-1);
+    expect(nullUid).toBeLessThan(del.indexOf("IF NOT public.is_admin() THEN"));
+    expect(nullUid).toBeLessThan(del.indexOf("PERFORM public.assert_admin_sensitive_step_up();"));
+    const rolled = body(callsRollback, "protect_platform_review");
+    expect(rolled).toMatch(/IF auth\.uid\(\) IS NOT NULL AND NOT public\.is_admin\(\) THEN/);
+  });
+
+  it("the SQL walkthrough loads 000002 and checks a stale code", () => {
+    const walk = readFileSync(path.join(root, "supabase/tests/admin_sensitive_step_up.sql"), "utf8");
+    expect(walk).toMatch(/\\ir \.\.\/migrations\/20261019000002_admin_sensitive_step_up_calls\.sql/);
+    expect(walk).toMatch(/interval '16 minutes'/);
+    expect(walk).toMatch(/null-uid account-deletion purge/);
+  });
+
   it("tells the owner to enroll two devices before flipping the flag", () => {
     expect(checklist).toMatch(/Leave it at 0/);
     expect(checklist).toMatch(/second authenticator/i);
