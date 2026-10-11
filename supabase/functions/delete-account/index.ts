@@ -78,6 +78,17 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return optionsResponse();
   if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
 
+  // EMERGENCY PAUSE (2026-10-11, owner-approved): live deletion can leave accounts
+  // half-deleted. Refuse before ANY side effect until PR #90 ships. Remove this
+  // block (or redeploy delete-account from main / PR #90) to restore.
+  const ACCOUNT_DELETION_PAUSED = true;
+  if (ACCOUNT_DELETION_PAUSED) {
+    return json({
+      error: "account_deletion_paused",
+      message: "Account deletion is temporarily handled by our support team. To request deletion, email support@prioritypropertypros.com from the email on your account, and we will process it.",
+    }, 503);
+  }
+
   try {
     const userId = await userIdFromRequest(req);
     const body = (await req.json().catch(() => ({}))) as { user_id?: string };
