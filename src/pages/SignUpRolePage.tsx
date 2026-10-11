@@ -4,20 +4,27 @@ import { AuthCard } from "../lib/auth/AuthCard";
 import { dashboardPath } from "../lib/auth/publicEntry";
 import { requestsVerifierSignup } from "../lib/auth/roles";
 import { useAuth } from "../lib/auth/useAuth";
-import { SIGNUP_ROLE_LEDE } from "../data/pricing";
+import {
+  CONNECTION_FEE_NO_HIRE_GUARANTEE,
+  HOMEOWNER_PRICING_SUMMARY,
+  JOB_PAYMENT_PLAIN,
+  PRO_PRICING_SUMMARY,
+  SIGNUP_FEE_NOT_MONTHLY,
+  SIGNUP_ROLE_LEDE,
+} from "../data/pricing";
 
 const options = [
   {
     to: "/sign-up/customer",
     label: "I need work done",
-    detail:
-      "Homeowners & Businesses. Post projects, review connections, and hire. One-time $9.99 account activation — not a monthly subscription. No PPP Connection Fee. The $9.99 account activation fee is non-refundable.",
+    account: "Customer account",
+    detail: HOMEOWNER_PRICING_SUMMARY,
   },
   {
     to: "/sign-up/contractor",
     label: "I want to get hired",
-    detail:
-      "Independent contractors. One-time $9.99 account activation, then $0/month. Browse first. Pay $4.99 only when you choose to connect. The $9.99 activation fee and the $4.99 Connection Fee are non-refundable.",
+    account: "Contractor account",
+    detail: `${PRO_PRICING_SUMMARY} ${CONNECTION_FEE_NO_HIRE_GUARANTEE}`,
   },
 ];
 
@@ -57,15 +64,30 @@ export function SignUpRolePage() {
         </>
       }
     >
+      <section className="rounded-3xl border border-forest-800/10 bg-cream-100 px-5 py-4 text-sm leading-relaxed text-ink-700" aria-labelledby="signup-before-checkout">
+        <h2 id="signup-before-checkout" className="font-semibold text-forest-800">
+          Before checkout
+        </h2>
+        <p className="mt-2">{SIGNUP_FEE_NOT_MONTHLY}</p>
+        <p className="mt-2">
+          Customer and contractor accounts pay that same one-time activation. A customer posts work and does not pay a
+          PPP Connection Fee. A contractor is an independent pro who browses first and pays $4.99 only when they choose
+          to connect. {JOB_PAYMENT_PLAIN}
+        </p>
+      </section>
       <ul className="space-y-3">
         {options.map((option) => (
           <li key={option.to}>
             <Link
               to={option.to}
-              className="block rounded-3xl border border-forest-800/15 bg-cream-50 px-5 py-4 transition-colors hover:border-forest-800 hover:bg-cream-100"
+              data-auth-card=""
+              className="flex w-full min-w-0 flex-col items-stretch gap-1 rounded-3xl border border-forest-800/15 bg-cream-50 px-5 py-4 text-left transition-colors hover:border-forest-800 hover:bg-cream-100"
             >
-              <p className="font-semibold text-forest-800">{option.label}</p>
-              <p className="mt-1 text-sm text-ink-700">{option.detail}</p>
+              <p className="min-w-0 whitespace-normal font-semibold text-forest-800">{option.label}</p>
+              <p className="min-w-0 whitespace-normal text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">
+                {option.account}
+              </p>
+              <p className="min-w-0 whitespace-normal text-sm leading-relaxed text-ink-700">{option.detail}</p>
             </Link>
           </li>
         ))}
