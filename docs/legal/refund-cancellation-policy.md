@@ -12,7 +12,7 @@ PPP does not require acceptance of this draft while the platform setting `legal_
 - The $4.99 Connection Fee is what a contractor pays to connect on one project. A rehire on a new project is another connection and another $4.99. The website says this fee is non-refundable, including if nobody is hired or the project is cancelled.
 - This app does not send refunds to Stripe. Card data is entered at Stripe. PPP does not store card numbers.
 - PPP does not collect the payment for the work. Cancelling a job does not create a PPP refund of that job payment, because PPP never held it.
-- PPP is not the employer, the general contractor, or a guarantor. Cancelling a project does not make PPP a party to the job.
+- Cancelling a project does not refund a platform fee and does not make PPP a party to the job. Job responsibility is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
 
 This policy is part of the [Terms of Use](/terms). The [Privacy Policy](/privacy) describes payment records.
 
@@ -56,13 +56,13 @@ A customer can decline an estimate, stop new connections, and cancel a project w
 
 A contractor can pass on an unpaid offer. Passing frees that slot for another contractor. Passing after a paid Connect does not refund the $4.99.
 
-A booking can move to Cancelled from the statuses the product allows. A completed booking is not cancelled by that same control. Cancelling a booking cancels the marketplace record of the hire. It does not move the job payment, because that payment is not in PPP. Any cancellation terms for the work itself are between the customer and the contractor.
+A booking can move to Cancelled from the statuses the product allows. A completed booking is not cancelled by that same control. Cancelling a booking cancels the marketplace record of the hire. It does not move the job payment, because that payment is not in PPP. Cancellation terms for the work itself are covered in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
 
 An abandoned Connect checkout can release a reserved slot after a server timeout (30 minutes unless that setting is changed). Releasing an unpaid reservation is not a charge and is not a refund.
 
 ## 5. Job payment and job disputes
 
-The customer pays the contractor directly for the job. PPP does not invoice that amount, does not take a percentage, and does not refund it. If the customer and contractor disagree about the work, the price, or a cancellation of the work, they resolve that between themselves. PPP is not the employer, the general contractor, or a guarantor, and PPP does not decide that dispute.
+The customer pays the contractor directly for the job. PPP does not invoice that amount, does not take a percentage, and does not refund it. Who resolves a dispute about the work is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
 
 A booking status of Disputed, when it is set, is a label on the marketplace record. It is not a PPP ruling and it is not a refund of the $9.99 or the $4.99.
 

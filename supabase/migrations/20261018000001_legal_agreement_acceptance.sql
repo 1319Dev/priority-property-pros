@@ -121,10 +121,10 @@ Effective date: [OWNER DECISION: the calendar date these terms take effect]
 
 ## Plain-language summary
 
-- Priority Property Pros is a marketplace. Priority Property Pros LLC does not do the work. It is not the customer’s employer, not the contractor’s employer, not the general contractor, and not a guarantor of either party.
+- Who performs the work, and who is responsible for the job, is in Independent Marketplace and Contractor Responsibility below.
 - Homeowners and businesses post projects. Matched contractors are offered those jobs. A project can have up to three connection slots.
 - Customers and contractors pay a one-time $9.99 account activation when Stripe Checkout for that fee is turned on. It is not a monthly fee. The site says this fee is non-refundable.
-- A contractor pays $4.99 to Connect on a project, including a later project with someone they have worked with before. That unlocks messaging for that pair and the customer’s choice to share contact details. It does not guarantee the job. The site says this fee is non-refundable.
+- A contractor pays $4.99 to Connect on a project, including a later project with someone they have worked with before. That unlocks messaging for that pair and the customer’s choice to share contact details. It does not promise that the customer will hire that contractor. The site says this fee is non-refundable.
 - The customer pays the contractor directly for the work. PPP does not collect that payment and does not take a percentage of it.
 - PPP does not state that a contractor is licensed, insured, bonded, or background-checked. Admin approval is not that kind of check.
 - The signup form asks for acceptance of these documents. PPP does not reject a new account for that acceptance while the platform setting `legal_acceptance_required` is off. That setting ships off. After it is turned on, a new signup is refused unless the current versions were accepted, and an existing account is asked to accept at the next sign-in. Existing accounts can still view their data. Nothing is deleted. Signup acceptances and later sign-in acceptances are stored separately, each with the document version and the time.
@@ -140,13 +140,23 @@ The only contact address the product publishes today is [support@prioritypropert
 
 [OWNER DECISION: provide a mailing address if you want one in these terms. The product has no street address on file. This draft does not invent one.]
 
-## 2. A marketplace, not the contractor
+## Independent Marketplace and Contractor Responsibility
 
-PPP provides software that lets a customer post a project and lets an independent contractor choose to connect. PPP does not perform the work. PPP does not hire the contractor to do the customer’s job. PPP does not supervise the job site. PPP is not a general contractor, a party to the job contract, or a guarantor of the work, the price, the schedule, or either person’s conduct.
+Priority Property Pros LLC operates solely as an online marketplace connecting homeowners with independent third-party contractors.
 
-The customer and the contractor decide whether to work together and on what terms. Estimates, change orders, and the price of the work are between them. The customer pays the contractor directly for any job cost. PPP does not collect that payment, hold it, escrow it, or take a percentage of it.
+Priority Property Pros does not perform, supervise, manage, direct, inspect, or guarantee construction, repair, maintenance, or other services provided by contractors through the platform.
 
-Contractor accounts are independent businesses. The details are in the Contractor Participation Terms. PPP does not claim, and these terms do not mean, that a contractor is licensed, insured, bonded, or background-checked.
+All contractors operate independently and are not employees, agents, partners, or representatives of Priority Property Pros.
+
+Homeowners and contractors are solely responsible for negotiating project terms, entering into service agreements, arranging payments for contracted work, and resolving disputes relating to the services performed.
+
+Disputes concerning workmanship, project completion, property damage, contractor payments, warranties, or other matters arising from contracted services are generally the responsibility of the homeowner and contractor involved.
+
+Priority Property Pros is not a party to agreements between homeowners and contractors unless expressly stated otherwise.
+
+Nothing in these Terms excludes liability that cannot legally be excluded or limits any rights or remedies provided by applicable law.
+
+The customer pays the contractor directly for any job cost. PPP does not collect that payment, hold it, escrow it, or take a percentage of it. PPP does not claim, and these terms do not mean, that a contractor is licensed, insured, bonded, or background-checked. Contractor rules that sit on top of this section are in the [Contractor Participation Terms](/contractor-terms).
 
 ## 3. Accounts and acceptance
 
@@ -218,7 +228,7 @@ PPP can notify you in the app, by web push, and by email. Email is sent through 
 
 ## 10. Disputes between customers and contractors
 
-Disputes about the work, the price, the schedule, materials, or conduct are between the customer and the contractor. PPP is not the judge of those disputes and does not pay either party for the job. A booking can be marked Disputed in the product. That status does not mean PPP has decided who is right, and it does not refund a platform fee. Platform fees are covered only by the Refund & Cancellation Policy.
+Job disputes are covered in Independent Marketplace and Contractor Responsibility. PPP does not pay either party for the job. A booking can be marked Disputed in the product. That status does not mean PPP has decided who is right, and it does not refund a platform fee. Platform fees are covered only by the Refund & Cancellation Policy.
 
 [OWNER DECISION: choose arbitration or the courts. This draft does not require arbitration, a class-action waiver, or a jury waiver. It leaves disputes about these terms to whatever forum you select here.]
 
@@ -240,9 +250,9 @@ The PPP name, logos, and site design belong to PPP. You may not copy the site or
 
 ## 14. Disclaimers
 
-The marketplace is provided as it runs today. Features such as Stripe Checkout can be switched off. PPP does not warrant that the site will be uninterrupted or error free, or that a contractor, a customer, or a job will meet your expectations.
+The marketplace software is provided as it runs today. Features such as Stripe Checkout can be switched off. PPP does not warrant that the site will be uninterrupted or error free.
 
-To the extent the law allows, PPP is not liable for the other party’s work, pay, delay, or conduct, or for a hiring decision you make. Nothing in this draft takes away a right that a Texas or federal law does not let us take away.
+Responsibility for the work, and liability these terms do not exclude, is in Independent Marketplace and Contractor Responsibility.
 
 ## 15. Changes
 
@@ -254,7 +264,7 @@ A new version can be made the current row when PPP turns `legal_acceptance_requi
 
 Questions about these terms: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
-Job payment, scheduling, and workmanship stay between the customer and the contractor. Email PPP for marketplace questions.
+Email PPP for marketplace questions. Job responsibility is in Independent Marketplace and Contractor Responsibility.
 $ppp_legal_terms_of_use$,
   false,
   'ALL',
@@ -437,7 +447,7 @@ PPP does not require acceptance of this draft while the platform setting `legal_
 - The $4.99 Connection Fee is what a contractor pays to connect on one project. A rehire on a new project is another connection and another $4.99. The website says this fee is non-refundable, including if nobody is hired or the project is cancelled.
 - This app does not send refunds to Stripe. Card data is entered at Stripe. PPP does not store card numbers.
 - PPP does not collect the payment for the work. Cancelling a job does not create a PPP refund of that job payment, because PPP never held it.
-- PPP is not the employer, the general contractor, or a guarantor. Cancelling a project does not make PPP a party to the job.
+- Cancelling a project does not refund a platform fee and does not make PPP a party to the job. Job responsibility is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
 
 This policy is part of the [Terms of Use](/terms). The [Privacy Policy](/privacy) describes payment records.
 
@@ -481,13 +491,13 @@ A customer can decline an estimate, stop new connections, and cancel a project w
 
 A contractor can pass on an unpaid offer. Passing frees that slot for another contractor. Passing after a paid Connect does not refund the $4.99.
 
-A booking can move to Cancelled from the statuses the product allows. A completed booking is not cancelled by that same control. Cancelling a booking cancels the marketplace record of the hire. It does not move the job payment, because that payment is not in PPP. Any cancellation terms for the work itself are between the customer and the contractor.
+A booking can move to Cancelled from the statuses the product allows. A completed booking is not cancelled by that same control. Cancelling a booking cancels the marketplace record of the hire. It does not move the job payment, because that payment is not in PPP. Cancellation terms for the work itself are covered in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
 
 An abandoned Connect checkout can release a reserved slot after a server timeout (30 minutes unless that setting is changed). Releasing an unpaid reservation is not a charge and is not a refund.
 
 ## 5. Job payment and job disputes
 
-The customer pays the contractor directly for the job. PPP does not invoice that amount, does not take a percentage, and does not refund it. If the customer and contractor disagree about the work, the price, or a cancellation of the work, they resolve that between themselves. PPP is not the employer, the general contractor, or a guarantor, and PPP does not decide that dispute.
+The customer pays the contractor directly for the job. PPP does not invoice that amount, does not take a percentage, and does not refund it. Who resolves a dispute about the work is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
 
 A booking status of Disputed, when it is set, is a label on the marketplace record. It is not a PPP ruling and it is not a refund of the $9.99 or the $4.99.
 
@@ -521,13 +531,13 @@ PPP does not require acceptance of this draft while the platform setting `legal_
 - Do not swap phone numbers, email addresses, or street addresses to skip the $4.99 Connection Fee.
 - Do not harass people, post someone else’s private information, or pretend PPP did the work.
 - PPP can warn, suspend, or close an account. One automatic text block is not an automatic permanent ban.
-- PPP is not the employer, the general contractor, or a guarantor of anyone on the site.
+- Job responsibility is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
 
 These guidelines are part of the [Terms of Use](/terms). Reviews and photos also follow the [Review & Content Guidelines](/content-guidelines).
 
 ## 1. Who this covers
 
-These guidelines cover customers, contractors, and anyone else using a Priority Property Pros account. Contractors are independent businesses under the [Contractor Participation Terms](/contractor-terms). Following these guidelines does not make a contractor an employee of Priority Property Pros LLC, and it does not mean PPP has licensed, insured, bonded, or background-checked that contractor.
+These guidelines cover customers, contractors, and anyone else using a Priority Property Pros account. Who performs the work is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms). Contractor accounts also follow the [Contractor Participation Terms](/contractor-terms). These guidelines do not mean PPP has licensed, insured, bonded, or background-checked a contractor.
 
 ## 2. Honest use
 
@@ -569,7 +579,7 @@ Enforcement is not a finding that someone is licensed, insured, bonded, or backg
 
 ## 6. Contact
 
-Report a marketplace problem to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Job-site disputes stay between the customer and the contractor.
+Report a marketplace problem to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Job-site disputes are covered in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
 $ppp_legal_community_guidelines$,
   false,
   'ALL',
@@ -651,8 +661,7 @@ Effective date: [OWNER DECISION: the calendar date these terms take effect]
 
 ## Plain-language summary
 
-- If you sign up as a contractor, you are an independent business. You are not an employee, agent, or partner of Priority Property Pros LLC.
-- PPP does not perform the work, does not act as the general contractor, and does not guarantee you, the customer, or the job.
+- How you relate to Priority Property Pros is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms). These terms do not repeat that section.
 - PPP does not state that you are licensed, insured, bonded, or background-checked. Putting a license or insurance note on your profile does not mean PPP verified it.
 - You pay the $9.99 one-time activation, then $4.99 each time you choose to Connect, including when a past customer posts a new project and you connect again. The site says both fees are non-refundable.
 - You choose which jobs to take. The customer pays you directly. PPP does not take a percentage of the job.
@@ -661,7 +670,7 @@ These terms are part of the [Terms of Use](/terms) for contractor accounts. Cust
 
 ## 1. Independent business
 
-You provide services to customers as an independent business. You are not an employee of PPP. You are not PPP’s agent. You may not present yourself as PPP, as employed by PPP, or as a crew PPP sent. PPP does not withhold employment taxes for you, does not set your hours, and does not supervise the job site.
+Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms) is the statement of your relationship to PPP. You may not present yourself as PPP, as employed by PPP, or as a crew PPP sent. PPP does not withhold employment taxes for you and does not set your hours.
 
 You are responsible for your own tools, helpers, taxes, permits, and the agreements you make with customers. Any license, insurance, or bond that the law or a customer requires is your obligation. PPP does not require proof of insurance in the product, and these terms do not add an insurance requirement. PPP also does not run a background-check program, and these terms do not create one.
 
@@ -691,7 +700,7 @@ After you pay $4.99 and the server verifies it, you and that customer can messag
 
 ## 5. Your work and your disputes
 
-You set your estimate and your terms with the customer. PPP does not guarantee that the customer will pay you, that the description is complete, or that the job will proceed. If you and the customer disagree, that dispute is between you. PPP is not the general contractor and is not a guarantor. A Disputed booking status is not a decision by PPP and is not a refund of the Connection Fee.
+You set your estimate in the product. Job responsibility is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms). A Disputed booking status is not a decision by PPP and is not a refund of the Connection Fee.
 
 ## 6. Acceptance
 

@@ -6,8 +6,7 @@ Effective date: [OWNER DECISION: the calendar date these terms take effect]
 
 ## Plain-language summary
 
-- If you sign up as a contractor, you are an independent business. You are not an employee, agent, or partner of Priority Property Pros LLC.
-- PPP does not perform the work, does not act as the general contractor, and does not guarantee you, the customer, or the job.
+- How you relate to Priority Property Pros is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms). These terms do not repeat that section.
 - PPP does not state that you are licensed, insured, bonded, or background-checked. Putting a license or insurance note on your profile does not mean PPP verified it.
 - You pay the $9.99 one-time activation, then $4.99 each time you choose to Connect, including when a past customer posts a new project and you connect again. The site says both fees are non-refundable.
 - You choose which jobs to take. The customer pays you directly. PPP does not take a percentage of the job.
@@ -16,7 +15,7 @@ These terms are part of the [Terms of Use](/terms) for contractor accounts. Cust
 
 ## 1. Independent business
 
-You provide services to customers as an independent business. You are not an employee of PPP. You are not PPP’s agent. You may not present yourself as PPP, as employed by PPP, or as a crew PPP sent. PPP does not withhold employment taxes for you, does not set your hours, and does not supervise the job site.
+Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms) is the statement of your relationship to PPP. You may not present yourself as PPP, as employed by PPP, or as a crew PPP sent. PPP does not withhold employment taxes for you and does not set your hours.
 
 You are responsible for your own tools, helpers, taxes, permits, and the agreements you make with customers. Any license, insurance, or bond that the law or a customer requires is your obligation. PPP does not require proof of insurance in the product, and these terms do not add an insurance requirement. PPP also does not run a background-check program, and these terms do not create one.
 
@@ -46,7 +45,7 @@ After you pay $4.99 and the server verifies it, you and that customer can messag
 
 ## 5. Your work and your disputes
 
-You set your estimate and your terms with the customer. PPP does not guarantee that the customer will pay you, that the description is complete, or that the job will proceed. If you and the customer disagree, that dispute is between you. PPP is not the general contractor and is not a guarantor. A Disputed booking status is not a decision by PPP and is not a refund of the Connection Fee.
+You set your estimate in the product. Job responsibility is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms). A Disputed booking status is not a decision by PPP and is not a refund of the Connection Fee.
 
 ## 6. Acceptance
 

@@ -71,8 +71,10 @@ describe("draft legal pages", () => {
     expect(combined).toMatch(/\$4\.99/);
     expect(combined).toMatch(/including a later project/i);
     expect(combined).toMatch(/up to three occupying connection slots/i);
-    expect(combined).toMatch(/not the customer’s employer/i);
-    expect(combined).toMatch(/not the general contractor/i);
+    expect(combined).toMatch(/Independent Marketplace and Contractor Responsibility/);
+    expect(combined).toMatch(/operates solely as an online marketplace connecting homeowners with independent third-party contractors/);
+    expect(combined).toMatch(/unless expressly stated otherwise/);
+    expect(combined).toMatch(/cannot legally be excluded/);
     expect(combined).toMatch(/does not currently verify licenses, insurance, or workmanship/i);
     expect(combined).toMatch(/background-checked/);
     expect(combined).toMatch(/30 days after it is posted/i);

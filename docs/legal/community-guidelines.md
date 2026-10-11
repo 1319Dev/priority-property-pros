@@ -12,13 +12,13 @@ PPP does not require acceptance of this draft while the platform setting `legal_
 - Do not swap phone numbers, email addresses, or street addresses to skip the $4.99 Connection Fee.
 - Do not harass people, post someone else’s private information, or pretend PPP did the work.
 - PPP can warn, suspend, or close an account. One automatic text block is not an automatic permanent ban.
-- PPP is not the employer, the general contractor, or a guarantor of anyone on the site.
+- Job responsibility is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
 
 These guidelines are part of the [Terms of Use](/terms). Reviews and photos also follow the [Review & Content Guidelines](/content-guidelines).
 
 ## 1. Who this covers
 
-These guidelines cover customers, contractors, and anyone else using a Priority Property Pros account. Contractors are independent businesses under the [Contractor Participation Terms](/contractor-terms). Following these guidelines does not make a contractor an employee of Priority Property Pros LLC, and it does not mean PPP has licensed, insured, bonded, or background-checked that contractor.
+These guidelines cover customers, contractors, and anyone else using a Priority Property Pros account. Who performs the work is in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms). Contractor accounts also follow the [Contractor Participation Terms](/contractor-terms). These guidelines do not mean PPP has licensed, insured, bonded, or background-checked a contractor.
 
 ## 2. Honest use
 
@@ -60,4 +60,4 @@ Enforcement is not a finding that someone is licensed, insured, bonded, or backg
 
 ## 6. Contact
 
-Report a marketplace problem to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Job-site disputes stay between the customer and the contractor.
+Report a marketplace problem to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Job-site disputes are covered in Independent Marketplace and Contractor Responsibility in the [Terms of Use](/terms).
