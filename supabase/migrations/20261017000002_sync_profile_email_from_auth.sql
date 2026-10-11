@@ -75,13 +75,15 @@ BEGIN
   WHERE id = NEW.id
     AND email IS DISTINCT FROM NEW.email;
 
+  -- audit_logs is append-only and kept after account deletion, so it records
+  -- that the email changed, not the old or new address.
   IF FOUND THEN
     PERFORM public.write_audit_log(
       NEW.id,
       'profile.email_synced',
       'profiles',
       NEW.id,
-      jsonb_build_object('previous_email', OLD.email, 'email', NEW.email)
+      jsonb_build_object('source', 'auth_email_change')
     );
   END IF;
 

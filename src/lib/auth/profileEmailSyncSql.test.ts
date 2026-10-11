@@ -27,6 +27,8 @@ describe("profile email sync migration", () => {
     expect(migration).toMatch(/GRANT EXECUTE ON FUNCTION public\.sync_profile_email_from_auth\(\) TO supabase_auth_admin/);
     expect(migration).toMatch(/IF FOUND THEN/);
     expect(migration).toMatch(/profile\.email_synced/);
+    // The append-only audit log must not keep the old or new address.
+    expect(migration).not.toMatch(/'previous_email'|'email',\s*NEW\.email/);
     expect(migration).not.toMatch(/signup_fee_status\s*=/);
   });
 
