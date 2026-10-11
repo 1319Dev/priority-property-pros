@@ -96,6 +96,19 @@
 
 html {
   scrollbar-gutter: stable;
+  /*
+   * Keep focused or scrolled-to content clear of the sticky header and, below
+   * lg, the fixed bottom tab bar (about 4.5rem tall plus the safe area).
+   * Without this, Tab can land on a link hidden behind the tab bar.
+   */
+  scroll-padding-top: calc(5rem + env(safe-area-inset-top));
+  scroll-padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 64rem) {
+  html {
+    scroll-padding-bottom: 1rem;
+  }
 }
 
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
