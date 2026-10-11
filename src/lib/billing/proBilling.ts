@@ -185,7 +185,9 @@ function db(): SupabaseClient {
 }
 
 export async function fetchMyPaidActivationAt(profileId: string): Promise<string | null> {
-  const { data, error } = await db()
+  const client = getSupabaseClient();
+  if (!client) return null;
+  const { data, error } = await (client as unknown as SupabaseClient)
     .from("signup_fee_charges")
     .select("status, payment_status, fulfilled_at, created_at, livemode")
     .eq("profile_id", profileId);

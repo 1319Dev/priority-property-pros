@@ -39,9 +39,11 @@ export function AccountPage() {
   useEffect(() => {
     if (!profile?.id) return;
     let stop = false;
-    void fetchMyPaidActivationAt(profile.id).then((at) => {
-      if (!stop) setPaidChargeAt(at);
-    });
+    void fetchMyPaidActivationAt(profile.id)
+      .then((at) => {
+        if (!stop) setPaidChargeAt(at);
+      })
+      .catch(() => undefined);
     return () => {
       stop = true;
     };
