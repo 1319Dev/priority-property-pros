@@ -63,7 +63,7 @@ BEGIN
   PERFORM public.write_booking_event(b.id, 'change_order.proposed', jsonb_build_object('change_order_id', oid, 'amount_delta_cents', p_amount_delta_cents, 'role', v_role));
   RETURN jsonb_build_object('change_order_id', oid, 'status', CASE WHEN v_role = 'CUSTOMER' THEN 'CUSTOMER_APPROVED' ELSE 'PROPOSED' END, 'unilateral_increase', false);
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.respond_change_order(p_change_order_id uuid, p_approve boolean)
  RETURNS jsonb
@@ -133,7 +133,7 @@ BEGIN
 
   RETURN jsonb_build_object('change_order_id', co.id, 'status', co.status);
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.start_booking(p_booking_id uuid)
  RETURNS jsonb
@@ -161,7 +161,7 @@ BEGIN
   PERFORM public.write_booking_event(b.id, 'booking.started', jsonb_build_object('charges_live', false, 'payments_live', false));
   RETURN jsonb_build_object('booking_id', b.id, 'status', 'IN_PROGRESS', 'charges_live', false, 'payments_live', false);
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.complete_booking(p_booking_id uuid)
  RETURNS jsonb
@@ -206,7 +206,7 @@ BEGIN
   );
   RETURN jsonb_build_object('booking_id', b.id, 'status', 'COMPLETED', 'charges_live', false, 'payments_live', false);
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.submit_booking_review(p_booking_id uuid, p_rating integer, p_body text DEFAULT NULL::text)
  RETURNS jsonb
@@ -277,7 +277,7 @@ BEGIN
     'mutually_hired', true
   );
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.block_contractor_for_customer(p_contractor_profile_id uuid, p_booking_id uuid DEFAULT NULL::uuid, p_estimate_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -349,7 +349,7 @@ BEGIN
     'contractor_profile_id', p_contractor_profile_id
   );
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.unblock_contractor_for_customer(p_contractor_profile_id uuid)
  RETURNS jsonb
@@ -376,7 +376,7 @@ BEGIN
     'contractor_profile_id', p_contractor_profile_id
   );
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.apply_customer_low_rating_block()
  RETURNS trigger
@@ -418,4 +418,4 @@ BEGIN
 
   RETURN NEW;
 END;
-$function$
+$function$;

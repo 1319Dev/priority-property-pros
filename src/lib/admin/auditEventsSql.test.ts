@@ -34,9 +34,11 @@ function body(sql: string, name: string): string {
   const start = sql.indexOf(marker);
   expect(start, name).toBeGreaterThan(-1);
   const rest = sql.slice(start);
-  const end = rest.indexOf("\n$function$\n");
-  expect(end, name).toBeGreaterThan(-1);
-  return rest.slice(0, end + "\n$function$\n".length);
+  const match = /\n\$function\$;?\n/.exec(rest);
+  expect(match, name).not.toBeNull();
+  // pg_get_functiondef has no statement semicolon. The file needs one so psql
+  // can run the next CREATE in the same script.
+  return rest.slice(0, match!.index) + "\n$function$\n";
 }
 
 function withoutAudit(sql: string): string {
@@ -52,6 +54,13 @@ function withoutAudit(sql: string): string {
 }
 
 describe("admin audit event SQL", () => {
+  it("terminates every function so the script can load", () => {
+    for (const sql of [events, rollback]) {
+      expect(sql.split("\n").filter((line) => line === "$function$")).toEqual([]);
+      expect(sql.split("\n").filter((line) => line === "$function$;")).toHaveLength(8);
+    }
+  });
+
   it("wraps the live definitions and only adds audit writes", () => {
     for (const [name, md5] of Object.entries(liveMd5)) {
       const previous = body(rollback, name);
@@ -78,6 +87,11 @@ describe("admin audit event SQL", () => {
   });
 
   it("shows checkout events in an admin-only feed without contact fields", () => {
+    expect(viewer).toContain(
+      "v_action := left(replace(replace(replace(v_action, '\\', '\\\\'), '%', '\\%'), '_', '\\_'), 80);",
+    );
+    expect(viewer).toContain("f.action ILIKE v_action || '%' ESCAPE '\\'");
+    expect(viewer).not.toContain("replace(v_action, '_', '')");
     expect(viewer).toMatch(/PERFORM public\.admin_require\(\)/);
     expect(viewer).toMatch(/connection\.checkout\./);
     expect(viewer).toMatch(/REVOKE ALL ON FUNCTION public\.admin_list_audit_log/);

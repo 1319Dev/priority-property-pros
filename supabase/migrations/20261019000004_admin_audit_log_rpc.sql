@@ -88,7 +88,7 @@ BEGIN
     RAISE EXCEPTION 'actor filter must be a role' USING ERRCODE = '22023';
   END IF;
 
-  v_action := left(replace(replace(v_action, '%', ''), '_', ''), 80);
+  v_action := left(replace(replace(replace(v_action, '\', '\\'), '%', '\%'), '_', '\_'), 80);
 
   IF p_from IS NOT NULL AND p_to IS NOT NULL AND p_from > p_to THEN
     RAISE EXCEPTION 'date range is backwards' USING ERRCODE = '22023';
@@ -193,7 +193,7 @@ BEGIN
     f.summary
   FROM feed f
   WHERE (v_actor = '' OR f.actor_role = v_actor)
-    AND (v_action = '' OR f.action ILIKE v_action || '%')
+    AND (v_action = '' OR f.action ILIKE v_action || '%' ESCAPE '\')
     AND (p_from IS NULL OR f.occurred_at >= p_from::timestamptz)
     AND (p_to IS NULL OR f.occurred_at < (p_to + 1)::timestamptz)
     AND (v_ref IS NULL OR f.reference_number = v_ref)
