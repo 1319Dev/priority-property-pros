@@ -6,7 +6,6 @@ Owner review copy. These pages are not published. Acceptance is off. This file i
 
 # Terms of Service
 
-
 This is not legal advice.
 
 Effective date: the date this version is published. Until this version is published, it is not in effect.
@@ -168,11 +167,9 @@ Privacy requests (access, correction, a copy, deletion, or an opt-out) and refun
 
 Email PPP for marketplace questions. Job responsibility is in Independent Marketplace and Contractor Responsibility.
 
-
 ---
 
 # Privacy Policy
-
 
 This is not legal advice.
 
@@ -185,7 +182,7 @@ Effective date: the date this version is published. Until this version is publis
 - Card numbers are entered at Stripe. PPP does not store card numbers. PPP stores payment metadata for the $9.99 activation and the $4.99 Connect.
 - The site is hosted as a static site on GitHub Pages. Accounts, database, files, and login are on Supabase. Email goes through Resend. Web push goes through the browser’s push service. There is no advertising tracker in the current site.
 - PPP does not sell personal information.
-- You can delete your account from the account screen. The login is removed. Some marketplace records stay with your name and contact cleared. Portfolio rows, credentials, messages, and older audit notes can remain, as described below. Stripe keeps its own payment records. PPP does not send Stripe a deletion notice. The product does not include an in-app export.
+- You can delete your account from the account screen. The login is removed. Some marketplace records stay with your name and contact cleared. Messages, estimates, and project descriptions can remain, as described below. Portfolio photos, credentials, services, and service areas are removed. A small number of older internal security logs may still contain an email address. Stripe keeps its own payment records and the contractor’s Stripe account. PPP does not close that Stripe account and does not send Stripe a deletion notice. The product does not include an in-app export.
 - The marketplace is for people 18 or older. That is an affirmation you make, not a verification of your age. The signup form does not ask for a date of birth.
 - A Priority Help chat is not part of the product. If it launches, an AI provider would be an extra processor. That is marked conditional below.
 - Texas privacy rights and general US practices are described below.
@@ -292,15 +289,17 @@ Files stored under your account in project photos and contractor documents are r
 
 These records stay, with the link to your account removed:
 
-- Projects other than those empty drafts. The street and precise coordinates are cleared, as above.
+- Projects other than those empty drafts. The project description stays. The street and precise coordinates are cleared, as above. Estimates on a kept project stay, including notes a contractor wrote.
 - Bookings, connections, job reviews, change orders, and project messages. Message text stays, so the other person can still read what was written. Job-review text stays. Change-order descriptions stay because they are the other person’s job history. Reviews of the PPP marketplace itself are removed.
 - Payment, refund, cancellation, and accounting records, including amounts, status, dates, and the Stripe references on those rows. A typed refund reason or cancellation note is cleared. An accounting note that cannot be rewritten, and Stripe’s own dispute classification, can remain. The $9.99 activation charge stays in that same way, with the link to your account removed.
-- The record of which agreement version you accepted and when. It is kept with an id that is no longer a live profile.
+- The record of which agreement version you accepted and when. That acceptance record keeps browser information from the acceptance. It is kept with an id that is no longer a live profile.
 - A contractor profile can remain under the name “Deleted Pro,” suspended and not accepting work, with the headline, bio, website, license note, insurance note, trade, and service-area text cleared.
 
-This deletion does not clear every row on that contractor profile. Portfolio photo rows, including titles, captions, and storage paths, credential rows, service rows, service-area rows, and the Stripe Connect account id are not cleared. The image files are part of the storage cleanup above. Project-photo rows on a project that is kept can still point at a file the cleanup tried to delete. Audit log entries can still contain an email address or an admin note from before the deletion.
+PPP removes that contractor’s portfolio photos, including titles and captions, credential entries, services, service areas, and the Stripe Connect record stored by PPP. Photo entries that are no longer tied to a kept project are removed. A photo entry on a kept project stays with that project.
 
-PPP does not send a deletion notice to Stripe, and PPP sends Stripe nothing as part of deletion. Stripe keeps its own payment, customer, and Checkout records under Stripe’s policy. PPP keeps the Stripe ids that refer to those records. PPP cannot delete card numbers it never stored. Deleting an account does not by itself refund the $9.99 or a $4.99 Connection Fee. Refund exceptions are in the [Refund & Cancellation Policy](/refunds).
+A small number of older internal security logs may contain an email address. Those logs cannot be altered.
+
+PPP does not send a deletion notice to Stripe, and PPP sends Stripe nothing as part of deletion. PPP does not close a contractor’s Stripe Connect account at Stripe. Stripe keeps that account, and its own payment, customer, and Checkout records, under Stripe’s policy. PPP keeps the Stripe ids that refer to those payment records. PPP cannot delete card numbers it never stored. Deleting an account does not by itself refund the $9.99 or a $4.99 Connection Fee. Refund exceptions are in the [Refund & Cancellation Policy](/refunds).
 
 The product does not publish a separate multi-year retention table. There is no fixed “we keep everything for X years” rule in the software. An acceptance record can remain after the account is deleted, as this section describes. The time of an 18-or-older affirmation is stored on the profile and is removed when that profile is deleted.
 
@@ -334,11 +333,9 @@ PPP will post an updated policy on this page. The effective date of a version is
 
 Privacy questions and privacy requests: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
-
 ---
 
 # Refund & Cancellation Policy
-
 
 This is not legal advice.
 
@@ -412,11 +409,9 @@ A booking status of Disputed, when it is set, is a label on the marketplace reco
 
 Questions about a platform fee: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Include the account email and, if you have it, the project. Emailing does not by itself create a refund.
 
-
 ---
 
 # Community Guidelines
-
 
 This is not legal advice.
 
@@ -498,11 +493,9 @@ Enforcement is not a finding that someone is licensed, insured, bonded, or backg
 
 Report a marketplace problem to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Job-site disputes are covered in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).
 
-
 ---
 
 # Contractor Participation Terms
-
 
 This is not legal advice.
 
@@ -555,11 +548,9 @@ You set your estimate in the product. Job responsibility, and disputes about the
 
 Contractor signup uses the same checkbox as any other signup, and the checkbox names these Contractor Participation Terms. You must be 18 or older. That is an affirmation you make, not a verification of your age. Until these pages are published and the requirement to accept these versions is turned on, the server does not reject the account for these versions and does not require the affirmation. After that requirement is on, the server stores the version and the time, records the time of the age affirmation, and a new contractor account is not created if the current version was not accepted or the affirmation is missing. If these terms are updated after you already have an account, the next sign-in asks you to accept the current versions and to affirm that you are 18 or older if you have not already done so. That later acceptance is stored separately from the acceptance recorded when the account was created, with its own version and time. You can still view your jobs, messages, and account information, and you can delete the account, before you accept. While the requirement is on, new marketplace actions wait on that acceptance. Nothing is deleted because you have not yet accepted.
 
-
 ---
 
 # Review & Content Guidelines
-
 
 This is not legal advice.
 
@@ -607,4 +598,3 @@ PPP may refuse, edit display of, or remove content that breaks these guidelines,
 ## 5. Contact
 
 Questions about a review or a photo: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
-
