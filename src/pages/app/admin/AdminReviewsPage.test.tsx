@@ -37,8 +37,8 @@ describe("platform review moderation", () => {
   it("requires a reason before approve or reject and sends that reason", async () => {
     const user = userEvent.setup();
     render(<AdminReviewsPage />);
-    const approve = await screen.findByRole("button", { name: "Approve", exact: true });
-    const reject = screen.getByRole("button", { name: "Reject", exact: true });
+    const approve = await screen.findByRole("button", { name: /^Approve$/ });
+    const reject = screen.getByRole("button", { name: /^Reject$/ });
     expect(approve).toBeDisabled();
     expect(reject).toBeDisabled();
 
