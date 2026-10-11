@@ -6,11 +6,14 @@ import { ToastProvider } from "../../src/components/ui/Toast";
 import { AuthProvider } from "../../src/lib/auth/AuthProvider";
 import "../../src/index.css";
 import { DirectoryPreview } from "./directoryPreview";
+import { HelpPreview } from "./priorityHelpPreview";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Root element #root is missing");
 
-const preview = new URLSearchParams(window.location.search).get("preview");
+const previewParams = new URLSearchParams(window.location.search);
+const preview = previewParams.get("preview");
+const helpScene = previewParams.get("scene") || "open";
 
 createRoot(root).render(
   <StrictMode>
@@ -18,6 +21,10 @@ createRoot(root).render(
       {preview === "directory" || preview === "storefront" ? (
         <AuthProvider>
           <DirectoryPreview view={preview} />
+        </AuthProvider>
+      ) : preview === "help" ? (
+        <AuthProvider>
+          <HelpPreview scene={helpScene} />
         </AuthProvider>
       ) : (
         <AuthProvider>
