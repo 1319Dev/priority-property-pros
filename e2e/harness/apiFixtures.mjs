@@ -679,3 +679,122 @@ export async function fetchAdminDashboardTrends() {
     ],
   };
 }
+
+
+const supportConversation = {
+  id: "conv-1",
+  reference: "PH-10001",
+  status: "OPEN",
+  priority: "HIGH",
+  humanJoined: false,
+  availability: "offline",
+  messages: [
+    { id: "pub", role: "customer", visibility: "public", body: "Please look at my registration.", createdAt: "2026-10-10T15:00:00Z" },
+    { id: "note", role: "admin", visibility: "internal", body: "Asked billing to check the receipt. Customers never see this note.", createdAt: "2026-10-10T15:05:00Z" },
+  ],
+  account: {
+    profileId: "ada",
+    role: "CUSTOMER",
+    accountStatus: "ACTIVE",
+    firstName: "Ada",
+    lastName: "Lovelace",
+    email: "ada@example.com",
+    contractorProfileId: null,
+    businessName: null,
+    profileHref: null,
+  },
+};
+
+export async function listSupportQueue() {
+  return {
+    queue: "open",
+    availability: "offline",
+    rows: [
+      {
+        id: "conv-1",
+        reference: "PH-10001",
+        status: "OPEN",
+        priority: "HIGH",
+        assignedAdminId: null,
+        createdAt: "2026-10-10T15:00:00Z",
+        lastMessageAt: "2026-10-10T15:05:00Z",
+        role: "CUSTOMER",
+        displayName: "Ada Lovelace",
+        guest: false,
+      },
+    ],
+  };
+}
+export async function searchSupport() {
+  return [];
+}
+export async function setSupportPresence(status) {
+  return status;
+}
+export async function heartbeatSupport() {
+  return undefined;
+}
+export async function getSupportConversation() {
+  return supportConversation;
+}
+export async function listCannedResponses() {
+  return [{ id: "c1", title: "Greeting", body: "Hello from Priority Help.", updatedAt: "2026-10-10T12:00:00Z" }];
+}
+export async function replySupport() {
+  return supportConversation;
+}
+export async function noteSupport() {
+  return supportConversation;
+}
+export async function setSupportStatus() {
+  return supportConversation;
+}
+export async function setSupportPriority() {
+  return supportConversation;
+}
+export async function takeoverSupport() {
+  return { ...supportConversation, humanJoined: true };
+}
+export async function listSupportArticles() {
+  return [
+    {
+      id: "a1",
+      slug: "payments-and-fees",
+      title: "Payments and fees",
+      body: "Homeowners and contractors pay a one-time $9.99 activation fee. Connect is $4.99. There is no commission.",
+      status: "PUBLISHED",
+      updatedAt: "2026-10-10T12:00:00Z",
+    },
+  ];
+}
+export async function saveSupportArticle() {
+  return listSupportArticles();
+}
+export async function saveCannedResponse() {
+  return listCannedResponses();
+}
+export async function deleteCannedResponse() {
+  return undefined;
+}
+export async function supportAnalytics() {
+  return {
+    days: 30,
+    timezone: "America/Chicago",
+    opened: 12,
+    withFirstResponse: 9,
+    medianFirstResponseSeconds: 720,
+    byStatus: { OPEN: 3, IN_PROGRESS: 2, RESOLVED: 7 },
+    byDay: [
+      { day: "2026-10-08", opened: 2 },
+      { day: "2026-10-09", opened: 4 },
+      { day: "2026-10-10", opened: 6 },
+    ],
+    availability: "offline",
+  };
+}
+export async function setSupportRetention(days) {
+  return days;
+}
+export async function purgeExpiredSupport() {
+  return 0;
+}

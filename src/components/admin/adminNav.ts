@@ -2,9 +2,8 @@ import { formatProjectReference, parseProjectReference } from "../../lib/marketp
 import type { AdminIconName } from "./AdminIcon";
 
 /**
- * Working admin sections only. People, Audit, Payments, Support, and Analytics
- * stay out of the nav until they have a real page. Direct placeholder routes
- * are removed in the cleanup PR.
+ * Working admin sections only. People, Audit, and Payments stay out of the
+ * nav until they have a real page.
  */
 export type AdminNavItem = {
   id: string;
@@ -52,6 +51,14 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     searchAliases: ["bookings", "booking tools", "jobs", "contact access"],
   },
   {
+    id: "support",
+    to: "/app/admin/support",
+    label: "Support",
+    icon: "support",
+    group: "Trust",
+    searchAliases: ["support", "priority help", "tickets", "knowledge", "analytics"],
+  },
+  {
     id: "security",
     to: "/app/admin/security",
     label: "Two-factor",
@@ -88,6 +95,18 @@ export function adminBreadcrumbs(pathname: string): AdminCrumb[] {
   const rest = path.startsWith("/app/admin/") ? path.slice("/app/admin/".length) : "";
   const [section, extra] = rest.split("/");
   const item = ADMIN_NAV.find((entry) => entry.to === `/app/admin/${section}`);
+
+  if (section === "support" && (extra === "kb" || extra === "analytics")) {
+    crumbs.push({ label: "Support", to: "/app/admin/support" });
+    crumbs.push({ label: extra === "kb" ? "Knowledge" : "Analytics" });
+    return crumbs;
+  }
+
+  if (section === "support" && extra) {
+    crumbs.push({ label: "Support", to: "/app/admin/support" });
+    crumbs.push({ label: "Conversation" });
+    return crumbs;
+  }
 
   if (section === "account" && extra === "notifications") {
     crumbs.push({ label: "Account", to: "/app/admin/account" });
