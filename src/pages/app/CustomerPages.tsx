@@ -71,7 +71,7 @@ export function AccountPage() {
   return (
     <div className="max-w-lg space-y-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Settings</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Settings</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Account settings</h1>
       </header>
       <form
@@ -319,7 +319,7 @@ export function BlockedProsPage() {
   return (
     <div className="max-w-lg space-y-4">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Settings</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Settings</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Blocked pros</h1>
       </header>
       <p className="text-sm leading-relaxed text-ink-700">

@@ -171,7 +171,7 @@ export function NotificationSettings({
   return (
     <div className="max-w-2xl space-y-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Settings</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Settings</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Notification settings</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-500">
           {account_type === "ADMIN"
@@ -232,7 +232,7 @@ export function NotificationSettings({
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {CHANNELS.map((channel) => (
                   <div key={channel.key} className="flex items-center justify-between gap-3 sm:flex-col sm:items-start">
-                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-gold-600">{channel.label}</span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-gold-700">{channel.label}</span>
                     <Switch
                       checked={row[channel.key]}
                       label={`${copy.label} ${channel.label}`}

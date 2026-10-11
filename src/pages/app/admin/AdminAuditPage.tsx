@@ -65,7 +65,7 @@ export function AdminAuditPage() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Admin</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Admin</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Audit log</h1>
         <p className="mt-3 max-w-xl text-sm leading-relaxed text-ink-700">
           Read-only. Rows show a role, an action, a time, and a job number. Names, contact details, addresses, and

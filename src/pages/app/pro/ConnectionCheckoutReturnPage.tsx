@@ -45,7 +45,7 @@ export function ConnectionCheckoutReturnPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[390px] flex-col gap-4 px-4 py-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Connection Fee</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Connection Fee</p>
       <h1 className="font-display text-3xl font-semibold text-forest-800">
         {unlocked ? "Connected" : "Not connected yet"}
       </h1>
