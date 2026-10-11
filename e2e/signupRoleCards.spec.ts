@@ -51,6 +51,11 @@ test.describe("signup role cards stay readable", () => {
         return lineHeight > 0 ? labelHeight / lineHeight : 0;
       });
       expect(contractorLines).toBeLessThan(1.6);
+
+      // The role cards come before the longer "Before checkout" note, so the
+      // first card starts above the fold even on a phone.
+      const customerTop = await customer.evaluate((el) => el.getBoundingClientRect().top);
+      expect(customerTop).toBeLessThan(viewport.height);
     });
   }
 });

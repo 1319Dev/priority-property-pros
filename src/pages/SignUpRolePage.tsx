@@ -9,7 +9,6 @@ import {
   HOMEOWNER_PRICING_SUMMARY,
   JOB_PAYMENT_PLAIN,
   PRO_PRICING_SUMMARY,
-  SIGNUP_FEE_NOT_MONTHLY,
   SIGNUP_ROLE_LEDE,
 } from "../data/pricing";
 
@@ -64,17 +63,6 @@ export function SignUpRolePage() {
         </>
       }
     >
-      <section className="rounded-3xl border border-forest-800/10 bg-cream-100 px-5 py-4 text-sm leading-relaxed text-ink-700" aria-labelledby="signup-before-checkout">
-        <h2 id="signup-before-checkout" className="font-semibold text-forest-800">
-          Before checkout
-        </h2>
-        <p className="mt-2">{SIGNUP_FEE_NOT_MONTHLY}</p>
-        <p className="mt-2">
-          Customer and contractor accounts pay that same one-time activation. A customer posts work and does not pay a
-          PPP Connection Fee. A contractor is an independent pro who browses first and pays $4.99 only when they choose
-          to connect. {JOB_PAYMENT_PLAIN}
-        </p>
-      </section>
       <ul className="space-y-3">
         {options.map((option) => (
           <li key={option.to}>
@@ -92,6 +80,17 @@ export function SignUpRolePage() {
           </li>
         ))}
       </ul>
+      <section className="mt-4 rounded-3xl border border-forest-800/10 bg-cream-100 px-5 py-4 text-sm leading-relaxed text-ink-700" aria-labelledby="signup-before-checkout">
+        <h2 id="signup-before-checkout" className="font-semibold text-forest-800">
+          Before checkout
+        </h2>
+        <p className="mt-2">One-time $9.99 account activation, not $9.99/month. There is no monthly charge to keep an account.</p>
+        <p className="mt-2">
+          Customer and contractor accounts pay that same one-time activation. A customer posts work and does not pay a
+          PPP Connection Fee. A contractor is an independent pro who browses first and pays $4.99 only when they choose
+          to connect. {JOB_PAYMENT_PLAIN}
+        </p>
+      </section>
     </AuthCard>
   );
 }
