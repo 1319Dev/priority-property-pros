@@ -5,6 +5,8 @@ import {
   fetchPublicContractorPortfolio,
   fetchPublicContractorReviews,
   fetchPublicDirectoryAcceptingWork,
+  fetchPublicPortfolioObjects,
+  signedContractorDocUrl,
   type PublicDirectoryRpcRow,
 } from "./api";
 import {
@@ -15,8 +17,34 @@ import {
   type FindAProCard,
   type FindAProProfile,
 } from "./findAPro";
-import { publicAboutText } from "./publicDirectory";
+import { publicAboutText, toPublicPortfolioPhoto, type PublicSafePortfolioItem } from "./publicDirectory";
 import { isExcludedPublicContractorId, isSmokeTesterText } from "./publicReviewFilters";
+
+/**
+ * Approved photos only. The object RPC is PUBLIC_SAFE and directory-listed.
+ * Signing uses createSignedUrl. A public-bucket URL is never requested.
+ * If the object RPC is not available yet, captions still load and no private path is shown.
+ */
+export async function loadPublicPortfolio(id: string): Promise<PublicSafePortfolioItem[]> {
+  try {
+    const objects = await fetchPublicPortfolioObjects(id);
+    return Promise.all(
+      objects.map(async (row) => {
+        const signed = await signedContractorDocUrl(row.storage_path);
+        return toPublicPortfolioPhoto({
+          id: row.id,
+          caption: row.caption,
+          sortOrder: row.sort_order,
+          imageUrl: signed,
+          storagePath: row.storage_path,
+        });
+      }),
+    );
+  } catch {
+    const rows = await fetchPublicContractorPortfolio(id).catch(() => []);
+    return publicPortfolioItems(rows);
+  }
+}
 
 function acceptingMap(rows: Array<{ id: string; accepting_work: boolean }>): Map<string, boolean> {
   return new Map(rows.map((row) => [row.id, row.accepting_work === true]));
@@ -30,9 +58,9 @@ async function cardFromRow(
   if (isSmokeTesterText(row.display_label) || isSmokeTesterText(row.short_description)) return null;
 
   const ratingCount = row.rating_count ?? 0;
-  const [reviewRows, portfolioRows] = await Promise.all([
+  const [reviewRows, portfolio] = await Promise.all([
     ratingCount > 0 ? fetchPublicContractorReviews(row.id).catch(() => []) : Promise.resolve([]),
-    fetchPublicContractorPortfolio(row.id).catch(() => []),
+    loadPublicPortfolio(row.id),
   ]);
 
   return toFindAProCard({
@@ -45,7 +73,7 @@ async function cardFromRow(
     badges: directoryRowBadges(row),
     shortDescription: row.short_description,
     acceptingWork,
-    portfolio: publicPortfolioItems(portfolioRows),
+    portfolio,
     reviews: publicDirectoryReviews(reviewRows),
   });
 }

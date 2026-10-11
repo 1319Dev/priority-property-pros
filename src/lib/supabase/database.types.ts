@@ -1154,6 +1154,10 @@ export type Database = {
         Args: { p_id: string };
         Returns: { id: string; caption: string; sort_order: number }[];
       };
+      list_public_portfolio_objects: {
+        Args: { p_id: string };
+        Returns: { id: string; caption: string; sort_order: number; storage_path: string }[];
+      };
       list_public_directory_reviews: {
         Args: { p_id: string };
         Returns: { id: string; rating: number; body: string }[];

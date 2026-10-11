@@ -1185,6 +1185,13 @@ export type PublicDirectoryPortfolioRow = {
   sort_order: number;
 };
 
+export type PublicPortfolioObjectRow = {
+  id: string;
+  caption: string;
+  sort_order: number;
+  storage_path: string;
+};
+
 export type PublicDirectoryReviewRow = {
   id: string;
   rating: number;
@@ -1260,6 +1267,26 @@ export async function fetchPublicContractorPortfolio(id: string): Promise<Public
   const { data, error } = await client().rpc("list_public_directory_portfolio", { p_id: id });
   if (error) throw new Error(asError(error, "Could not load screened portfolio."));
   return (Array.isArray(data) ? data : []) as PublicDirectoryPortfolioRow[];
+}
+
+/** PUBLIC_SAFE object names only. Pending and private photos are not in this RPC. */
+export async function fetchPublicPortfolioObjects(id: string): Promise<PublicPortfolioObjectRow[]> {
+  const { data, error } = await client().rpc("list_public_portfolio_objects", { p_id: id });
+  if (error) throw new Error(asError(error, "Could not load screened portfolio photos."));
+  if (!Array.isArray(data)) return [];
+  return data.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const item = row as Record<string, unknown>;
+    if (typeof item.id !== "string" || typeof item.storage_path !== "string" || !item.storage_path.trim()) return [];
+    return [
+      {
+        id: item.id,
+        caption: typeof item.caption === "string" ? item.caption : "",
+        sort_order: typeof item.sort_order === "number" ? item.sort_order : 0,
+        storage_path: item.storage_path,
+      },
+    ];
+  });
 }
 
 export async function fetchPublicContractorReviews(id: string): Promise<PublicDirectoryReviewRow[]> {

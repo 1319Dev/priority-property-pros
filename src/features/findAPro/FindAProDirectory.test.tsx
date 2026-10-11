@@ -83,8 +83,42 @@ describe("Find a Pro cards", () => {
     renderCard(<FindAProCardView card={reviewed} />);
     expect(screen.getByText("5.0 ★ · 1 review")).toBeInTheDocument();
     expect(screen.getByText("Reset a cedar panel")).toBeInTheDocument();
+    expect(screen.getByText("Photo unavailable")).toBeInTheDocument();
     expect(screen.queryByText(NEW_ON_PPP)).not.toBeInTheDocument();
     expect(screen.getByText("Not accepting work")).toBeInTheDocument();
+  });
+
+  it("renders an approved signed photo at a phone width and hides a public-bucket URL", () => {
+    const signed = "https://cdn.example.com/storage/v1/object/sign/contractor-docs/photo.jpg?token=abc";
+    const withPhoto = card({
+      portfolio: [
+        {
+          id: "p1",
+          caption: "Portfolio photo",
+          sortOrder: 0,
+          imageUrl: signed,
+          imageStatus: "ready",
+        },
+        {
+          id: "p2",
+          caption: "Pending shot",
+          sortOrder: 1,
+          imageUrl: "https://cdn.example.com/storage/v1/object/public/contractor-docs/secret.jpg",
+          imageStatus: "ready",
+        },
+      ],
+    });
+    renderCard(
+      <div className="mx-auto w-[390px] max-w-[390px]">
+        <FindAProCardView card={withPhoto} />
+      </div>,
+    );
+    const photo = screen.getByRole("img", { name: "Portfolio photo" });
+    expect(photo).toHaveAttribute("src", signed);
+    expect(photo.getAttribute("src")).not.toMatch(/\/object\/public\//);
+    expect(screen.getByText("Photo unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Pending shot")).toBeInTheDocument();
+    expect(document.body.innerHTML).not.toMatch(/\/object\/public\/|storage_path|user\/portfolio/i);
   });
 
   it("keeps the directory from using a horizontal overflow layout at 390px", () => {
