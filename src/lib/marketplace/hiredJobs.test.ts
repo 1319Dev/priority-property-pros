@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { notificationPath } from "../notifications/policy";
+import { changeOrderNeedsThisParty } from "./changeOrders";
 import {
   contractorHiredLandingPath,
   customerFirstNameFromLabel,
@@ -41,6 +42,10 @@ describe("hired job cards", () => {
       }),
     ).toBe("Start the job when you are ready.");
     expect(hiredJobNextStep({ bookingStatus: "IN_PROGRESS", pendingChangeOrders: 1 })).toBe("Review the change order.");
+    expect(hiredJobNextStep({ bookingStatus: "IN_PROGRESS", pendingChangeOrders: 0 })).toBe(
+      "Finish the work, then mark it complete.",
+    );
+    expect(changeOrderNeedsThisParty("contractor", { status: "PROPOSED" })).toBe(false);
     expect(hiredJobNextStep({ bookingStatus: "COMPLETED" })).toBe("This job is complete.");
 
     const card = toHiredJobCard({

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../lib/auth/useAuth";
 import { fetchChangeOrders, fetchContractorProfileByUser, fetchEstimate, fetchMyBookings, fetchProject } from "../../lib/marketplace/api";
+import { countChangeOrdersForParty } from "../../lib/marketplace/changeOrders";
 import {
   sortHiredJobCards,
   toHiredJobCard,
@@ -47,7 +48,7 @@ export function HiredJobsPanel({ heading = "Hired jobs", showHeading = true }: {
               referenceNumber: project?.reference_number ?? null,
               city: project?.city ?? null,
               customerLabel: names.get(booking.project_id) ?? null,
-              pendingChangeOrders: orders.filter((order) => order.status === "PROPOSED").length,
+              pendingChangeOrders: countChangeOrdersForParty("contractor", orders),
               startAt: estimate?.available_from ?? null,
             });
           }),

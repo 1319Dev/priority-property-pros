@@ -44,6 +44,7 @@ import { HiredJobsPanel } from "../../../components/marketplace/HiredJobsPanel";
 import { HiredJobStatusChip } from "../../../components/marketplace/HiredJobsSection";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { startComparisonLabel } from "../../../lib/marketplace/estimateComparison";
+import { countChangeOrdersForParty } from "../../../lib/marketplace/changeOrders";
 import { customerFirstNameFromLabel, hiredJobChip, hiredJobNextStep, hiredJobPath, isSafeRecordId } from "../../../lib/marketplace/hiredJobs";
 import { friendlyNotFound, isQueryableId } from "../../../lib/marketplace/recordId";
 import { isMutuallyHired } from "../../../lib/marketplace/hired";
@@ -189,7 +190,7 @@ export function ProBookingDetailPage() {
     customerHiredAt: booking.customer_hired_at,
     contractorHiredAt: booking.contractor_hired_at,
   });
-  const pendingOrders = orders.filter((order) => order.status === "PROPOSED").length;
+  const pendingOrders = countChangeOrdersForParty("contractor", orders);
   const nextStep = hiredJobNextStep({
     bookingStatus: booking.status,
     customerHiredAt: booking.customer_hired_at,
@@ -272,6 +273,7 @@ export function ProBookingDetailPage() {
           role="contractor"
           orders={orders}
           referenceNumber={referenceNumber}
+          jobTotalCents={booking.billable_amount_cents ?? booking.amount_cents}
           onPropose={async (description, cents) => {
             await proposeChangeOrder(booking.id, description, cents);
             await reload();
