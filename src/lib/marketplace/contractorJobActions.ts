@@ -136,6 +136,21 @@ export function endJobConfirmBody(connectionStatus?: ProjectConnectionStatus | n
   return PASS_SKIP_BODY;
 }
 
+/** Hide raw database text from Pass / End this job. */
+export function friendlyEndJobError(message: string | null | undefined): string {
+  const text = message ?? "";
+  if (/connection cannot be marked paid/i.test(text)) {
+    return "We couldn't update this job. Your $4.99 connection was not changed. Try again, or contact support.";
+  }
+  if (/already in a booking/i.test(text)) {
+    return "This job is already hired. Finish it from Hired jobs.";
+  }
+  if (/opportunity cannot be ended|opportunity is not available/i.test(text)) {
+    return "This job can't be passed from here.";
+  }
+  return text || "We couldn't update this job. Try again.";
+}
+
 export function contractorEndJobPlan(input: {
   opportunityStatus: OpportunityStatus;
   connectionStatus?: ProjectConnectionStatus | null;

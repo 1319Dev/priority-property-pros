@@ -1,0 +1,20 @@
+-- Walkthrough for 20261015000002_contractor_end_job_prod_guards.sql.
+-- Call as the contractor. Do not UPDATE project_connections from the client.
+--
+-- 1. AVAILABLE opportunity, no connection.
+--    contractor_end_job -> opportunity PASSED, contact_unlocked false, fee unchanged.
+-- 2. ACCEPTED + PAYMENT_DISABLED occupying a slot.
+--    connection CANCELLED, slot deleted, opportunity PASSED. Not marked PAID.
+-- 3. RESERVED with an OPEN checkout session.
+--    session EXPIRED, connection CANCELLED, slot freed.
+-- 4. PAID connection, no active booking.
+--    connection COMPLETED (not a new charge), opportunity CLOSED, slot remains.
+--    Expect this to succeed, not 'connection cannot be marked paid from the client'.
+-- 5. PAID connection and a CONFIRMED or IN_PROGRESS booking.
+--    connection COMPLETED only. Booking status unchanged. Contact not granted.
+--    The Jobs UI does not offer Pass or End on that hired job.
+-- 6. Active booking without a PAID connection.
+--    exception containing 'already in a booking'.
+-- 7. Direct UPDATE of project_connections.status to PAID as the contractor.
+--    still 'project connections cannot be written from the client'
+--    or 'connection cannot be marked paid from the client'.

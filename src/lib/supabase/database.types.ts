@@ -1026,6 +1026,17 @@ export type Database = {
       admin_grant_booking_contact_access: { Args: { p_booking_id: string; p_reason: string }; Returns: Json };
       admin_revoke_booking_contact_access: { Args: { p_booking_id: string; p_reason?: string | null }; Returns: Json };
       hire_again_contractors: { Args: Record<string, never>; Returns: Json };
+      block_contractor_for_customer: {
+        Args: {
+          p_contractor_profile_id: string;
+          p_booking_id?: string | null;
+          p_estimate_id?: string | null;
+        };
+        Returns: Json;
+      };
+      unblock_contractor_for_customer: { Args: { p_contractor_profile_id: string }; Returns: Json };
+      list_my_contractor_blocks: { Args: Record<string, never>; Returns: Json };
+      customer_has_blocked_contractor: { Args: { p_contractor_profile_id: string }; Returns: boolean };
       booking_is_confirmed_for_contractor: { Args: { p_project_id: string }; Returns: boolean };
       current_contractor_profile_id: { Args: Record<string, never>; Returns: string };
       post_project: { Args: { p_project_id: string }; Returns: Json };

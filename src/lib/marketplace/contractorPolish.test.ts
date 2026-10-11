@@ -87,6 +87,16 @@ describe("project contact from the booking RPC", () => {
       },
     });
     expect(projectContactFromRpc({ unlocked: true, customer_shared: false }).state).toBe("waiting");
+    expect(
+      projectContactFromRpc({
+        unlocked: true,
+        customer_shared: false,
+        contact_access_status: "UNLOCKED",
+        phone: "404-555-0100",
+        email: "secret@example.com",
+      }).state,
+    ).toBe("waiting");
+    expect(projectContactFromRpc({ unlocked: false, contact_access_status: "LOCKED" }).state).toBe("locked");
     expect(projectContactFromRpc(null).state).toBe("locked");
   });
 });

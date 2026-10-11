@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BlockContractorControl } from "./BlockContractorControl";
 import { JobReference } from "./JobReference";
 import { Button, ButtonLink } from "../ui/Button";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
@@ -127,6 +128,8 @@ export function ProfileReviewForm({
   onRatingChange,
   onBodyChange,
   onSubmit,
+  contractorProfileId = null,
+  bookingId = null,
   now = Date.now(),
 }: {
   role: HiredParty;
@@ -139,6 +142,8 @@ export function ProfileReviewForm({
   onRatingChange: (value: string) => void;
   onBodyChange: (value: string) => void;
   onSubmit: (rating: string, body: string) => void | Promise<void>;
+  contractorProfileId?: string | null;
+  bookingId?: string | null;
   /** Test clock. Production callers leave this unset. */
   now?: number;
 }) {
@@ -190,6 +195,7 @@ export function ProfileReviewForm({
         <Button type="button" variant="outline" className="min-h-14 w-full" disabled={saving} onClick={() => setEditing(false)}>
           Cancel
         </Button>
+        <CustomerBlockAction role={role} contractorProfileId={contractorProfileId} bookingId={bookingId} />
       </section>
     );
   }
@@ -221,6 +227,7 @@ export function ProfileReviewForm({
             Edit
           </Button>
         ) : null}
+        <CustomerBlockAction role={role} contractorProfileId={contractorProfileId} bookingId={bookingId} />
       </section>
     );
   }
@@ -245,6 +252,20 @@ export function ProfileReviewForm({
       <Button type="button" className="min-h-14 w-full" onClick={() => void onSubmit(rating, body)}>
         Submit review
       </Button>
+      <CustomerBlockAction role={role} contractorProfileId={contractorProfileId} bookingId={bookingId} />
     </section>
   );
+}
+
+function CustomerBlockAction({
+  role,
+  contractorProfileId,
+  bookingId,
+}: {
+  role: HiredParty;
+  contractorProfileId?: string | null;
+  bookingId?: string | null;
+}) {
+  if (role !== "customer" || !contractorProfileId) return null;
+  return <BlockContractorControl contractorProfileId={contractorProfileId} bookingId={bookingId} />;
 }
