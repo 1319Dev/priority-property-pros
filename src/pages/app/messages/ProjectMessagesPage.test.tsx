@@ -369,7 +369,9 @@ describe("project messages UI", () => {
     expect(screen.getAllByText("Plymate Property Maintenance").length).toBeGreaterThan(0);
     expect(screen.queryByText("No message text yet")).not.toBeInTheDocument();
     expect(await screen.findByText("(936) 718-8184")).toBeInTheDocument();
-    expect(screen.getByText(/contact box/i)).toBeInTheDocument();
+    expect(screen.queryByText(/contact box/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/this thread does not show phone, email, or street/i)).not.toBeInTheDocument();
+    expect(await screen.findByText(/this pro already has the contact you shared/i)).toBeInTheDocument();
     expect(screen.queryByText("9367188184")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View booking" })).toHaveAttribute("href", "/app/customer/bookings/book-1");
     await user.click(screen.getByRole("link", { name: /back to messages/i }));
@@ -390,7 +392,11 @@ describe("project messages UI", () => {
     renderAt("/app/pro/messages/p1/pro-1", <ProjectMessagesPage role="contractor" />);
     expect(await screen.findByText("(936) 718-8184")).toBeInTheDocument();
     expect(screen.getByText("12 Oak Street, Decatur, GA 30030")).toBeInTheDocument();
-    expect(screen.getByText(/contact box/i)).toBeInTheDocument();
+    // Shared: no "does not show" line above the card, and no "customer chooses" hint.
+    expect(screen.queryByText(/contact box/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/this thread does not show phone, email, or street/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/customer chooses when to share contact/i)).not.toBeInTheDocument();
+    expect(await screen.findByText(/customer already shared contact with you/i)).toBeInTheDocument();
     expect(screen.queryByText("9367188184")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /share my contact/i })).not.toBeInTheDocument();
   });

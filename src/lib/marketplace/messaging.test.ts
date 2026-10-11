@@ -184,6 +184,8 @@ describe("message privacy", () => {
     expect(threadContactNotice(false)).toBe("This thread does not show phone, email, or street.");
     expect(threadContactNotice(true)).toMatch(/contact box/i);
     expect(threadContactNotice(true)).not.toMatch(/does not show phone/i);
+    expect(threadContactNotice(true, true)).toBeNull();
+    expect(threadContactNotice(false, true)).toBeNull();
     expect(deriveUnread({ lastMessageAt: "2026-10-08T12:00:00Z", lastSenderIsViewer: false, lastReadAt: null })).toBe(1);
     expect(deriveUnread({ lastMessageAt: "2026-10-08T12:00:00Z", lastSenderIsViewer: true, lastReadAt: null })).toBe(0);
     expect(

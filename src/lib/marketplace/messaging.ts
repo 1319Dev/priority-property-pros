@@ -29,8 +29,13 @@ export const THREAD_HIDES_CONTACT_NOTICE = "This thread does not show phone, ema
 export const THREAD_CONTACT_BOX_NOTICE =
   "Phone, email, and street are in the contact box. Messages in this thread still do not include them.";
 
-/** The message transcript and the contact box are different. Say which one is on screen. */
-export function threadContactNotice(contactLinesVisible: boolean): string {
+/**
+ * The message transcript and the contact box are different. Say which one is on screen.
+ * Once contact has been shared with the other party the notice is dropped: the shared
+ * contact card is the answer, and a "does not show" line above it reads as a contradiction.
+ */
+export function threadContactNotice(contactLinesVisible: boolean, contactShared = false): string | null {
+  if (contactShared) return null;
   return contactLinesVisible ? THREAD_CONTACT_BOX_NOTICE : THREAD_HIDES_CONTACT_NOTICE;
 }
 

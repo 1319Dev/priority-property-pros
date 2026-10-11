@@ -69,6 +69,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
   const [messages, setMessages] = useState<ProjectMessage[]>([]);
   const [pending, setPending] = useState<PendingMessage[]>([]);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [contactShared, setContactShared] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [locked, setLocked] = useState(false);
@@ -358,6 +359,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
                 projectId={projectId}
                 contractorProfileId={contractorProfileId}
                 announceThreadPrivacy
+                onSharedChange={setContactShared}
               />
             ) : null}
             {!locked && threadId && messages.length === 0 && pending.length === 0 ? (
@@ -419,7 +421,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
                   />
                 </label>
                 <FormError message={error} />
-                <p className="text-xs leading-relaxed text-ink-500">{messageComposerHint(role, false)}</p>
+                <p className="text-xs leading-relaxed text-ink-500">{messageComposerHint(role, contactShared)}</p>
                 <Button type="submit" className="min-h-14 w-full" disabled={sending}>
                   {sending ? "Sending…" : "Send"}
                 </Button>

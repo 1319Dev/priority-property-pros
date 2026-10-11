@@ -55,12 +55,15 @@ export function ContactSharePanel({
   projectId,
   contractorProfileId,
   announceThreadPrivacy = false,
+  onSharedChange,
 }: {
   role: ContactShareAudience;
   projectId: string;
   contractorProfileId: string;
   /** On a message thread, the privacy line has to match the contact box in the same render. */
   announceThreadPrivacy?: boolean;
+  /** Tells the thread whether contact has been shared, so the composer hint can match. */
+  onSharedChange?: (shared: boolean) => void;
 }) {
   const [view, setView] = useState<SharedContactView | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -96,8 +99,15 @@ export function ContactSharePanel({
   const linesVisible = Boolean(
     view?.eligible && (role === "customer" || contractorMaySeeSharedContact(view)),
   );
-  const privacyNotice = announceThreadPrivacy ? (
-    <p className="text-sm text-ink-500">{threadContactNotice(linesVisible)}</p>
+  const shared = Boolean(
+    view?.eligible && (role === "customer" ? view.customer_shared : contractorMaySeeSharedContact(view)),
+  );
+  useEffect(() => {
+    onSharedChange?.(shared);
+  }, [shared, onSharedChange]);
+  const noticeText = threadContactNotice(linesVisible, shared);
+  const privacyNotice = announceThreadPrivacy && noticeText ? (
+    <p className="text-sm text-ink-500">{noticeText}</p>
   ) : null;
 
   if (error && !view) {

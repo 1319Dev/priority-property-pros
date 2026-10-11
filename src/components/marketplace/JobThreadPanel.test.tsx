@@ -61,8 +61,9 @@ describe("job thread contact notice", () => {
 
   it("stops claiming contact is hidden once the paid share is on the job page", async () => {
     renderPanel(true);
-    expect(await screen.findByText(/contact box/i)).toBeInTheDocument();
+    expect(await screen.findByText("Plymate Property Maintenance")).toBeInTheDocument();
+    expect(screen.queryByText(/contact box/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/this thread does not show phone, email, or street/i)).not.toBeInTheDocument();
-    expect(screen.getByText("Plymate Property Maintenance")).toBeInTheDocument();
+    expect(screen.queryByText(/customer chooses when to share contact/i)).not.toBeInTheDocument();
   });
 });
