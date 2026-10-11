@@ -22,6 +22,7 @@ import { initialIncludeTest, AdminIncludeTestToggle } from "../../../components/
 import { collapseActivity } from "../../../lib/admin/activityCollapse";
 import { formatCents, formatCentralTimestamp, trendQuery, type TrendPreset } from "../../../lib/admin/money";
 import { OVERVIEW_CARD_COPY } from "../../../lib/admin/overviewCardCopy";
+import { fetchPaymentsSummary, overlayNetRevenue } from "../../../lib/admin/paymentsApi";
 
 const FOREST = "var(--color-forest-800)";
 const GOLD = "var(--color-gold-500)";
@@ -31,6 +32,7 @@ type CardSpec = {
   label: string;
   href?: string;
   money?: boolean;
+  grossNote?: boolean;
   support?: boolean;
 };
 
@@ -58,9 +60,9 @@ const GROUPS: Array<{ title: string; cards: CardSpec[] }> = [
   {
     title: "Money",
     cards: [
-      { key: "revenue_month_cents", label: "Gross revenue this month", money: true },
-      { key: "revenue_lifetime_cents", label: "Gross revenue, lifetime", money: true },
-      { key: "revenue_net_cents", label: "Net revenue", money: true },
+      { key: "revenue_month_cents", label: "Gross revenue this month", money: true, grossNote: true },
+      { key: "revenue_lifetime_cents", label: "Gross revenue, lifetime", money: true, grossNote: true },
+      { key: "revenue_net_cents", label: "Net revenue", money: true, href: "/app/admin/payments" },
       { key: "checkouts_completed", label: "Checkouts completed" },
       { key: "checkouts_expired", label: "Checkouts expired" },
       { key: "checkouts_open", label: "Checkouts still open" },
@@ -148,6 +150,12 @@ export function AdminOverviewPage() {
       if (summaryResult.status === "fulfilled") {
         setSummary(summaryResult.value);
         setSummaryFailed(false);
+        void fetchPaymentsSummary(includeTest)
+          .then((money) => {
+            if (cancelled || generation.current !== nextGeneration) return;
+            setSummary((current) => overlayNetRevenue(current, money));
+          })
+          .catch(() => undefined);
       } else {
         if (!loaded.current.summary) {
           setSummary(null);
@@ -458,8 +466,11 @@ function MetricCard({
       <p className="mt-2 font-display text-3xl font-semibold text-forest-800">{text}</p>
       {definition ? <p className="sr-only">{definition}</p> : null}
       {OVERVIEW_CARD_COPY[card.key] ? <p className="mt-1 text-xs text-ink-500">{OVERVIEW_CARD_COPY[card.key]}</p> : null}
-      {card.money && text !== "Not set up yet" && text !== "—" ? (
+      {card.grossNote && text !== "Not set up yet" && text !== "—" ? (
         <p className="mt-1 text-xs text-ink-500">Gross, before Stripe fees</p>
+      ) : null}
+      {card.key === "revenue_net_cents" && metric?.status === "available" ? (
+        <p className="mt-1 text-xs text-ink-500">Succeeded live fees minus stored refunds</p>
       ) : null}
       {card.support ? (
         <a className="mt-2 inline-flex min-h-11 items-center font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>

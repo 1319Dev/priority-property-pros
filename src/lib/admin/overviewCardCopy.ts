@@ -12,7 +12,7 @@ export const OVERVIEW_CARD_COPY: Record<string, string> = {
   completed: "Jobs marked completed.",
   revenue_month_cents: "Activation and Connect fees paid this month, before processor fees.",
   revenue_lifetime_cents: "Activation and Connect fees paid so far, before processor fees.",
-  revenue_net_cents: "Succeeded fees minus stored refunds. This stays empty until that total is available.",
+  revenue_net_cents: "Live fees paid, minus stored refunds.",
   checkouts_completed: "Activation and Connect checkouts that were paid.",
   checkouts_expired: "Checkouts that were left unfinished. This is not a card decline.",
   checkouts_open: "Checkouts that are still open.",

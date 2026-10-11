@@ -79,6 +79,7 @@ function renderAdmin(entry: string) {
             <Route path="reviews" element={<h1>Reviews page</h1>} />
             <Route path="bookings" element={<h1>Bookings page</h1>} />
             <Route path="security" element={<h1>Two-factor page</h1>} />
+            <Route path="audit" element={<h1>Audit log page</h1>} />
             <Route path="account" element={<h1>Account page</h1>} />
           </Route>
         </Routes>
@@ -104,9 +105,11 @@ describe("admin layout", () => {
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("Overview");
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("Reviews");
     expect(screen.queryByRole("link", { name: "People" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Homeowners" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Payments" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /^Audit/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Projects" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "Contractors" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "Homeowners" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "Payments" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "Audit log" }).length).toBeGreaterThan(0);
     expect(screen.queryByRole("navigation", { name: "Dashboard" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Notifications/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Account menu" })).toBeInTheDocument();

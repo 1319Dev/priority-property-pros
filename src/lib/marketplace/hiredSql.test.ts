@@ -17,9 +17,9 @@ function allSql(): string {
 }
 
 function functionBody(sql: string, name: string): string {
-  const marker = `CREATE OR REPLACE FUNCTION public.${name}`;
+  const marker = `CREATE OR REPLACE FUNCTION public.${name}(`;
   const start = sql.lastIndexOf(marker);
-  expect(start).toBeGreaterThan(-1);
+  expect(start, name).toBeGreaterThan(-1);
   const rest = sql.slice(start);
   const end = rest.indexOf("CREATE OR REPLACE FUNCTION public.", marker.length);
   return end === -1 ? rest : rest.slice(0, end);
