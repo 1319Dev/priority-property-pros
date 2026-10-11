@@ -130,7 +130,9 @@ export function NotificationSettings({
     setNotice(null);
     if (mode === "preview") {
       setEndpoint("preview");
-      setRows((existing) => existing.map((row) => ({ ...row, push: true })));
+      setRows((existing) =>
+        existing.map((row) => (categoriesForAccount(account_type).includes(row.category) ? { ...row, push: true } : row)),
+      );
       setNotice("Push is on. Turn off any alert you do not want.");
       setBusy(false);
       return;
@@ -142,7 +144,9 @@ export function NotificationSettings({
       return;
     }
     setEndpoint(result.endpoint);
-    setRows((existing) => existing.map((row) => ({ ...row, push: true })));
+    setRows((existing) =>
+      existing.map((row) => (categoriesForAccount(account_type).includes(row.category) ? { ...row, push: true } : row)),
+    );
     setNotice("Push is on. Turn off any alert you do not want.");
   }
 

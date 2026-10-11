@@ -5,12 +5,13 @@ import {
   directoryRowBadges,
   fetchContractorNameForProject,
   fetchEstimateItems,
+  fetchProjectBooking,
   fetchProjectEstimates,
   fetchPublicContractor,
   fetchPublicContractorExtras,
   selectEstimate,
 } from "../../lib/marketplace/api";
-import { SELECT_CONFIRM_BODY, SELECTED_BOOKING_COPY } from "../../lib/marketplace/customerCopy";
+import { SELECT_CONFIRM_BODY, selectedHireCopy } from "../../lib/marketplace/customerCopy";
 import {
   ratingComparisonLabel,
   startComparisonLabel,
@@ -48,10 +49,19 @@ export function ProjectEstimateComparison({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState<Awaited<ReturnType<typeof fetchProjectBooking>>>(null);
   const visible =
     projectStatus === "ESTIMATES_AVAILABLE" || projectStatus === "CONTRACTOR_SELECTED" || rows.length > 0;
 
   async function load() {
+    if (selectedBookingId) {
+      void Promise.resolve()
+        .then(() => fetchProjectBooking(projectId))
+        .then((row) => setSelectedBooking(row ?? null))
+        .catch(() => setSelectedBooking(null));
+    } else {
+      setSelectedBooking(null);
+    }
     const estimates = liveCustomerEstimates(await fetchProjectEstimates(projectId)).slice(0, 3);
     const openForChoice = projectStatus !== "CONTRACTOR_SELECTED" && projectStatus !== "CANCELLED";
     const detailed = await Promise.all(
@@ -127,7 +137,7 @@ export function ProjectEstimateComparison({
       stop = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId, projectStatus, selectedEstimateId]);
+  }, [projectId, projectStatus, selectedEstimateId, selectedBookingId]);
 
   if (!visible && !loading) return null;
   if (loading) return <p className="text-sm text-ink-500">Loading estimates</p>;
@@ -140,7 +150,7 @@ export function ProjectEstimateComparison({
         confirmId={confirmId}
         busy={busy}
         bookingHref={selectedBookingId ? `/app/customer/bookings/${selectedBookingId}` : null}
-        selectedCopy={SELECTED_BOOKING_COPY}
+        selectedCopy={selectedHireCopy(selectedBooking)}
         confirmBody={SELECT_CONFIRM_BODY}
         onStartHire={setConfirmId}
         onCancelHire={() => setConfirmId(null)}

@@ -23,6 +23,7 @@ ALTER TABLE public.notification_preferences
     ]::text[])
   );
 
+-- Rebuilt at deploy from the LIVE definition (keeps new_job contractor-only); only change: admin categories.
 CREATE OR REPLACE FUNCTION public.ensure_notification_preferences(p_user_id uuid)
  RETURNS integer
  LANGUAGE plpgsql
@@ -32,10 +33,15 @@ AS $function$
 DECLARE
   inserted integer := 0;
   extra integer := 0;
+  v_type text;
 BEGIN
   IF p_user_id IS NULL THEN
     RETURN 0;
   END IF;
+
+  SELECT account_type::text INTO v_type
+  FROM public.profiles
+  WHERE id = p_user_id;
 
   INSERT INTO public.notification_preferences (user_id, category, in_app, push, email)
   SELECT p_user_id, v.category, true, false, v.email_on
@@ -50,10 +56,12 @@ BEGIN
       ('reviews', false),
       ('account', false)
   ) AS v(category, email_on)
+  WHERE v.category <> 'new_job' OR v_type = 'CONTRACTOR'
   ON CONFLICT (user_id, category) DO NOTHING;
+
   GET DIAGNOSTICS inserted = ROW_COUNT;
 
-  IF EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = p_user_id AND p.account_type = 'ADMIN') THEN
+  IF v_type = 'ADMIN' THEN
     INSERT INTO public.notification_preferences (user_id, category, in_app, push, email)
     SELECT p_user_id, v.category, true, false, true
     FROM (

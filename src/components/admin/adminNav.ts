@@ -2,28 +2,36 @@ import { formatProjectReference, parseProjectReference } from "../../lib/marketp
 import type { AdminIconName } from "./AdminIcon";
 
 /**
- * Working admin sections only. People, Audit, Payments, Support, and Analytics
- * stay out of the nav until they have a real page. Direct placeholder routes
- * are removed in the cleanup PR.
+ * Working admin sections only. A later section adds its own file under
+ * ./sections and is picked up here. Empty groups stay out of the sidebar.
  */
+export const ADMIN_NAV_GROUPS = ["Overview", "People", "Marketplace", "Money", "Trust", "Account"] as const;
+
+export type AdminNavGroup = (typeof ADMIN_NAV_GROUPS)[number];
+
 export type AdminNavItem = {
   id: string;
   to: string;
   label: string;
   icon: AdminIconName;
-  group: "Overview" | "Marketplace" | "Trust" | "System";
+  group: AdminNavGroup;
+  /** Sort key inside the whole nav. Lower comes first. */
+  order: number;
   end?: boolean;
+  /** Last breadcrumb when the path has another segment. */
+  detailCrumb?: string;
   /** Extra words the top-bar search should match. */
   searchAliases: string[];
 };
 
-export const ADMIN_NAV: readonly AdminNavItem[] = [
+const BUILTIN_NAV: readonly AdminNavItem[] = [
   {
     id: "overview",
     to: "/app/admin",
     label: "Overview",
     icon: "overview",
     group: "Overview",
+    order: 0,
     end: true,
     searchAliases: ["overview", "dashboard", "home"],
   },
@@ -33,6 +41,8 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     label: "Approvals",
     icon: "approvals",
     group: "Marketplace",
+    order: 50,
+    detailCrumb: "Application",
     searchAliases: ["approvals", "contractors", "portfolio", "photos"],
   },
   {
@@ -41,6 +51,7 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     label: "Reviews",
     icon: "reviews",
     group: "Marketplace",
+    order: 60,
     searchAliases: ["reviews", "testimonials", "platform reviews"],
   },
   {
@@ -49,6 +60,7 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     label: "Booking tools",
     icon: "bookings",
     group: "Marketplace",
+    order: 70,
     searchAliases: ["bookings", "booking tools", "jobs", "contact access"],
   },
   {
@@ -57,21 +69,48 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     label: "Two-factor",
     icon: "security",
     group: "Trust",
+    order: 80,
     searchAliases: ["two-factor", "two factor", "2fa", "security", "mfa", "authenticator"],
+  },
+  {
+    id: "audit",
+    to: "/app/admin/audit",
+    label: "Audit log",
+    icon: "audit",
+    group: "Trust",
+    order: 85,
+    searchAliases: ["audit", "audit log", "activity"],
   },
   {
     id: "account",
     to: "/app/admin/account",
     label: "Account",
     icon: "account",
-    group: "System",
-    searchAliases: ["account", "profile"],
+    group: "Account",
+    order: 90,
+    searchAliases: ["account", "profile", "my admin account"],
   },
 ];
 
-export const ADMIN_NAV_GROUPS = ["Overview", "Marketplace", "Trust", "System"] as const;
+type NavModule = {
+  adminNavSection?: {
+    items: readonly AdminNavItem[];
+  };
+};
 
-export function adminNavByGroup(group: AdminNavItem["group"]): AdminNavItem[] {
+const navModules = import.meta.glob("./sections/*/nav.ts", { eager: true }) as Record<string, NavModule>;
+
+function extensionItems(): AdminNavItem[] {
+  return Object.keys(navModules)
+    .sort()
+    .flatMap((key) => navModules[key]?.adminNavSection?.items ?? []);
+}
+
+export const ADMIN_NAV: readonly AdminNavItem[] = [...BUILTIN_NAV, ...extensionItems()].sort(
+  (a, b) => a.order - b.order || a.label.localeCompare(b.label),
+);
+
+export function adminNavByGroup(group: AdminNavGroup): AdminNavItem[] {
   return ADMIN_NAV.filter((item) => item.group === group);
 }
 
@@ -97,8 +136,7 @@ export function adminBreadcrumbs(pathname: string): AdminCrumb[] {
 
   if (item && extra) {
     crumbs.push({ label: item.label, to: item.to });
-    if (section === "approvals") crumbs.push({ label: "Application" });
-    else crumbs.push({ label: "Detail" });
+    crumbs.push({ label: item.detailCrumb ?? "Detail" });
     return crumbs;
   }
 

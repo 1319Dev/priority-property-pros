@@ -5,7 +5,7 @@ import { useAuth } from "../../lib/auth/useAuth";
 import { accountSettingsPath } from "../../lib/auth/roles";
 import type { InAppNotification } from "../../lib/notifications/api";
 import { useNotifications } from "../../lib/notifications/useNotifications";
-import { noticeBody, noticeProjectLine } from "../../lib/marketplace/contractorPolish";
+import { notificationProjectLine, safeNoticeText, safeNoticeTitle } from "../../lib/notifications/presentation";
 import { NARROW_NOTIFICATION_QUERY, dropdownRightInset } from "./notificationPanelLayout";
 
 export type NotificationBellPreview = {
@@ -241,7 +241,14 @@ export function NotificationBell({ preview: previewProp }: { preview?: Notificat
             {preview || live.ready ? (live.loadError && !preview ? live.loadError : "You're all caught up.") : "Loading notifications…"}
           </li>
         ) : (
-          items.map((item) => (
+          items.map((item) => {
+            const title = safeNoticeTitle(item.title);
+            const context = notificationProjectLine({
+              projectTitle: item.projectTitle,
+              referenceNumber: item.referenceNumber,
+            });
+            const body = safeNoticeText(title, item.body);
+            return (
             <li key={item.id} className="border-b border-forest-800/5 last:border-b-0">
               <Link
                 to={item.path}
@@ -253,28 +260,17 @@ export function NotificationBell({ preview: previewProp }: { preview?: Notificat
               >
                 <span className="flex min-w-0 items-start justify-between gap-3">
                   <span className={`min-w-0 flex-1 break-words text-sm font-semibold ${item.readAt ? "text-ink-700" : "text-forest-800"}`}>
-                    {item.title}
+                    {title}
                   </span>
                   {!item.readAt ? <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-gold-500" aria-hidden="true" /> : null}
                 </span>
-                {noticeProjectLine({
-                  project_title: item.projectTitle,
-                  reference_number: item.referenceNumber,
-                }) ? (
-                  <span className="break-words text-sm font-medium text-forest-800">
-                    {noticeProjectLine({
-                      project_title: item.projectTitle,
-                      reference_number: item.referenceNumber,
-                    })}
-                  </span>
-                ) : null}
-                {noticeBody(item.title, item.body) ? (
-                  <span className="break-words text-sm leading-snug text-ink-500">{noticeBody(item.title, item.body)}</span>
-                ) : null}
+                {context ? <span className="break-words text-sm font-medium text-forest-800">{context}</span> : null}
+                {body ? <span className="break-words text-sm leading-snug text-ink-500">{body}</span> : null}
                 <span className="text-xs text-ink-300">{relativeTime(item.createdAt)}</span>
               </Link>
             </li>
-          ))
+            );
+          })
         )}
       </ul>
       <Link
