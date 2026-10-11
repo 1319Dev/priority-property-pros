@@ -76,7 +76,7 @@ describe("contractor job detail UX", () => {
     expect(screen.getByRole("button", { name: PASS_SKIP_CONFIRM })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /keep this job/i })).toBeInTheDocument();
     expect(screen.getByText(/passing removes this job from your list/i)).toBeInTheDocument();
-    expect(screen.getByText(/next best-suited contractor can be invited/i)).toBeInTheDocument();
+    expect(screen.getByText(/next matched contractor can be invited/i)).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: /end this job/i })).not.toBeInTheDocument();
   });
 });
