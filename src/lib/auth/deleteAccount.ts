@@ -1,4 +1,24 @@
+import { SUPPORT_EMAIL } from "../../data/brand";
 import { getSupabaseClient } from "../supabase/client";
+
+/**
+ * EMERGENCY PAUSE (2026-10-11, owner-approved). Self-serve deletion can leave
+ * accounts half-deleted until PR #90 ships, so the Account page shows a
+ * support-email notice instead of the Delete button. The delete-account edge
+ * function also refuses with 503 account_deletion_paused. Set this to false
+ * (with the fixed function from PR #90 deployed) to restore the old flow.
+ */
+export const ACCOUNT_DELETION_PAUSED = true;
+
+export const ACCOUNT_DELETION_PAUSED_ERROR = "account_deletion_paused";
+
+export const ACCOUNT_DELETION_REQUEST_SUBJECT = "Account deletion request";
+
+export const ACCOUNT_DELETION_REQUEST_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+  ACCOUNT_DELETION_REQUEST_SUBJECT,
+)}`;
+
+export const ACCOUNT_DELETION_PAUSED_MESSAGE = `Account deletion is temporarily handled by our support team. To request deletion, email ${SUPPORT_EMAIL} from the email on your account, and we will process it.`;
 
 export const DELETE_ACCOUNT_CONFIRM_WORD = "DELETE";
 
@@ -21,6 +41,16 @@ function functionsErrorMessage(data: unknown, fallback: string): string {
   return fallback;
 }
 
+async function readFunctionErrorBody(error: unknown): Promise<unknown> {
+  const context = (error as { context?: unknown } | null)?.context;
+  if (!context || typeof (context as Response).clone !== "function") return null;
+  try {
+    return await (context as Response).clone().json();
+  } catch {
+    return null;
+  }
+}
+
 export async function deleteOwnAccount(): Promise<{ error: string | null }> {
   const supabase = getSupabaseClient();
   if (!supabase) return { error: "Supabase is not configured yet." };
@@ -30,6 +60,14 @@ export async function deleteOwnAccount(): Promise<{ error: string | null }> {
   });
 
   if (error) {
+    const body = data ?? (await readFunctionErrorBody(error));
+    if (
+      body &&
+      typeof body === "object" &&
+      (body as { error?: unknown }).error === ACCOUNT_DELETION_PAUSED_ERROR
+    ) {
+      return { error: ACCOUNT_DELETION_PAUSED_MESSAGE };
+    }
     const message = functionsErrorMessage(
       data,
       error.message || "Could not delete your account. Try again, or contact support.",
