@@ -4,7 +4,7 @@ import { MiniChart, type ChartSeries } from "../../../components/admin/MiniChart
 import { Button } from "../../../components/ui/Button";
 import { ErrorState } from "../../../components/ui/PageState";
 import { Skeleton } from "../../../components/ui/Skeleton";
-import { SUPPORT_EMAIL } from "../../../data/brand";
+import { CONTACT_LINK_LABEL, CONTACT_PATH } from "../../../data/brand";
 import {
   ADMIN_ACTIVITY_PAGE_SIZE,
   fetchAdminDashboardSummary,
@@ -459,7 +459,8 @@ function MetricCard({
   failed: boolean;
 }) {
   const text = failed ? "—" : metricText(metric, Boolean(card.money));
-  const definition = metric?.definition ?? "";
+  // The support card's SQL definition names the support inbox; that address only renders on the Contact Us page.
+  const definition = card.support ? "" : metric?.definition ?? "";
   const body = (
     <>
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">{card.label}</p>
@@ -473,9 +474,9 @@ function MetricCard({
         <p className="mt-1 text-xs text-ink-500">Succeeded live fees minus stored refunds</p>
       ) : null}
       {card.support ? (
-        <a className="mt-2 inline-flex min-h-11 items-center font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
-          Email {SUPPORT_EMAIL}
-        </a>
+        <Link className="mt-2 inline-flex min-h-11 items-center font-semibold text-forest-800 underline" to={CONTACT_PATH}>
+          {CONTACT_LINK_LABEL}
+        </Link>
       ) : null}
     </>
   );

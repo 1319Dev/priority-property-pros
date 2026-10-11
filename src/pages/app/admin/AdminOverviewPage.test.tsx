@@ -151,10 +151,8 @@ describe("Admin overview", () => {
     renderOverview();
     expect((await screen.findAllByText("$14.98")).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Not set up yet").length).toBeGreaterThanOrEqual(3);
-    expect(screen.getByRole("link", { name: /Email support@prioritypropertypros.com/i })).toHaveAttribute(
-      "href",
-      "mailto:support@prioritypropertypros.com",
-    );
+    expect(screen.getByRole("link", { name: "Contact us" })).toHaveAttribute("href", "/contact");
+    expect(document.body.innerHTML).not.toMatch(/support@prioritypropertypros\.com|mailto:/i);
     expect(screen.getByRole("link", { name: /Awaiting approval/i })).toHaveAttribute("href", "/app/admin/approvals");
     expect(screen.getByRole("link", { name: /Platform reviews/i })).toHaveAttribute("href", "/app/admin/reviews");
     expect(screen.getByRole("link", { name: /Two-factor is not enrolled/i })).toHaveAttribute("href", "/app/admin/security");
@@ -185,7 +183,7 @@ describe("Admin overview", () => {
     expect(await screen.findByText("Account flag updated · 2")).toBeInTheDocument();
     expect(screen.getAllByText("Account flag updated", { exact: false })).toHaveLength(1);
     expect(screen.getByText("People with a customer account.")).toBeInTheDocument();
-    expect(screen.getByText("There is no ticket inbox yet. Write to support@prioritypropertypros.com.")).toBeInTheDocument();
+    expect(screen.getByText("There is no ticket inbox yet. Support requests come in by email from the Contact us page.")).toBeInTheDocument();
     expect(screen.queryByText(/gmail/i)).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Refresh" }));
     expect(screen.getAllByText("$14.98").length).toBeGreaterThan(0);

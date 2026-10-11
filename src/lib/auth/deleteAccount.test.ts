@@ -67,15 +67,13 @@ describe("account deletion pause", () => {
     }));
     const mod = await import("./deleteAccount");
     expect(mod.ACCOUNT_DELETION_PAUSED).toBe(false);
-    expect(mod.ACCOUNT_DELETION_REQUEST_MAILTO).toBe(
-      "mailto:support@prioritypropertypros.com?subject=Account%20deletion%20request",
-    );
+    expect(mod.ACCOUNT_DELETION_REQUEST_PATH).toBe("/contact");
     await expect(mod.deleteOwnAccount("secret")).resolves.toEqual({
       error: mod.ACCOUNT_DELETION_PAUSED_MESSAGE,
       deleted: false,
     });
     expect(mod.ACCOUNT_DELETION_PAUSED_MESSAGE).toBe(
-      "Account deletion is temporarily handled by our support team. To request deletion, email support@prioritypropertypros.com from the email on your account, and we will process it.",
+      "Account deletion is temporarily handled by our support team. To request deletion, use the Contact us page and write from the email on your account, and we will process it.",
     );
     vi.doUnmock("../supabase/client");
   });

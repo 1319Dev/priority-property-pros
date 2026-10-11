@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { BrandLoader } from "../brand/BrandLoader";
-import { SUPPORT_EMAIL } from "../../data/brand";
+import { CONTACT_LINK_LABEL, CONTACT_PATH } from "../../data/brand";
 import { AdminStepUpHost } from "../../lib/auth/AdminStepUpDialog";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopBar } from "./AdminTopBar";
@@ -88,9 +88,9 @@ export function AdminLayout({
           <Suspense fallback={<BrandLoader layout="section" label="Loading…" />}>{children ?? <Outlet />}</Suspense>
         </main>
         <p className="mx-auto w-full max-w-6xl px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-sm text-ink-500 sm:px-6">
-          <a className="font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
-            {SUPPORT_EMAIL}
-          </a>
+          <Link className="font-semibold text-forest-800 underline" to={CONTACT_PATH}>
+            {CONTACT_LINK_LABEL}
+          </Link>
         </p>
       </div>
 

@@ -21,5 +21,5 @@ export const OVERVIEW_CARD_COPY: Record<string, string> = {
   platform_reviews_pending: "Platform reviews waiting for a decision.",
   content_reports_30d: "Reports received in the last 30 days.",
   disputed_bookings: "Jobs currently marked disputed.",
-  support_tickets: "There is no ticket inbox yet. Write to support@prioritypropertypros.com.",
+  support_tickets: "There is no ticket inbox yet. Support requests come in by email from the Contact us page.",
 };
