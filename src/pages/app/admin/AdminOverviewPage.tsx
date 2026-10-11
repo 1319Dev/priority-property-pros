@@ -4,7 +4,7 @@ import { MiniChart, type ChartSeries } from "../../../components/admin/MiniChart
 import { Button } from "../../../components/ui/Button";
 import { ErrorState } from "../../../components/ui/PageState";
 import { Skeleton } from "../../../components/ui/Skeleton";
-import { SUPPORT_EMAIL } from "../../../data/brand";
+import { CONTACT_LINK_LABEL, CONTACT_PATH } from "../../../data/brand";
 import {
   ADMIN_ACTIVITY_PAGE_SIZE,
   fetchAdminDashboardSummary,
@@ -271,11 +271,11 @@ export function AdminOverviewPage() {
               </div>
               {group.title === "Trust" ? (
                 <p className="max-w-2xl text-sm text-ink-700">
-                  Support requests arrive by email at{" "}
-                  <a className="font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
-                    {SUPPORT_EMAIL}
-                  </a>
-                  .
+                  Support requests arrive by email from the{" "}
+                  <Link className="font-semibold text-forest-800 underline" to={CONTACT_PATH}>
+                    {CONTACT_LINK_LABEL}
+                  </Link>{" "}
+                  page.
                 </p>
               ) : null}
             </section>
@@ -481,9 +481,9 @@ function MetricCard({
         <p className="mt-1 text-xs text-ink-500">Succeeded live fees minus stored refunds</p>
       ) : null}
       {card.support ? (
-        <a className="mt-2 inline-flex min-h-11 items-center font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
-          Email {SUPPORT_EMAIL}
-        </a>
+        <Link className="mt-2 inline-flex min-h-11 items-center font-semibold text-forest-800 underline" to={CONTACT_PATH}>
+          {CONTACT_LINK_LABEL}
+        </Link>
       ) : null}
     </>
   );

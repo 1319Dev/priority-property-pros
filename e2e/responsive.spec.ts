@@ -363,10 +363,8 @@ test.describe("admin overview stays within the viewport", () => {
       await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
       await expect(page.getByText("$14.98").first()).toBeVisible();
       await expect(page.getByText("Not set up yet")).toHaveCount(0);
-      await expect(page.locator("#main").getByRole("link", { name: "support@prioritypropertypros.com" })).toHaveAttribute(
-        "href",
-        "mailto:support@prioritypropertypros.com",
-      );
+      await expect(page.locator("#main").getByRole("link", { name: "Contact us" }).first()).toHaveAttribute("href", /#\/contact$|\/contact$/);
+      await expect(page.locator("body")).not.toContainText("support@prioritypropertypros.com");
       const box = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         innerWidth: window.innerWidth,

@@ -1,4 +1,4 @@
-import { SUPPORT_EMAIL } from "../../data/brand";
+import { CONTACT_PATH } from "../../data/brand";
 import { getSupabaseClient } from "../supabase/client";
 
 /**
@@ -12,11 +12,10 @@ export const ACCOUNT_DELETION_PAUSED_ERROR = "account_deletion_paused";
 
 export const ACCOUNT_DELETION_REQUEST_SUBJECT = "Account deletion request";
 
-export const ACCOUNT_DELETION_REQUEST_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
-  ACCOUNT_DELETION_REQUEST_SUBJECT,
-)}`;
+/** Paused-deletion requests go through the Contact Us page, the only page that shows the support address. */
+export const ACCOUNT_DELETION_REQUEST_PATH = CONTACT_PATH;
 
-export const ACCOUNT_DELETION_PAUSED_MESSAGE = `Account deletion is temporarily handled by our support team. To request deletion, email ${SUPPORT_EMAIL} from the email on your account, and we will process it.`;
+export const ACCOUNT_DELETION_PAUSED_MESSAGE = `Account deletion is temporarily handled by our support team. To request deletion, use the Contact us page and write from the email on your account, and we will process it.`;
 
 export const DELETE_ACCOUNT_CONFIRM_WORD = "DELETE";
 

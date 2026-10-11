@@ -7,10 +7,10 @@ import { TextInput } from "../../components/ui/Input";
 import { useAuth } from "../../lib/auth/useAuth";
 import {
   ACCOUNT_DELETION_PAUSED,
-  ACCOUNT_DELETION_REQUEST_MAILTO,
+  ACCOUNT_DELETION_REQUEST_PATH,
   deleteOwnAccount,
 } from "../../lib/auth/deleteAccount";
-import { SUPPORT_EMAIL } from "../../data/brand";
+import { CONTACT_LINK_LABEL } from "../../data/brand";
 import { FormError } from "../../lib/auth/AuthCard";
 import { getSupabaseClient } from "../../lib/supabase/client";
 import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
@@ -256,11 +256,11 @@ export function AccountPage() {
             Delete account
           </h2>
           <p className="mt-2 break-words text-sm leading-relaxed text-ink-700">
-            Account deletion is temporarily handled by our support team. To request deletion, email{" "}
-            <a href={ACCOUNT_DELETION_REQUEST_MAILTO} className="break-all font-semibold text-forest-800 underline">
-              {SUPPORT_EMAIL}
-            </a>{" "}
-            from the email on your account, and we will process it.
+            Account deletion is temporarily handled by our support team. To request deletion, use the{" "}
+            <Link to={ACCOUNT_DELETION_REQUEST_PATH} className="font-semibold text-forest-800 underline">
+              {CONTACT_LINK_LABEL}
+            </Link>{" "}
+            page and write from the email on your account, and we will process it.
           </p>
         </section>
       ) : (

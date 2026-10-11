@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { Logo } from "../brand/Logo";
 import { AccountMenu } from "../account/AccountMenu";
 import { NotificationBell } from "../notifications/NotificationBell";
 import { useAuth } from "../../lib/auth/useAuth";
 import { displayName } from "../../lib/auth/roles";
-import { SUPPORT_EMAIL } from "../../data/brand";
+import { CONTACT_LINK_LABEL, CONTACT_PATH } from "../../data/brand";
 
 export type DashNavItem = {
   to: string;
@@ -78,9 +78,9 @@ export function DashboardShell({
         {children ?? <Outlet />}
       </main>
       <p className="mx-auto w-full max-w-6xl break-words px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] text-sm text-ink-500 sm:px-6 lg:pb-6">
-        <a className="font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
-          {SUPPORT_EMAIL}
-        </a>
+        <Link className="font-semibold text-forest-800 underline" to={CONTACT_PATH}>
+          {CONTACT_LINK_LABEL}
+        </Link>
       </p>
       <nav
         aria-label="Dashboard"

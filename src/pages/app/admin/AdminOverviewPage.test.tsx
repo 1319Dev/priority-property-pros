@@ -155,10 +155,8 @@ describe("Admin overview", () => {
     expect(screen.queryByText("Card declines")).not.toBeInTheDocument();
     expect(screen.queryByText(/Card declines:/)).not.toBeInTheDocument();
     expect(screen.queryByText("Support tickets")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "support@prioritypropertypros.com" })).toHaveAttribute(
-      "href",
-      "mailto:support@prioritypropertypros.com",
-    );
+    expect(screen.getByRole("link", { name: "Contact us" })).toHaveAttribute("href", "/contact");
+    expect(document.body.innerHTML).not.toMatch(/support@prioritypropertypros\.com|mailto:/i);
     expect(screen.getByRole("link", { name: /Awaiting approval/i })).toHaveAttribute("href", "/app/admin/approvals");
     expect(screen.getByRole("link", { name: /Platform reviews/i })).toHaveAttribute("href", "/app/admin/reviews");
     expect(screen.getByRole("link", { name: /Two-factor is not enrolled/i })).toHaveAttribute("href", "/app/admin/security");
@@ -189,7 +187,7 @@ describe("Admin overview", () => {
     expect(await screen.findByText("Account flag updated · 2")).toBeInTheDocument();
     expect(screen.getAllByText("Account flag updated", { exact: false })).toHaveLength(1);
     expect(screen.getByText("Homeowner accounts, not counting deleted ones.")).toBeInTheDocument();
-    expect(screen.getByText(/Support requests arrive by email at/)).toBeInTheDocument();
+    expect(screen.getByText(/Support requests arrive by email from the/)).toBeInTheDocument();
     expect(screen.queryByText(/gmail/i)).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Refresh" }));
     expect(screen.getAllByText("$14.98").length).toBeGreaterThan(0);

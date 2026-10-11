@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { EmptyState } from "../../../components/layout/DashboardShell";
-import { SUPPORT_EMAIL } from "../../../data/brand";
+import { CONTACT_LINK_LABEL, CONTACT_PATH } from "../../../data/brand";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
 import { fetchContractorProfileByUser } from "../../../lib/marketplace/api";
@@ -107,9 +108,9 @@ export function ProBillingPage() {
       ) : null}
       <p className="text-sm text-ink-500">
         Questions about a charge or a refund exception:{" "}
-        <a className="font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
-          {SUPPORT_EMAIL}
-        </a>
+        <Link className="font-semibold text-forest-800 underline" to={CONTACT_PATH}>
+          {CONTACT_LINK_LABEL}
+        </Link>
       </p>
     </div>
   );

@@ -1,5 +1,4 @@
 import { JOB_PAYMENT_PLAIN } from "../../data/pricing";
-import { SUPPORT_EMAIL } from "../../data/brand";
 
 /** One plain sentence. Use at most once on a customer page. */
 export const CUSTOMER_PAYS_DIRECTLY = JOB_PAYMENT_PLAIN;
@@ -65,9 +64,9 @@ export const WIZARD_PERSIST_NOTE =
 
 export const POST_BLOCKED_REASON = "Add a title, a project type, and a ZIP code before posting.";
 
-export const CUSTOMER_SUPPORT_LINE = `Questions? Email ${SUPPORT_EMAIL}`;
+export const CUSTOMER_SUPPORT_LINE = "Questions? Use the Contact us page.";
 
-export const APP_CONTACT_LINE = SUPPORT_EMAIL;
+export const APP_CONTACT_LINE = "Contact us";
 
 export const HIRE_AGAIN_INTRO =
   "Pros you have finished a job with. Post a new project when you want to work with them again.";
