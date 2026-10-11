@@ -72,4 +72,6 @@ A booking status of Disputed, when it is set, is a label on the marketplace reco
 
 Questions about a platform fee: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Include the account email and, if you have it, the project. Emailing does not by itself create a refund.
 
+Once Priority Help is enabled, its AI assistant can explain this policy but cannot approve a refund exception or start a refund. Choose Talk to Support in the chat, or email the address above, so a person reviews the request.
+
 Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.

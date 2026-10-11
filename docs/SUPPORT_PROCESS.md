@@ -49,3 +49,14 @@ Exceptions: a duplicate charge, an erroneous charge (money taken but the service
 - Job-review edit window is `platform_settings.booking_review_edit_window_days` (30 if missing). PR #116 hides a job review by setting `hidden_at` and does not delete the row. A low star rating is not a hide reason. PR #105 leaves new `platform_reviews` in `PENDING` until an admin approves them. PR #118 public ratings use visible verified job reviews and omit hidden ones.
 - Marketplace review moderation reasons are 3 to 500 characters and are written to `audit_logs`. They are not shown on the public review.
 - Login uses Supabase Auth PKCE in local storage. Web push uses VAPID keys. The website anon key is public by design. Row-level security limits signed-in reads. None of those names belong in the public policies.
+
+## Priority Help (applies once Priority Help is enabled)
+
+Public wording: Privacy Policy sections 2, 5, 6, and 8; Terms section 14; Refund Policy section 6; Community Guidelines section 5. Code: PRs #82–#85, migration `20261019700001_priority_help.sql`.
+
+- Retention the public text promises: guest chats deleted 90 days after the last activity unless a ticket is OPEN, IN_PROGRESS, or WAITING_ON_CUSTOMER; signed-in chats 365 days after RESOLVED/CLOSED (or after the last message for an AI-only chat). Settings `support_settings.guest_retention_days` (90) and `retention_days` (365). If either changes, update Privacy section 8 and Terms section 14 first.
+- pg_cron job `priority-help-retention` runs `support_purge_expired_auto()` daily at 08:17 UTC. After applying the migration, confirm `SELECT jobname, schedule, active FROM cron.job WHERE jobname = 'priority-help-retention';` returns one active row. If it does not, the public 90-day promise is not met: schedule it or keep Priority Help off. The admin “Purge expired” button runs the same rules.
+- Account deletion removes the user’s chats in the same transaction (`support_purge_on_profile_delete`).
+- OpenAI: model `gpt-4.1-nano` through `/v1/chat/completions`, `store` not set. Before enabling, confirm in the OpenAI dashboard (Settings → Organization → Data controls) that sharing inputs and outputs with OpenAI for training is OFF; the Privacy Policy says PPP does not opt in. OpenAI's stated API retention (abuse-monitoring logs up to 30 days) was checked on 2026-10-11 at https://platform.openai.com/docs/guides/your-data and https://openai.com/enterprise-privacy/. Re-check those pages before publishing a new policy version.
+- Redaction before OpenAI: emails, phone numbers, and street addresses (regex in `_shared/priorityHelp/guardrails.ts`). It is a filter, not a guarantee; the public text says so.
+- A privacy request for chats: search `support_conversations` by account (signed-in) or by reference number the guest gives. Guests have no account, so access requests need the reference number shown in the chat.

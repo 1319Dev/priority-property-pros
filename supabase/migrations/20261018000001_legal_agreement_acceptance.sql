@@ -138,6 +138,7 @@ Effective date: the date this version is published. Until this version is publis
 - A contractor pays $4.99 to Connect on a project, including a later project with someone they have worked with before. That unlocks messaging for that pair and the customer’s choice to share contact details. It does not promise that the customer will hire that contractor. The fee is generally non-refundable once that connection is delivered, with the same exceptions.
 - The customer pays the contractor directly for the work. PPP does not collect that payment and does not take a percentage of it.
 - PPP does not state that a contractor is licensed, insured, bonded, or background-checked. Admin approval is not that kind of check.
+- Priority Help, a support chat, is not turned on. Once Priority Help is enabled, its automatic replies are written by an AI assistant and can be wrong. Section 14 has the rules, and the Privacy Policy explains how chats are stored and sent to OpenAI.
 - You must be 18 or older to create an account. That is an affirmation you make, not a verification of your age.
 - The signup form asks for acceptance of these documents. PPP does not reject a new account for these versions until these pages are published and that requirement is turned on. That requirement ships off. After it is turned on, a new account is refused unless the current versions were accepted and you affirmed that you are 18 or older. An existing account is asked at the next sign-in to accept the current versions and to make that same affirmation. Existing accounts can still view their information and delete the account. While the requirement is on, declining the current versions limits new marketplace actions. Nothing is deleted because someone has not yet accepted. The acceptance recorded at that later sign-in is stored separately from the acceptance recorded when the account was created. Each one keeps the document version and the time.
 
@@ -273,6 +274,8 @@ The marketplace software is provided as it runs today. Features such as Stripe C
 
 Responsibility for the work, and liability these terms do not exclude, is in Independent Marketplace and Contractor Responsibility.
 
+**Priority Help (applies once Priority Help is enabled).** Priority Help is a support chat that is built but not turned on. Once PPP enables it, automatic replies are written by an AI assistant from PPP’s published help articles and current fees. An automatic reply can be incomplete or wrong. It is not legal, tax, or construction advice, and it does not change these terms, the [Refund & Cancellation Policy](/refunds), or a fee. The assistant cannot issue a refund, approve a refund exception, change an account, or share another person’s contact details. Choose Talk to Support, or email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com), to reach a person. PPP stores Priority Help chats and deletes them on the schedule in the [Privacy Policy](/privacy): a chat started without signing in is deleted 90 days after its last message, unless a ticket is still open. To write a reply, PPP sends the chat text to OpenAI after removing the email addresses, phone numbers, and street addresses it detects. Do not type card numbers, passwords, or another person’s contact details into the chat. PPP may limit, pause, or turn off Priority Help at any time, and may refuse messages that try to misuse it.
+
 ## 15. Changes
 
 PPP will post updated terms on this page. The effective date of a version is its publication date. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates.
@@ -316,7 +319,7 @@ Effective date: the date this version is published. Until this version is publis
 - PPP does not sell personal information.
 - You can delete your account from the account screen, or by email if that control is temporarily unavailable. Your login, email, name, phone, profile photo, and street address are removed. Payment records stay with amounts and dates but without your name or contact. Text you wrote for other people, such as messages, estimates, reviews, and project descriptions, can remain, as described below. Portfolio photos, credentials, services, service areas, and project photos are removed. A small number of older internal security logs may still contain an email address. Stripe keeps its own payment records and the contractor’s Stripe account. PPP does not close that Stripe account and does not send Stripe a deletion notice. The product does not include an in-app export.
 - The marketplace is for people 18 or older. That is an affirmation you make, not a verification of your age. The signup form does not ask for a date of birth.
-- Priority Help, a support chat, is pending activation and is not turned on. If and when it is turned on, the chat messages you type are processed by OpenAI to generate a reply. That is marked pending activation below.
+- Priority Help, a support chat, is not turned on. The Priority Help parts of this policy apply once Priority Help is enabled. Once it is, PPP stores the chat, and the text you type is sent to OpenAI to write a reply after PPP removes the email addresses, phone numbers, and street addresses it detects. A chat started without signing in is deleted automatically 90 days after its last message. Details are in sections 2, 5, 6, and 8.
 - PPP does not remove GPS location information from uploaded photos. A project photo can be opened by contractors offered your project before a paid Connect, so location tagging in that photo can point to your property.
 - Texas privacy rights and general US practices are described below.
 
@@ -354,7 +357,7 @@ Contact PPP by email at [support@prioritypropertypros.com](mailto:support@priori
 
 **Support.** The contact page opens an email in your own mail app to support@prioritypropertypros.com. PPP does not store that form on its servers.
 
-**Priority Help chat (pending activation).** Priority Help is a support chat that is built but not turned on. While it is off, none of this is collected. If and when PPP turns it on, PPP would store the chat messages you type, the replies, the time, and, for a signed-in user, the account the chat belongs to. To limit abuse, PPP would store a one-way coded form of your network address rather than the address itself. An admin can read a chat and reply to it. Do not type phone numbers, email addresses, street addresses, card numbers, or passwords into the chat.
+**Priority Help chat (applies once Priority Help is enabled).** Priority Help is a support chat that is built but not turned on. While it is off, none of this is collected and nothing is sent to OpenAI. Once PPP enables it, PPP stores the messages you type, the replies, and the times. If you are signed in, the chat is linked to your account. If you are not signed in, the chat is linked to a random code saved in your browser, not to your name. To limit abuse, PPP stores a one-way coded form of your network address rather than the address itself. Automatic replies are written by an AI assistant, not a person. A PPP admin can read any Priority Help chat, and a person replies only after you choose Talk to Support. For each automatic reply, PPP also records the AI model, the amount of text processed, and the cost, without the chat text. Do not type phone numbers, email addresses, street addresses, card numbers, passwords, or another person’s details into the chat.
 
 PPP does not ask for a Social Security number, a government ID image, or a background-check report. PPP does not collect a bond.
 
@@ -371,7 +374,7 @@ PPP uses this information to:
 - deliver in-app notices, web push, and email you have not turned off
 - moderate marketplace reviews and portfolio photos
 - detect obvious pre-connection contact details so people do not skip the Connection Fee
-- answer support questions in the Priority Help chat, if and when it is turned on
+- answer support questions in the Priority Help chat, once Priority Help is enabled
 - record acceptance of the current agreements, and the 18-or-older affirmation, when that requirement is on
 - delete an account when you ask, and keep an audit record of that deletion
 - fix errors and keep the service secure
@@ -397,7 +400,7 @@ PPP uses these services to run the product:
 - **GitHub Pages** hosts the static website at prioritypropertypros.com.
 - **Resend** sends notification email.
 - **Your browser’s push service** (for example the service behind Chrome, Firefox, or Safari) delivers web push if you turn it on. PPP holds the keys used to send those pushes. The private key is not in the website code.
-- **OpenAI, pending activation.** Priority Help chat is pending activation and is not turned on today. Until it is turned on, OpenAI receives no information from PPP. If and when PPP turns Priority Help on, the message you type in that chat, and up to the last few messages of the same chat, are sent to OpenAI to generate a reply. PPP’s published help articles and fee amounts are sent with it. PPP does not send your projects, your messages with contractors or customers, your photos, your contact details, or your payment details to OpenAI for this. OpenAI processes that chat text under its own terms for business customers.
+- **OpenAI (applies once Priority Help is enabled).** Priority Help is not turned on today, and until it is, OpenAI receives no information from PPP. Once it is enabled, PPP sends OpenAI the message you type in that chat and up to eight earlier messages of the same chat, after removing the email addresses, phone numbers, and street addresses that PPP’s filter detects. A filter can miss details written in an unusual way, so do not type them. PPP’s published help articles and the current fee amounts are sent with it. PPP does not send your name, your account details, your projects, your messages with contractors or customers, your photos, or your payment details to OpenAI for this. PPP uses OpenAI’s API and does not opt in to sharing that data with OpenAI for training. OpenAI states that data sent to its API is not used to train its models unless the customer opts in. OpenAI also states that it may keep API inputs and outputs in abuse-monitoring logs for up to 30 days, longer only when the law requires it or when it is reasonably necessary to protect OpenAI’s services or others from harm, and that access to that data is limited to authorized OpenAI staff and contractors bound by confidentiality who review for abuse and misuse. Sources: OpenAI, “Data controls in the OpenAI platform” (https://platform.openai.com/docs/guides/your-data) and “Enterprise privacy at OpenAI” (https://openai.com/enterprise-privacy/), both checked October 11, 2026.
 
 PPP does not sell personal information to these companies. They process it to provide the service.
 
@@ -407,6 +410,7 @@ PPP does not run an ad-cookie banner because the current site does not use adver
 
 - **Login session.** The login service keeps the session in the browser’s local storage so you stay signed in. A password-reset request uses separate browser storage and does not replace that session.
 - **Unposted project draft and a few site-update flags.** Session storage holds the project wizard until you post, and it holds a short flag so a site update does not reload in the middle of a form.
+- **Priority Help guest code (applies once Priority Help is enabled).** If you use Priority Help without signing in, the browser keeps a random code in local storage so the chat can continue on your next visit. Clearing site data removes the code, and the chat then starts over.
 - **PWA cache.** The site can install a service worker that caches the app shell so pages load again and so web push can be delivered. That cache is the site’s files, not a profile sold to advertisers.
 
 You can clear this storage in your browser. Clearing it signs you out and drops an unposted draft.
@@ -450,7 +454,9 @@ Files stored under your account in project photos and contractor documents are r
 
 **Stripe.** PPP does not send a deletion notice to Stripe, and PPP sends Stripe nothing as part of deletion. PPP does not close a contractor’s Stripe Connect account at Stripe. Stripe keeps that account, and its own payment, customer, and Checkout records, under Stripe’s policy. PPP keeps the Stripe ids that refer to those payment records. PPP cannot delete card numbers it never stored. Deleting an account does not by itself refund the $9.99 or a $4.99 Connection Fee. Refund exceptions are in the [Refund & Cancellation Policy](/refunds).
 
-The product does not publish a separate multi-year retention table. There is no fixed “we keep everything for X years” rule in the software. An acceptance record can remain after the account is deleted, as this section describes. The time of an 18-or-older affirmation is stored on the profile and is removed when that profile is deleted.
+**Priority Help chats (applies once Priority Help is enabled).** A chat started without signing in is deleted automatically 90 days after its last message. If that chat became a support ticket that is still open, it is kept until the ticket is resolved or closed, and is then deleted automatically 90 days later. A signed-in chat is deleted automatically 365 days after it is resolved or closed, or 365 days after its last message if it never became a ticket. Deleting your account deletes your Priority Help chats in the same step. The automatic deletion runs once a day, so a chat can remain up to one more day. PPP keeps a usage record for each automatic reply (the date, the AI model, the amount of text processed, and the cost) without the chat text; once the chat is deleted, that record no longer links to it. OpenAI’s own retention is described in section 5.
+
+Apart from Priority Help chats, the product does not publish a separate multi-year retention table. There is no fixed “we keep everything for X years” rule in the software. An acceptance record can remain after the account is deleted, as this section describes. The time of an 18-or-older affirmation is stored on the profile and is removed when that profile is deleted.
 
 ## 9. Your choices and your rights
 
@@ -570,6 +576,8 @@ A booking status of Disputed, when it is set, is a label on the marketplace reco
 
 Questions about a platform fee: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Include the account email and, if you have it, the project. Emailing does not by itself create a refund.
 
+Once Priority Help is enabled, its AI assistant can explain this policy but cannot approve a refund exception or start a refund. Choose Talk to Support in the chat, or email the address above, so a person reviews the request.
+
 Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.
 $ppp_legal_refund_cancellation$,
   false,
@@ -650,7 +658,7 @@ A homeowner or other account holder can report:
 - serious contractor misconduct
 - a violation of these guidelines or the Terms of Service
 
-Send the report by email to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). The site does not have a separate in-app complaint center. A contractor can also report a project photo in the product. That report stores the reporter, the target, and the reason. An admin can read photo reports. The other person on a job can report that job review. An admin can hide a job review without deleting it. Marketplace reviews of PPP stay off the public page until an admin approves them. An admin who approves or rejects one records a written reason that is not shown on the public review. An admin can suspend, disable, or close an account.
+Send the report by email to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). The site does not have a separate in-app complaint center. Once Priority Help is enabled, you can also choose Talk to Support in that chat; a person handles the report there. A contractor can also report a project photo in the product. That report stores the reporter, the target, and the reason. An admin can read photo reports. The other person on a job can report that job review. An admin can hide a job review without deleting it. Marketplace reviews of PPP stay off the public page until an admin approves them. An admin who approves or rejects one records a written reason that is not shown on the public review. An admin can suspend, disable, or close an account.
 
 PPP may review a report, ask for more information, moderate the content, suspend an account, or remove a contractor from the marketplace. PPP keeps the report and the decision in its records. PPP does not publish the other person’s private information in a public decision. A person who wants another look can reply to the support email. PPP does not promise to investigate every report or to resolve every report.
 
