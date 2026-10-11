@@ -16,22 +16,19 @@
 
 GRANT EXECUTE ON FUNCTION public.portfolio_storage_is_publicly_readable(text) TO anon;
 
-DROP POLICY IF EXISTS contractor_docs_storage_select ON storage.objects;
-CREATE POLICY contractor_docs_storage_select
-  ON storage.objects FOR SELECT TO anon, authenticated
+-- Separate anon-only policy. The authenticated contractor_docs_storage_select
+-- policy is left exactly as it is. Reusing that policy for anon would make
+-- every anon read evaluate public.is_admin(), which anon cannot execute, so
+-- the read fails with "permission denied for function is_admin" (found in a
+-- rolled-back production test). Postgres checks EXECUTE before it decides
+-- whether an OR branch is needed, so auth.uid() IS NOT NULL guards do not help.
+DROP POLICY IF EXISTS contractor_docs_storage_select_public_portfolio ON storage.objects;
+CREATE POLICY contractor_docs_storage_select_public_portfolio
+  ON storage.objects FOR SELECT TO anon
   USING (
     bucket_id = 'contractor-docs'
-    AND (
-      (
-        auth.uid() IS NOT NULL
-        AND (storage.foldername(name))[1] = auth.uid()::text
-      )
-      OR (auth.uid() IS NOT NULL AND public.is_admin())
-      OR (
-        (storage.foldername(name))[2] = 'portfolio'
-        AND public.portfolio_storage_is_publicly_readable(name)
-      )
-    )
+    AND (storage.foldername(name))[2] = 'portfolio'
+    AND public.portfolio_storage_is_publicly_readable(name)
   );
 
 CREATE OR REPLACE FUNCTION public.list_public_portfolio_objects(p_id uuid)

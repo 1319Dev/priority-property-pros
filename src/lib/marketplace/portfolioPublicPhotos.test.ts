@@ -51,8 +51,12 @@ describe("public portfolio photo display", () => {
     expect(migration).toMatch(/pf\.privacy_state = 'PUBLIC_SAFE'/);
     expect(migration).toMatch(/GRANT EXECUTE ON FUNCTION public\.list_public_portfolio_objects\(uuid\) TO anon, authenticated/);
     expect(migration).toMatch(/GRANT EXECUTE ON FUNCTION public\.portfolio_storage_is_publicly_readable\(text\) TO anon/);
-    expect(migration).toMatch(/CREATE POLICY contractor_docs_storage_select/);
-    expect(migration).toMatch(/FOR SELECT TO anon, authenticated/);
+    expect(migration).toMatch(/CREATE POLICY contractor_docs_storage_select_public_portfolio/);
+    expect(migration).toMatch(/FOR SELECT TO anon\n/);
+    // The authenticated policy is untouched, so anon never evaluates is_admin().
+    expect(migration).not.toMatch(/DROP POLICY IF EXISTS contractor_docs_storage_select ON/);
+    const anonPolicy = migration.slice(migration.indexOf("CREATE POLICY contractor_docs_storage_select_public_portfolio"));
+    expect(anonPolicy.slice(0, anonPolicy.indexOf(";"))).not.toMatch(/is_admin/);
     expect(migration).toMatch(/portfolio_storage_is_publicly_readable\(name\)/);
     expect(migration).not.toMatch(/\/object\/public\//);
     expect(migration).not.toMatch(/getPublicUrl/);
@@ -62,7 +66,7 @@ describe("public portfolio photo display", () => {
     expect(migration).not.toMatch(/UPDATE\s+public\.contractor_portfolio/i);
     expect(migration).not.toMatch(/stripe|payments_live|connection_fee/i);
     expect(rollback).toMatch(/DROP FUNCTION IF EXISTS public\.list_public_portfolio_objects\(uuid\)/);
-    expect(rollback).toMatch(/FOR SELECT TO authenticated/);
+    expect(rollback).toMatch(/DROP POLICY IF EXISTS contractor_docs_storage_select_public_portfolio ON storage\.objects/);
     expect(rollback).toMatch(/REVOKE ALL ON FUNCTION public\.portfolio_storage_is_publicly_readable\(text\) FROM anon/);
     expect(loader).toMatch(/signedContractorDocUrl/);
     expect(loader).not.toMatch(/getPublicUrl/);
