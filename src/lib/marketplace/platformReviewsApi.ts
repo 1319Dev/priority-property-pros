@@ -1,9 +1,12 @@
 import { friendlyAdminError } from "../admin/friendlyAdminError";
+import { runSensitiveAdminCall } from "../auth/adminStepUp";
 import { getSupabaseClient } from "../supabase/client";
 import {
+  accountCanSubmitPlatformReview,
   canInsertPlatformReview,
   isPublishablePlatformReview,
   normalizePlatformReviewDraft,
+  PLATFORM_REVIEWS_ACTIVATION_REQUIRED,
   validatePlatformReviewDraft,
   type PlatformReview,
   type PlatformReviewDraft,
@@ -46,10 +49,18 @@ export async function fetchOwnPlatformReview(userId: string): Promise<PlatformRe
 
 export async function submitPlatformReview(input: {
   viewerId: string | null;
+  signupFeeStatus: string | null;
   draft: PlatformReviewDraft;
 }): Promise<PlatformReview> {
-  if (!canInsertPlatformReview({ viewerId: input.viewerId })) {
+  if (!input.viewerId) {
     throw new Error("Sign in to leave a review of Priority Property Pros.");
+  }
+  if (!canInsertPlatformReview({ viewerId: input.viewerId, signupFeeStatus: input.signupFeeStatus })) {
+    throw new Error(
+      accountCanSubmitPlatformReview(input.signupFeeStatus)
+        ? "Sign in to leave a review of Priority Property Pros."
+        : PLATFORM_REVIEWS_ACTIVATION_REQUIRED,
+    );
   }
   const normalized = normalizePlatformReviewDraft(input.draft);
   const invalid = validatePlatformReviewDraft(normalized);
@@ -97,10 +108,14 @@ export async function adminSetPlatformReviewStatus(
   if (trimmed.length < 3 || trimmed.length > 500) {
     throw new Error("Add a reason of at least 3 characters.");
   }
-  const { error } = await client().rpc("admin_set_platform_review_status", {
-    p_review_id: id,
-    p_status: status,
-    p_reason: trimmed,
-  });
-  if (error) throw new Error(friendlyAdminError(error, "Could not update that review."));
+  await runSensitiveAdminCall(
+    () =>
+      client().rpc("admin_set_platform_review_status", {
+        p_review_id: id,
+        p_status: status,
+        p_reason: trimmed,
+      }),
+    "Could not update that review.",
+    { requireData: false },
+  );
 }

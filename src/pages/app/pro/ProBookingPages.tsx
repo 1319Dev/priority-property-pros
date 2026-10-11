@@ -23,7 +23,9 @@ import {
   proposeChangeOrder,
   respondChangeOrder,
   startBooking,
+  reportBookingReview,
   submitBookingReview,
+  submitBookingReviewResponse,
   updateBookingReview,
 } from "../../../lib/marketplace/api";
 import { BOOKING_STATUS_LABELS, paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
@@ -53,6 +55,7 @@ import { listMyMessageThreads } from "../../../lib/marketplace/messagingApi";
 import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type BookingReview, type BookingStatus, type ChangeOrder, type EstimateItemKind } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
 import { HiredConfirmationCard, ProfileReviewForm } from "../../../components/marketplace/HiredConfirmation";
+import { BookingReviewPartySection } from "../../../components/marketplace/BookingReviewPartySection";
 
 function statusLabel(status: string) {
   return BOOKING_STATUS_LABELS[status as BookingStatus] ?? status.replaceAll("_", " ");
@@ -316,6 +319,12 @@ export function ProBookingDetailPage() {
             .catch((err: Error) => setError(err.message))
             .finally(() => setBusy(false));
         }}
+      />
+      <BookingReviewPartySection
+        role="contractor"
+        reviews={reviews}
+        onReport={(reviewId, reason) => reportBookingReview(reviewId, reason).then(() => undefined)}
+        onRespond={(reviewId, body) => submitBookingReviewResponse(reviewId, body).then(() => reload())}
       />
       <ProfileReviewForm
         role="contractor"
