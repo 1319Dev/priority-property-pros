@@ -1,6 +1,6 @@
 import { JOB_PAYMENT_PLAIN } from "../../data/pricing";
 import type { AccountType } from "../auth/types";
-import { BOOKING_STATUSES, type BookingStatus, type ContactAccessStatus } from "./types";
+import { BOOKING_STATUSES, type BookingContactAccess, type BookingStatus, type ContactAccessStatus } from "./types";
 
 /** Keys that must never appear on unauthorized RPC / notification / event payloads. */
 export const PRIVATE_CONTACT_PAYLOAD_KEYS = [
@@ -119,6 +119,44 @@ export function unauthorizedPayloadLeaksPrivateContact(
     const value = payload[key];
     return value != null && value !== "";
   });
+}
+
+export type AdminContactAccessView = {
+  unlocked: boolean;
+  /** A paid $4.99 Connect entitlement for this contractor on this job (connection-scoped or carried onto the booking). */
+  viaConnect: BookingContactAccess | null;
+  /** An admin override on this one booking. */
+  viaOverride: BookingContactAccess | null;
+};
+
+/**
+ * Contact can be unlocked two ways: the paid Connect row (keyed by connection, booking_id may be null)
+ * or a booking-scoped row (admin override, or the Connect grant carried onto the booking).
+ * The admin page must look at both, the same way contractor_has_contact_access_on_project does.
+ */
+export function adminEffectiveContactAccess(
+  bookingRow: BookingContactAccess | null | undefined,
+  connectionRows: readonly BookingContactAccess[] = [],
+): AdminContactAccessView {
+  const bookingOpen = contactAccessRowAllowsReveal(bookingRow) ? bookingRow ?? null : null;
+  const bookingIsOverride =
+    bookingOpen != null && (bookingOpen.grant_source === "ADMIN_OVERRIDE" || bookingOpen.status === "ADMIN_OVERRIDE");
+  const viaOverride = bookingIsOverride ? bookingOpen : null;
+  const viaConnect =
+    connectionRows.find((row) => contactAccessRowAllowsReveal(row) && row.grant_source !== "ADMIN_OVERRIDE") ??
+    (bookingOpen && !bookingIsOverride ? bookingOpen : null);
+  return { unlocked: Boolean(viaConnect || viaOverride), viaConnect, viaOverride };
+}
+
+export function adminContactAccessSummary(view: AdminContactAccessView): string {
+  if (view.viaConnect && view.viaOverride) {
+    return "Contact is unlocked. This contractor paid the $4.99 Connect on this job, and an admin override is also on this booking.";
+  }
+  if (view.viaConnect) {
+    return "Contact is unlocked. This contractor paid the $4.99 Connect on this job, so no admin grant is needed.";
+  }
+  if (view.viaOverride) return "Contact is unlocked by an admin override on this booking.";
+  return privateContactLockedCopy();
 }
 
 export function privateContactLockedCopy(): string {
