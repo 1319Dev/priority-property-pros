@@ -14,8 +14,8 @@ describe("admin nav config", () => {
       "/app/admin",
       "/app/admin/approvals",
       "/app/admin/reviews",
-      "/app/admin/contact",
       "/app/admin/bookings",
+      "/app/admin/contact",
       "/app/admin/security",
       "/app/admin/account",
     ]);

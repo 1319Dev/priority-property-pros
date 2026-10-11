@@ -86,9 +86,10 @@ export async function fetchUnhandledContactCount(): Promise<number> {
   if (!supabase) return 0;
   const { data, error } = await supabase.rpc("admin_unhandled_contact_message_count");
   if (error) throw new Error(friendlyAdminError(error, "Could not count contact messages."));
-  if (typeof data === "number" && Number.isFinite(data)) return Math.max(0, Math.trunc(data));
-  if (typeof data === "string" && data.trim() !== "") {
-    const parsed = Number(data);
+  const value = data as unknown;
+  if (typeof value === "number" && Number.isFinite(value)) return Math.max(0, Math.trunc(value));
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
     if (Number.isFinite(parsed)) return Math.max(0, Math.trunc(parsed));
   }
   return 0;

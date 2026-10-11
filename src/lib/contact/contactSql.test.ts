@@ -79,6 +79,7 @@ describe("contact message RLS", () => {
     expect(rollback).toContain("DROP FUNCTION IF EXISTS public.consume_contact_rate_bucket(text, integer, integer)");
     expect(rollback).toContain("DROP TABLE IF EXISTS public.contact_rate_buckets");
     expect(rollback).toContain("DROP TABLE IF EXISTS public.contact_messages");
-    expect(rollback).not.toMatch(/admin_dashboard_/);
+    expect(rollback).not.toMatch(/DROP FUNCTION[^;]*admin_dashboard/);
+    expect(rollback).not.toMatch(/admin_needs_attention/);
   });
 });

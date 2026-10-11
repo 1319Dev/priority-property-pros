@@ -59,7 +59,7 @@ function mockFetch(options?: { allow?: boolean; resendStatus?: number }) {
       return new Response(JSON.stringify([{ id: "msg-1" }]), { status: 201 });
     }
     if (url.includes("/contact_messages") && init?.method === "PATCH") {
-      return new Response("", { status: 204 });
+      return new Response(null, { status: 204 });
     }
     if (url.includes("api.resend.com")) {
       return new Response(JSON.stringify({ id: "email_1" }), { status: options?.resendStatus ?? 200 });

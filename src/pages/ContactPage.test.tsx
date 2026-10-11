@@ -2,7 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "../components/ui/Toast";
 import { SUPPORT_EMAIL } from "../data/brand";
+import { AuthProvider } from "../lib/auth/AuthProvider";
 import { submitContactForm } from "../lib/contact/submitContactForm";
 import { ContactPage } from "./ContactPage";
 
@@ -17,9 +19,13 @@ const message = "How do connection fees work for a side-yard fence?";
 function renderContact(width: number) {
   return render(
     <MemoryRouter>
-      <div className="mx-auto max-w-full" style={{ width }}>
-        <ContactPage />
-      </div>
+      <AuthProvider>
+        <ToastProvider>
+          <div className="mx-auto max-w-full" style={{ width }}>
+            <ContactPage />
+          </div>
+        </ToastProvider>
+      </AuthProvider>
     </MemoryRouter>,
   );
 }
