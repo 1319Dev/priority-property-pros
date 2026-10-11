@@ -13,6 +13,7 @@ describe("admin nav config", () => {
   it("only lists sections that have a route in the admin bundle", () => {
     expect(ADMIN_NAV.map((item) => item.to)).toEqual([
       "/app/admin",
+      "/app/admin/projects",
       "/app/admin/approvals",
       "/app/admin/reviews",
       "/app/admin/bookings",
