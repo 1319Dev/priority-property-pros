@@ -86,3 +86,17 @@
 -- checkout sessions are still not deleted.
 -- Active jobs, an open dispute, an unfinished refund, and the last active
 -- admin are still refused with the same messages, before any of these deletes.
+--
+-- 20261017100002, still inside the same purge transaction, before names are cleared:
+-- other people's notifications that name this account are rewritten.
+-- Message notifications in this account's threads read
+-- 'New message from a deleted user.' (customer or admin) or
+-- 'New message from a former PPP pro.' (contractor).
+-- Other notifications tied to this account's projects, jobs, estimates,
+-- connections, opportunities, change orders, reviews, and threads have the
+-- first name, last name, full name, email, phone, business name, and public
+-- pro label replaced, and name, email, and phone payload keys dropped.
+-- Elsewhere only the exact full name, email, and phone are replaced.
+-- Another person with the same first name or business name is not changed.
+-- Refusals and failures leave every notification unchanged.
+-- See supabase/tests/account_deletion_scrub_notifications.sql.

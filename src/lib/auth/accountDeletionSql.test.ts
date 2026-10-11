@@ -22,11 +22,17 @@ function functionBody(sql: string, name: string): string {
 }
 
 describe("account deletion SQL", () => {
-  it("is the latest migration so it applies after the live blocks migration", () => {
+  it("orders the deletion migrations after the live blocks migration", () => {
     const names = readdirSync(path.join(repoRoot, "supabase/migrations"))
       .filter((name) => name.endsWith(".sql"))
       .sort();
-    expect(names.at(-1)).toBe("20261017100001_account_deletion_clear_contractor_details.sql");
+    // Main has later migrations (for example 20261019400001). The deletion
+    // migrations apply in their own version order, after the live blocks migration.
+    expect(names.includes("20261017100001_account_deletion_clear_contractor_details.sql")).toBe(true);
+    expect(names.includes("20261017100002_account_deletion_scrub_notifications.sql")).toBe(true);
+    expect(names.indexOf("20261017100002_account_deletion_scrub_notifications.sql")).toBeGreaterThan(
+      names.indexOf("20261017100001_account_deletion_clear_contractor_details.sql"),
+    );
     expect(names.includes("20261017000001_account_deletion_anonymize.sql")).toBe(true);
     expect(names.indexOf("20261017100001_account_deletion_clear_contractor_details.sql")).toBeGreaterThan(
       names.indexOf("20261017000001_account_deletion_anonymize.sql"),
