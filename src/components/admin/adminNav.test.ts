@@ -15,12 +15,14 @@ describe("admin nav config", () => {
       "/app/admin/approvals",
       "/app/admin/reviews",
       "/app/admin/bookings",
+      "/app/admin/support",
       "/app/admin/security",
       "/app/admin/account",
     ]);
     expect(app).toContain('path="approvals"');
     expect(app).toContain('path="reviews"');
     expect(app).toContain('path="bookings"');
+    expect(app).toContain('path="support"');
     expect(app).toContain('path="security"');
     expect(app).toContain('path="account"');
     expect(app).not.toMatch(/path="people"/);
@@ -45,6 +47,21 @@ describe("admin nav config", () => {
       { label: "Approvals", to: "/app/admin/approvals" },
       { label: "Application" },
     ]);
+    expect(adminBreadcrumbs("/app/admin/support/kb")).toEqual([
+      { label: "Overview", to: "/app/admin" },
+      { label: "Support", to: "/app/admin/support" },
+      { label: "Knowledge" },
+    ]);
+    expect(adminBreadcrumbs("/app/admin/support/analytics")).toEqual([
+      { label: "Overview", to: "/app/admin" },
+      { label: "Support", to: "/app/admin/support" },
+      { label: "Analytics" },
+    ]);
+    expect(adminBreadcrumbs("/app/admin/support/conv-1")).toEqual([
+      { label: "Overview", to: "/app/admin" },
+      { label: "Support", to: "/app/admin/support" },
+      { label: "Conversation" },
+    ]);
     expect(adminBreadcrumbs("/app/admin/account/notifications")).toEqual([
       { label: "Overview", to: "/app/admin" },
       { label: "Account", to: "/app/admin/account" },
@@ -64,6 +81,7 @@ describe("admin nav config", () => {
         to: "/app/admin/bookings?ref=PPP-1004",
       },
     ]);
+    expect(adminSearchHits("support").map((hit) => hit.label)).toContain("Support");
     expect(adminSearchHits("people").map((hit) => hit.label)).not.toContain("People");
     expect(adminSearchHits("audit")).toEqual([]);
     expect(adminSearchHits("")).toEqual([]);

@@ -141,6 +141,31 @@ const swaps: Array<{ id: string; match: RegExp; real: string; names: string[] }>
     real: path.resolve(rootDir, "src/lib/marketplace/platformReviewsApi.ts"),
     names: ["adminListPlatformReviews", "adminSetPlatformReviewStatus"],
   },
+  {
+    id: "\0ppp-support-api",
+    match: /\/admin\/supportApi(?:\.ts)?$/,
+    real: path.resolve(rootDir, "src/lib/admin/supportApi.ts"),
+    names: [
+      "listSupportQueue",
+      "searchSupport",
+      "setSupportPresence",
+      "heartbeatSupport",
+      "getSupportConversation",
+      "listCannedResponses",
+      "replySupport",
+      "noteSupport",
+      "setSupportStatus",
+      "setSupportPriority",
+      "takeoverSupport",
+      "listSupportArticles",
+      "saveSupportArticle",
+      "saveCannedResponse",
+      "deleteCannedResponse",
+      "supportAnalytics",
+      "setSupportRetention",
+      "purgeExpiredSupport",
+    ],
+  },
 ];
 
 function harnessMocks(): Plugin {

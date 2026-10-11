@@ -1181,6 +1181,27 @@ export type Database = {
         Args: { p_connection_id: string; p_reason?: string | null };
         Returns: Json;
       };
+      admin_support_list: { Args: { p_queue?: string; p_limit?: number }; Returns: Json };
+      admin_support_get: { Args: { p_id: string }; Returns: Json };
+      admin_support_search: { Args: { p_query: string }; Returns: Json };
+      admin_support_set_status: { Args: { p_id: string; p_status: string }; Returns: Json };
+      admin_support_set_priority: { Args: { p_id: string; p_priority: string }; Returns: Json };
+      admin_support_takeover: { Args: { p_id: string }; Returns: Json };
+      admin_support_reply: { Args: { p_id: string; p_body: string }; Returns: Json };
+      admin_support_note: { Args: { p_id: string; p_body: string }; Returns: Json };
+      admin_support_set_presence: { Args: { p_status: string }; Returns: string };
+      admin_support_heartbeat: { Args: Record<string, never>; Returns: string };
+      admin_support_analytics: { Args: { p_days?: number }; Returns: Json };
+      admin_support_kb_list: { Args: Record<string, never>; Returns: Json };
+      admin_support_kb_save: {
+        Args: { p_id: string | null; p_title: string; p_body: string; p_status: string; p_slug: string };
+        Returns: Json;
+      };
+      admin_support_canned_list: { Args: Record<string, never>; Returns: Json };
+      admin_support_canned_save: { Args: { p_id: string | null; p_title: string; p_body: string }; Returns: Json };
+      admin_support_canned_delete: { Args: { p_id: string }; Returns: Json };
+      admin_support_set_retention: { Args: { p_days: number }; Returns: number };
+      admin_support_purge_expired: { Args: Record<string, never>; Returns: number };
     };
     Enums: {
       account_type: AccountType;

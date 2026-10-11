@@ -70,6 +70,18 @@ const AdminBookingsPage = lazy(() =>
 const AdminTwoFactorPage = lazy(() =>
   import("./pages/app/admin/AdminTwoFactorPage").then((mod) => ({ default: mod.AdminTwoFactorPage })),
 );
+const AdminSupportQueuePage = lazy(() =>
+  import("./pages/app/admin/SupportPages").then((mod) => ({ default: mod.AdminSupportQueuePage })),
+);
+const AdminSupportConversationPage = lazy(() =>
+  import("./pages/app/admin/SupportPages").then((mod) => ({ default: mod.AdminSupportConversationPage })),
+);
+const AdminSupportKnowledgePage = lazy(() =>
+  import("./pages/app/admin/SupportPages").then((mod) => ({ default: mod.AdminSupportKnowledgePage })),
+);
+const AdminSupportAnalyticsPage = lazy(() =>
+  import("./pages/app/admin/SupportPages").then((mod) => ({ default: mod.AdminSupportAnalyticsPage })),
+);
 
 const DevNotificationPreview = import.meta.env.DEV
   ? lazy(() =>
@@ -205,6 +217,10 @@ export default function App() {
             <Route path="approvals/:contractorProfileId" element={<AdminApprovalDetailPage />} />
             <Route path="reviews" element={<AdminReviewsPage />} />
             <Route path="bookings" element={<AdminBookingsPage />} />
+            <Route path="support" element={<AdminSupportQueuePage />} />
+            <Route path="support/kb" element={<AdminSupportKnowledgePage />} />
+            <Route path="support/analytics" element={<AdminSupportAnalyticsPage />} />
+            <Route path="support/:conversationId" element={<AdminSupportConversationPage />} />
             <Route path="security" element={<AdminTwoFactorPage />} />
             <Route path="account" element={<AccountPage />} />
             <Route path="account/notifications" element={<NotificationSettingsPage />} />
