@@ -62,7 +62,7 @@ export function HowItWorks() {
               key={step.n}
               className="rounded-3xl border border-forest-800/10 bg-cream-50 p-5 sm:p-6"
             >
-              <p className="font-display text-3xl italic text-gold-600">{step.n}</p>
+              <p className="font-display text-3xl italic text-gold-700">{step.n}</p>
               <h3 className="mt-2 font-display text-2xl text-forest-800">{step.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink-700">{step.body}</p>
             </li>

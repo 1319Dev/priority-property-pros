@@ -307,6 +307,38 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
     expect(trust.container.textContent).toMatch(/does not currently verify licenses, insurance, or workmanship/i);
   });
 
+  it("shows the support email only on the Contact Us page", () => {
+    const email = /support@prioritypropertypros\.com/i;
+    const contact = renderApp("/contact");
+    expect(contact.container.innerHTML).toMatch(email);
+    contact.unmount();
+    const otherRoutes = [
+      "/",
+      "/find-a-pro",
+      "/how-it-works",
+      "/pricing",
+      "/become-a-pro",
+      "/faq",
+      "/reviews",
+      "/sign-in",
+      "/sign-up",
+      "/sign-up/customer",
+      "/sign-up/contractor",
+      "/forgot-password",
+      "/account/status",
+      "/post-project",
+      "/trust",
+      "/notifications",
+      "/no-such-page",
+    ];
+    for (const path of otherRoutes) {
+      const view = renderApp(path);
+      expect(view.container.innerHTML, path).not.toMatch(email);
+      expect(view.container.innerHTML, path).not.toMatch(/mailto:/i);
+      view.unmount();
+    }
+  });
+
   it("renders a public route when the address has a trailing slash", () => {
     renderApp("/faq/");
     expect(screen.getByRole("heading", { name: /questions about priority property pros/i })).toBeInTheDocument();

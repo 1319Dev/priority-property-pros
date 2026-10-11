@@ -1,5 +1,6 @@
-import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { applyRouteMetaToHtml } from "../seo/routeMeta.ts";
 
 /**
  * Static paths that must exist as real files on GitHub Pages.
@@ -9,6 +10,10 @@ import { dirname, resolve } from "node:path";
  * Those copies are the SPA document at the real path. Query and hash stay put,
  * including /auth/reset-password#access_token=… recovery links. Do not swap
  * this for a path-rewriting 404 redirect; that drops the fragment.
+ *
+ * Each copy gets that route's own title, description, canonical, and robots
+ * tags (src/lib/seo/routeMeta.ts) so crawlers that read the raw HTML do not see
+ * every page as a duplicate of the homepage. 404.html is marked noindex.
  */
 export const GITHUB_PAGES_SPA_ROUTES = [
   "/find-a-pro",
@@ -49,14 +54,16 @@ export function writeSpaShells(distDir: string, indexPath = resolve(distDir, "in
   if (!existsSync(indexPath)) {
     throw new Error(`${indexPath} missing — run vite build first.`);
   }
+  const shell = readFileSync(indexPath, "utf8");
   const notFoundPath = resolve(distDir, "404.html");
-  copyFileSync(indexPath, notFoundPath);
+  writeFileSync(notFoundPath, applyRouteMetaToHtml(shell, "/404", { notFound: true }));
   const written = [notFoundPath];
   for (const route of GITHUB_PAGES_SPA_ROUTES) {
+    const html = applyRouteMetaToHtml(shell, route);
     for (const relativePath of spaShellDestinations(route)) {
       const target = resolve(distDir, relativePath);
       mkdirSync(dirname(target), { recursive: true });
-      copyFileSync(indexPath, target);
+      writeFileSync(target, html);
       written.push(target);
     }
   }

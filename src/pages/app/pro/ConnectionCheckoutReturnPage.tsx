@@ -11,7 +11,7 @@ export function ConnectionCheckoutReturnPage() {
   const [params] = useSearchParams();
   const sessionId = params.get("session_id");
   const [message, setMessage] = useState(
-    `Confirming your $4.99 payment. This page cannot unlock contact. ${CONNECTION_FEE_NON_REFUNDABLE}`,
+    `Confirming your $4.99 payment. This page cannot open messaging or reveal contact. ${CONNECTION_FEE_NON_REFUNDABLE}`,
   );
   const [unlocked, setUnlocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,8 +32,8 @@ export function ConnectionCheckoutReturnPage() {
         setUnlocked(granted);
         setMessage(
           granted
-            ? `Payment verified. Connection access is unlocked for this project. ${CONNECTION_FEE_NON_REFUNDABLE}`
-            : `Payment is still being verified, or it was not completed. Contact stays locked until the server confirms a $4.99 Connection Fee. ${CONNECTION_FEE_NON_REFUNDABLE}`,
+            ? `Payment verified. You can now message this customer about this project. The customer decides if and when to share their phone, email, and exact address. ${CONNECTION_FEE_NON_REFUNDABLE}`
+            : `Payment is still being verified, or it was not completed. Messaging opens only after the server confirms a $4.99 Connection Fee. ${CONNECTION_FEE_NON_REFUNDABLE}`,
         );
       })
       .catch((err: Error) => setError(err.message))
@@ -45,9 +45,9 @@ export function ConnectionCheckoutReturnPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[390px] flex-col gap-4 px-4 py-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Connection Fee</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Connection Fee</p>
       <h1 className="font-display text-3xl font-semibold text-forest-800">
-        {unlocked ? "Connected" : "Contact still locked"}
+        {unlocked ? "Connected" : "Not connected yet"}
       </h1>
       <p className="text-sm leading-relaxed text-ink-700">{message}</p>
       <p className="text-sm leading-relaxed text-ink-500">{CONNECTION_FEE_NON_REFUNDABLE}</p>

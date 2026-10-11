@@ -1,3 +1,4 @@
+import { runSensitiveAdminCall } from "../auth/adminStepUp";
 import { getSupabaseClient } from "../supabase/client";
 import type { ApprovalTab, ContractorApprovalItem } from "./approvals";
 import { friendlyAdminError } from "./friendlyAdminError";
@@ -51,10 +52,13 @@ export async function countPendingContractorApprovals(): Promise<number> {
 }
 
 export async function adminApproveContractor(contractorProfileId: string): Promise<ContractorApprovalItem> {
-  const { data, error } = await client().rpc("admin_approve_contractor", {
-    p_contractor_profile_id: contractorProfileId,
-  });
-  if (error || !data) throw new Error(asError(error, "Could not approve this contractor."));
+  const data = await runSensitiveAdminCall(
+    () =>
+      client().rpc("admin_approve_contractor", {
+        p_contractor_profile_id: contractorProfileId,
+      }),
+    "Could not approve this contractor.",
+  );
   return asItem(data, "Could not approve this contractor.");
 }
 
@@ -62,11 +66,14 @@ export async function adminRejectContractor(
   contractorProfileId: string,
   reason?: string,
 ): Promise<ContractorApprovalItem> {
-  const { data, error } = await client().rpc("admin_reject_contractor", {
-    p_contractor_profile_id: contractorProfileId,
-    p_reason: reason?.trim() || null,
-  });
-  if (error || !data) throw new Error(asError(error, "Could not reject this contractor."));
+  const data = await runSensitiveAdminCall(
+    () =>
+      client().rpc("admin_reject_contractor", {
+        p_contractor_profile_id: contractorProfileId,
+        p_reason: reason?.trim() || null,
+      }),
+    "Could not reject this contractor.",
+  );
   return asItem(data, "Could not reject this contractor.");
 }
 
@@ -101,22 +108,29 @@ export async function adminSetPortfolioPrivacy(
   state: PortfolioPrivacyChoice,
   note?: string | null,
 ): Promise<void> {
-  const { error } = await client().rpc("admin_set_portfolio_privacy", {
-    p_item_id: itemId,
-    p_state: state,
-    p_note: note ?? null,
-  });
-  if (error) throw new Error(friendlyAdminError(error, "Could not update this photo."));
+  await runSensitiveAdminCall(
+    () =>
+      client().rpc("admin_set_portfolio_privacy", {
+        p_item_id: itemId,
+        p_state: state,
+        p_note: note ?? null,
+      }),
+    "Could not update this photo.",
+    { requireData: false },
+  );
 }
 
 export async function adminRequestContractorInfo(
   contractorProfileId: string,
   message: string,
 ): Promise<ContractorApprovalItem> {
-  const { data, error } = await client().rpc("admin_request_contractor_info", {
-    p_contractor_profile_id: contractorProfileId,
-    p_message: message.trim(),
-  });
-  if (error || !data) throw new Error(asError(error, "Could not request more information."));
+  const data = await runSensitiveAdminCall(
+    () =>
+      client().rpc("admin_request_contractor_info", {
+        p_contractor_profile_id: contractorProfileId,
+        p_message: message.trim(),
+      }),
+    "Could not request more information.",
+  );
   return asItem(data, "Could not request more information.");
 }

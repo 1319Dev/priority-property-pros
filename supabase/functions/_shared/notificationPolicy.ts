@@ -12,9 +12,33 @@ export const NOTIFICATION_CATEGORIES = [
   "change_orders",
   "reviews",
   "account",
+  "admin_applications",
+  "admin_reports",
+  "admin_disputes",
+  "admin_refunds",
 ] as const;
 
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
+
+/** Admin-only alerts. Other roles never see these settings, and admins see only these plus Account. */
+export const ADMIN_NOTIFICATION_CATEGORIES = [
+  "admin_applications",
+  "admin_reports",
+  "admin_disputes",
+  "admin_refunds",
+] as const satisfies readonly NotificationCategory[];
+
+const ADMIN_CATEGORY_SET = new Set<NotificationCategory>(ADMIN_NOTIFICATION_CATEGORIES);
+
+/** New-job offers are contractor alerts. Other roles never see that setting. */
+const CONTRACTOR_ONLY_CATEGORIES = new Set<NotificationCategory>(["new_job"]);
+
+export function categoriesForAccount(accountType: string | null | undefined): NotificationCategory[] {
+  if (accountType === "ADMIN") return [...ADMIN_NOTIFICATION_CATEGORIES, "account"];
+  const marketplace = NOTIFICATION_CATEGORIES.filter((category) => !ADMIN_CATEGORY_SET.has(category));
+  if (accountType === "CONTRACTOR") return marketplace;
+  return marketplace.filter((category) => !CONTRACTOR_ONLY_CATEGORIES.has(category));
+}
 
 export type NotificationChannel = "in_app" | "push" | "email";
 
@@ -45,6 +69,10 @@ const EMAIL_ON_BY_DEFAULT = new Set<NotificationCategory>([
   "estimates",
   "booking",
   "change_orders",
+  "admin_applications",
+  "admin_reports",
+  "admin_disputes",
+  "admin_refunds",
 ]);
 
 export const NOTIFICATION_CATEGORY_COPY: Record<
@@ -82,6 +110,22 @@ export const NOTIFICATION_CATEGORY_COPY: Record<
   account: {
     label: "Account",
     description: "Account notices.",
+  },
+  admin_applications: {
+    label: "New contractor applications",
+    description: "A contractor submits an application for review.",
+  },
+  admin_reports: {
+    label: "New reports",
+    description: "Someone reports a profile, message, review, or photo.",
+  },
+  admin_disputes: {
+    label: "Disputes opened",
+    description: "A homeowner, pro, or admin disputes a job.",
+  },
+  admin_refunds: {
+    label: "Payments flagged for refund",
+    description: "A paid activation or Connect needs a refund decision. Nothing is refunded automatically.",
   },
 };
 
@@ -151,6 +195,10 @@ export function resolveUnsubscribeSecret(input: {
 }
 
 export function categoryForKind(kind: string): NotificationCategory {
+  if (kind === "admin.application_submitted") return "admin_applications";
+  if (kind === "admin.report_received") return "admin_reports";
+  if (kind === "admin.dispute_opened") return "admin_disputes";
+  if (kind === "admin.refund_flagged") return "admin_refunds";
   if (kind === "opportunity.offered" || kind === "job.offered" || kind.startsWith("opportunity.")) {
     return "new_job";
   }
