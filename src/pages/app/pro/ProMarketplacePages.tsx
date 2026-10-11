@@ -30,7 +30,9 @@ import {
   fetchEstimateQuestions,
   fetchOrCreateEstimate,
   fetchOpportunity,
+  fetchMyEstimates,
   fetchMyOpportunities,
+  fetchMyOpportunityLabels,
   fetchMyBookings,
   fetchProjectBooking,
   fetchProjectConnectionAvailability,
@@ -61,6 +63,8 @@ import {
 } from "../../../lib/marketplace/api";
 import { JobReference } from "../../../components/marketplace/JobReference";
 import { opportunityListTitle } from "../../../lib/marketplace/opportunityAttach";
+import { mergeRecoveredJobLabels } from "../../../lib/marketplace/opportunityLabels";
+import { coerceProjectReference } from "../../../lib/marketplace/projectReference";
 import { centsToDollarString, dollarsToCents, formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { ServiceRadiusEditor } from "../../../components/marketplace/ServiceRadiusEditor";
 import { prepareServiceAreaSave, previewServiceRadius } from "../../../lib/marketplace/serviceAreaApi";
@@ -85,6 +89,7 @@ import {
   declineJobButtonLabel,
   declineJobToast,
   canContractorEndJob,
+  connectionActionsOpen,
   friendlyEndJobError,
   opportunityAllowsConnectCta,
   runContractorConnect,
@@ -459,17 +464,25 @@ export function OpportunitiesPage() {
         setRows(next);
         setHiredProjects(hiredProjectIdSet(bookings as Parameters<typeof hiredProjectIdSet>[0]));
         setError(null);
-        const missing = next.filter((row) => !row.projects?.title).map((row) => row.project_id);
+        const missing = next.filter((row) => !row.projects?.title || row.projects.reference_number == null);
         if (missing.length === 0) return;
-        return fetchProjectSummaries(missing)
-          .then((summaries) => {
-            setRecovered(
-              Object.fromEntries(
-                summaries.map((project) => [project.id, { title: project.title, reference_number: project.reference_number }]),
-              ),
-            );
-          })
-          .catch(() => undefined);
+        return Promise.all([
+          fetchProjectSummaries(missing.map((row) => row.project_id)).catch(() => []),
+          fetchMyEstimates().catch(() => []),
+          fetchMyOpportunityLabels().catch(() => []),
+        ]).then(([summaries, estimates, labels]) => {
+          setRecovered(
+            mergeRecoveredJobLabels([
+              ...summaries.map((project) => ({
+                project_id: project.id,
+                project_title: project.title,
+                project_reference_number: project.reference_number,
+              })),
+              ...estimates,
+              ...labels,
+            ]),
+          );
+        });
       });
   }
 
@@ -686,12 +699,16 @@ export function OpportunityDetailPage() {
   if (!row) return error ? <ErrorState message={friendlyNotFound(error, "We couldn't open that job.")} /> : <LoadingState label="Loading job" />;
   const project = row.projects;
   const cancelled = project?.status === "CANCELLED";
+  const actionsOpen = connectionActionsOpen({
+    opportunityStatus: row.status,
+    projectStatus: project?.status,
+  });
   const spotsLabel = availability
     ? connectionAvailabilityCopy(availability.remaining, {
         accepting: availability.accepting_connections,
         max: availability.max,
       })
-    : "3 connection spots available";
+    : null;
   const connectionUiState = contractorConnectionUiState({
     cancelled,
     accepting: availability?.accepting_connections,
@@ -709,9 +726,11 @@ export function OpportunityDetailPage() {
       }),
   );
   const connectedHere = connectionUiState === "connected";
-  const showConnectionCta = !cancelled && !hiredHere && !connectedHere && opportunityAllowsConnectCta(row.status);
-  const showSpots = !cancelled && !hiredHere && !connectedHere;
+  const showConnectionCta =
+    actionsOpen && !hiredHere && !connectedHere && opportunityAllowsConnectCta(row.status);
+  const showSpots = actionsOpen && !hiredHere && !connectedHere && Boolean(spotsLabel);
   const showDecline =
+    actionsOpen &&
     !hiredHere &&
     !connectedHere &&
     canContractorEndJob({
@@ -754,7 +773,7 @@ export function OpportunityDetailPage() {
             {project.budget_max_cents != null ? formatUsdFromCents(project.budget_max_cents) : "open"}
           </p>
         ) : null}
-        {showSpots ? <p className="mt-3 font-semibold text-forest-800">{spotsLabel}</p> : null}
+        {showSpots && spotsLabel ? <p className="mt-3 font-semibold text-forest-800">{spotsLabel}</p> : null}
         {showConnectionCta ? <p className="mt-2 text-sm font-medium text-forest-800">{CONNECT_SINGLE_STEP_COPY}</p> : null}
       </section>
       <div className="grid grid-cols-2 gap-2">
@@ -950,7 +969,18 @@ export function EstimateBuilderPage() {
   async function load() {
     if (!user) return;
     const opp = await fetchOpportunity(opportunityId);
-    setReferenceNumber(opp.projects?.reference_number ?? null);
+    let reference = coerceProjectReference(opp.projects?.reference_number);
+    if (reference == null) {
+      const estimates = await fetchMyEstimates().catch(() => []);
+      const fromEstimate = estimates.find((item) => item.opportunity_id === opp.id || item.project_id === opp.project_id);
+      reference = coerceProjectReference(fromEstimate?.project_reference_number);
+    }
+    if (reference == null) {
+      const labels = await fetchMyOpportunityLabels().catch(() => []);
+      const fromLabel = labels.find((item) => item.opportunity_id === opp.id);
+      reference = coerceProjectReference(fromLabel?.project_reference_number);
+    }
+    setReferenceNumber(reference);
     const profile = await fetchContractorProfileByUser(user.id);
     if (!profile) throw new Error("Missing contractor profile");
     const estimate = await fetchOrCreateEstimate({

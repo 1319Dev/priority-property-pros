@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  adminContactAccessIntro,
   bookingUnlocksContact,
   contactAccessAllowsReveal,
   contactAccessRowAllowsReveal,
@@ -180,6 +181,24 @@ describe("contact-access entitlement helpers", () => {
     expect(privateContactLockedCopy()).not.toMatch(/until (the )?booking is confirmed/i);
     expect(privateContactLockedCopy()).not.toMatch(/payments are off|coming soon/i);
     expect(privateContactHintCopy()).toMatch(/\$4\.99 connection entitlement/i);
+    expect(adminContactAccessIntro(null)).toMatch(/project contact is locked/i);
+    expect(
+      adminContactAccessIntro({
+        status: "UNLOCKED",
+        revoked_at: null,
+        grant_source: "CONNECTION_FEE_PAYMENT",
+      }),
+    ).toMatch(/connect was paid/i);
+    expect(
+      adminContactAccessIntro({
+        status: "UNLOCKED",
+        revoked_at: "2026-10-10T00:00:00Z",
+        grant_source: "CONNECTION_FEE_PAYMENT",
+      }),
+    ).toMatch(/project contact is locked/i);
+    expect(
+      adminContactAccessIntro({ status: "ADMIN_OVERRIDE", revoked_at: null, grant_source: "ADMIN_OVERRIDE" }),
+    ).toMatch(/admin override/i);
     expect(unauthorizedPayloadLeaksPrivateContact({ project_id: "p1" })).toBe(false);
     expect(unauthorizedPayloadLeaksPrivateContact({ phone: "404-555-0100" })).toBe(true);
   });
