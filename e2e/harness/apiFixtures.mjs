@@ -151,6 +151,27 @@ export async function findAdminBookingsByReference(raw) {
     bookings: [{ id: booking.id, status: booking.status }],
   };
 }
+export async function blockContractorForCustomer() {
+  return { blocked: true, contractor_profile_id: "pro-1" };
+}
+export async function unblockContractorForCustomer() {
+  return { blocked: false, removed: true, contractor_profile_id: "pro-2" };
+}
+export async function listMyContractorBlocks() {
+  return [
+    {
+      id: "block-1",
+      contractor_profile_id: "pro-2",
+      display_label: "Approved Plumbing Pro",
+      uses_business_name: false,
+      reason: "CUSTOMER_REQUEST",
+      created_at: "2026-10-02T12:00:00.000Z",
+    },
+  ];
+}
+export async function customerHasBlockedContractor() {
+  return false;
+}
 export async function expireStalePendingBookings() {
   return 0;
 }

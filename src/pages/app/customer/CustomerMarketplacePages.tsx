@@ -78,6 +78,7 @@ import {
 } from "../../../lib/marketplace/statusLabels";
 import { useToast } from "../../../hooks/useToast";
 import { InboxHomeCards } from "../../../components/marketplace/InboxHomeCards";
+import { BlockContractorControl } from "../../../components/marketplace/BlockContractorControl";
 import { ProjectEstimateComparison } from "../../../components/marketplace/ProjectEstimateComparison";
 
 function bookingByProject(bookings: Booking[]) {
@@ -783,6 +784,9 @@ export function CustomerEstimateDetailPage() {
         >
           Decline
         </Button>
+      ) : null}
+      {estimate.contractor_profile_id ? (
+        <BlockContractorControl contractorProfileId={estimate.contractor_profile_id} estimateId={estimate.id} />
       ) : null}
     </div>
   );

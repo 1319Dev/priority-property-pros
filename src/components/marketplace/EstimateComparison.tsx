@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { BlockContractorControl } from "./BlockContractorControl";
 import { Button, ButtonLink } from "../ui/Button";
 import { StatusBanner } from "../ui/StatusBanner";
 import { formatUsdFromCents } from "../../lib/marketplace/fees";
@@ -16,6 +17,7 @@ export type ComparisonViewRow = ComparisonEstimate & {
   selected: boolean;
   outOfDate: boolean;
   statusLabel: string;
+  contractorProfileId?: string | null;
 };
 
 const SORTS: Array<{ key: EstimateComparisonSort; label: string }> = [
@@ -180,6 +182,7 @@ export function EstimateComparison({
                     onCancelHire={onCancelHire}
                     onDecline={onDecline}
                   />
+                  <EstimateBlockAction row={row} />
                 </CompareCell>
               ))}
             </CompareRow>
@@ -324,8 +327,14 @@ function EstimateBody({
         onCancelHire={onCancelHire}
         onDecline={onDecline}
       />
+      <EstimateBlockAction row={row} />
     </div>
   );
+}
+
+function EstimateBlockAction({ row }: { row: ComparisonViewRow }) {
+  if (!row.contractorProfileId) return null;
+  return <BlockContractorControl contractorProfileId={row.contractorProfileId} estimateId={row.id} />;
 }
 
 function HireActions({
