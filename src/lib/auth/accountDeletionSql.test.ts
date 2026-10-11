@@ -30,6 +30,9 @@ describe("account deletion SQL", () => {
     expect(roles).toMatch(/only ACTIVE admin/);
     expect(roles).toMatch(/payments, refunds, ledger_entries, stripe_disputes/);
     expect(roles).toMatch(/Another user's booking review/);
+    expect(roles).toMatch(/payment_schedule_items\.description becomes the item kind/);
+    expect(roles).toMatch(/stripe_disputes\.reason: Stripe dispute classification/);
+    expect(roles).toMatch(/ledger_entries\.note: the ledger is immutable/);
   });
 
   const migration = readFileSync(migrationPath, "utf8");
@@ -67,6 +70,21 @@ describe("account deletion SQL", () => {
     expect(purge).not.toMatch(/DELETE FROM public\.booking_reviews/);
     expect(purge).not.toMatch(/selected_contractor_profile_id = NULL/);
     expect(purge).not.toMatch(/fee_cents\s*=/);
+    expect(purge).toMatch(/SET description = item\.kind::text/);
+    expect(purge).toMatch(/UPDATE public\.booking_cancellations AS cancel[\s\S]*SET reason = NULL/);
+    expect(purge).toMatch(/UPDATE public\.refunds AS refund[\s\S]*SET reason = NULL/);
+    expect(purge).not.toMatch(/UPDATE public\.ledger_entries/);
+    expect(purge).not.toMatch(/UPDATE public\.stripe_disputes/);
+    expect(purge).not.toMatch(/refund_reason\s*=/);
+    expect(migration).toMatch(/It is Stripe's dispute/);
+    expect(migration).toMatch(/ledger entries are immutable/);
+    expect(migration).toMatch(/account\.deleted[\s\S]*self_service and anonymized/);
+    expect(migration).not.toMatch(/CREATE OR REPLACE FUNCTION public\.protect_ledger_row/);
+    expect(migration).not.toMatch(/CREATE OR REPLACE FUNCTION public\.protect_financial_row/);
+    expect(migration).not.toMatch(/CREATE OR REPLACE FUNCTION public\.fulfill_connection_fee_checkout/);
+    expect(migration).not.toMatch(/CREATE OR REPLACE FUNCTION public\.fulfill_signup_fee_checkout/);
+    expect(migration).not.toMatch(/CREATE OR REPLACE FUNCTION public\.stripe_connection_price_id/);
+    expect(migration).not.toMatch(/CREATE OR REPLACE FUNCTION public\.stripe_activation_price_id/);
     expect(migration).not.toMatch(/CREATE OR REPLACE FUNCTION public\.match_project/);
     expect(migration).not.toMatch(/CREATE OR REPLACE FUNCTION public\.recompute_booking_money/);
     expect(migration).not.toMatch(/CREATE OR REPLACE FUNCTION public\.respond_change_order/);

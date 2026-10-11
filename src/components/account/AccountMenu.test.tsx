@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { AuthContext, type AuthContextValue } from "../../lib/auth/AuthContext";
+import { signedInAuth } from "../../lib/auth/authFixture";
 import type { AccountStatus, AccountType, Profile } from "../../lib/auth/types";
 import { AccountMenu } from "./AccountMenu";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
@@ -134,5 +135,44 @@ describe("Delete account confirmation gating", () => {
     await user.click(deleteAccount);
     expect(screen.getByRole("heading", { name: /delete this account/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /delete my account/i })).toBeDisabled();
+  });
+});
+
+describe("Delete account for each role at a phone width", () => {
+  const roles = [
+    ["CUSTOMER", "Customer"],
+    ["CONTRACTOR", "Contractor"],
+    ["ADMIN", "Admin"],
+  ] as const;
+
+  it.each(roles)("opens a full-width sheet for %s without someone else's private details", async (role, label) => {
+    const user = userEvent.setup();
+    renderWithAuth(<AccountPage />, signedInAuth(role));
+
+    expect(screen.getByText(label)).toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^delete account$/i }));
+    const dialog = screen.getByRole("dialog", { name: /delete this account/i });
+    expect(dialog.className).toContain("inset-x-0");
+    expect(dialog.className).toContain("max-h-[100dvh]");
+    expect(dialog.className).toContain("safe-area-inset-bottom");
+    expect(dialog.querySelector("img")).toBeNull();
+    expect(dialog.textContent ?? "").not.toMatch(/@/);
+    expect(dialog.textContent ?? "").not.toMatch(/\d{3}[-.\s]\d{3}/);
+    expect(dialog.textContent ?? "").not.toMatch(/\d+\s+\w+\s+(street|avenue|road|drive)/i);
+    expect(dialog.textContent ?? "").not.toMatch(/deleted pro/i);
+
+    const password = screen.getByLabelText(/current password/i);
+    const confirmWord = screen.getByLabelText(/type delete/i);
+    const confirm = screen.getByRole("button", { name: /delete my account/i });
+    const keep = screen.getByRole("button", { name: /keep my account/i });
+    for (const control of [password, confirmWord, confirm]) {
+      expect(control.className).toContain("w-full");
+      expect(control.className).toContain("min-h-14");
+    }
+    expect(keep.className).toContain("w-full");
+    expect(keep.className).toContain("min-h-12");
+    expect(confirm).toBeDisabled();
   });
 });

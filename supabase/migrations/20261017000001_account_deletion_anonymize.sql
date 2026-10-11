@@ -38,6 +38,47 @@
 -- Ledger and agreement links stay as opaque uuids because those rows cannot
 -- be updated. Other people's reviews, messages, and projects are not deleted.
 --
+-- What stays on those money rows, and why:
+--   payments: amount_cents, currency, status, processing_cost_cents, stripe_mode,
+--     every Stripe id, created_at, updated_at. No name, email, phone, or address
+--     column exists. customer_id is set null.
+--   refunds: the row, amount_cents, status, stripe_refund_id, booking_id,
+--     payment_id, created_at. reason is free text and is set null. created_by
+--     is set null only when it is this account.
+--   payment_schedule_items: amount_cents, kind, sequence, status, due_now,
+--     due_condition, due_at, paid_at, failed_at, Stripe ids, created_at,
+--     updated_at. due_condition stays because it is a schedule code
+--     (due_now_to_confirm), not an essay. description is replaced with the
+--     kind name so a typed note cannot remain. *_by is set null.
+--   booking_cancellations: category, initiator, refund_decision, payment_state,
+--     created_at. reason is free text and is set null. created_by is set null
+--     only when it is this account.
+--   stripe_disputes: kind, status, stripe_dispute_id, amount_cents, reason,
+--     evidence_due_by, dates. reason stays. It is Stripe's dispute
+--     classification and is the legal record of the dispute.
+--   signup_fee_charges, project_connections, connection_checkout_sessions:
+--     amounts, statuses, Stripe ids, dates, needs_refund, and refund_reason.
+--     refund_reason stays. It is a server code (paid_but_reservation_not_active,
+--     activation_unpaid, paid_but_entitlement_failed), not a person's note.
+--     fee_cents, paid_at, and the live flags are not changed.
+--   ledger_entries: entry_type, amount_cents, currency, Stripe ids, dates, and
+--     note. note stays because protect_ledger_row rejects every update
+--     (ledger entries are immutable; corrections are new rows). This migration
+--     does not replace that function. A note is the accounting narrative.
+--   audit_logs: action, target, timestamp, actor uuid, metadata. Rows stay
+--     because forbid_audit_mutation rejects every update. The account.deleted
+--     row written here stores only self_service and anonymized. Older metadata
+--     can hold an email or a short admin note under the keys email, from, to,
+--     message, note, or reason. Those rows are the legal audit trail.
+--   agreement_acceptances: document, version, accepted_at, user_agent, and the
+--     profile id as an opaque uuid. That is the record that terms were accepted.
+--   estimate_events and signup_fee_events: event type, timestamp, and payload.
+--     Payloads on file are statuses, amounts, and ids. The rows are immutable.
+-- Removed with the profile: name, email, phone, avatar. Project street, lat,
+-- and lng are cleared. The pro card becomes Deleted Pro, with bio, headline,
+-- website, license, and insurance cleared. change_orders.description stays
+-- because it is the other party's job history. Messages and booking reviews stay.
+--
 -- Matching: setting account_status DELETED, approval_status SUSPENDED, and
 -- accepting_work false fires the existing rematch triggers. This migration
 -- does not change match_project or contractor_eligible_for_project.
@@ -349,6 +390,52 @@ BEGIN
     AND NOT EXISTS (SELECT 1 FROM public.opportunities o WHERE o.project_id = p.id)
     AND NOT EXISTS (SELECT 1 FROM public.project_message_threads t WHERE t.project_id = p.id);
 
+  -- Free text on money rows can hold a name or a note. Clear it while the
+  -- booking owner is still set. Amounts, Stripe ids, dates, and statuses stay.
+  -- protect_financial_row allows the write while this RPC name is set.
+  PERFORM public.ppp_set_rpc('purge_account_owned_rows');
+
+  UPDATE public.payment_schedule_items AS item
+  SET description = item.kind::text
+  WHERE item.booking_id IN (
+    SELECT b.id
+    FROM public.bookings b
+    WHERE b.customer_id = p_user_id
+       OR (v_contractor_id IS NOT NULL AND b.contractor_profile_id = v_contractor_id)
+  )
+    AND item.description IS DISTINCT FROM item.kind::text;
+
+  UPDATE public.booking_cancellations AS cancel
+  SET reason = NULL
+  WHERE cancel.reason IS NOT NULL
+    AND (
+      cancel.created_by = p_user_id
+      OR cancel.booking_id IN (
+        SELECT b.id
+        FROM public.bookings b
+        WHERE b.customer_id = p_user_id
+           OR (v_contractor_id IS NOT NULL AND b.contractor_profile_id = v_contractor_id)
+      )
+    );
+
+  UPDATE public.refunds AS refund
+  SET reason = NULL
+  WHERE refund.reason IS NOT NULL
+    AND (
+      refund.created_by = p_user_id
+      OR refund.booking_id IN (
+        SELECT b.id
+        FROM public.bookings b
+        WHERE b.customer_id = p_user_id
+           OR (v_contractor_id IS NOT NULL AND b.contractor_profile_id = v_contractor_id)
+      )
+      OR refund.payment_id IN (
+        SELECT pay.id
+        FROM public.payments pay
+        WHERE pay.customer_id = p_user_id
+      )
+    );
+
   UPDATE public.project_connections
   SET customer_id = NULL,
       updated_at = now()
@@ -424,7 +511,7 @@ REVOKE ALL ON FUNCTION public.purge_account_owned_rows(uuid) FROM PUBLIC, anon, 
 GRANT EXECUTE ON FUNCTION public.purge_account_owned_rows(uuid) TO service_role;
 
 COMMENT ON FUNCTION public.purge_account_owned_rows(uuid) IS
-  'Service-role account close in one transaction, including the auth user delete. Blocks active bookings, open disputes, and unfinished refunds. Anonymizes the pro card. Keeps projects except an empty draft. Never deletes payments, refunds, ledger rows, disputes, bookings, connections, checkout sessions, messages, booking reviews, agreement acceptances, or audit logs.';
+  'Service-role account close in one transaction, including the auth user delete. Blocks active bookings, open disputes, and unfinished refunds. Anonymizes the pro card. Keeps projects except an empty draft. Keeps payment amounts, Stripe ids, dates, statuses, refund rows, and audit rows. Clears refund and cancellation free text and replaces schedule descriptions with the item kind. Does not rewrite immutable ledger notes, dispute classifications, or refund_reason codes. Never deletes payments, refunds, ledger rows, disputes, bookings, connections, checkout sessions, messages, booking reviews, agreement acceptances, or audit logs.';
 
 CREATE OR REPLACE FUNCTION public.protect_project_connection_row()
 RETURNS trigger

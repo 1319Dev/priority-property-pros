@@ -343,3 +343,64 @@ test.describe("admin overview stays within the viewport", () => {
     await expect(page.getByText("$24.97").first()).toBeVisible();
   });
 });
+
+test("account deletion sheet fits a phone and hides other people's private details", async ({ page }) => {
+  const roles = [
+    { as: "customer", path: "/app/customer/account", label: "Customer" },
+    { as: "contractor", path: "/app/pro/account", label: "Contractor" },
+    { as: "admin", path: "/app/admin/account", label: "Admin" },
+  ];
+  const widths = [320, 375];
+  for (const role of roles) {
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(`http://127.0.0.1:5174/e2e/harness/index.html?as=${role.as}#${role.path}`, {
+        waitUntil: "domcontentloaded",
+      });
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page.getByRole("heading", { name: "Account settings" })).toBeVisible();
+      await expect(page.locator("dd").filter({ hasText: new RegExp(`^${role.label}$`) })).toBeVisible();
+      await expect(page.locator("main img")).toHaveCount(0);
+
+      await page.getByRole("button", { name: "Delete account" }).click();
+      const dialog = page.getByRole("dialog", { name: "Delete this account?" });
+      await expect(dialog).toBeVisible();
+      await expect(dialog.locator("img")).toHaveCount(0);
+      const copy = (await dialog.innerText()).toLowerCase();
+      expect(copy).not.toMatch(/@/);
+      expect(copy).not.toMatch(/\d{3}[-.\s]\d{3}/);
+      expect(copy).not.toMatch(/\d+\s+\w+\s+(street|avenue|road|drive)/);
+      expect(copy).not.toContain("deleted pro");
+
+      const confirm = dialog.getByRole("button", { name: "Delete my account" });
+      await expect(confirm).toBeDisabled();
+      await dialog.getByLabel("Current password").fill("secret");
+      await dialog.getByLabel("Type DELETE").fill("DELETE");
+      await expect(confirm).toBeEnabled();
+
+      const layout = await page.evaluate(() => {
+        const sheet = document.querySelector("[role='dialog']");
+        const controls = sheet
+          ? [...sheet.querySelectorAll("input, button")].map((el) => {
+              const rect = el.getBoundingClientRect();
+              return { left: rect.left, right: rect.right, height: rect.height, width: rect.width };
+            })
+          : [];
+        return {
+          scrollWidth: document.documentElement.scrollWidth,
+          innerWidth: window.innerWidth,
+          controls,
+        };
+      });
+      expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth + 1);
+      expect(layout.controls.length).toBeGreaterThan(0);
+      for (const control of layout.controls) {
+        expect(control.left).toBeGreaterThanOrEqual(-1);
+        expect(control.right).toBeLessThanOrEqual(layout.innerWidth + 1);
+        expect(control.height).toBeGreaterThanOrEqual(44);
+        expect(control.width).toBeGreaterThanOrEqual(width - 80);
+      }
+      await page.keyboard.press("Escape");
+    }
+  }
+});

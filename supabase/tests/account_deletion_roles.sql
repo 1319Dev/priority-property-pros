@@ -54,3 +54,20 @@
 -- The purge body does not DELETE payments, refunds, ledger_entries,
 -- stripe_disputes, bookings, project_connections, project_messages,
 -- booking_reviews, change_orders, or agreement_acceptances.
+--
+-- Personal text removed from the money rows of this account:
+-- payment_schedule_items.description becomes the item kind.
+-- booking_cancellations.reason and refunds.reason become null.
+-- Name, email, phone, and street are already gone with the profile and the
+-- private location. The pro card is Deleted Pro.
+--
+-- Still present, and why:
+-- payment and refund amounts, Stripe ids, dates, and statuses.
+-- stripe_disputes.reason: Stripe dispute classification.
+-- refund_reason on signup charges, connections, and checkout sessions:
+-- a server code, not a person's note. fee_cents is unchanged.
+-- ledger_entries.note: the ledger is immutable, so the note cannot be cleared.
+-- audit_logs rows, including older metadata that may contain an email or an
+-- admin note. The new account.deleted payload is only self_service and anonymized.
+-- agreement acceptances, estimate events, and signup-fee events.
+-- change_orders.description: the other party's job history.
