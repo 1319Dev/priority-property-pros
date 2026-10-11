@@ -46,12 +46,18 @@ describe("notification preference defaults", () => {
 
   it("shows new-job alerts only to contractors", () => {
     expect(categoriesForAccount("CONTRACTOR")).toContain("new_job");
-    expect(categoriesForAccount("CONTRACTOR")).toEqual([...NOTIFICATION_CATEGORIES]);
-    for (const accountType of ["CUSTOMER", "ADMIN", "VERIFIER", null]) {
+    expect(categoriesForAccount("CONTRACTOR")).toEqual(
+      NOTIFICATION_CATEGORIES.filter((category) => !category.startsWith("admin_")),
+    );
+    for (const accountType of ["CUSTOMER", "VERIFIER", null]) {
       expect(categoriesForAccount(accountType)).not.toContain("new_job");
       expect(categoriesForAccount(accountType)).toContain("messages");
       expect(categoriesForAccount(accountType)).toContain("estimates");
+      expect(categoriesForAccount(accountType)).not.toContain("admin_disputes");
     }
+    // #131: admins see only the admin alerts plus Account.
+    expect(categoriesForAccount("ADMIN")).not.toContain("new_job");
+    expect(categoriesForAccount("ADMIN")).toEqual(["admin_applications", "admin_reports", "admin_disputes", "admin_refunds", "account"]);
   });
 
   it("maps alert kinds onto the eight categories", () => {

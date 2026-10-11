@@ -3,6 +3,7 @@ export {
   MINIMAL_MESSAGE_EMAIL,
   NOTIFICATION_CATEGORIES,
   NOTIFICATION_CATEGORY_COPY,
+  ADMIN_NOTIFICATION_CATEGORIES,
   absoluteUrl,
   buildNotificationEmail,
   categoriesForAccount,

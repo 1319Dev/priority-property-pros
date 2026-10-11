@@ -222,7 +222,7 @@ describe("notification settings", () => {
     );
     expect(screen.queryByRole("heading", { name: "New jobs" })).not.toBeInTheDocument();
     expect(screen.queryByText(/a job is offered in your service area/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Messages" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Disputes opened" })).toBeInTheDocument();
   });
 
   it("shows the iPhone Home Screen guide instead of a push button", () => {
