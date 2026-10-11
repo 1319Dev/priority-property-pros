@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthContext, type AuthContextValue } from "./AuthContext";
 import { RequireAdmin, RequireAuth, RequireRole } from "./guards";
@@ -55,6 +55,16 @@ function auth(partial: Partial<AuthContextValue>): AuthContextValue {
   };
 }
 
+function SignInProbe() {
+  const location = useLocation();
+  const state = location.state as { from?: string; notice?: string } | null;
+  return (
+    <div>
+      sign-in from={state?.from ?? ""} notice={state?.notice ?? ""}
+    </div>
+  );
+}
+
 function renderGuard(entry: string, value: AuthContextValue) {
   return render(
     <AuthContext.Provider value={value}>
@@ -63,15 +73,20 @@ function renderGuard(entry: string, value: AuthContextValue) {
           <Route element={<RequireAuth />}>
             <Route element={<RequireRole role="CUSTOMER" />}>
               <Route path="/app/customer" element={<div>customer-home</div>} />
+              <Route path="/app/customer/projects/:projectId" element={<div>customer-project</div>} />
+            </Route>
+            <Route element={<RequireRole role="CONTRACTOR" />}>
+              <Route path="/app/pro" element={<div>pro-home</div>} />
+              <Route path="/app/pro/opportunities/:opportunityId" element={<div>pro-opportunity</div>} />
             </Route>
             <Route element={<RequireAdmin />}>
               <Route path="/app/admin" element={<div>admin-home</div>} />
+              <Route path="/app/admin/security" element={<div>admin-security</div>} />
             </Route>
           </Route>
-          <Route path="/sign-in" element={<div>sign-in</div>} />
+          <Route path="/sign-in" element={<SignInProbe />} />
           <Route path="/account/status" element={<div>status-page</div>} />
           <Route path="/account/activate" element={<div>activate-page</div>} />
-          <Route path="/app/pro" element={<div>pro-home</div>} />
         </Routes>
       </MemoryRouter>
     </AuthContext.Provider>,
@@ -94,7 +109,7 @@ describe("protected routes", () => {
 
   it("redirects signed-out users to sign-in", () => {
     renderGuard("/app/customer", auth({ user: null, profile: null }));
-    expect(screen.getByText("sign-in")).toBeInTheDocument();
+    expect(screen.getByText(/sign-in/)).toBeInTheDocument();
     expect(screen.queryByText("customer-home")).not.toBeInTheDocument();
   });
 
@@ -157,6 +172,108 @@ describe("protected routes", () => {
     );
     expect(screen.getByText("customer-home")).toBeInTheDocument();
     expect(screen.queryByText("activate-page")).not.toBeInTheDocument();
+  });
+
+  it("sends an expired session to sign-in with the page to reopen", () => {
+    renderGuard(
+      "/app/customer/projects/ppp-1004?tab=estimates",
+      auth({ user: null, profile: null, sessionNotice: "expired" }),
+    );
+    expect(screen.getByText(/notice=expired/)).toHaveTextContent("from=/app/customer/projects/ppp-1004?tab=estimates");
+    expect(screen.queryByText("customer-project")).not.toBeInTheDocument();
+  });
+
+  it("does not let an unpaid customer or contractor open a dashboard URL when the fee is on", () => {
+    const customer = profile("CUSTOMER");
+    const { unmount } = renderGuard(
+      "/app/customer/projects/ppp-1004",
+      auth({
+        user: { id: "user-1", email: "pat@example.com", email_confirmed_at: "2026-01-01" } as AuthContextValue["user"],
+        profile: { ...customer, signup_fee_status: "UNPAID" },
+        account_type: "CUSTOMER",
+        account_status: "ACTIVE",
+        signup_fee_status: "UNPAID",
+        signup_fee_enabled: true,
+      }),
+    );
+    expect(screen.getByText("activate-page")).toBeInTheDocument();
+    expect(screen.queryByText("customer-project")).not.toBeInTheDocument();
+    unmount();
+
+    const contractor = profile("CONTRACTOR", "PENDING");
+    renderGuard(
+      "/app/pro/opportunities/offer-1",
+      auth({
+        user: { id: "user-1", email: "pat@example.com", email_confirmed_at: "2026-01-01" } as AuthContextValue["user"],
+        profile: { ...contractor, signup_fee_status: "UNPAID" },
+        account_type: "CONTRACTOR",
+        account_status: "PENDING",
+        signup_fee_status: "UNPAID",
+        signup_fee_enabled: true,
+      }),
+    );
+    expect(screen.getByText("activate-page")).toBeInTheDocument();
+    expect(screen.queryByText("pro-opportunity")).not.toBeInTheDocument();
+  });
+
+  it("lets a fee-exempt contractor and a paid customer open their own dashboards", () => {
+    const contractor = profile("CONTRACTOR", "ACTIVE");
+    const { unmount } = renderGuard(
+      "/app/pro/opportunities/offer-1",
+      auth({
+        user: { id: "user-1", email: "pat@example.com", email_confirmed_at: "2026-01-01" } as AuthContextValue["user"],
+        profile: { ...contractor, signup_fee_status: "NOT_REQUIRED" },
+        account_type: "CONTRACTOR",
+        account_status: "ACTIVE",
+        signup_fee_status: "NOT_REQUIRED",
+        signup_fee_enabled: true,
+      }),
+    );
+    expect(screen.getByText("pro-opportunity")).toBeInTheDocument();
+    unmount();
+
+    const customer = profile("CUSTOMER");
+    renderGuard(
+      "/app/customer/projects/ppp-1004",
+      auth({
+        user: { id: "user-1", email: "pat@example.com", email_confirmed_at: "2026-01-01" } as AuthContextValue["user"],
+        profile: { ...customer, signup_fee_status: "PAID" },
+        account_type: "CUSTOMER",
+        account_status: "ACTIVE",
+        signup_fee_status: "PAID",
+        signup_fee_enabled: true,
+      }),
+    );
+    expect(screen.getByText("customer-project")).toBeInTheDocument();
+  });
+
+  it("keeps a customer out of admin and a contractor out of the customer project", () => {
+    const customer = profile("CUSTOMER");
+    const { unmount } = renderGuard(
+      "/app/admin/security",
+      auth({
+        user: { id: "user-1", email: "pat@example.com", email_confirmed_at: "2026-01-01" } as AuthContextValue["user"],
+        profile: customer,
+        account_type: "CUSTOMER",
+        account_status: "ACTIVE",
+      }),
+    );
+    expect(screen.queryByText("admin-security")).not.toBeInTheDocument();
+    expect(screen.getByText("customer-home")).toBeInTheDocument();
+    unmount();
+
+    const contractor = profile("CONTRACTOR", "ACTIVE");
+    renderGuard(
+      "/app/customer/projects/ppp-1004",
+      auth({
+        user: { id: "user-1", email: "pat@example.com", email_confirmed_at: "2026-01-01" } as AuthContextValue["user"],
+        profile: contractor,
+        account_type: "CONTRACTOR",
+        account_status: "ACTIVE",
+      }),
+    );
+    expect(screen.queryByText("customer-project")).not.toBeInTheDocument();
+    expect(screen.getByText("pro-home")).toBeInTheDocument();
   });
 
   it("sends unpaid customers to activate only when signup_fee_enabled is on", () => {

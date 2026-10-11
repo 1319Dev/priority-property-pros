@@ -1,3 +1,5 @@
+import { projectPhotoAlt } from "../../lib/marketplace/projectPhotoAlt";
+
 export type EditablePhoto = { id: string; url?: string; storage_path: string };
 
 export function EditableProjectPhotos({
@@ -21,9 +23,9 @@ export function EditableProjectPhotos({
         </p>
       ) : null}
       <div className="grid grid-cols-2 gap-2">
-        {photos.map((photo) => (
+        {photos.map((photo, index) => (
           <div key={photo.id} className="overflow-hidden rounded-2xl bg-cream-100">
-            <img src={photo.url} alt="" className="h-28 w-full object-cover" />
+            <img src={photo.url} alt={projectPhotoAlt(index, photos.length)} className="h-28 w-full object-cover" />
             <button
               type="button"
               className="min-h-11 w-full text-sm font-semibold text-danger-600 disabled:opacity-60"
