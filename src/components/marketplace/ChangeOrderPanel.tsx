@@ -8,9 +8,10 @@ import {
   CHANGE_ORDER_APPROVE_ERROR,
   CHANGE_ORDER_REJECT_ERROR,
   CHANGE_ORDER_SAVE_ERROR,
+  changeOrderPartyLabel,
   validateChangeOrderDraft,
 } from "../../lib/marketplace/changeOrders";
-import { changeOrderAmountLabel, changeOrderStatusLabel } from "../../lib/marketplace/contractorPolish";
+import { changeOrderAmountLabel } from "../../lib/marketplace/contractorPolish";
 import { formatUsdFromCents } from "../../lib/marketplace/fees";
 import type { ChangeOrder } from "../../lib/marketplace/types";
 
@@ -18,12 +19,14 @@ export function ChangeOrderPanel({
   role,
   orders,
   referenceNumber,
+  jobTotalCents,
   onPropose,
   onRespond,
 }: {
   role: "customer" | "contractor";
   orders: ChangeOrder[];
   referenceNumber?: number | string | null;
+  jobTotalCents?: number | null;
   onPropose: (description: string, amountDeltaCents: number) => Promise<void>;
   onRespond: (changeOrderId: string, approve: boolean) => Promise<void>;
 }) {
@@ -36,7 +39,7 @@ export function ChangeOrderPanel({
 
   async function submit() {
     setBanner(null);
-    const draft = validateChangeOrderDraft(delta, note);
+    const draft = validateChangeOrderDraft(delta, note, { jobTotalCents });
     if (!draft.ok) {
       setAmountError(draft.amountError);
       setDescriptionError(draft.descriptionError);
@@ -86,13 +89,18 @@ export function ChangeOrderPanel({
         {orders.map((order) => (
           <li key={order.id} className="rounded-2xl border border-forest-800/10 bg-cream-100 px-4 py-3">
             <p className="font-semibold">
-              {changeOrderAmountLabel(order.amount_delta_cents, formatUsdFromCents)} · {changeOrderStatusLabel(order.status)}
+              {changeOrderAmountLabel(order.amount_delta_cents, formatUsdFromCents)} · {changeOrderPartyLabel(role, order)}
             </p>
             <p>{order.description}</p>
             {role === "contractor" && order.status === "CUSTOMER_APPROVED" && !order.contractor_acked_at ? (
-              <Button type="button" size="sm" className="mt-2" disabled={busy} onClick={() => void respond(order.id, true)}>
-                Acknowledge
-              </Button>
+              <div className="mt-2 flex gap-2">
+                <Button type="button" size="sm" disabled={busy} onClick={() => void respond(order.id, true)}>
+                  Acknowledge
+                </Button>
+                <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void respond(order.id, false)}>
+                  Decline
+                </Button>
+              </div>
             ) : null}
             {role === "customer" && order.status === "PROPOSED" ? (
               <div className="mt-2 flex gap-2">

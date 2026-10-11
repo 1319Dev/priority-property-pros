@@ -5,6 +5,7 @@ import {
   CHANGE_ORDER_ACK_ERROR,
   CHANGE_ORDER_AMOUNT_ERROR,
   CHANGE_ORDER_APPROVE_ERROR,
+  CHANGE_ORDER_DECREASE_ERROR,
   CHANGE_ORDER_DESCRIPTION_ERROR,
   CHANGE_ORDER_REJECT_ERROR,
   CHANGE_ORDER_SAVE_ERROR,
@@ -101,5 +102,46 @@ describe("ChangeOrderPanel", () => {
     onRespond.mockRejectedValueOnce(new Error("boom"));
     await user.click(screen.getByRole("button", { name: "Acknowledge" }));
     expect(await screen.findByText(CHANGE_ORDER_ACK_ERROR)).toBeInTheDocument();
+  });
+
+  it("lets the contractor decline a customer proposal and ignores the customer's waiting row", async () => {
+    const user = userEvent.setup();
+    const onRespond = vi.fn().mockResolvedValue(undefined);
+    const { rerender } = render(
+      <ChangeOrderPanel
+        role="contractor"
+        orders={[order({ status: "CUSTOMER_APPROVED", created_by_role: "CUSTOMER", customer_approved_at: "2026-10-08T00:00:00Z" })]}
+        onPropose={vi.fn()}
+        onRespond={onRespond}
+      />,
+    );
+    expect(screen.getByText(/Needs your OK/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Decline" }));
+    expect(onRespond).toHaveBeenCalledWith("co-1", false);
+
+    rerender(
+      <ChangeOrderPanel
+        role="contractor"
+        orders={[order({ status: "PROPOSED" })]}
+        onPropose={vi.fn()}
+        onRespond={onRespond}
+      />,
+    );
+    expect(screen.getByText(/Waiting for customer/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Decline" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Acknowledge" })).not.toBeInTheDocument();
+  });
+
+  it("blocks a decrease larger than the job total before calling the server", async () => {
+    const onPropose = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <ChangeOrderPanel role="contractor" orders={[]} jobTotalCents={4000} onPropose={onPropose} onRespond={vi.fn()} />,
+    );
+    await user.type(screen.getByRole("textbox", { name: /change amount/i }), "-50");
+    await user.type(screen.getByRole("textbox", { name: /what changed/i }), "Remove the whole fence");
+    await user.click(screen.getByRole("button", { name: /propose a change/i }));
+    expect(onPropose).not.toHaveBeenCalled();
+    expect(screen.getByText(CHANGE_ORDER_DECREASE_ERROR)).toBeInTheDocument();
   });
 });

@@ -1,0 +1,31 @@
+-- Walkthrough for 20261015000003_change_order_validation.sql.
+-- Do not run against production. Do not UPDATE the existing $0 APPROVED row
+-- (change_orders 3030365c…, booking 8ef8f18e…, PPP-1004, "Materials increase").
+-- The NOT VALID checks skip that row. Validating them would fail on it.
+--
+-- 1. Confirmed booking, billable_amount_cents = 5000.
+--    propose_change_order(booking, 'Add a gate', 0)
+--    Expect: exception 'change order amount must not be zero'. No new row.
+-- 2. propose_change_order(booking, 'Add a gate', 2147483647)
+--    Expect: exception 'change order amount is outside the allowed range'.
+-- 3. propose_change_order(booking, 'Add a gate', -999999)
+--    Expect: exception 'a decrease cannot exceed the current job total'.
+-- 4. propose_change_order(booking, 'Remove the job', -5000)
+--    Expect: insert succeeds. New total would be 0. Reaching 0 is allowed.
+--    Fee columns on the booking are unchanged until both parties approve,
+--    and this migration does not alter recompute_booking_money.
+-- 5. propose_change_order(booking, 'Add a gate', 10000000)
+--    Expect: insert succeeds ($100,000 cap, equal to the default).
+-- 6. Set platform_settings.change_order_max_abs_cents = 0, then propose 100.
+--    Expect: still succeeds, because a non-positive cap falls back to 10000000.
+--    Restore the setting to 10000000 afterward.
+-- 7. Customer proposes a decrease the contractor does not want.
+--    Row status is CUSTOMER_APPROVED and contractor_acked_at is null.
+--    respond_change_order(id, false) as the contractor
+--    Expect: status REJECTED. This migration does not replace respond_change_order.
+-- 8. Contractor PROPOSED row is the customer's turn.
+--    A contractor hired-job count of status = PROPOSED is the wrong side.
+--    The contractor's count is CUSTOMER_APPROVED with contractor_acked_at null.
+-- 9. SELECT convalidated FROM pg_constraint
+--    WHERE conname IN ('change_orders_amount_nonzero', 'change_orders_description_max');
+--    Expect: both false (NOT VALID). The $0 row is still APPROVED and still 0.
