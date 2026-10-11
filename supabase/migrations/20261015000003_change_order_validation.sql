@@ -8,11 +8,18 @@
 --
 -- The existing $0 APPROVED row is not updated:
 --   change_orders 3030365c… on booking 8ef8f18e… (PPP-1004), "Materials increase".
--- New CHECKs are NOT VALID so that row is not scanned and is not rewritten.
--- A later UPDATE of that row will fail change_orders_amount_nonzero until the
--- row is corrected or the constraint is dropped.
+-- No table check rejects a zero amount. Even NOT VALID, that check would
+-- reject every later UPDATE of the legacy row, including the account-deletion
+-- purge nulling created_by. propose_change_order already rejects a new $0 delta.
+-- The description length check is NOT VALID. That row's description is short,
+-- so an update of it still passes.
+--
+-- Approval-time decreases are re-checked by guard_change_order_approval_total,
+-- a BEFORE UPDATE trigger. respond_change_order is not replaced: the live
+-- function calls add_change_order_schedule_item, which this repo does not have.
 --
 -- Replaces existing function propose_change_order; must be diffed against prod before apply.
+-- Does not replace respond_change_order.
 
 INSERT INTO public.platform_settings (key, value_int, description)
 VALUES (
@@ -21,10 +28,6 @@ VALUES (
   'Maximum absolute change-order amount in cents. 10000000 = $100,000. A missing, null, or non-positive value falls back to 10000000 inside propose_change_order. Does not change fee math.'
 )
 ON CONFLICT (key) DO NOTHING;
-
-ALTER TABLE public.change_orders
-  ADD CONSTRAINT change_orders_amount_nonzero
-  CHECK (amount_delta_cents <> 0) NOT VALID;
 
 ALTER TABLE public.change_orders
   ADD CONSTRAINT change_orders_description_max
@@ -98,3 +101,57 @@ GRANT EXECUTE ON FUNCTION public.propose_change_order(uuid, text, integer) TO au
 
 COMMENT ON FUNCTION public.propose_change_order(uuid, text, integer) IS
   'Propose a change order. Rejects a zero delta, a decrease below the current billable total (amount_cents when billable is null), and an absolute delta above platform_settings.change_order_max_abs_cents (default $100,000). Does not change fee math. Does not update existing rows.';
+
+-- Re-check a decrease when a change order becomes APPROVED. Several pending
+-- decreases can each fit the current total alone. The second approval must
+-- not take the job below $0. Reaching exactly $0 is allowed.
+-- Already-APPROVED rows (including the legacy $0 row) are not re-checked,
+-- so nulling created_by does not fail.
+-- Does not replace respond_change_order and does not change fee math.
+CREATE OR REPLACE FUNCTION public.guard_change_order_approval_total()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_amount bigint;
+  v_approved bigint;
+BEGIN
+  IF TG_OP <> 'UPDATE' THEN
+    RETURN NEW;
+  END IF;
+  IF NEW.status IS DISTINCT FROM 'APPROVED'::public.change_order_status
+     OR OLD.status = 'APPROVED'::public.change_order_status THEN
+    RETURN NEW;
+  END IF;
+  IF NEW.amount_delta_cents IS NULL OR NEW.amount_delta_cents >= 0 THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT coalesce(b.amount_cents, 0)::bigint
+  INTO v_amount
+  FROM public.bookings b
+  WHERE b.id = NEW.booking_id;
+
+  SELECT coalesce(sum(co.amount_delta_cents), 0)::bigint
+  INTO v_approved
+  FROM public.change_orders co
+  WHERE co.booking_id = NEW.booking_id
+    AND co.status = 'APPROVED'
+    AND co.id IS DISTINCT FROM NEW.id;
+
+  IF coalesce(v_amount, 0) + coalesce(v_approved, 0) + NEW.amount_delta_cents::bigint < 0 THEN
+    RAISE EXCEPTION $err$A decrease can't be larger than the current job total.$err$;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS change_orders_guard_approval_total ON public.change_orders;
+CREATE TRIGGER change_orders_guard_approval_total
+  BEFORE UPDATE ON public.change_orders
+  FOR EACH ROW
+  EXECUTE FUNCTION public.guard_change_order_approval_total();
+
+REVOKE ALL ON FUNCTION public.guard_change_order_approval_total() FROM PUBLIC, anon, authenticated;

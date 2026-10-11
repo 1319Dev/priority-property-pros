@@ -1,9 +1,12 @@
 -- Exact rollback for 20261015000003_change_order_validation.sql.
 -- Restores propose_change_order to the 20261008023700 body (status cast, no amount bounds).
--- Drops the NOT VALID checks and the cap setting. Does not touch the $0 APPROVED row.
+-- Drops the description check, the approval-total trigger, and the cap setting.
+-- Does not touch the $0 APPROVED row.
 -- Does not replace respond_change_order or recompute_booking_money.
 
-ALTER TABLE public.change_orders DROP CONSTRAINT IF EXISTS change_orders_amount_nonzero;
+DROP TRIGGER IF EXISTS change_orders_guard_approval_total ON public.change_orders;
+DROP FUNCTION IF EXISTS public.guard_change_order_approval_total();
+
 ALTER TABLE public.change_orders DROP CONSTRAINT IF EXISTS change_orders_description_max;
 
 DELETE FROM public.platform_settings WHERE key = 'change_order_max_abs_cents';

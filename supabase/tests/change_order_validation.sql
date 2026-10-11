@@ -1,7 +1,7 @@
 -- Walkthrough for 20261015000003_change_order_validation.sql.
 -- Do not run against production. Do not UPDATE the existing $0 APPROVED row
 -- (change_orders 3030365c…, booking 8ef8f18e…, PPP-1004, "Materials increase").
--- The NOT VALID checks skip that row. Validating them would fail on it.
+-- There is no amount_delta_cents <> 0 check. A no-op UPDATE of that row must succeed.
 --
 -- 1. Confirmed booking, billable_amount_cents = 5000.
 --    propose_change_order(booking, 'Add a gate', 0)
@@ -26,6 +26,10 @@
 -- 8. Contractor PROPOSED row is the customer's turn.
 --    A contractor hired-job count of status = PROPOSED is the wrong side.
 --    The contractor's count is CUSTOMER_APPROVED with contractor_acked_at null.
--- 9. SELECT convalidated FROM pg_constraint
---    WHERE conname IN ('change_orders_amount_nonzero', 'change_orders_description_max');
---    Expect: both false (NOT VALID). The $0 row is still APPROVED and still 0.
+-- 9. UPDATE change_orders SET created_by = created_by WHERE amount_delta_cents = 0 AND status = 'APPROVED';
+--    Expect: success. The legacy row stays $0 and APPROVED.
+-- 10. Two pending decreases that each fit alone, then approve the second
+--     after the first is APPROVED and the total would go below $0.
+--     Expect: A decrease can't be larger than the current job total.
+--     respond_change_order is not replaced. Fee columns are not written here.
+-- 11. change_orders_description_max is NOT VALID. change_orders_amount_nonzero does not exist.
