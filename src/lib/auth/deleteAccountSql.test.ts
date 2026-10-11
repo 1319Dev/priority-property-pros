@@ -14,6 +14,15 @@ function allSql(): string {
     .join("\n\n");
 }
 
+function functionBody(sql: string, name: string): string {
+  const marker = `CREATE OR REPLACE FUNCTION public.${name}`;
+  const start = sql.lastIndexOf(marker);
+  expect(start).toBeGreaterThan(-1);
+  const rest = sql.slice(start);
+  const end = rest.indexOf("CREATE OR REPLACE FUNCTION public.", marker.length);
+  return end === -1 ? rest : rest.slice(0, end);
+}
+
 function walk(dir: string, acc: string[] = []): string[] {
   for (const name of readdirSync(dir, { withFileTypes: true })) {
     const next = path.join(dir, name.name);
@@ -32,13 +41,21 @@ describe("self-service account delete SQL and Edge Function", () => {
     .join("\n");
 
   it("purges owned rows as service role only and never lets the client pick a victim", () => {
+    const purge = functionBody(sql, "purge_account_owned_rows");
     expect(sql).toMatch(/FUNCTION public\.purge_account_owned_rows\(p_user_id uuid\)/);
-    expect(sql).toMatch(/PERFORM public\.require_service_role\(\)/);
+    expect(purge).toMatch(/PERFORM public\.require_service_role\(\)/);
     expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.purge_account_owned_rows\(uuid\) FROM PUBLIC, anon, authenticated/);
     expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.purge_account_owned_rows\(uuid\) TO service_role/);
-    expect(sql).toMatch(/DELETE FROM public\.bookings/);
-    expect(sql).toMatch(/DELETE FROM public\.project_connections/);
-    expect(sql).toMatch(/DELETE FROM public\.estimates/);
+    expect(purge).not.toMatch(/DELETE FROM public\.bookings/);
+    expect(purge).not.toMatch(/DELETE FROM public\.project_connections/);
+    expect(purge).not.toMatch(/DELETE FROM public\.estimates/);
+    expect(purge).not.toMatch(/DELETE FROM public\.change_orders/);
+    expect(purge).not.toMatch(/DELETE FROM public\.signup_fee_charges/);
+    expect(purge).not.toMatch(/DELETE FROM public\.audit_logs/);
+    expect(purge).not.toMatch(/selected_booking_id = NULL/);
+    expect(purge).not.toMatch(/selected_contractor_profile_id = NULL/);
+    expect(purge).toMatch(/Finish or cancel your active jobs before deleting this account/);
+    expect(purge).toMatch(/ppp_set_rpc\('purge_account_owned_rows'\)/);
     expect(sql).toMatch(/cannot delete the last active admin/);
     expect(sql).not.toMatch(/DELETE FROM auth\.users/i);
     expect(sql).not.toMatch(/GRANT EXECUTE ON FUNCTION public\.purge_account_owned_rows\(uuid\) TO authenticated/);
@@ -49,6 +66,9 @@ describe("self-service account delete SQL and Edge Function", () => {
     expect(fn).toMatch(/auth\/v1\/admin\/users\/\$\{userId\}/);
     expect(fn).toMatch(/purge_account_owned_rows/);
     expect(fn).toMatch(/you can only delete your own account/);
+    expect(fn).toMatch(/Finish or cancel your active jobs before deleting this account/);
+    expect(fn).toMatch(/Nothing was charged/);
+    expect(fn).not.toMatch(/return json\(\{ error: purged\.error \}/);
     expect(fn).not.toMatch(/body\.user_id\s*=/);
     expect(fn).not.toMatch(/SUPABASE_SERVICE_ROLE_KEY.*=.*['"]eyJ/);
     expect(fn).not.toMatch(/payments_live|charges_live|signup_fee_enabled/);

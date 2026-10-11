@@ -1,6 +1,28 @@
 import { json, optionsResponse } from "../_shared/cors.ts";
 import { restRpc, userIdFromRequest } from "../_shared/supabase.ts";
 
+function friendlyDeleteError(raw: string): string {
+  let text = raw.trim();
+  try {
+    const parsed = JSON.parse(text) as { message?: unknown; error?: unknown };
+    if (typeof parsed.message === "string" && parsed.message.trim()) text = parsed.message;
+    else if (typeof parsed.error === "string" && parsed.error.trim()) text = parsed.error;
+  } catch {
+    const match = text.match(/"message"\s*:\s*"([^"]+)"/);
+    if (match?.[1]) text = match[1];
+  }
+  if (/last active admin/i.test(text)) {
+    return "This is the last admin account, so it cannot be deleted.";
+  }
+  if (/active jobs before deleting/i.test(text)) {
+    return "Finish or cancel your active jobs before deleting this account.";
+  }
+  if (/you can only delete your own account/i.test(text)) {
+    return "You can only delete your own account.";
+  }
+  return "We couldn't delete this account. Nothing was charged. If this keeps happening, contact support.";
+}
+
 async function deleteAuthUser(userId: string): Promise<void> {
   const url = Deno.env.get("SUPABASE_URL") ?? "";
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -86,12 +108,19 @@ Deno.serve(async (req) => {
     }
 
     const purged = await restRpc("purge_account_owned_rows", { p_user_id: userId });
-    if (purged.error) return json({ error: purged.error }, 400);
+    if (purged.error) return json({ error: friendlyDeleteError(purged.error) }, 400);
 
     await removeStoragePrefix("project-photos", userId).catch(() => undefined);
     await removeStoragePrefix("contractor-docs", userId).catch(() => undefined);
 
-    await deleteAuthUser(userId);
+    try {
+      await deleteAuthUser(userId);
+    } catch {
+      return json(
+        { error: "We couldn't finish closing this account. Nothing was charged. Contact support." },
+        400,
+      );
+    }
     return json({ ok: true, deleted: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "could not delete account";

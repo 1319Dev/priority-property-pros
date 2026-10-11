@@ -1,0 +1,26 @@
+-- Walkthrough for 20261015000004_account_deletion_anonymize.sql.
+-- Do not run against production. Do not delete payment rows.
+--
+-- 1. Customer with a CONFIRMED or IN_PROGRESS booking (also DISPUTED).
+--    purge_account_owned_rows(user)
+--    Expect: exception 'Finish or cancel your active jobs before deleting this account.'
+--    Bookings, connections, and signup_fee_charges are unchanged.
+-- 2. Customer with only a COMPLETED booking and a PAID project_connection.
+--    Expect: profiles.account_status = DELETED, email like 'deleted+%@users.invalid',
+--    phone null. projects.customer_id null, selection columns unchanged.
+--    project_connections.status, fee_cents, paid_at, payments_live, charges_live unchanged.
+--    customer_id on that connection is null. signup_fee_charges row still exists,
+--    profile_id null, amount_cents still 999. No DELETE of those tables.
+-- 3. Contractor with a PAID connection and no active booking.
+--    Expect: contractor_profiles.business_name = 'Deleted Pro', approval_status
+--    SUSPENDED, accepting_work false, profile_id still set until the auth user
+--    is deleted (then ON DELETE SET NULL). The connection row remains.
+-- 4. Direct UPDATE of project_connections.status to PAID as the purge RPC.
+--    Expect: 'connection cannot be marked paid from the client' or the connection
+--    guard exception, because the purge branch requires status, fee, and paid_at
+--    to stay the same.
+-- 5. DELETE FROM project_connections while ppp.rpc is purge_account_owned_rows.
+--    Expect: 'project connections cannot be written from the client'.
+-- 6. A DRAFT project with no booking, connection, estimate, opportunity, or thread
+--    is removed. A posted project is kept with customer_id null and street cleared.
+-- 7. account.deleted audit row exists. audit_logs are not deleted.
