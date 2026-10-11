@@ -1,4 +1,4 @@
--- Rolls back 20261019500001_priority_help.sql.
+-- Rolls back 20261019600001_priority_help.sql.
 -- Drops only objects that migration created. Does not restore dropped data.
 -- Does not change is_admin(), purge_account_owned_rows(), fees, or Stripe.
 
@@ -43,6 +43,8 @@ DROP TRIGGER IF EXISTS support_settings_set_updated_at ON public.support_setting
 DROP TRIGGER IF EXISTS support_messages_touch_conversation ON public.support_messages;
 DROP TRIGGER IF EXISTS support_guest_secrets_one_active ON public.support_guest_secrets;
 
+DROP FUNCTION IF EXISTS public.admin_support_set_settings(boolean, boolean, integer, bigint);
+DROP FUNCTION IF EXISTS public.admin_support_settings();
 DROP FUNCTION IF EXISTS public.admin_support_purge_expired();
 DROP FUNCTION IF EXISTS public.admin_support_set_retention(integer);
 DROP FUNCTION IF EXISTS public.admin_support_canned_delete(uuid);
@@ -61,6 +63,7 @@ DROP FUNCTION IF EXISTS public.admin_support_set_status(uuid, text);
 DROP FUNCTION IF EXISTS public.admin_support_search(text);
 DROP FUNCTION IF EXISTS public.admin_support_get(uuid);
 DROP FUNCTION IF EXISTS public.admin_support_list(text, integer);
+DROP FUNCTION IF EXISTS public.support_service_record_ai_usage(uuid, text, text, integer, integer, bigint);
 DROP FUNCTION IF EXISTS public.support_service_ai_budget();
 DROP FUNCTION IF EXISTS public.support_service_context(text);
 DROP FUNCTION IF EXISTS public.support_service_escalate(uuid, text, uuid, text, text, text);
@@ -77,6 +80,7 @@ DROP FUNCTION IF EXISTS public.support_conversation_payload(uuid, boolean);
 DROP FUNCTION IF EXISTS public.support_message_json(public.support_messages);
 DROP FUNCTION IF EXISTS public.support_reference_label(bigint);
 DROP FUNCTION IF EXISTS public.support_rate_limit_hit(text, integer, integer);
+DROP FUNCTION IF EXISTS public.support_require_enabled();
 DROP FUNCTION IF EXISTS public.support_require_admin();
 DROP FUNCTION IF EXISTS public.support_one_active_guest();
 DROP FUNCTION IF EXISTS public.support_touch_conversation();
@@ -84,6 +88,7 @@ DROP FUNCTION IF EXISTS public.support_reject_html(text);
 DROP FUNCTION IF EXISTS public.support_set_updated_at();
 DROP FUNCTION IF EXISTS public.purge_support_on_profile_delete();
 
+DROP TABLE IF EXISTS public.support_ai_usage;
 DROP TABLE IF EXISTS public.support_settings;
 DROP TABLE IF EXISTS public.support_rate_limits;
 DROP TABLE IF EXISTS public.support_agent_status;

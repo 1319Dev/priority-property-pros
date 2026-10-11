@@ -1,5 +1,16 @@
 -- Priority Help (customer support). Additive only.
 --
+-- Version 20261019600001. 20261019500001 is taken by the Stripe live price-id
+-- PR (#123); this file was renumbered on 2026-10-11. No other open PR uses
+-- 20261019600001.
+--
+-- Ships OFF. support_settings.priority_help_enabled and ai_answers_enabled
+-- both default false. While priority_help_enabled is false every
+-- support_service_* entry point refuses with 'priority help is off', so the
+-- widget stays hidden and no conversation, message, or model call happens.
+-- AI answers additionally need ai_answers_enabled, the Edge Function secret
+-- PRIORITY_HELP_AI_API_KEY, the daily answer cap, and the daily dollar budget.
+--
 -- Does not CREATE OR REPLACE any existing function. Does not ALTER existing
 -- columns. Does not change Stripe, fees, platform_settings values, matching,
 -- project workflows, permissions, or public.is_admin().
@@ -21,8 +32,11 @@
 --   support_canned_responses  admin reply snippets (markdown, no raw HTML)
 --   support_agent_status      available / away / offline plus a heartbeat
 --   support_rate_limits       per IP-hash and per session counters
---   support_settings          retention days and the daily AI answer cap
+--   support_settings          feature flags (default off), retention days, the
+--                             daily AI answer cap, and the daily AI dollar budget
 --                             (purge is manual, not scheduled)
+--   support_ai_usage          one row per model call: model, tokens, cost in
+--                             micro-dollars, outcome. No client grants.
 --
 -- Guests have no anon table privileges. The Edge Function calls the
 -- support_service_* functions with the service role after it hashes the token.
@@ -193,12 +207,38 @@ CREATE TABLE public.support_settings (
   id boolean PRIMARY KEY DEFAULT true,
   retention_days integer NOT NULL DEFAULT 365,
   daily_ai_answer_cap integer NOT NULL DEFAULT 200,
+  priority_help_enabled boolean NOT NULL DEFAULT false,
+  ai_answers_enabled boolean NOT NULL DEFAULT false,
+  daily_ai_budget_usd_micros bigint NOT NULL DEFAULT 1000000,
   updated_by uuid REFERENCES public.profiles (id) ON DELETE SET NULL,
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT support_settings_singleton_chk CHECK (id),
   CONSTRAINT support_settings_retention_chk CHECK (retention_days BETWEEN 30 AND 3650),
-  CONSTRAINT support_settings_ai_cap_chk CHECK (daily_ai_answer_cap BETWEEN 0 AND 100000)
+  CONSTRAINT support_settings_ai_cap_chk CHECK (daily_ai_answer_cap BETWEEN 0 AND 100000),
+  CONSTRAINT support_settings_ai_budget_chk CHECK (daily_ai_budget_usd_micros BETWEEN 0 AND 100000000)
 );
+
+-- One row per model call. Cost is computed by the Edge Function from the
+-- provider's token usage and the published per-token price, in micro-dollars
+-- (1,000,000 = $1.00). The daily dollar budget sums this table.
+CREATE TABLE public.support_ai_usage (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id uuid REFERENCES public.support_conversations (id) ON DELETE SET NULL,
+  model text NOT NULL,
+  outcome text NOT NULL,
+  input_tokens integer,
+  output_tokens integer,
+  cost_usd_micros bigint NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT support_ai_usage_outcome_chk CHECK (outcome IN ('answered', 'blocked', 'provider_error', 'timeout')),
+  CONSTRAINT support_ai_usage_model_chk CHECK (char_length(model) BETWEEN 1 AND 100),
+  CONSTRAINT support_ai_usage_tokens_chk CHECK (
+    (input_tokens IS NULL OR input_tokens >= 0) AND (output_tokens IS NULL OR output_tokens >= 0)
+  ),
+  CONSTRAINT support_ai_usage_cost_chk CHECK (cost_usd_micros BETWEEN 0 AND 100000000)
+);
+
+CREATE INDEX support_ai_usage_recent_idx ON public.support_ai_usage (created_at);
 
 INSERT INTO public.support_settings (id, retention_days)
 VALUES (true, 365);
@@ -313,6 +353,22 @@ AS $$
 BEGIN
   IF NOT public.is_admin() THEN
     RAISE EXCEPTION 'not authorized' USING ERRCODE = '42501';
+  END IF;
+END;
+$$;
+
+-- Raises when Priority Help is off. Every support_service_* entry point that
+-- opens, reads, or writes a conversation calls this first.
+CREATE FUNCTION public.support_require_enabled()
+RETURNS void
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT coalesce((SELECT priority_help_enabled FROM public.support_settings WHERE id = true), false) THEN
+    RAISE EXCEPTION 'priority help is off' USING ERRCODE = '55000';
   END IF;
 END;
 $$;
@@ -679,6 +735,7 @@ DECLARE
   v_ip text := nullif(left(coalesce(p_ip_hash, ''), 128), '');
 BEGIN
   PERFORM public.require_service_role();
+  PERFORM public.support_require_enabled();
 
   IF p_user_id IS NOT NULL AND coalesce(p_guest_token_hash, '') <> '' THEN
     RAISE EXCEPTION 'pass a user or a guest session, not both' USING ERRCODE = '22023';
@@ -746,6 +803,7 @@ DECLARE
   v_key text;
 BEGIN
   PERFORM public.require_service_role();
+  PERFORM public.support_require_enabled();
   v_row := public.support_assert_owner(p_conversation_id, p_user_id, p_guest_token_hash);
   v_key := CASE
     WHEN p_user_id IS NOT NULL THEN 'user-read:' || p_user_id::text
@@ -777,6 +835,7 @@ DECLARE
   v_ip text := nullif(left(coalesce(p_ip_hash, ''), 128), '');
 BEGIN
   PERFORM public.require_service_role();
+  PERFORM public.support_require_enabled();
 
   IF v_ip IS NOT NULL THEN
     PERFORM public.support_rate_limit_hit('ip-msg:' || v_ip, 40, 3600);
@@ -857,6 +916,41 @@ BEGIN
 END;
 $$;
 
+-- Records one model call. Called by the Edge Function after every call it
+-- makes, including failures, so the dollar budget counts what was spent.
+CREATE FUNCTION public.support_service_record_ai_usage(
+  p_conversation_id uuid,
+  p_model text,
+  p_outcome text,
+  p_input_tokens integer,
+  p_output_tokens integer,
+  p_cost_usd_micros bigint
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_id uuid;
+BEGIN
+  PERFORM public.require_service_role();
+  INSERT INTO public.support_ai_usage (
+    conversation_id, model, outcome, input_tokens, output_tokens, cost_usd_micros
+  )
+  VALUES (
+    p_conversation_id,
+    left(coalesce(nullif(btrim(p_model), ''), 'unknown'), 100),
+    p_outcome,
+    p_input_tokens,
+    p_output_tokens,
+    greatest(coalesce(p_cost_usd_micros, 0), 0)
+  )
+  RETURNING id INTO v_id;
+  RETURN v_id;
+END;
+$$;
+
 CREATE FUNCTION public.support_service_escalate(
   p_user_id uuid,
   p_guest_token_hash text,
@@ -878,6 +972,7 @@ DECLARE
   v_ip text := nullif(left(coalesce(p_ip_hash, ''), 128), '');
 BEGIN
   PERFORM public.require_service_role();
+  PERFORM public.support_require_enabled();
 
   IF coalesce(btrim(p_honeypot), '') <> '' THEN
     RETURN jsonb_build_object('ok', true, 'dropped', true);
@@ -962,6 +1057,8 @@ AS $$
 BEGIN
   PERFORM public.require_service_role();
   RETURN jsonb_build_object(
+    'enabled', coalesce((SELECT priority_help_enabled FROM public.support_settings WHERE id = true), false),
+    'ai_enabled', coalesce((SELECT priority_help_enabled AND ai_answers_enabled FROM public.support_settings WHERE id = true), false),
     'pricing', public.support_public_pricing(),
     'articles', public.support_search_kb(p_query, 4),
     'availability', public.support_desk_availability()
@@ -969,8 +1066,10 @@ BEGIN
 END;
 $$;
 
--- Count of assistant replies in the last 24 hours against the daily cap.
--- Cap 0 means the model must not be called. Granted only to service_role.
+-- Model calls and dollars spent in the last 24 hours against the daily answer
+-- cap and the daily dollar budget. allowed is false when Priority Help or AI
+-- answers are off, the cap is 0 or used, or the budget is 0 or used.
+-- Granted only to service_role.
 CREATE FUNCTION public.support_service_ai_budget()
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -979,22 +1078,29 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_cap integer;
+  v_settings public.support_settings%ROWTYPE;
   v_used integer;
+  v_spent bigint;
+  v_cap integer;
+  v_budget bigint;
+  v_on boolean;
 BEGIN
   PERFORM public.require_service_role();
-  SELECT daily_ai_answer_cap INTO v_cap
-  FROM public.support_settings
-  WHERE id = true;
-  v_cap := coalesce(v_cap, 0);
-  SELECT count(*)::integer INTO v_used
-  FROM public.support_messages
-  WHERE author_role = 'assistant'
-    AND created_at >= now() - interval '24 hours';
+  SELECT * INTO v_settings FROM public.support_settings WHERE id = true;
+  v_cap := coalesce(v_settings.daily_ai_answer_cap, 0);
+  v_budget := coalesce(v_settings.daily_ai_budget_usd_micros, 0);
+  v_on := coalesce(v_settings.priority_help_enabled, false) AND coalesce(v_settings.ai_answers_enabled, false);
+  SELECT count(*)::integer, coalesce(sum(cost_usd_micros), 0)::bigint
+  INTO v_used, v_spent
+  FROM public.support_ai_usage
+  WHERE created_at >= now() - interval '24 hours';
   RETURN jsonb_build_object(
-    'allowed', v_cap > 0 AND v_used < v_cap,
+    'allowed', v_on AND v_cap > 0 AND v_used < v_cap AND v_budget > 0 AND v_spent < v_budget,
+    'enabled', v_on,
     'used', coalesce(v_used, 0),
-    'cap', v_cap
+    'cap', v_cap,
+    'spent_usd_micros', coalesce(v_spent, 0),
+    'budget_usd_micros', v_budget
   );
 END;
 $$;
@@ -1641,6 +1747,78 @@ BEGIN
 END;
 $$;
 
+-- Feature flags, cap, and dollar budget. Admin only, audited. This is the
+-- kill switch: p_enabled false hides the widget and stops every model call.
+CREATE FUNCTION public.admin_support_settings()
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_settings public.support_settings%ROWTYPE;
+BEGIN
+  PERFORM public.support_require_admin();
+  SELECT * INTO v_settings FROM public.support_settings WHERE id = true;
+  RETURN jsonb_build_object(
+    'priority_help_enabled', v_settings.priority_help_enabled,
+    'ai_answers_enabled', v_settings.ai_answers_enabled,
+    'daily_ai_answer_cap', v_settings.daily_ai_answer_cap,
+    'daily_ai_budget_usd_micros', v_settings.daily_ai_budget_usd_micros,
+    'retention_days', v_settings.retention_days,
+    'calls_24h', (SELECT count(*) FROM public.support_ai_usage WHERE created_at >= now() - interval '24 hours'),
+    'spent_24h_usd_micros', (SELECT coalesce(sum(cost_usd_micros), 0) FROM public.support_ai_usage WHERE created_at >= now() - interval '24 hours'),
+    'spent_30d_usd_micros', (SELECT coalesce(sum(cost_usd_micros), 0) FROM public.support_ai_usage WHERE created_at >= now() - interval '30 days')
+  );
+END;
+$$;
+
+CREATE FUNCTION public.admin_support_set_settings(
+  p_priority_help_enabled boolean,
+  p_ai_answers_enabled boolean,
+  p_daily_ai_answer_cap integer,
+  p_daily_ai_budget_usd_micros bigint
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  PERFORM public.support_require_admin();
+  IF p_priority_help_enabled IS NULL OR p_ai_answers_enabled IS NULL THEN
+    RAISE EXCEPTION 'flags are required' USING ERRCODE = '22023';
+  END IF;
+  IF p_daily_ai_answer_cap IS NULL OR p_daily_ai_answer_cap < 0 OR p_daily_ai_answer_cap > 100000 THEN
+    RAISE EXCEPTION 'daily answer cap must be between 0 and 100000' USING ERRCODE = '22023';
+  END IF;
+  IF p_daily_ai_budget_usd_micros IS NULL OR p_daily_ai_budget_usd_micros < 0 OR p_daily_ai_budget_usd_micros > 100000000 THEN
+    RAISE EXCEPTION 'daily budget must be between $0 and $100' USING ERRCODE = '22023';
+  END IF;
+  UPDATE public.support_settings
+  SET priority_help_enabled = p_priority_help_enabled,
+      ai_answers_enabled = p_ai_answers_enabled,
+      daily_ai_answer_cap = p_daily_ai_answer_cap,
+      daily_ai_budget_usd_micros = p_daily_ai_budget_usd_micros,
+      updated_by = auth.uid()
+  WHERE id = true;
+  PERFORM public.write_audit_log(
+    auth.uid(),
+    'support.settings_set',
+    'support_settings',
+    NULL,
+    jsonb_build_object(
+      'priority_help_enabled', p_priority_help_enabled,
+      'ai_answers_enabled', p_ai_answers_enabled,
+      'daily_ai_answer_cap', p_daily_ai_answer_cap,
+      'daily_ai_budget_usd_micros', p_daily_ai_budget_usd_micros
+    )
+  );
+  RETURN public.admin_support_settings();
+END;
+$$;
+
 -- Manual only. Not scheduled. Does not delete open tickets.
 CREATE FUNCTION public.admin_support_purge_expired()
 RETURNS integer
@@ -1722,6 +1900,7 @@ ALTER TABLE public.support_canned_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.support_agent_status ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.support_rate_limits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.support_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.support_ai_usage ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON TABLE public.support_conversations FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON TABLE public.support_messages FROM PUBLIC, anon, authenticated;
@@ -1732,6 +1911,7 @@ REVOKE ALL ON TABLE public.support_canned_responses FROM PUBLIC, anon, authentic
 REVOKE ALL ON TABLE public.support_agent_status FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON TABLE public.support_rate_limits FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON TABLE public.support_settings FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON TABLE public.support_ai_usage FROM PUBLIC, anon, authenticated;
 
 GRANT SELECT ON TABLE public.support_conversations TO authenticated;
 GRANT SELECT ON TABLE public.support_messages TO authenticated;
@@ -1774,6 +1954,7 @@ REVOKE ALL ON FUNCTION public.support_touch_conversation() FROM PUBLIC, anon, au
 REVOKE ALL ON FUNCTION public.support_one_active_guest() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.support_require_admin() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.support_rate_limit_hit(text, integer, integer) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.support_require_enabled() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.support_reference_label(bigint) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.support_message_json(public.support_messages) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.support_conversation_payload(uuid, boolean) FROM PUBLIC, anon, authenticated;
@@ -1791,6 +1972,7 @@ REVOKE ALL ON FUNCTION public.support_service_assistant_message(uuid, text) FROM
 REVOKE ALL ON FUNCTION public.support_service_escalate(uuid, text, uuid, text, text, text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.support_service_context(text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.support_service_ai_budget() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.support_service_record_ai_usage(uuid, text, text, integer, integer, bigint) FROM PUBLIC, anon, authenticated;
 
 GRANT EXECUTE ON FUNCTION public.support_service_open(uuid, text, text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.support_service_history(uuid, text, uuid) TO service_role;
@@ -1799,6 +1981,7 @@ GRANT EXECUTE ON FUNCTION public.support_service_assistant_message(uuid, text) T
 GRANT EXECUTE ON FUNCTION public.support_service_escalate(uuid, text, uuid, text, text, text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.support_service_context(text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.support_service_ai_budget() TO service_role;
+GRANT EXECUTE ON FUNCTION public.support_service_record_ai_usage(uuid, text, text, integer, integer, bigint) TO service_role;
 GRANT EXECUTE ON FUNCTION public.support_public_pricing() TO service_role;
 GRANT EXECUTE ON FUNCTION public.support_search_kb(text, integer) TO service_role;
 GRANT EXECUTE ON FUNCTION public.support_desk_availability() TO service_role;
@@ -1821,6 +2004,8 @@ REVOKE ALL ON FUNCTION public.admin_support_canned_save(uuid, text, text) FROM P
 REVOKE ALL ON FUNCTION public.admin_support_canned_delete(uuid) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.admin_support_set_retention(integer) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.admin_support_purge_expired() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_support_settings() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_support_set_settings(boolean, boolean, integer, bigint) FROM PUBLIC, anon;
 
 GRANT EXECUTE ON FUNCTION public.admin_support_list(text, integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_support_get(uuid) TO authenticated;
@@ -1840,6 +2025,8 @@ GRANT EXECUTE ON FUNCTION public.admin_support_canned_save(uuid, text, text) TO 
 GRANT EXECUTE ON FUNCTION public.admin_support_canned_delete(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_support_set_retention(integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_support_purge_expired() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_support_settings() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_support_set_settings(boolean, boolean, integer, bigint) TO authenticated;
 
 -- Realtime. Postgres Changes are filtered by the SELECT policies above.
 -- Private broadcast/presence on topic support:desk is admin-only when the
@@ -1946,9 +2133,9 @@ Approving a contractor profile is not verification of workmanship, a license, or
   $md$
 Homeowners and contractors both create an account and confirm their email.
 
-A one-time account activation applies to homeowners and to contractors. The amount is the live signup fee (currently $9.99 when signup_fee_cents is 999 and signup_fee_enabled is on). It is charged once through Stripe Checkout. It is not a subscription and it is not a commission.
+A one-time account activation applies to homeowners and to contractors. The amount is the live activation fee, currently $9.99, charged only while that checkout is turned on. It is charged once through Stripe Checkout. It is not a subscription and it is not a commission.
 
-The activation service is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds. That purchase is the right to use the paid marketplace: a homeowner can post a project into matching, and a contractor can use the paid parts of the account. The assistant must quote the live signup_fee_cents value it was given, not a remembered number.
+The activation service is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds. That purchase is the right to use the paid marketplace: a homeowner can post a project into matching, and a contractor can use the paid parts of the account. The assistant must quote the live amount it was given, not a remembered number.
 
 Once that service is delivered, the activation fee is generally non-refundable. This chat cannot see whether a specific person has paid, and it cannot mark an account paid.
   $md$,
@@ -1998,8 +2185,8 @@ There is no platform commission on the estimate. Any percentage shown in an old 
   $md$
 Two public fees exist. There is no subscription and no commission on the job.
 
-1. One-time account activation for homeowners and contractors. Live amount is signup_fee_cents (currently $9.99). The activation service is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds.
-2. Contractor Connect, also called the contact unlock. Live amount is connection_fee_cents (currently $4.99). The contractor pays it to unlock contact on one project. The Connect service is delivered when the server verifies that payment and unlocks that connection.
+1. One-time account activation for homeowners and contractors. The live amount is currently $9.99. The activation service is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds.
+2. Contractor Connect, also called the contact unlock. The live amount is currently $4.99. The contractor pays it to unlock contact on one project. The Connect service is delivered when the server verifies that payment and unlocks that connection.
 
 Job payments through the platform are not live. Priority Property Pros does not take a cut of the contractor's price. Workmanship payments are between the homeowner and the contractor.
 
@@ -2041,7 +2228,7 @@ The assistant must not invent a contractor name, license, insurance, or rating. 
   'complaints-and-reports',
   'Complaints and reports',
   $md$
-A homeowner can report fraud or impersonation, harassment or threats, a misleading profile, a suspected fake review, serious contractor misconduct, or a marketplace rule violation. That report goes to a person through Talk to Support. This chat cannot file, investigate, or close the report.
+A homeowner can report fraud or impersonation, harassment or threats, a misleading profile, a suspected fake review, serious contractor misconduct, or a marketplace rule violation. That report goes to a person through Talk to Support or by email to support@prioritypropertypros.com. This chat cannot file, investigate, or close the report.
 
 Priority Property Pros may review a report, ask for evidence, moderate content, suspend an account, or remove a contractor. Reviewing a complaint is not guaranteeing workmanship, taking responsibility for the work, or deciding a construction dispute. Priority Property Pros does not resolve construction disputes. It does not promise to investigate or resolve every complaint.
 
@@ -2069,6 +2256,20 @@ It cannot:
 - say that Priority Property Pros resolves a construction dispute
 
 Those requests are handed to a person through Talk to Support. A ticket reference is created only when the person chooses Talk to Support. A human is not in the chat until a teammate actually joins.
+  $md$,
+  'PUBLISHED'
+),
+(
+  'contact-refund-and-privacy-requests',
+  'Contacting Priority Property Pros, refund exceptions, and privacy requests',
+  $md$
+Priority Property Pros LLC is a Texas limited liability company. Email support@prioritypropertypros.com. Mail: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US. Email is the fastest way to reach Priority Property Pros. Those are the only contact details the assistant may give.
+
+Refund exceptions: email support@prioritypropertypros.com with the account email, which fee ($9.99 activation or $4.99 Connect), the amount, the date if known, and why it is a duplicate charge, an erroneous charge, a refund the law requires, or another exception. The same information can be mailed to the address above. The owner reviews the request. If it is approved, the refund is issued in Stripe outside this app. Sending a request does not by itself create a refund, and not every request is approved. Closing an account does not by itself refund a fee.
+
+Privacy requests: email support@prioritypropertypros.com or mail the address above. Say whether you want access, a correction, a copy, deletion, or an opt-out, and include the email on the account. Priority Property Pros may ask you to confirm that you control that email. Priority Property Pros answers within 45 days, and may take up to 45 more days after telling you. Priority Property Pros does not sell personal information and does not use it for targeted advertising.
+
+Deleting an account: use Delete account on the account settings page. If that control is temporarily unavailable, email support@prioritypropertypros.com from the account email with the subject "Account deletion request". Active jobs, an open dispute, an unfinished refund, or being the last admin stop a deletion.
   $md$,
   'PUBLISHED'
 )
@@ -2120,10 +2321,12 @@ COMMENT ON TABLE public.support_agent_status IS
 COMMENT ON TABLE public.support_rate_limits IS
   'Server-side counters keyed by a hash, never a raw IP.';
 COMMENT ON TABLE public.support_settings IS
-  'Retention days and the daily AI answer cap. admin_support_purge_expired is manual and is not scheduled. Cap 0 stops model answers.';
+  'Feature flags (both default off), retention days, the daily AI answer cap, and the daily AI dollar budget in micro-dollars. admin_support_purge_expired is manual and is not scheduled. Cap 0 or budget 0 stops model answers.';
+COMMENT ON TABLE public.support_ai_usage IS
+  'One row per model call with tokens and cost in micro-dollars. No client grants. Feeds the daily dollar budget and cost monitoring.';
 
 COMMENT ON FUNCTION public.support_service_ai_budget() IS
-  'Assistant replies in the last 24 hours versus daily_ai_answer_cap. Service role only. allowed is false when the cap is 0 or already used.';
+  'Model calls and micro-dollars spent in the last 24 hours versus daily_ai_answer_cap and daily_ai_budget_usd_micros. Service role only. allowed is false when Priority Help or AI answers are off, or the cap or budget is 0 or used.';
 
 COMMENT ON FUNCTION public.support_public_pricing() IS
   'Live activation and Connect amounts from platform_settings. Does not read the legacy basis-point setting.';

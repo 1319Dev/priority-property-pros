@@ -235,7 +235,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public._ph_ok(boolean, text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION public._ph_raises(text, text) TO PUBLIC;
 
-\ir ../migrations/20261019500001_priority_help.sql
+\ir ../migrations/20261019600001_priority_help.sql
 
 SELECT public._ph_ok(
   NOT has_table_privilege('anon', 'public.support_conversations', 'SELECT'),
@@ -283,6 +283,37 @@ SELECT public._ph_raises(
   '42501'
 );
 RESET ROLE;
+
+-- Ships off: both flags default false, and every service entry point refuses.
+SELECT public._ph_ok(
+  (SELECT NOT priority_help_enabled AND NOT ai_answers_enabled AND daily_ai_budget_usd_micros = 1000000
+   FROM public.support_settings WHERE id = true),
+  'priority help and AI answers ship off with a $1.00 daily budget'
+);
+SELECT set_config('request.jwt.claims', '{"role":"service_role"}', false);
+SET ROLE service_role;
+SELECT public._ph_raises(
+  $$SELECT public.support_service_open(NULL, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', NULL)$$,
+  '55000'
+);
+SELECT public._ph_ok(
+  (public.support_service_context('') ->> 'enabled') = 'false'
+  AND (public.support_service_context('') ->> 'ai_enabled') = 'false'
+  AND (public.support_service_ai_budget() ->> 'allowed') = 'false',
+  'context reports off and the budget refuses model calls while off'
+);
+RESET ROLE;
+SELECT public._ph_ok(
+  NOT has_table_privilege('anon', 'public.support_ai_usage', 'SELECT')
+  AND NOT has_table_privilege('authenticated', 'public.support_ai_usage', 'SELECT'),
+  'clients cannot read AI usage'
+);
+SELECT public._ph_ok(
+  NOT has_function_privilege('authenticated', 'public.support_service_record_ai_usage(uuid, text, text, integer, integer, bigint)', 'EXECUTE')
+  AND NOT has_function_privilege('anon', 'public.admin_support_set_settings(boolean, boolean, integer, bigint)', 'EXECUTE'),
+  'usage recorder is service-only and settings are not anon'
+);
+UPDATE public.support_settings SET priority_help_enabled = true, ai_answers_enabled = true WHERE id = true;
 
 SELECT set_config('request.jwt.claims', '{"role":"service_role"}', false);
 SET ROLE service_role;
@@ -579,11 +610,43 @@ SELECT public._ph_ok(
 );
 SELECT public._ph_ok(
   (public.support_service_ai_budget() ->> 'cap')::int = 200
-  AND (public.support_service_ai_budget() ->> 'used')::int = :assistant_used
+  AND (public.support_service_ai_budget() ->> 'used')::int = 0
+  AND (public.support_service_ai_budget() ->> 'budget_usd_micros')::bigint = 1000000
   AND (public.support_service_ai_budget() ->> 'allowed') = 'true',
-  'daily AI cap is 200 and still allows answers under that count'
+  'daily AI cap is 200, budget $1.00, and no model calls yet'
+);
+SELECT public.support_service_record_ai_usage(
+  (:'customer_thread'::jsonb ->> 'id')::uuid, 'gpt-4.1-nano', 'answered', 1200, 150, 180
+);
+SELECT public._ph_ok(
+  (public.support_service_ai_budget() ->> 'used')::int = 1
+  AND (public.support_service_ai_budget() ->> 'spent_usd_micros')::bigint = 180
+  AND (public.support_service_ai_budget() ->> 'allowed') = 'true',
+  'a recorded call counts against the cap and the dollar budget'
+);
+SELECT public._ph_raises(
+  $$SELECT public.support_service_record_ai_usage(NULL, 'gpt-4.1-nano', 'made-up', 1, 1, 1)$$,
+  '23514'
+);
+SELECT public.support_service_record_ai_usage(NULL, 'gpt-4.1-nano', 'answered', 0, 0, 999820);
+SELECT public._ph_ok(
+  (public.support_service_ai_budget() ->> 'spent_usd_micros')::bigint = 1000000
+  AND (public.support_service_ai_budget() ->> 'allowed') = 'false',
+  'reaching the dollar budget refuses model calls'
 );
 RESET ROLE;
+DELETE FROM public.support_ai_usage;
+UPDATE public.support_settings SET ai_answers_enabled = false WHERE id = true;
+SELECT set_config('request.jwt.claims', '{"role":"service_role"}', false);
+SET ROLE service_role;
+SELECT public._ph_ok(
+  (public.support_service_ai_budget() ->> 'allowed') = 'false'
+  AND (public.support_service_context('') ->> 'enabled') = 'true'
+  AND (public.support_service_context('') ->> 'ai_enabled') = 'false',
+  'AI answers off keeps human support on and refuses model calls'
+);
+RESET ROLE;
+UPDATE public.support_settings SET ai_answers_enabled = true WHERE id = true;
 UPDATE public.support_settings SET daily_ai_answer_cap = 0 WHERE id = true;
 SELECT set_config('request.jwt.claims', '{"role":"service_role"}', false);
 SET ROLE service_role;
@@ -696,7 +759,34 @@ SELECT set_config(
 SET ROLE authenticated;
 SELECT public.admin_support_set_status((:'guest_b'::jsonb ->> 'id')::uuid, 'RESOLVED');
 SELECT public.admin_support_set_retention(30);
+SELECT public._ph_ok(
+  (public.admin_support_set_settings(false, false, 200, 1000000) ->> 'priority_help_enabled') = 'false',
+  'an admin can turn Priority Help off (kill switch)'
+);
+SELECT public._ph_raises('SELECT public.admin_support_set_settings(true, true, 200, 100000001)', '22023');
+SELECT public._ph_raises('SELECT public.admin_support_set_settings(true, true, -1, 1000000)', '22023');
 RESET ROLE;
+SELECT public._ph_ok(
+  EXISTS (SELECT 1 FROM public.audit_logs WHERE action = 'support.settings_set'),
+  'settings changes write an audit row'
+);
+SELECT set_config('request.jwt.claims', '{"role":"service_role"}', false);
+SET ROLE service_role;
+SELECT public._ph_raises(
+  format('SELECT public.support_service_history(NULL, %L, %L)', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', (:'guest_a'::jsonb ->> 'id')),
+  '55000'
+);
+RESET ROLE;
+SELECT set_config(
+  'request.jwt.claims',
+  json_build_object('sub', '11111111-1111-4111-8111-111111111111', 'role', 'authenticated', 'aal', 'aal1')::text,
+  false
+);
+SET ROLE authenticated;
+SELECT public._ph_raises('SELECT public.admin_support_set_settings(true, true, 200, 1000000)', '42501');
+SELECT public._ph_raises('SELECT public.admin_support_settings()', '42501');
+RESET ROLE;
+UPDATE public.support_settings SET priority_help_enabled = true, ai_answers_enabled = true WHERE id = true;
 UPDATE public.support_conversations
 SET resolved_at = now() - interval '40 days'
 WHERE id = (:'guest_b'::jsonb ->> 'id')::uuid;
