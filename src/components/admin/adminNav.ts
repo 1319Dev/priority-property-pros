@@ -95,6 +95,11 @@ export function adminBreadcrumbs(pathname: string): AdminCrumb[] {
     return crumbs;
   }
 
+  if (section === "notifications" && !extra) {
+    crumbs.push({ label: "Notification history" });
+    return crumbs;
+  }
+
   if (item && extra) {
     crumbs.push({ label: item.label, to: item.to });
     if (section === "approvals") crumbs.push({ label: "Application" });

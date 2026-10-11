@@ -312,8 +312,8 @@ test.describe("admin overview stays within the viewport", () => {
       await page.evaluate(() => document.fonts.ready);
       await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
       await expect(page.getByText("$14.98").first()).toBeVisible();
-      await expect(page.getByText("Not set up yet").first()).toBeVisible();
-      await expect(page.getByRole("link", { name: /Email support@prioritypropertypros.com/i })).toHaveAttribute(
+      await expect(page.getByText("Not set up yet")).toHaveCount(0);
+      await expect(page.locator("#main").getByRole("link", { name: "support@prioritypropertypros.com" })).toHaveAttribute(
         "href",
         "mailto:support@prioritypropertypros.com",
       );

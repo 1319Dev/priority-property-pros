@@ -209,6 +209,7 @@ export default function App() {
             <Route path="bookings" element={<AdminBookingsPage />} />
             <Route path="security" element={<AdminTwoFactorPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="notifications" element={<NotificationHistoryPage />} />
             <Route path="account/notifications" element={<NotificationSettingsPage />} />
           </Route>
         </Route>

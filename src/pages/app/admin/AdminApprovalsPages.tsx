@@ -9,6 +9,7 @@ import { ErrorState, LoadingState } from "../../../components/ui/PageState";
 import { FormError } from "../../../lib/auth/AuthCard";
 import {
   APPROVAL_TABS,
+  approvalAccountChipVisible,
   approvalActionVisibility,
   approvalContactName,
   approvalStatusLabel,
@@ -32,7 +33,8 @@ import {
   listContractorApprovals,
 } from "../../../lib/admin/approvalsApi";
 import { accountStatusLabel } from "../../../lib/marketplace/statusLabels";
-import { centsToDollarString } from "../../../lib/marketplace/fees";
+import { formatCents } from "../../../lib/admin/money";
+import { formatPhoneDisplay } from "../../../lib/marketplace/contractorPolish";
 import { useToast } from "../../../hooks/useToast";
 import { StatusBanner } from "../../../components/ui/StatusBanner";
 
@@ -43,6 +45,8 @@ const TAB_LABELS: Record<ApprovalTab, string> = {
   IDENTITY_REVIEW: "Re-verify",
   ALL: "All",
 };
+
+const BACK_LINK = "inline-flex min-h-11 items-center text-sm font-semibold text-forest-800 underline";
 
 function dash(value: string | number | null | undefined): string {
   if (value == null || value === "") return "—";
@@ -174,7 +178,7 @@ export function ApprovalsQueueView({
       {!loading && items.length === 0 ? (
         <EmptyState
           title={tab === "PENDING" ? "No pending applications" : "Nothing in this tab"}
-          body="Contractor approval_status cannot be self-served. When someone applies, they appear here for an admin to review."
+          body="When a contractor finishes their application, it shows up here for review. Contractors cannot approve themselves."
         />
       ) : null}
       {!loading && items.length > 0 ? (
@@ -207,13 +211,15 @@ function ApprovalCard({ item }: { item: ContractorApprovalItem }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <StatusChip label={approvalStatusLabel(item.approval_status)} />
-          <StatusChip label={accountStatusLabel(item.account_status)} />
+          {approvalAccountChipVisible(item.approval_status, item.account_status) ? (
+            <StatusChip label={accountStatusLabel(item.account_status)} />
+          ) : null}
           {item.identity_review_required ? <StatusChip label="Re-verify credentials" /> : null}
         </div>
       </div>
       <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
         <Field label="Email" value={item.email} />
-        <Field label="Phone" value={dash(item.phone)} />
+        <Field label="Phone" value={dash(formatPhoneDisplay(item.phone))} />
         <Field label="Categories" value={formatCategoryNames(item)} />
         <Field label="Service area" value={formatServiceAreaSummary(item)} />
         <Field label="Date applied" value={formatApprovalDate(item.applied_at)} />
@@ -280,7 +286,7 @@ export function AdminApprovalDetailPage() {
   if (!item) {
     return (
       <div className="space-y-4">
-        <Link to="/app/admin/approvals" className="text-sm font-semibold text-forest-800 underline">
+        <Link to="/app/admin/approvals" className={BACK_LINK}>
           Back to approvals
         </Link>
         <ErrorState message={error || "Contractor application not found."} onRetry={load} />
@@ -292,7 +298,7 @@ export function AdminApprovalDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/app/admin/approvals" className="text-sm font-semibold text-forest-800 underline">
+      <Link to="/app/admin/approvals" className={BACK_LINK}>
         Back to approvals
       </Link>
       <ApprovalDetailView
@@ -415,7 +421,9 @@ export function ApprovalDetailView({
         <p className="mt-2 text-ink-700">{approvalContactName(item)}</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <StatusChip label={approvalStatusLabel(item.approval_status)} />
-          <StatusChip label={accountStatusLabel(item.account_status)} />
+          {approvalAccountChipVisible(item.approval_status, item.account_status) ? (
+            <StatusChip label={accountStatusLabel(item.account_status)} />
+          ) : null}
           <StatusChip label={onboardingStatusLabel(item.onboarding_status)} />
         </div>
       </header>
@@ -424,7 +432,7 @@ export function ApprovalDetailView({
         <h2 className="font-display text-2xl font-semibold text-forest-800">Application</h2>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
           <Field label="Email" value={item.email} />
-          <Field label="Phone" value={dash(item.phone)} />
+          <Field label="Phone" value={dash(formatPhoneDisplay(item.phone))} />
           <Field label="Categories" value={formatCategoryNames(item)} />
           <Field label="Service area" value={formatServiceAreaSummary(item)} />
           <Field label="Date applied" value={formatApprovalDate(item.applied_at)} />
@@ -438,7 +446,7 @@ export function ApprovalDetailView({
             value={
               item.min_job_cents == null && item.max_job_cents == null
                 ? "Not provided"
-                : `$${centsToDollarString(item.min_job_cents) || "0"} – $${centsToDollarString(item.max_job_cents) || "0"}`
+                : `${formatCents(item.min_job_cents ?? 0)} – ${formatCents(item.max_job_cents ?? 0)}`
             }
           />
           <Field label="Approved at" value={formatApprovalDate(item.approved_at)} />
