@@ -5,6 +5,7 @@
  * Do not enable job payments / Connect / payouts. Signup/activation is a separate $9.99 flow.
  */
 
+import { originIsAllowed } from "../../../supabase/functions/_shared/returnOrigin.ts";
 import { CONNECTION_FEE_CENTS } from "./types";
 import { connectionEntitlementAllowsReveal } from "./connectionLifecycle";
 import type { ContactAccessStatus, ProjectConnectionStatus } from "./types";
@@ -411,19 +412,8 @@ export async function customerFacingConnectionCheckoutError(
   return fallback;
 }
 
-export function allowedReturnOrigin(origin: string, siteUrl?: string | null): boolean {
-  const value = origin.trim().replace(/\/$/, "");
-  if (!value) return false;
-  if (siteUrl && value === siteUrl.replace(/\/$/, "")) return true;
-  try {
-    const url = new URL(value);
-    if (url.protocol === "http:" && (url.hostname === "localhost" || url.hostname === "127.0.0.1")) return true;
-    if (url.protocol !== "https:") return false;
-    if (url.username || url.password || url.search || url.hash) return false;
-    return Boolean(url.hostname);
-  } catch {
-    return false;
-  }
+export function allowedReturnOrigin(origin: string, siteUrl?: string | null, extraOrigins?: string | null): boolean {
+  return originIsAllowed(origin, { siteUrl, extraOrigins });
 }
 
 export function connectionCheckoutSuccessPath(): string {
