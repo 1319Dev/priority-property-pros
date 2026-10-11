@@ -1,5 +1,9 @@
 import { ADMIN_STEP_UP_DB_ERROR, ADMIN_STEP_UP_MESSAGE } from "../auth/adminMfa";
 
+/** Validation sentences raised by the admin profile editor RPCs. Safe to show as written. */
+const PROFILE_EDITOR_MESSAGE =
+  /^(Enter (a|an|40) |That (email|project|notification|account|approval|photo|timeline|credential|service area)\b|payment records and fee status are not editable here|Please keep communication on Priority Property Pros|Nothing to change\.|Choose a service category\.|Account type is not editable here\.|directory visibility is set by Priority Property Pros|Directory visibility must be|(Profile changes|Location|Notifications|Projects|Services|Service areas|Credentials|Portfolio photos|ZIP codes) must be |Notification choices must be|Each project needs|customer not found|contractor not found|[a-z0-9 ]{2,40} must be \d+ characters or fewer)/;
+
 type AdminErrorLike = { message?: string; code?: string } | null | undefined;
 
 /** Maps a database or API failure to a sentence an admin can act on. The raw text stays in the console. */
@@ -36,5 +40,6 @@ export function friendlyAdminError(error: AdminErrorLike, fallback: string): str
   ) {
     return raw;
   }
+  if (PROFILE_EDITOR_MESSAGE.test(raw)) return raw;
   return fallback;
 }
