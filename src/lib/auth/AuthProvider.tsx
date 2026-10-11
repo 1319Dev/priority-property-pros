@@ -8,6 +8,7 @@ import { buildSignupMetadata } from "./signupMetadata";
 import type { Profile, SignUpInput } from "./types";
 import type { SignupFeeStatus } from "../signupFee/constants";
 import { fetchSignupFeeCheckoutFlags } from "../signupFee/api";
+import { passwordPolicyError } from "./passwordPolicy";
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
   const supabase = getSupabaseClient();
@@ -112,6 +113,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (requestsVerifierSignup([input.accountType])) {
       return { error: "That account type is not available.", needsEmailConfirm: false };
     }
+    const tooShort = passwordPolicyError(input.password);
+    if (tooShort) return { error: tooShort, needsEmailConfirm: false };
     const { data, error } = await supabase.auth.signUp({
       email: input.email.trim(),
       password: input.password,
@@ -146,6 +149,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updatePassword = useCallback(async (password: string) => {
     const supabase = getSupabaseClient();
     if (!supabase) return { error: "Supabase is not configured yet." };
+    const tooShort = passwordPolicyError(password);
+    if (tooShort) return { error: tooShort };
     const { error } = await supabase.auth.updateUser({ password });
     return { error: error?.message ?? null };
   }, []);
