@@ -157,6 +157,7 @@ export default function App() {
             <Route path="account" element={<AccountPage />} />
             <Route path="notifications" element={<NotificationHistoryPage />} />
             <Route path="account/blocked" element={<BlockedProsPage />} />
+            <Route path="blocked" element={<Navigate to="/app/customer/account/blocked" replace />} />
             <Route path="account/notifications" element={<NotificationSettingsPage />} />
           </Route>
         </Route>
