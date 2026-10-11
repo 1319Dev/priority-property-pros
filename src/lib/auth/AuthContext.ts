@@ -20,6 +20,8 @@ export type AuthContextValue = {
   requestPasswordReset: (email: string) => Promise<{ error: string | null; status?: number | null }>;
   updatePassword: (password: string) => Promise<{ error: string | null }>;
   resendVerification: (email: string) => Promise<{ error: string | null }>;
+  /** Present on the live provider. Optional so older test fixtures still type-check. */
+  requestEmailChange?: (nextEmail: string, currentPassword: string) => Promise<{ error: string | null }>;
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
