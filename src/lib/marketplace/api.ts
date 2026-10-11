@@ -625,6 +625,24 @@ export async function updateBookingReview(bookingId: string, rating: number, bod
   return (data ?? {}) as RpcJson;
 }
 
+export async function reportBookingReview(reviewId: string, reason: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("report_booking_review", {
+    p_review_id: reviewId,
+    p_reason: reason.trim(),
+  });
+  if (error) throw new Error(asError(error, "Could not send that report."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function submitBookingReviewResponse(reviewId: string, body: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("submit_booking_review_response", {
+    p_review_id: reviewId,
+    p_body: body.trim(),
+  });
+  if (error) throw new Error(asError(error, "Could not post that response."));
+  return (data ?? {}) as RpcJson;
+}
+
 export async function confirmBookingHired(bookingId: string): Promise<RpcJson> {
   const { data, error } = await client().rpc("confirm_booking_hired", { p_booking_id: bookingId });
   if (error) throw new Error(asError(error, "Could not confirm Hired."));
@@ -1205,6 +1223,7 @@ export type PublicDirectoryReviewRow = {
   id: string;
   rating: number;
   body: string;
+  contractor_response?: string | null;
 };
 
 function parseDirectoryBadges(value: Json | null | undefined): Array<{ kind: string; label: string }> {

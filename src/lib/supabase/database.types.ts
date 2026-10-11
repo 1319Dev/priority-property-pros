@@ -1034,6 +1034,27 @@ export type Database = {
         Args: { p_booking_id: string; p_rating: number; p_body?: string | null };
         Returns: Json;
       };
+      report_booking_review: {
+        Args: { p_review_id: string; p_reason: string };
+        Returns: Json;
+      };
+      submit_booking_review_response: {
+        Args: { p_review_id: string; p_body: string };
+        Returns: Json;
+      };
+      admin_hide_booking_review: {
+        Args: { p_review_id: string; p_reason: string };
+        Returns: Json;
+      };
+      admin_restore_booking_review: {
+        Args: { p_review_id: string; p_reason: string };
+        Returns: Json;
+      };
+      admin_hide_booking_review_response: {
+        Args: { p_review_id: string; p_reason: string };
+        Returns: Json;
+      };
+      admin_list_booking_reviews: { Args: Record<string, never>; Returns: Json };
       confirm_booking_hired: { Args: { p_booking_id: string }; Returns: Json };
       booking_is_mutually_hired: { Args: { p_booking_id: string }; Returns: boolean };
       booking_job_contact: { Args: { p_booking_id: string }; Returns: Json };
@@ -1173,7 +1194,7 @@ export type Database = {
       };
       list_public_directory_reviews: {
         Args: { p_id: string };
-        Returns: { id: string; rating: number; body: string }[];
+        Returns: { id: string; rating: number; body: string; contractor_response: string | null }[];
       };
       text_contains_pre_hire_contact: { Args: { p_text?: string | null }; Returns: boolean };
       assert_no_pre_hire_contact: { Args: { p_text?: string | null }; Returns: undefined };

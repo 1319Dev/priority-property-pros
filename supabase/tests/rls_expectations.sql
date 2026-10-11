@@ -64,6 +64,15 @@
 --   anon EXECUTE list_public_directory_contractors / get_public_directory_contractor → allowed
 --   anon SELECT contractor_profiles / profiles / booking_reviews / contractor_portfolio / booking_contact_access → denied
 
+-- Job review moderation (after 20261019200002):
+--   non-admin admin_hide_booking_review → not authorized
+--   anon EXECUTE admin_hide_booking_review → denied
+--   rating-only hide reason → rejected, row stays visible in contractor_public_ratings
+--   evidence hide → row remains, rating unchanged, excluded from contractor_public_ratings and contractor_public_reviews
+--   customer and contractor on that booking can still SELECT the hidden row
+--   author and a third party report_booking_review → only the other party
+--   contractor response with a phone number → rejected; one response only
+
 -- Platform reviews (after 20261003000001, tightened by 20261019200001):
 --   anon SELECT approved platform_reviews → rows
 --   anon SELECT pending or rejected platform_reviews → 0 rows

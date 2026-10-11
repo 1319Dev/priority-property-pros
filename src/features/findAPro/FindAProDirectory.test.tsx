@@ -135,6 +135,40 @@ describe("Contractor storefront", () => {
     expect(screen.getByText(/no qualifying relationship/i)).toBeInTheDocument();
   });
 
+  it("shows a public pro response and leaves a phone number off the profile", () => {
+    const reviews = publicDirectoryReviews([
+      {
+        id: "r-phone",
+        rating: 2,
+        body: "The gate was left unfinished.",
+        contractor_response: "Call me at 512-555-0199 and I will explain.",
+      },
+      {
+        id: "r-ok",
+        rating: 5,
+        body: "Finished the indoor repair.",
+        contractor_response: "We replaced the latch the next morning.",
+      },
+    ]);
+    renderCard(
+      <div className="w-[390px] max-w-[390px]">
+        <ContractorStorefront
+          profile={{
+            ...card(),
+            about: "Independent local fence contractor.",
+            reviews,
+            ratingLabel: "3.5 ★ · 2 reviews",
+            newOnPlatform: false,
+          }}
+        />
+      </div>,
+    );
+    expect(screen.getByText(/We replaced the latch the next morning/)).toBeInTheDocument();
+    expect(screen.getByText("Pro response.")).toBeInTheDocument();
+    expect(screen.queryByText(/512-555-0199/)).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/Northside Fence|business name/i);
+  });
+
   it("filters the directory down to new contractors", async () => {
     const user = userEvent.setup();
     renderCard(<FindAProDirectory cards={[card(), reviewed]} loading={false} />);

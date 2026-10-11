@@ -8,6 +8,7 @@ import { PLATFORM_REVIEW_STATUSES, type PlatformReview, type PlatformReviewStatu
 import { adminListPlatformReviews, adminSetPlatformReviewStatus } from "../../../lib/marketplace/platformReviewsApi";
 import { isSupabaseConfigured } from "../../../lib/supabase/config";
 import { StarRating } from "../../../features/reviews/ReviewCard";
+import { JobReviewModeration } from "./JobReviewModeration";
 
 export function AdminReviewsPage() {
   const [rows, setRows] = useState<PlatformReview[]>([]);
@@ -15,6 +16,7 @@ export function AdminReviewsPage() {
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [tab, setTab] = useState<"site" | "jobs">("site");
 
   useEffect(() => {
     let cancelled = false;
@@ -54,28 +56,51 @@ export function AdminReviewsPage() {
           These are not Google reviews.
         </p>
       </header>
-      <div className="flex flex-col gap-2 sm:flex-row" role="tablist" aria-label="Platform review queue">
-        {PLATFORM_REVIEW_STATUSES.map((status) => {
-          const count = rows.filter((row) => row.status === status).length;
-          const label = status === "PENDING" ? "Pending" : status === "APPROVED" ? "Approved" : "Rejected";
-          return (
-            <button
-              key={status}
-              type="button"
-              role="tab"
-              aria-selected={queue === status}
-              className={`min-h-11 w-full rounded-full px-4 text-sm font-semibold sm:w-auto ${
-                queue === status ? "bg-forest-800 text-cream-50" : "border border-forest-800/15 bg-cream-50 text-forest-800"
-              }`}
-              onClick={() => setQueue(status)}
-            >
-              {label} ({count})
-            </button>
-          );
-        })}
+      <div role="tablist" aria-label="Review moderation" className="flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "site"}
+          className={`min-h-11 w-full rounded-full px-4 text-sm font-semibold sm:w-auto ${tab === "site" ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-forest-800"}`}
+          onClick={() => setTab("site")}
+        >
+          Site reviews
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "jobs"}
+          className={`min-h-11 w-full rounded-full px-4 text-sm font-semibold sm:w-auto ${tab === "jobs" ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-forest-800"}`}
+          onClick={() => setTab("jobs")}
+        >
+          Job reviews
+        </button>
       </div>
-      <FormError message={error} />
-      {!loaded ? null : rows.filter((row) => row.status === queue).length === 0 ? (
+      {tab === "jobs" ? <JobReviewModeration /> : null}
+      {tab !== "site" ? null : (
+        <div className="flex flex-col gap-2 sm:flex-row" role="tablist" aria-label="Platform review queue">
+          {PLATFORM_REVIEW_STATUSES.map((status) => {
+            const count = rows.filter((row) => row.status === status).length;
+            const label = status === "PENDING" ? "Pending" : status === "APPROVED" ? "Approved" : "Rejected";
+            return (
+              <button
+                key={status}
+                type="button"
+                role="tab"
+                aria-selected={queue === status}
+                className={`min-h-11 w-full rounded-full px-4 text-sm font-semibold sm:w-auto ${
+                  queue === status ? "bg-forest-800 text-cream-50" : "border border-forest-800/15 bg-cream-50 text-forest-800"
+                }`}
+                onClick={() => setQueue(status)}
+              >
+                {label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {tab === "site" ? <FormError message={error} /> : null}
+      {tab !== "site" ? null : !loaded ? null : rows.filter((row) => row.status === queue).length === 0 ? (
         <EmptyState
           title={`No ${queue.toLowerCase()} reviews`}
           body="Approved reviews appear on /reviews and the homepage. Pending reviews stay off the public page."
