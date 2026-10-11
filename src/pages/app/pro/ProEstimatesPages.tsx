@@ -7,7 +7,8 @@ import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
 import { deleteEstimate, fetchMyEstimates, fetchMyNotifications, markNotificationRead, type ContractorEstimateListItem } from "../../../lib/marketplace/api";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
-import { friendlyTimestamp, noticeBody, noticeProjectLine } from "../../../lib/marketplace/contractorPolish";
+import { friendlyTimestamp } from "../../../lib/marketplace/contractorPolish";
+import { notificationProjectLine, safeNoticeText, safeNoticeTitle } from "../../../lib/notifications/presentation";
 import { listMyMessageThreads } from "../../../lib/marketplace/messagingApi";
 import { messageNotificationHref } from "../../../lib/marketplace/messaging";
 import { notificationPath } from "../../../lib/notifications/policy";
@@ -177,7 +178,77 @@ export function EstimateStatusChip({
   );
 }
 
-export function ProNotificationsList() {
+function ProUpdatesList({
+  rows,
+  projects,
+  onRead,
+}: {
+  rows: Awaited<ReturnType<typeof fetchMyNotifications>>;
+  projects: Record<string, { title: string; reference: number | null }>;
+  onRead: (row: Awaited<ReturnType<typeof fetchMyNotifications>>[number]) => void;
+}) {
+  const visible = rows.filter((row) => row.kind !== "message.received" && row.action_state !== "historical");
+  if (visible.length === 0) return null;
+  return (
+    <section className="space-y-3">
+      <h2 className="font-display text-2xl text-forest-800">Updates</h2>
+      <ul className="space-y-2">
+        {visible.slice(0, 5).map((row) => {
+          const messageHref =
+            row.kind === "message.received" || row.kind === "contact.shared"
+              ? messageNotificationHref("contractor", row.payload)
+              : notificationPath({
+                  kind: row.kind,
+                  entityId: row.entity_id,
+                  payload: row.payload ?? {},
+                  accountType: "CONTRACTOR",
+                });
+          const known = typeof row.payload?.project_id === "string" ? projects[row.payload.project_id] : undefined;
+          const title = safeNoticeTitle(row.title);
+          const context = notificationProjectLine({
+            projectTitle:
+              (typeof row.payload?.project_title === "string" && row.payload.project_title) || known?.title,
+            referenceNumber: row.payload?.project_reference_number ?? row.payload?.reference_number ?? known?.reference,
+            payload: row.payload,
+          });
+          const body = safeNoticeText(title, row.body);
+          const when = friendlyTimestamp(row.created_at);
+          const inner = (
+            <>
+              <p className="font-semibold text-forest-800">{title}</p>
+              {context ? <p className="text-forest-800">{context}</p> : null}
+              {body ? <p className="text-ink-700">{body}</p> : null}
+              {when ? <p className="text-xs text-ink-500">{when}</p> : null}
+            </>
+          );
+          return (
+          <li key={row.id}>
+            {messageHref ? (
+              <Link
+                to={messageHref}
+                className="block w-full rounded-2xl border border-forest-800/10 px-4 py-3 text-left text-sm"
+                onClick={() => onRead(row)}
+              >
+                {inner}
+              </Link>
+            ) : (
+            <button
+              type="button"
+              className="w-full rounded-2xl border border-forest-800/10 px-4 py-3 text-left text-sm"
+              onClick={() => onRead(row)}
+            >
+              {inner}
+            </button>
+            )}
+          </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function LiveProNotificationsList() {
   const { user } = useAuth();
   const [rows, setRows] = useState<Awaited<ReturnType<typeof fetchMyNotifications>>>([]);
   const [projects, setProjects] = useState<Record<string, { title: string; reference: number | null }>>({});
@@ -201,72 +272,27 @@ export function ProNotificationsList() {
       .catch(() => undefined);
   }, [user]);
 
-  const visible = rows.filter((row) => row.kind !== "message.received");
-  if (visible.length === 0) return null;
   return (
-    <section className="space-y-3">
-      <h2 className="font-display text-2xl text-forest-800">Updates</h2>
-      <ul className="space-y-2">
-        {visible.slice(0, 5).map((row) => {
-          const messageHref =
-            row.kind === "message.received" || row.kind === "contact.shared"
-              ? messageNotificationHref("contractor", row.payload)
-              : notificationPath({
-                  kind: row.kind,
-                  entityId: row.entity_id,
-                  payload: row.payload ?? {},
-                  accountType: "CONTRACTOR",
-                });
-          const known = typeof row.payload?.project_id === "string" ? projects[row.payload.project_id] : undefined;
-          const context = noticeProjectLine({
-            ...row.payload,
-            project_title:
-              (typeof row.payload?.project_title === "string" && row.payload.project_title) || known?.title,
-            project_reference_number: row.payload?.project_reference_number ?? row.payload?.reference_number ?? known?.reference,
-          });
-          const body = noticeBody(row.title, row.body);
-          const when = friendlyTimestamp(row.created_at);
-          const inner = (
-            <>
-              <p className="font-semibold text-forest-800">{row.title}</p>
-              {context ? <p className="text-forest-800">{context}</p> : null}
-              {body ? <p className="text-ink-700">{body}</p> : null}
-              {when ? <p className="text-xs text-ink-500">{when}</p> : null}
-            </>
-          );
-          return (
-          <li key={row.id}>
-            {messageHref ? (
-              <Link
-                to={messageHref}
-                className="block w-full rounded-2xl border border-forest-800/10 px-4 py-3 text-left text-sm"
-                onClick={() => {
-                  if (!row.read_at) void markNotificationRead(row.id);
-                }}
-              >
-                {inner}
-              </Link>
-            ) : (
-            <button
-              type="button"
-              className="w-full rounded-2xl border border-forest-800/10 px-4 py-3 text-left text-sm"
-              onClick={() => {
-                if (!row.read_at) {
-                  void markNotificationRead(row.id).then(() =>
-                    setRows((current) =>
-                      current.map((item) => (item.id === row.id ? { ...item, read_at: new Date().toISOString() } : item)),
-                    ),
-                  );
-                }
-              }}
-            >
-              {inner}
-            </button>
-            )}
-          </li>
-          );
-        })}
-      </ul>
-    </section>
+    <ProUpdatesList
+      rows={rows}
+      projects={projects}
+      onRead={(row) => {
+        if (row.read_at) return;
+        void markNotificationRead(row.id).then(() =>
+          setRows((current) =>
+            current.map((item) => (item.id === row.id ? { ...item, read_at: new Date().toISOString() } : item)),
+          ),
+        );
+      }}
+    />
   );
+}
+
+export function ProNotificationsList({
+  previewRows,
+}: {
+  previewRows?: Awaited<ReturnType<typeof fetchMyNotifications>>;
+}) {
+  if (previewRows) return <ProUpdatesList rows={previewRows} projects={{}} onRead={() => undefined} />;
+  return <LiveProNotificationsList />;
 }

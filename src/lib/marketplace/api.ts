@@ -1,4 +1,5 @@
 import { friendlyAdminError } from "../admin/friendlyAdminError";
+import { dedupeNotificationRows } from "../notifications/presentation";
 import { getSupabaseClient } from "../supabase/client";
 import type { Database, Json } from "../supabase/database.types";
 import { assertNoPreHireContact } from "./antiCircumvention";
@@ -455,12 +456,14 @@ export type InAppNotificationRow = {
   channel: "in_app";
   read_at: string | null;
   created_at: string;
+  action_state?: string | null;
 };
 
 export async function fetchMyNotifications(): Promise<InAppNotificationRow[]> {
   const { data, error } = await client().rpc("list_my_notifications");
   if (error) throw new Error(asError(error, "Could not load notifications."));
-  return Array.isArray(data) ? (data as InAppNotificationRow[]) : [];
+  const rows = Array.isArray(data) ? (data as InAppNotificationRow[]) : [];
+  return dedupeNotificationRows(rows);
 }
 
 export async function markNotificationRead(id: string): Promise<RpcJson> {

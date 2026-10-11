@@ -5,6 +5,7 @@ export {
   NOTIFICATION_CATEGORY_COPY,
   absoluteUrl,
   buildNotificationEmail,
+  categoriesForAccount,
   categoryForKind,
   channelEnabled,
   defaultPreference,

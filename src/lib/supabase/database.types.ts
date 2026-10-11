@@ -1074,6 +1074,7 @@ export type Database = {
         Returns: boolean;
       };
       mark_notification_read: { Args: { p_notification_id: string }; Returns: Json };
+      mark_all_my_notifications_read: { Args: Record<string, never>; Returns: number };
       ensure_my_notification_preferences: { Args: Record<string, never>; Returns: number };
       save_my_push_subscription: {
         Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent?: string | null };

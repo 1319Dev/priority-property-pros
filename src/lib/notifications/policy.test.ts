@@ -4,6 +4,7 @@ import {
   MINIMAL_MESSAGE_EMAIL,
   NOTIFICATION_CATEGORIES,
   buildNotificationEmail,
+  categoriesForAccount,
   categoryForKind,
   channelEnabled,
   defaultPreference,
@@ -41,6 +42,16 @@ describe("notification preference defaults", () => {
     expect(channelEnabled("messages", { in_app: false, push: true, email: false }, "push")).toBe(true);
     expect(channelEnabled("reviews", null, "email")).toBe(false);
     expect(channelEnabled("reviews", null, "in_app")).toBe(true);
+  });
+
+  it("shows new-job alerts only to contractors", () => {
+    expect(categoriesForAccount("CONTRACTOR")).toContain("new_job");
+    expect(categoriesForAccount("CONTRACTOR")).toEqual([...NOTIFICATION_CATEGORIES]);
+    for (const accountType of ["CUSTOMER", "ADMIN", "VERIFIER", null]) {
+      expect(categoriesForAccount(accountType)).not.toContain("new_job");
+      expect(categoriesForAccount(accountType)).toContain("messages");
+      expect(categoriesForAccount(accountType)).toContain("estimates");
+    }
   });
 
   it("maps alert kinds onto the eight categories", () => {
