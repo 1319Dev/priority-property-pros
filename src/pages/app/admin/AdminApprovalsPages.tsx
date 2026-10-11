@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { PortfolioPhotoReviewPanel } from "./PortfolioPhotoReview";
-import { Link, useParams } from "react-router-dom";
+import { Link, Outlet, useMatch, useParams } from "react-router-dom";
+import { AdminMasterDetail } from "../../../components/admin/shell/AdminMasterDetail";
+import { useAdminDesktop } from "../../../components/admin/shell/useAdminDesktop";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { BottomSheet } from "../../../components/ui/BottomSheet";
 import { Button, ButtonLink } from "../../../components/ui/Button";
@@ -54,6 +56,8 @@ function dash(value: string | number | null | undefined): string {
 }
 
 export function AdminApprovalsPage() {
+  const desktop = useAdminDesktop();
+  const detailMatch = useMatch("/app/admin/approvals/:contractorProfileId");
   const [section, setSection] = useState<"contractors" | "photos">("contractors");
   const [tab, setTab] = useState<ApprovalTab>("PENDING");
   const [items, setItems] = useState<ContractorApprovalItem[]>([]);
@@ -125,17 +129,34 @@ export function AdminApprovalsPage() {
       {section === "photos" ? (
         <PortfolioPhotoReviewPanel />
       ) : (
-        <>
-          <FormError message={error} />
-          <ApprovalsQueueView
-            tab={tab}
-            counts={counts}
-            items={filtered}
-            loading={loading}
-            onTabChange={setTab}
-            onRetry={load}
-          />
-        </>
+        <AdminMasterDetail
+          desktop={desktop}
+          showList={!detailMatch}
+          listLabel="Applications"
+          detailLabel="Application"
+          list={
+            <>
+              <FormError message={error} />
+              <ApprovalsQueueView
+                tab={tab}
+                counts={counts}
+                items={filtered}
+                loading={loading}
+                onTabChange={setTab}
+                onRetry={load}
+              />
+            </>
+          }
+          detail={
+            detailMatch ? (
+              <Outlet />
+            ) : (
+              <p className="rounded-3xl border border-dashed border-forest-800/20 px-5 py-6 text-sm text-ink-700">
+                Select an application to review it here.
+              </p>
+            )
+          }
+        />
       )}
     </div>
   );

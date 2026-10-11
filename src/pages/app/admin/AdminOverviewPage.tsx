@@ -18,10 +18,12 @@ import {
   type DashboardTrends,
 } from "../../../lib/admin/dashboardApi";
 import { friendlyAdminError } from "../../../lib/admin/friendlyAdminError";
+import { initialIncludeTest, AdminIncludeTestToggle } from "../../../components/admin/shell/AdminPageHeader";
+import { collapseActivity } from "../../../lib/admin/activityCollapse";
 import { formatCents, formatCentralTimestamp, trendQuery, type TrendPreset } from "../../../lib/admin/money";
 import { overviewCardDescription, overviewCardVisible } from "../../../lib/admin/overviewCopy";
+import { fetchPaymentsSummary, overlayNetRevenue } from "../../../lib/admin/paymentsApi";
 
-const INCLUDE_TEST_KEY = "ppp-admin-include-test";
 const FOREST = "var(--color-forest-800)";
 const GOLD = "var(--color-gold-500)";
 
@@ -30,6 +32,8 @@ type CardSpec = {
   label: string;
   href?: string;
   money?: boolean;
+  grossNote?: boolean;
+  support?: boolean;
 };
 
 const GROUPS: Array<{ title: string; cards: CardSpec[] }> = [
@@ -56,9 +60,9 @@ const GROUPS: Array<{ title: string; cards: CardSpec[] }> = [
   {
     title: "Money",
     cards: [
-      { key: "revenue_month_cents", label: "Gross revenue this month", money: true },
-      { key: "revenue_lifetime_cents", label: "Gross revenue, lifetime", money: true },
-      { key: "revenue_net_cents", label: "Net revenue", money: true },
+      { key: "revenue_month_cents", label: "Gross revenue this month", money: true, grossNote: true },
+      { key: "revenue_lifetime_cents", label: "Gross revenue, lifetime", money: true, grossNote: true },
+      { key: "revenue_net_cents", label: "Net revenue", money: true, href: "/app/admin/payments" },
       { key: "checkouts_completed", label: "Checkouts completed" },
       { key: "checkouts_expired", label: "Checkouts expired" },
       { key: "checkouts_open", label: "Checkouts still open" },
@@ -76,22 +80,6 @@ const GROUPS: Array<{ title: string; cards: CardSpec[] }> = [
     ],
   },
 ];
-
-function readIncludeTest(): boolean {
-  try {
-    return localStorage.getItem(INCLUDE_TEST_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function writeIncludeTest(value: boolean) {
-  try {
-    localStorage.setItem(INCLUDE_TEST_KEY, value ? "1" : "0");
-  } catch {
-    // The toggle still changes this view when storage is blocked.
-  }
-}
 
 function readError(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message.trim()) {
@@ -114,7 +102,7 @@ function bucketLabel(start: string, granularity: string): string {
 }
 
 export function AdminOverviewPage() {
-  const [includeTest, setIncludeTest] = useState(readIncludeTest);
+  const [includeTest, setIncludeTest] = useState(initialIncludeTest);
   const [preset, setPreset] = useState<TrendPreset>("30d");
   const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -129,6 +117,13 @@ export function AdminOverviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const generation = useRef(0);
+  const loaded = useRef({ summary: false, attention: false, rows: false, trends: false });
+  loaded.current = {
+    summary: summary != null,
+    attention: attention != null,
+    rows: rows != null,
+    trends: trends != null,
+  };
 
   useEffect(() => {
     const onFocus = () => setReloadKey((value) => value + 1);
@@ -141,13 +136,6 @@ export function AdminOverviewPage() {
     const nextGeneration = generation.current + 1;
     generation.current = nextGeneration;
     setLoading(true);
-    setSummary(null);
-    setAttention(null);
-    setRows(null);
-    setTrends(null);
-    setSummaryFailed(false);
-    setActivityFailed(false);
-    setTrendsFailed(false);
     setError(null);
     const range = trendQuery(preset);
     void Promise.allSettled([
@@ -161,14 +149,22 @@ export function AdminOverviewPage() {
       if (summaryResult.status === "fulfilled") {
         setSummary(summaryResult.value);
         setSummaryFailed(false);
+        void fetchPaymentsSummary(includeTest)
+          .then((money) => {
+            if (cancelled || generation.current !== nextGeneration) return;
+            setSummary((current) => overlayNetRevenue(current, money));
+          })
+          .catch(() => undefined);
       } else {
-        setSummary(null);
-        setSummaryFailed(true);
+        if (!loaded.current.summary) {
+          setSummary(null);
+          setSummaryFailed(true);
+        }
         problems.push(readError(summaryResult.reason, "Could not load the overview."));
       }
       if (attentionResult.status === "fulfilled") setAttention(attentionResult.value.items);
       else {
-        setAttention(null);
+        if (!loaded.current.attention) setAttention(null);
         problems.push(readError(attentionResult.reason, "Could not load what needs attention."));
       }
       if (activityResult.status === "fulfilled") {
@@ -176,17 +172,21 @@ export function AdminOverviewPage() {
         setHasMore(activityResult.value.length === ADMIN_ACTIVITY_PAGE_SIZE);
         setActivityFailed(false);
       } else {
-        setRows(null);
-        setHasMore(false);
-        setActivityFailed(true);
+        if (!loaded.current.rows) {
+          setRows(null);
+          setHasMore(false);
+          setActivityFailed(true);
+        }
         problems.push(readError(activityResult.reason, "Could not load recent activity."));
       }
       if (trendsResult.status === "fulfilled") {
         setTrends(trendsResult.value);
         setTrendsFailed(false);
       } else {
-        setTrends(null);
-        setTrendsFailed(true);
+        if (!loaded.current.trends) {
+          setTrends(null);
+          setTrendsFailed(true);
+        }
         problems.push(readError(trendsResult.reason, "Could not load the trends."));
       }
       setError(problems.length > 0 ? [...new Set(problems)].join(" ") : null);
@@ -231,19 +231,7 @@ export function AdminOverviewPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex min-h-11 items-center gap-2 text-sm font-semibold text-forest-800">
-            <input
-              type="checkbox"
-              className="size-4 accent-forest-800"
-              checked={includeTest}
-              onChange={(event) => {
-                const next = event.target.checked;
-                setIncludeTest(next);
-                writeIncludeTest(next);
-              }}
-            />
-            Include test accounts
-          </label>
+          <AdminIncludeTestToggle checked={includeTest} onChange={setIncludeTest} />
           <Button type="button" variant="outline" size="sm" onClick={() => setReloadKey((value) => value + 1)}>
             Refresh
           </Button>
@@ -334,9 +322,12 @@ export function AdminOverviewPage() {
           </p>
         ) : (
           <ul className="space-y-2">
-            {rows.map((row) => (
+            {collapseActivity(rows).map((row) => (
               <li key={row.cursor} className="rounded-3xl border border-forest-800/10 px-4 py-3">
-                <p className="font-semibold text-forest-800">{row.label}</p>
+                <p className="font-semibold text-forest-800">
+                  {row.label}
+                  {row.count > 1 ? ` · ${row.count}` : ""}
+                </p>
                 <p className="text-sm text-ink-500">{formatCentralTimestamp(row.occurredAt)}</p>
                 <p className="mt-1 text-sm text-ink-700">
                   {row.jobReference ? (
@@ -483,8 +474,16 @@ function MetricCard({
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">{card.label}</p>
       <p className="mt-2 font-display text-3xl font-semibold text-forest-800">{text}</p>
       {description ? <p className="mt-1 text-sm text-ink-700">{description}</p> : null}
-      {card.money && card.key !== "revenue_net_cents" && text !== "—" ? (
+      {card.grossNote && text !== "—" ? (
         <p className="mt-1 text-xs text-ink-500">Gross, before Stripe fees</p>
+      ) : null}
+      {card.key === "revenue_net_cents" && metric?.status === "available" ? (
+        <p className="mt-1 text-xs text-ink-500">Succeeded live fees minus stored refunds</p>
+      ) : null}
+      {card.support ? (
+        <a className="mt-2 inline-flex min-h-11 items-center font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
+          Email {SUPPORT_EMAIL}
+        </a>
       ) : null}
     </>
   );

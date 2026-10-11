@@ -11,6 +11,15 @@ const fetchAdminDashboardSummary = vi.fn();
 const fetchAdminNeedsAttention = vi.fn();
 const fetchAdminRecentActivity = vi.fn();
 const fetchAdminDashboardTrends = vi.fn();
+const fetchPaymentsSummary = vi.fn();
+
+vi.mock("../../../lib/admin/paymentsApi", async () => {
+  const actual = await vi.importActual<typeof import("../../../lib/admin/paymentsApi")>("../../../lib/admin/paymentsApi");
+  return {
+    ...actual,
+    fetchPaymentsSummary: (...args: unknown[]) => fetchPaymentsSummary(...args),
+  };
+});
 
 vi.mock("../../../lib/admin/dashboardApi", async () => {
   const actual = await vi.importActual<typeof import("../../../lib/admin/dashboardApi")>("../../../lib/admin/dashboardApi");
@@ -135,6 +144,7 @@ describe("Admin overview", () => {
     fetchAdminNeedsAttention.mockResolvedValue(attention);
     fetchAdminRecentActivity.mockResolvedValue(activity);
     fetchAdminDashboardTrends.mockResolvedValue(trends);
+    fetchPaymentsSummary.mockRejectedValue(new Error("not set up"));
   });
 
   it("shows documented counts, integer revenue, and unavailable metrics", async () => {
@@ -159,6 +169,32 @@ describe("Admin overview", () => {
     expect(screen.getAllByRole("table").length).toBeGreaterThan(0);
     expect(screen.queryByText(/Payments are not live/i)).not.toBeInTheDocument();
     expect(screen.queryByText("$0.00")).not.toBeInTheDocument();
+  });
+
+  it("collapses consecutive identical activity and keeps numbers while a refresh is in flight", async () => {
+    let release: (value: DashboardSummary) => void = () => undefined;
+    fetchAdminRecentActivity.mockResolvedValue([
+      { ...activity[0], label: "Account flag updated", subjectLabel: "Tina", jobReference: null, cursor: "a" },
+      { ...activity[0], label: "Account flag updated", subjectLabel: "Tina", jobReference: null, cursor: "b" },
+      { ...activity[0], cursor: "c" },
+    ]);
+    fetchAdminDashboardSummary.mockResolvedValueOnce(summary).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    const user = userEvent.setup();
+    renderOverview();
+    expect(await screen.findByText("Account flag updated · 2")).toBeInTheDocument();
+    expect(screen.getAllByText("Account flag updated", { exact: false })).toHaveLength(1);
+    expect(screen.getByText("Homeowner accounts, not counting deleted ones.")).toBeInTheDocument();
+    expect(screen.getByText(/Support requests arrive by email at/)).toBeInTheDocument();
+    expect(screen.queryByText(/gmail/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Refresh" }));
+    expect(screen.getAllByText("$14.98").length).toBeGreaterThan(0);
+    release(summary);
+    await waitFor(() => expect(fetchAdminDashboardSummary).toHaveBeenCalledTimes(2));
   });
 
   it("shows an empty activity feed without inventing rows", async () => {
@@ -210,6 +246,24 @@ describe("Admin overview", () => {
         includeTest: false,
       }),
     );
+  });
+
+  it("fills the net revenue card from the payments summary and leaves declines unset", async () => {
+    fetchPaymentsSummary.mockResolvedValue({
+      grossCents: 2497,
+      refundedCents: 0,
+      netCents: 2497,
+      failedCount: 1,
+      needsRefundCount: 2,
+      definition: "needs_refund flag is not a completed refund",
+    });
+    renderOverview();
+    expect(await screen.findByRole("link", { name: /Net revenue/ })).toHaveAttribute("href", "/app/admin/payments");
+    expect(screen.getByText("Succeeded live fees minus stored refunds")).toBeInTheDocument();
+    expect(screen.getAllByText("$14.98").length).toBeGreaterThan(0);
+    expect(screen.getByText("$24.97")).toBeInTheDocument();
+    expect(screen.queryByText("Card declines")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /mark paid|refund/i })).not.toBeInTheDocument();
   });
 
   it("requests the selected trend range", async () => {
