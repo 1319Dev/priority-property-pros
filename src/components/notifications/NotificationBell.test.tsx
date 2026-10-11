@@ -26,6 +26,8 @@ const items: InAppNotification[] = [
     title: "New estimate received",
     body: "A contractor sent an estimate for your project.",
     path: "/app/customer/projects/project-1/estimates/est-1",
+    projectTitle: "Fence repair",
+    referenceNumber: 1004,
     readAt: null,
     createdAt: new Date().toISOString(),
     category: "estimates",
@@ -68,6 +70,7 @@ describe("notification bell", () => {
     expect(screen.queryByRole("button", { name: "Close notifications" })).not.toBeInTheDocument();
     const link = screen.getByRole("link", { name: /new estimate received/i });
     expect(link).toHaveAttribute("href", "/app/customer/projects/project-1/estimates/est-1");
+    expect(screen.getByText("Fence repair · PPP-1004")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /mark all read/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Notifications" })).toBeInTheDocument();
     const settings = screen.getByRole("link", { name: /notification settings/i });
@@ -78,6 +81,33 @@ describe("notification bell", () => {
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(bell).toHaveFocus();
+  });
+
+  it("hides phone, email, and street details in the panel", async () => {
+    mockNarrow(false);
+    const user = userEvent.setup();
+    renderWithAuth(
+      <NotificationBell
+        preview={{
+          items: [
+            {
+              ...items[0],
+              id: "private",
+              title: "Call 512-555-0199",
+              body: "Email pat@example.com about 123 Main Street.",
+              projectTitle: "123 Main Street",
+            },
+          ],
+          unread: 1,
+        }}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: /notifications, 1 unread/i }));
+    expect(screen.getByText("Update")).toBeInTheDocument();
+    expect(screen.getByText("PPP-1004")).toBeInTheDocument();
+    expect(screen.queryByText(/512-555-0199/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/pat@example.com/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/123 Main Street/i)).not.toBeInTheDocument();
   });
 
   it("wraps long titles and closes when the pointer goes outside", async () => {
@@ -167,6 +197,32 @@ describe("notification settings", () => {
     expect(messagesEmail).toHaveAttribute("aria-checked", "false");
     expect(messagesPush).toHaveAttribute("aria-checked", "false");
     expect(screen.getByRole("button", { name: /enable push notifications/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "New jobs" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/a job is offered in your service area/i)).not.toBeInTheDocument();
+  });
+
+  it("shows new-job alerts only on a contractor account", () => {
+    const { unmount } = render(
+      <AuthContext.Provider value={signedInAuth("CONTRACTOR")}>
+        <MemoryRouter>
+          <NotificationSettings mode="preview" />
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    );
+    expect(screen.getByRole("heading", { name: "New jobs" })).toBeInTheDocument();
+    expect(screen.getByText(/a job is offered in your service area/i)).toBeInTheDocument();
+    unmount();
+
+    render(
+      <AuthContext.Provider value={signedInAuth("ADMIN")}>
+        <MemoryRouter>
+          <NotificationSettings mode="preview" />
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    );
+    expect(screen.queryByRole("heading", { name: "New jobs" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/a job is offered in your service area/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Messages" })).toBeInTheDocument();
   });
 
   it("shows the iPhone Home Screen guide instead of a push button", () => {

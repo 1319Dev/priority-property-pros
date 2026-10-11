@@ -217,7 +217,7 @@ describe("Contact-access + estimate-lifecycle SQL compatibility", () => {
     expect(liveMarkViewed).not.toMatch(/cust\.phone/);
     expect(liveSelect).not.toMatch(/street_line1/);
     expect(liveSelect).not.toMatch(/cust\.phone/);
-    expect(liveListNotes).toMatch(/strip_private_contact_keys\(n\.payload\)/);
+    expect(liveListNotes).toMatch(/strip_private_contact_keys\(coalesce\(a\.payload, '\{\}'::jsonb\)\)/);
     expect(liveEvents).toMatch(/strip_private_contact_keys/);
     expect(liveEnqueue).toMatch(/strip_private_contact_keys/);
     expect(compat).toMatch(/- 'phone' - 'email' - 'street'/);
