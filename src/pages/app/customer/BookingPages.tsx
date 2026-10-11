@@ -7,6 +7,7 @@ import { JobReference } from "../../../components/marketplace/JobReference";
 import { Button, ButtonLink } from "../../../components/ui/Button";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { FormError } from "../../../lib/auth/AuthCard";
+import { ErrorState, LoadingState } from "../../../components/ui/PageState";
 import { useAuth } from "../../../lib/auth/useAuth";
 import {
   cancelPendingBooking,
@@ -33,6 +34,7 @@ import {
   updateBookingReview,
   type RpcJson,
 } from "../../../lib/marketplace/api";
+import { loadCustomerBookingList } from "../../../lib/marketplace/customerBookingList";
 import { BOOKING_STATUS_LABELS, canCustomerCancelPendingBooking, canStartBooking } from "../../../lib/marketplace/bookings";
 import { CUSTOMER_PAYS_DIRECTLY, HIRE_AGAIN_EMPTY, HIRE_AGAIN_INTRO, customerWizardPath } from "../../../lib/marketplace/customerCopy";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
@@ -50,22 +52,32 @@ function statusLabel(status: string) {
 }
 
 export function CustomerBookingsPage() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
+  const ownerId = profile?.id ?? user?.id ?? null;
   const [rows, setRows] = useState<Booking[]>([]);
   const [titles, setTitles] = useState<Record<string, string>>({});
   const [references, setReferences] = useState<Record<string, number | null | undefined>>({});
   const [names, setNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (!profile) return;
-    void expireStalePendingBookings()
-      .then(() => Promise.all([fetchMyBookings("customer", profile.id), fetchCustomerProjects(profile.id)]))
-      .then(async ([data, projects]) => {
-        const bookings = data as Booking[];
+    if (!ownerId) return;
+    let stop = false;
+    setLoading(true);
+    setError(null);
+    void loadCustomerBookingList({
+      expireStale: expireStalePendingBookings,
+      fetchBookings: () => fetchMyBookings("customer", ownerId),
+      fetchProjects: () => fetchCustomerProjects(ownerId),
+    })
+      .then(async ({ bookings, projects }) => {
+        if (stop) return;
         setRows(bookings);
         setTitles(Object.fromEntries(projects.map((project) => [project.id, project.title || "Project"])));
         setReferences(Object.fromEntries(projects.map((project) => [project.id, project.reference_number])));
+        setLoading(false);
         const labeled = await Promise.all(
           bookings.map(async (row) => {
             const entitled = await fetchContractorNameForProject(row.project_id, row.contractor_profile_id).catch(() => null);
@@ -74,17 +86,25 @@ export function CustomerBookingsPage() {
             return [row.id, pro?.display_label || "Local pro"] as const;
           }),
         );
-        setNames(Object.fromEntries(labeled));
+        if (!stop) setNames(Object.fromEntries(labeled));
       })
-      .catch((err: Error) => setError(err.message));
-  }, [profile]);
+      .catch(() => {
+        if (stop) return;
+        setError("We couldn't load your bookings. Check your connection and try again.");
+        setLoading(false);
+      });
+    return () => {
+      stop = true;
+    };
+  }, [ownerId, attempt]);
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
         <p className="text-ink-700">Selecting a pro starts a booking. {CUSTOMER_PAYS_DIRECTLY}</p>
-      <FormError message={error} />
-      {rows.length === 0 ? (
+      {error ? <ErrorState message={error} onRetry={() => setAttempt((n) => n + 1)} /> : null}
+      {loading && !error ? <LoadingState label="Loading bookings…" /> : null}
+      {loading || error ? null : rows.length === 0 ? (
         <EmptyState title="No bookings yet" body="When you select a contractor, the booking will wait here. Nothing is marked paid." />
       ) : (
         <ul className="space-y-3">
