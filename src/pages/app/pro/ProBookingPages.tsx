@@ -4,7 +4,7 @@ import { BrandLoader } from "../../../components/brand/BrandLoader";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { ChangeOrderPanel } from "../../../components/marketplace/ChangeOrderPanel";
 import { JobReference } from "../../../components/marketplace/JobReference";
-import { Button, ButtonLink } from "../../../components/ui/Button";
+import { Button } from "../../../components/ui/Button";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { useAuth } from "../../../lib/auth/useAuth";
@@ -40,7 +40,6 @@ import {
   type ProjectContactView,
 } from "../../../lib/marketplace/contractorPolish";
 import { JobThreadPanel } from "../../../components/marketplace/JobThreadPanel";
-import { HiredJobsPanel } from "../../../components/marketplace/HiredJobsPanel";
 import { HiredJobStatusChip } from "../../../components/marketplace/HiredJobsSection";
 import { formatUsdFromCents } from "../../../lib/marketplace/fees";
 import { startComparisonLabel } from "../../../lib/marketplace/estimateComparison";
@@ -86,23 +85,6 @@ export function ProjectContactSection({ view }: { view: ProjectContactView }) {
         <p className="mt-3 leading-relaxed text-ink-700">{CONTRACTOR_CONTACT_LOCKED_COPY}</p>
       )}
     </section>
-  );
-}
-
-export function ProBookingsPage() {
-  return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="font-display text-4xl font-semibold text-forest-800">Bookings</h1>
-        <p className="mt-2 max-w-xl text-sm text-ink-700">
-          Hired jobs are listed under Jobs. This page stays available and shows the same list.
-        </p>
-      </header>
-      <ButtonLink to="/app/pro/opportunities?tab=hired" variant="outline">
-        Open Hired jobs
-      </ButtonLink>
-      <HiredJobsPanel showHeading={false} />
-    </div>
   );
 }
 

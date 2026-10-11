@@ -7,7 +7,7 @@ const baseItems: DashNavItem[] = [
   { to: "/app/pro/opportunities", label: "Jobs" },
   { to: "/app/pro/messages", label: "Messages" },
   { to: "/app/pro/estimates", label: "Estimates" },
-  { to: "/app/pro/bookings", label: "Bookings" },
+  { to: "/app/pro/billing", label: "Billing" },
   { to: "/app/pro/profile", label: "Profile" },
 ];
 

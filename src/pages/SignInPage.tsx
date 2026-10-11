@@ -4,6 +4,7 @@ import { BrandLoader } from "../components/brand/BrandLoader";
 import { Button } from "../components/ui/Button";
 import { TextInput } from "../components/ui/Input";
 import { dashboardPath } from "../lib/auth/publicEntry";
+import { safeReturnPath } from "../lib/auth/roles";
 import { AuthCard, FormError } from "../lib/auth/AuthCard";
 import { useAuth } from "../lib/auth/useAuth";
 import { SIGN_IN_CREATE_ACCOUNT_NOTE } from "../data/pricing";
@@ -19,12 +20,13 @@ export function SignInPage() {
 
   if (loading) return <BrandLoader layout="page" label="Loading…" />;
   if (user && account_type) {
-    const next = from || dashboardPath({
+    const home = dashboardPath({
       accountType: account_type,
       accountStatus: account_status,
       signupFeeEnabled: signup_fee_enabled,
       signupFeeStatus: signup_fee_status,
     });
+    const next = safeReturnPath(from, account_type, home);
     return <Navigate to={next} replace />;
   }
 

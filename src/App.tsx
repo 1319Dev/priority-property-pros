@@ -52,7 +52,8 @@ import {
 import { ConnectionCheckoutReturnPage } from "./pages/app/pro/ConnectionCheckoutReturnPage";
 import { ProProfilePage } from "./pages/app/pro/ProProfilePages";
 import { ProEstimatesPage } from "./pages/app/pro/ProEstimatesPages";
-import { ProBookingDetailPage, ProBookingRedirect, ProBookingsPage, ProHiredJobByProjectPage } from "./pages/app/pro/ProBookingPages";
+import { ProBookingDetailPage, ProBookingRedirect, ProHiredJobByProjectPage } from "./pages/app/pro/ProBookingPages";
+import { ProBillingPage } from "./pages/app/pro/ProBillingPage";
 import { VerifierHomePage, VerifierMessagesPage, VerifierVisitsPage } from "./pages/app/VerifierPages";
 const AdminShell = lazy(() => import("./pages/app/AdminShell").then((mod) => ({ default: mod.AdminShell })));
 const AdminHomePage = lazy(() => import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminHomePage })));
@@ -166,7 +167,10 @@ export default function App() {
             <Route path="connections/return" element={<ConnectionCheckoutReturnPage />} />
             <Route path="jobs/project/:projectId" element={<ProHiredJobByProjectPage />} />
             <Route path="jobs/:bookingId" element={<ProBookingDetailPage />} />
-            <Route path="bookings" element={<ProBookingsPage />} />
+            {/* Bookings duplicated Hired jobs; old links land there. */}
+            <Route path="bookings" element={<Navigate to="/app/pro/opportunities?tab=hired" replace />} />
+            <Route path="billing" element={<ProBillingPage />} />
+            <Route path="connections" element={<Navigate to="/app/pro/billing" replace />} />
             <Route path="bookings/:bookingId" element={<ProBookingRedirect />} />
             <Route path="estimates" element={<ProEstimatesPage />} />
             <Route path="onboarding" element={<ProOnboardingPage />} />

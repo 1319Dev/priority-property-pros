@@ -51,6 +51,47 @@ export function postLoginPath(
   return ROLE_HOME[accountType];
 }
 
+const ROLE_APP_PREFIXES = Object.entries(ROLE_HOME) as Array<[AccountType, string]>;
+
+/** Pages that exist under each role's own /app/<role> prefix (see App.tsx). */
+const ROLE_SHARED_PAGES: Record<AccountType, readonly string[]> = {
+  CUSTOMER: ["/account", "/account/notifications", "/notifications", "/messages"],
+  CONTRACTOR: ["/account", "/account/notifications", "/notifications", "/messages"],
+  VERIFIER: ["/account", "/account/notifications", "/messages"],
+  ADMIN: ["/account", "/account/notifications"],
+};
+
+/**
+ * A path saved before sign-in (or a link) can belong to another role, for example
+ * /app/customer/account from an earlier customer session. Send the signed-in role to
+ * the same page under its own prefix when that page exists for every role, otherwise
+ * to its dashboard. Paths outside /app/ are returned unchanged.
+ */
+export function pathForRole(path: string, accountType: AccountType): string {
+  const own = ROLE_HOME[accountType];
+  if (path === own || path.startsWith(`${own}/`) || path.startsWith(`${own}?`)) return path;
+  for (const [role, prefix] of ROLE_APP_PREFIXES) {
+    if (role === accountType) continue;
+    if (path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`)) {
+      const rest = path.slice(prefix.length).split(/[?#]/)[0];
+      return ROLE_SHARED_PAGES[accountType].includes(rest) ? `${own}${rest}` : own;
+    }
+  }
+  return path;
+}
+
+/**
+ * Where to go after sign-in. A saved "from" path is honored only when it is a local
+ * path; another role's /app path is mapped with pathForRole.
+ */
+export function safeReturnPath(from: string | null | undefined, accountType: AccountType, fallback: string): string {
+  if (typeof from !== "string" || !from.startsWith("/") || from.startsWith("//") || from.startsWith("/sign-in")) {
+    return fallback;
+  }
+  if (fallback === "/account/activate" || fallback === "/account/status") return fallback;
+  return pathForRole(from, accountType);
+}
+
 export function accountSettingsPath(
   accountType: AccountType | null,
   accountStatus: AccountStatus | null,
