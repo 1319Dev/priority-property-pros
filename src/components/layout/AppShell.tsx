@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import { PriorityHelp } from "../support/PriorityHelp";
 import { BottomNav } from "./BottomNav";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
@@ -12,6 +13,7 @@ export function AppShell() {
       </main>
       <Footer />
       <BottomNav />
+      <PriorityHelp />
     </div>
   );
 }
