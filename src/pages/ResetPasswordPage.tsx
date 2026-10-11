@@ -13,6 +13,7 @@ import {
   type RecoveryEstablishResult,
   type RecoveryLink,
 } from "../lib/auth/recoveryLink";
+import { passwordPolicyError } from "../lib/auth/passwordPolicy";
 import { postLoginPath } from "../lib/auth/roles";
 import { useAuth } from "../lib/auth/useAuth";
 import { getSupabaseClient } from "../lib/supabase/client";
@@ -125,8 +126,9 @@ export function ResetPasswordPage() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (password.length < 8) {
-      setError("Use at least 8 characters.");
+    const tooShort = passwordPolicyError(password);
+    if (tooShort) {
+      setError(tooShort);
       return;
     }
     setBusy(true);
