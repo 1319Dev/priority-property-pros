@@ -2,6 +2,10 @@
 /// <reference types="vite-plugin-pwa/client" />
 
 declare module "*.css";
+declare module "*.md?raw" {
+  const src: string;
+  export default src;
+}
 declare module "*.svg";
 declare module "*.svg?url" {
   const src: string;
@@ -16,6 +20,8 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_ANON_KEY?: string;
   readonly VITE_VAPID_PUBLIC_KEY?: string;
+  /** "true" publishes the draft legal pages. Any other value keeps them off the built site. */
+  readonly VITE_PUBLISH_LEGAL_PAGES?: string;
 }
 
 interface ImportMeta {

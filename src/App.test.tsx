@@ -181,6 +181,15 @@ describe("Phase 2 auth surfaces", () => {
     renderApp("/sign-up/contractor");
     expect(screen.getByLabelText(/business name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/primary trade/i)).toBeInTheDocument();
+    expect(screen.getByText(/Contractor Participation Terms/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /contractor participation terms/i })).not.toBeInTheDocument();
+  });
+
+  it("names the customer agreements on signup without linking unpublished drafts", () => {
+    renderApp("/sign-up/customer");
+    expect(screen.getByText(/Refund & Cancellation Policy/)).toBeInTheDocument();
+    expect(screen.getByText(/Review & Content Guidelines/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /refund & cancellation policy/i })).not.toBeInTheDocument();
   });
 
   it("shows email verification check-email state", () => {
@@ -333,6 +342,14 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
     expect(screen.getAllByRole("link", { name: /^faq$/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /^contact$/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /leave a review/i }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("link", { name: /^terms$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^privacy$/i })).not.toBeInTheDocument();
+  });
+
+  it("keeps draft terms and privacy off the site until the build flag is on", () => {
+    renderApp("/terms");
+    expect(screen.getByRole("heading", { name: /that page is not on this site/i })).toBeInTheDocument();
+    expect(screen.queryByText(/this is not legal advice/i)).not.toBeInTheDocument();
   });
 
   it("redirects old WordPress /services and /about paths", () => {

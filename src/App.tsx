@@ -78,6 +78,27 @@ const DevNotificationPreview = import.meta.env.DEV
     )
   : null;
 
+/** Off unless the build sets VITE_PUBLISH_LEGAL_PAGES=true. Drafts stay out of the production bundle. */
+const publishLegalPages = import.meta.env.VITE_PUBLISH_LEGAL_PAGES === "true";
+const TermsPage = publishLegalPages
+  ? lazy(() => import("./pages/TermsPage").then((mod) => ({ default: mod.TermsPage })))
+  : null;
+const PrivacyPage = publishLegalPages
+  ? lazy(() => import("./pages/PrivacyPage").then((mod) => ({ default: mod.PrivacyPage })))
+  : null;
+const RefundPolicyPage = publishLegalPages
+  ? lazy(() => import("./pages/RefundPolicyPage").then((mod) => ({ default: mod.RefundPolicyPage })))
+  : null;
+const CommunityGuidelinesPage = publishLegalPages
+  ? lazy(() => import("./pages/CommunityGuidelinesPage").then((mod) => ({ default: mod.CommunityGuidelinesPage })))
+  : null;
+const ContractorTermsPage = publishLegalPages
+  ? lazy(() => import("./pages/ContractorTermsPage").then((mod) => ({ default: mod.ContractorTermsPage })))
+  : null;
+const ReviewGuidelinesPage = publishLegalPages
+  ? lazy(() => import("./pages/ReviewGuidelinesPage").then((mod) => ({ default: mod.ReviewGuidelinesPage })))
+  : null;
+
 function StripTrailingSlash() {
   const location = useLocation();
   if (location.pathname.length > 1 && location.pathname.endsWith("/")) {
@@ -121,6 +142,66 @@ export default function App() {
         <Route path="/post-project" element={<PostProjectPage />} />
         <Route path="/trust" element={<TrustPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
+        {TermsPage ? (
+          <Route
+            path="/terms"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading terms…" />}>
+                <TermsPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {PrivacyPage ? (
+          <Route
+            path="/privacy"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading privacy policy…" />}>
+                <PrivacyPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {RefundPolicyPage ? (
+          <Route
+            path="/refunds"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading refund policy…" />}>
+                <RefundPolicyPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {CommunityGuidelinesPage ? (
+          <Route
+            path="/community-guidelines"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading community guidelines…" />}>
+                <CommunityGuidelinesPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {ContractorTermsPage ? (
+          <Route
+            path="/contractor-terms"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading contractor terms…" />}>
+                <ContractorTermsPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {ReviewGuidelinesPage ? (
+          <Route
+            path="/content-guidelines"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading review guidelines…" />}>
+                <ReviewGuidelinesPage />
+              </Suspense>
+            }
+          />
+        ) : null}
       </Route>
 
       {DevNotificationPreview ? (
