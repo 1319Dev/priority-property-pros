@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  BUSINESS_MAILING_ADDRESS,
   MESSAGE_EMAIL_THROTTLE_MS,
   MINIMAL_MESSAGE_EMAIL,
   NOTIFICATION_CATEGORIES,
@@ -172,6 +173,27 @@ describe("notification email copy", () => {
     expect(email.text).not.toContain("555-0100");
     expect(email.html).toContain("support@prioritypropertypros.com");
     expect(email.text).toContain("support@prioritypropertypros.com");
+  });
+
+  it("prints the business mailing address in the text and HTML footer", () => {
+    const address = "Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US";
+    expect(BUSINESS_MAILING_ADDRESS).toBe(address);
+    for (const kind of ["message.received", "estimate.received"]) {
+      const email = buildNotificationEmail({
+        kind,
+        title: "A new estimate is ready",
+        body: "Open the project to review it.",
+        itemUrl: "https://prioritypropertypros.com/app/customer/projects/p1",
+        manageUrl: "https://prioritypropertypros.com/notifications",
+        unsubscribeUrl: "https://example.supabase.co/functions/v1/notification-unsubscribe?token=abc",
+      });
+      const textFooter = email.text.slice(email.text.indexOf("Unsubscribe from these emails"));
+      expect(textFooter).toContain("support@prioritypropertypros.com");
+      expect(textFooter.trim().endsWith(address)).toBe(true);
+      const htmlFooter = email.html.slice(email.html.lastIndexOf("mailto:support@prioritypropertypros.com"));
+      expect(htmlFooter).toContain(address);
+      expect(email.html.indexOf(address)).toBeGreaterThan(email.html.indexOf("Unsubscribe from these emails"));
+    }
   });
 
   it("rejects external paths and keeps role-specific links", () => {

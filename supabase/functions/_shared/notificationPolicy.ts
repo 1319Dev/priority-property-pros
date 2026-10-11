@@ -54,6 +54,14 @@ export const UNSUBSCRIBE_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 180;
 
 export const MINIMAL_MESSAGE_EMAIL = "You have a new message on Priority Property Pros";
 
+/**
+ * Postal address printed in every notification email footer (CAN-SPAM requires
+ * a valid physical postal address in commercial email). Same address as the
+ * contact sections of the legal documents.
+ */
+export const BUSINESS_MAILING_ADDRESS =
+  "Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US";
+
 const EMAIL_ON_BY_DEFAULT = new Set<NotificationCategory>([
   "new_job",
   "messages",
@@ -376,6 +384,7 @@ export function buildNotificationEmail(input: {
     "",
     "Priority Property Pros",
     "support@prioritypropertypros.com",
+    BUSINESS_MAILING_ADDRESS,
   ].join("\n");
 
   const safeLead = escapeHtml(lead);
@@ -415,7 +424,8 @@ export function buildNotificationEmail(input: {
           <tr>
             <td style="padding:0 28px 22px;font-family:Arial, Helvetica, sans-serif;font-size:12px;line-height:1.5;color:#6b645a;">
               Priority Property Pros<br>
-              <a href="mailto:support@prioritypropertypros.com" style="color:#6b645a;">support@prioritypropertypros.com</a>
+              <a href="mailto:support@prioritypropertypros.com" style="color:#6b645a;">support@prioritypropertypros.com</a><br>
+              ${escapeHtml(BUSINESS_MAILING_ADDRESS)}
             </td>
           </tr>
         </table>
