@@ -110,6 +110,9 @@ describe("customer patches", () => {
     expect(patch).toEqual({ phone: "2815550142", email: "owen.new@example.com" });
     expect(patchNeedsStepUp(patch)).toBe(true);
     expect(patchNeedsStepUp({ first_name: "x" })).toBe(false);
+    expect(patchNeedsStepUp({ portfolio: [{ id: "p1", privacy_state: "PUBLIC_SAFE" }] })).toBe(true);
+    expect(patchNeedsStepUp({ credentials: [{ id: "c1", status: "VERIFIED" }] })).toBe(true);
+    expect(patchNeedsStepUp({ portfolio: [{ id: "p1", title: "Deck" }] })).toBe(false);
   });
 
   it("blocks contact info in public text and bad ZIPs before calling the server", () => {

@@ -444,8 +444,18 @@ export function buildContractorPatch(original: ContractorEditor, draft: Contract
   return patch;
 }
 
+/** Nested changes the server also treats as sensitive: photo approval state and credential status. */
+function listChanges(value: unknown, key: string): boolean {
+  return Array.isArray(value) && value.some((item) => item && typeof item === "object" && key in (item as Record<string, unknown>));
+}
+
 export function patchNeedsStepUp(patch: Patch): boolean {
-  return SENSITIVE_KEYS.some((key) => key in patch);
+  const record = patch as Record<string, unknown>;
+  return (
+    SENSITIVE_KEYS.some((key) => key in patch) ||
+    listChanges(record.portfolio, "privacy_state") ||
+    listChanges(record.credentials, "status")
+  );
 }
 
 const LABELS: Record<string, string> = {

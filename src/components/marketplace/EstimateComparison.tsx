@@ -79,7 +79,9 @@ export function EstimateComparison({
       </div>
       <p className="text-sm text-ink-700">Compare up to three estimates side by side. Pick the pro that fits you best.</p>
       {ordered.length === 0 ? <p className="text-sm text-ink-500">Submitted estimates will appear here.</p> : null}
-      <p className="text-sm font-semibold text-forest-800 lg:hidden">Swipe sideways to compare pros.</p>
+      {ordered.length > 1 ? (
+        <p className="text-sm font-semibold text-forest-800 lg:hidden">Swipe sideways to compare pros.</p>
+      ) : null}
       <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 lg:hidden" aria-label="Estimate cards">
         {ordered.map((row) => (
           <article

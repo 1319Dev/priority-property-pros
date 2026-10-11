@@ -1,8 +1,9 @@
 -- Admin corrections for customer and contractor profiles.
 -- Stacked on the homeowner (#106) and contractor (#109) directories.
 --
--- Step-up: email, phone, account status, approval status, and directory
--- visibility changes call public.admin_profile_edit_step_up(). That helper calls
+-- Step-up: email, phone, account status, approval status, directory
+-- visibility, photo approval state, and credential status changes call
+-- public.admin_profile_edit_step_up(). That helper calls
 -- public.assert_admin_sensitive_step_up() from PR #110 (migration 20261019000001)
 -- when it exists. Before #110 is deployed the helper is a no-op, so this
 -- migration can ship first; once #110 is applied the same calls enforce AAL2
@@ -1573,6 +1574,10 @@ BEGIN
           RAISE EXCEPTION 'That credential status is not valid.';
         END IF;
       END IF;
+      -- Credential verification status drives public badges; treat it as a #110 sensitive change.
+      IF v_cred_status IS DISTINCT FROM (v_row_before->>'status') THEN
+        PERFORM public.admin_profile_edit_step_up();
+      END IF;
       IF v_item ? 'expires_at' THEN
         IF nullif(v_item->>'expires_at', '') IS NULL THEN
           v_expires := NULL;
@@ -1639,6 +1644,10 @@ BEGIN
         IF v_privacy NOT IN ('PUBLIC_SAFE', 'PRIVATE', 'REVIEW_REQUIRED') THEN
           RAISE EXCEPTION 'That photo approval state is not valid.';
         END IF;
+      END IF;
+      -- Photo approval state is a #110 sensitive action (same as the review screen).
+      IF v_privacy IS DISTINCT FROM (v_row_before->>'privacy_state') THEN
+        PERFORM public.admin_profile_edit_step_up();
       END IF;
       UPDATE public.contractor_portfolio
       SET title = v_title,
@@ -1759,23 +1768,24 @@ WHERE cp.approval_status = 'APPROVED'
     OR lower(btrim(sc.name)) IS DISTINCT FROM lower(btrim(cp.business_name))
   );
 
+-- Rebuilt at deploy from the LIVE definition (includes #116 hidden_at filter + contractor_response); only change: NOT cp.directory_hidden.
 CREATE OR REPLACE VIEW public.contractor_public_reviews
 WITH (security_invoker = false)
 AS
-SELECT
-  r.id,
-  r.contractor_profile_id,
-  r.rating,
-  public.public_review_body(r.body, cp.business_name, p.first_name, p.last_name) AS body
-FROM public.booking_reviews r
-JOIN public.contractor_profiles cp ON cp.id = r.contractor_profile_id
-JOIN public.profiles p ON p.id = cp.profile_id
-WHERE r.is_verified = true
-  AND r.reviewer_role = 'CUSTOMER'
-  AND cp.approval_status = 'APPROVED'
-  AND p.account_status = 'ACTIVE'
-  AND NOT cp.directory_hidden
-  AND (NOT public.signup_fee_enabled() OR p.signup_fee_status IN ('PAID', 'NOT_REQUIRED') OR p.account_type NOT IN ('CUSTOMER', 'CONTRACTOR'));
+SELECT r.id,
+    r.contractor_profile_id,
+    r.rating,
+    public_review_body(r.body, cp.business_name, p.first_name, p.last_name) AS body,
+        CASE
+            WHEN r.contractor_response_hidden_at IS NOT NULL THEN NULL::text
+            WHEN r.contractor_response IS NULL OR btrim(r.contractor_response) = ''::text THEN NULL::text
+            WHEN text_contains_contact_info(r.contractor_response) THEN NULL::text
+            ELSE public_review_body(r.contractor_response, cp.business_name, p.first_name, p.last_name)
+        END AS contractor_response
+   FROM booking_reviews r
+     JOIN contractor_profiles cp ON cp.id = r.contractor_profile_id
+     JOIN profiles p ON p.id = cp.profile_id
+  WHERE r.is_verified = true AND r.reviewer_role = 'CUSTOMER'::text AND r.hidden_at IS NULL AND cp.approval_status = 'APPROVED'::approval_status AND NOT cp.directory_hidden AND p.account_status = 'ACTIVE'::account_status AND (NOT signup_fee_enabled() OR (p.signup_fee_status = ANY (ARRAY['PAID'::signup_fee_status, 'NOT_REQUIRED'::signup_fee_status])) OR (p.account_type <> ALL (ARRAY['CUSTOMER'::account_type, 'CONTRACTOR'::account_type])));
 
 CREATE OR REPLACE VIEW public.contractor_public_areas
 WITH (security_invoker = false)
@@ -1814,23 +1824,18 @@ WHERE pf.privacy_state = 'PUBLIC_SAFE'
   AND NOT public.text_contains_pre_hire_contact(pf.title)
   AND NOT public.text_contains_pre_hire_contact(coalesce(pf.description, ''));
 
+-- Rebuilt at deploy from the LIVE definition (includes #116 hidden_at filter + contractor_response); only change: NOT cp.directory_hidden.
 CREATE OR REPLACE VIEW public.contractor_public_ratings
 WITH (security_invoker = false)
 AS
-SELECT
-  r.contractor_profile_id,
-  round(avg(r.rating)::numeric, 1) AS rating_average,
-  count(*)::integer AS rating_count
-FROM public.booking_reviews r
-JOIN public.contractor_profiles cp ON cp.id = r.contractor_profile_id
-JOIN public.profiles p ON p.id = cp.profile_id
-WHERE r.is_verified = true
-  AND r.reviewer_role = 'CUSTOMER'
-  AND cp.approval_status = 'APPROVED'
-  AND p.account_status = 'ACTIVE'
-  AND NOT cp.directory_hidden
-  AND (NOT public.signup_fee_enabled() OR p.signup_fee_status IN ('PAID', 'NOT_REQUIRED') OR p.account_type NOT IN ('CUSTOMER', 'CONTRACTOR'))
-GROUP BY r.contractor_profile_id;
+SELECT r.contractor_profile_id,
+    round(avg(r.rating), 1) AS rating_average,
+    count(*)::integer AS rating_count
+   FROM booking_reviews r
+     JOIN contractor_profiles cp ON cp.id = r.contractor_profile_id
+     JOIN profiles p ON p.id = cp.profile_id
+  WHERE r.is_verified = true AND r.reviewer_role = 'CUSTOMER'::text AND r.hidden_at IS NULL AND cp.approval_status = 'APPROVED'::approval_status AND NOT cp.directory_hidden AND p.account_status = 'ACTIVE'::account_status AND (NOT signup_fee_enabled() OR (p.signup_fee_status = ANY (ARRAY['PAID'::signup_fee_status, 'NOT_REQUIRED'::signup_fee_status])) OR (p.account_type <> ALL (ARRAY['CUSTOMER'::account_type, 'CONTRACTOR'::account_type])))
+  GROUP BY r.contractor_profile_id;
 
 CREATE OR REPLACE FUNCTION public.list_public_directory_contractors()
 RETURNS TABLE (

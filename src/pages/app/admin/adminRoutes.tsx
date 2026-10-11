@@ -11,6 +11,7 @@ const AdminApprovalDetailPage = lazy(() =>
 const AdminReviewsPage = lazy(() => import("../AdminPages").then((mod) => ({ default: mod.AdminReviewsPage })));
 const AdminBookingsPage = lazy(() => import("../AdminPages").then((mod) => ({ default: mod.AdminBookingsPage })));
 const AdminTwoFactorPage = lazy(() => import("./AdminTwoFactorPage").then((mod) => ({ default: mod.AdminTwoFactorPage })));
+const AdminAuditPage = lazy(() => import("./AdminAuditPage").then((mod) => ({ default: mod.AdminAuditPage })));
 
 type RouteModule = {
   adminSectionRoutes?: ReactElement[];
@@ -25,11 +26,14 @@ export const adminExtensionRoutes: ReactElement[] = Object.keys(routeModules)
 
 export const adminChildRoutes: ReactElement[] = [
   <Route key="index" index element={<AdminHomePage />} />,
-  <Route key="approvals" path="approvals" element={<AdminApprovalsPage />} />,
-  <Route key="approval-detail" path="approvals/:contractorProfileId" element={<AdminApprovalDetailPage />} />,
+  <Route key="approvals" path="approvals" element={<AdminApprovalsPage />}>
+    <Route index element={null} />
+    <Route path=":contractorProfileId" element={<AdminApprovalDetailPage />} />
+  </Route>,
   <Route key="reviews" path="reviews" element={<AdminReviewsPage />} />,
   <Route key="bookings" path="bookings" element={<AdminBookingsPage />} />,
   <Route key="security" path="security" element={<AdminTwoFactorPage />} />,
+  <Route key="audit" path="audit" element={<AdminAuditPage />} />,
   <Route key="account" path="account" element={<AccountPage />} />,
   <Route key="account-notifications" path="account/notifications" element={<NotificationSettingsPage />} />,
   ...adminExtensionRoutes,

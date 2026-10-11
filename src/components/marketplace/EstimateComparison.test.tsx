@@ -86,4 +86,30 @@ describe("Estimate comparison", () => {
     await user.click(screen.getAllByRole("button", { name: "Hire" })[0]);
     expect(onStartHire).toHaveBeenCalledWith("high");
   });
+
+  it("shows the swipe hint only when there is more than one estimate to swipe", () => {
+    const props = {
+      confirmId: null,
+      busy: false,
+      bookingHref: null,
+      selectedCopy: "You selected this pro.",
+      confirmBody: "Choosing this pro starts a booking.",
+      onStartHire: () => undefined,
+      onConfirmHire: () => undefined,
+      onCancelHire: () => undefined,
+      onDecline: () => undefined,
+    };
+    const { rerender } = render(
+      <MemoryRouter>
+        <EstimateComparison rows={[rows[0]]} {...props} />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByText("Swipe sideways to compare pros.")).not.toBeInTheDocument();
+    rerender(
+      <MemoryRouter>
+        <EstimateComparison rows={rows} {...props} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Swipe sideways to compare pros.")).toBeInTheDocument();
+  });
 });

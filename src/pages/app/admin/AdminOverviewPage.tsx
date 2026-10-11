@@ -19,7 +19,10 @@ import {
 } from "../../../lib/admin/dashboardApi";
 import { friendlyAdminError } from "../../../lib/admin/friendlyAdminError";
 import { initialIncludeTest, AdminIncludeTestToggle } from "../../../components/admin/shell/AdminPageHeader";
+import { collapseActivity } from "../../../lib/admin/activityCollapse";
 import { formatCents, formatCentralTimestamp, trendQuery, type TrendPreset } from "../../../lib/admin/money";
+import { OVERVIEW_CARD_COPY } from "../../../lib/admin/overviewCardCopy";
+import { fetchPaymentsSummary, overlayNetRevenue } from "../../../lib/admin/paymentsApi";
 
 const FOREST = "var(--color-forest-800)";
 const GOLD = "var(--color-gold-500)";
@@ -29,6 +32,7 @@ type CardSpec = {
   label: string;
   href?: string;
   money?: boolean;
+  grossNote?: boolean;
   support?: boolean;
 };
 
@@ -56,9 +60,9 @@ const GROUPS: Array<{ title: string; cards: CardSpec[] }> = [
   {
     title: "Money",
     cards: [
-      { key: "revenue_month_cents", label: "Gross revenue this month", money: true },
-      { key: "revenue_lifetime_cents", label: "Gross revenue, lifetime", money: true },
-      { key: "revenue_net_cents", label: "Net revenue", money: true },
+      { key: "revenue_month_cents", label: "Gross revenue this month", money: true, grossNote: true },
+      { key: "revenue_lifetime_cents", label: "Gross revenue, lifetime", money: true, grossNote: true },
+      { key: "revenue_net_cents", label: "Net revenue", money: true, href: "/app/admin/payments" },
       { key: "checkouts_completed", label: "Checkouts completed" },
       { key: "checkouts_expired", label: "Checkouts expired" },
       { key: "checkouts_open", label: "Checkouts still open" },
@@ -114,6 +118,13 @@ export function AdminOverviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const generation = useRef(0);
+  const loaded = useRef({ summary: false, attention: false, rows: false, trends: false });
+  loaded.current = {
+    summary: summary != null,
+    attention: attention != null,
+    rows: rows != null,
+    trends: trends != null,
+  };
 
   useEffect(() => {
     const onFocus = () => setReloadKey((value) => value + 1);
@@ -126,13 +137,6 @@ export function AdminOverviewPage() {
     const nextGeneration = generation.current + 1;
     generation.current = nextGeneration;
     setLoading(true);
-    setSummary(null);
-    setAttention(null);
-    setRows(null);
-    setTrends(null);
-    setSummaryFailed(false);
-    setActivityFailed(false);
-    setTrendsFailed(false);
     setError(null);
     const range = trendQuery(preset);
     void Promise.allSettled([
@@ -146,14 +150,22 @@ export function AdminOverviewPage() {
       if (summaryResult.status === "fulfilled") {
         setSummary(summaryResult.value);
         setSummaryFailed(false);
+        void fetchPaymentsSummary(includeTest)
+          .then((money) => {
+            if (cancelled || generation.current !== nextGeneration) return;
+            setSummary((current) => overlayNetRevenue(current, money));
+          })
+          .catch(() => undefined);
       } else {
-        setSummary(null);
-        setSummaryFailed(true);
+        if (!loaded.current.summary) {
+          setSummary(null);
+          setSummaryFailed(true);
+        }
         problems.push(readError(summaryResult.reason, "Could not load the overview."));
       }
       if (attentionResult.status === "fulfilled") setAttention(attentionResult.value.items);
       else {
-        setAttention(null);
+        if (!loaded.current.attention) setAttention(null);
         problems.push(readError(attentionResult.reason, "Could not load what needs attention."));
       }
       if (activityResult.status === "fulfilled") {
@@ -161,17 +173,21 @@ export function AdminOverviewPage() {
         setHasMore(activityResult.value.length === ADMIN_ACTIVITY_PAGE_SIZE);
         setActivityFailed(false);
       } else {
-        setRows(null);
-        setHasMore(false);
-        setActivityFailed(true);
+        if (!loaded.current.rows) {
+          setRows(null);
+          setHasMore(false);
+          setActivityFailed(true);
+        }
         problems.push(readError(activityResult.reason, "Could not load recent activity."));
       }
       if (trendsResult.status === "fulfilled") {
         setTrends(trendsResult.value);
         setTrendsFailed(false);
       } else {
-        setTrends(null);
-        setTrendsFailed(true);
+        if (!loaded.current.trends) {
+          setTrends(null);
+          setTrendsFailed(true);
+        }
         problems.push(readError(trendsResult.reason, "Could not load the trends."));
       }
       setError(problems.length > 0 ? [...new Set(problems)].join(" ") : null);
@@ -291,9 +307,12 @@ export function AdminOverviewPage() {
           </p>
         ) : (
           <ul className="space-y-2">
-            {rows.map((row) => (
+            {collapseActivity(rows).map((row) => (
               <li key={row.cursor} className="rounded-3xl border border-forest-800/10 px-4 py-3">
-                <p className="font-semibold text-forest-800">{row.label}</p>
+                <p className="font-semibold text-forest-800">
+                  {row.label}
+                  {row.count > 1 ? ` · ${row.count}` : ""}
+                </p>
                 <p className="text-sm text-ink-500">{formatCentralTimestamp(row.occurredAt)}</p>
                 <p className="mt-1 text-sm text-ink-700">
                   {row.jobReference ? (
@@ -446,8 +465,12 @@ function MetricCard({
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">{card.label}</p>
       <p className="mt-2 font-display text-3xl font-semibold text-forest-800">{text}</p>
       {definition ? <p className="sr-only">{definition}</p> : null}
-      {card.money && text !== "Not set up yet" && text !== "—" ? (
+      {OVERVIEW_CARD_COPY[card.key] ? <p className="mt-1 text-xs text-ink-500">{OVERVIEW_CARD_COPY[card.key]}</p> : null}
+      {card.grossNote && text !== "Not set up yet" && text !== "—" ? (
         <p className="mt-1 text-xs text-ink-500">Gross, before Stripe fees</p>
+      ) : null}
+      {card.key === "revenue_net_cents" && metric?.status === "available" ? (
+        <p className="mt-1 text-xs text-ink-500">Succeeded live fees minus stored refunds</p>
       ) : null}
       {card.support ? (
         <a className="mt-2 inline-flex min-h-11 items-center font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>

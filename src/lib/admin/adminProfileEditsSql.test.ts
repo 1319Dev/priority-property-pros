@@ -85,7 +85,9 @@ describe("admin profile edits SQL", () => {
     expect(migration).not.toMatch(
       /(UPDATE|INSERT INTO|DELETE FROM)\s+public\.(payments|refunds|signup_fee_charges|project_connections|connection_checkout_sessions|contractor_stripe_accounts|booking_contact_access|ledger_entries)\b/,
     );
-    expect(migration).not.toMatch(/signup_fee_status\s*=/);
+    // Assignment only (an UPDATE ... SET). The live public views compare signup_fee_status = ANY(...) in WHERE, which is a read.
+    expect(migration).not.toMatch(/signup_fee_status\s*=(?!\s*ANY\b)/);
+    expect(migration).not.toMatch(/SET[^;]*\bsignup_fee_status\s*=/);
   });
 
   it("changes the sign-in email server-side and clears pending self-service changes", () => {

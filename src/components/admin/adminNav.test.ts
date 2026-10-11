@@ -15,22 +15,25 @@ describe("admin nav config", () => {
       "/app/admin",
       "/app/admin/homeowners",
       "/app/admin/contractors",
+      "/app/admin/projects",
+      "/app/admin/payments",
       "/app/admin/approvals",
       "/app/admin/reviews",
       "/app/admin/bookings",
       "/app/admin/security",
+      "/app/admin/audit",
       "/app/admin/account",
     ]);
     expect(routes).toContain('path="approvals"');
     expect(routes).toContain('path="reviews"');
     expect(routes).toContain('path="bookings"');
     expect(routes).toContain('path="security"');
+    expect(routes).toContain('path="audit"');
     expect(routes).toContain('path="account"');
     expect(routes).not.toMatch(/path="people"/);
-    expect(routes).not.toMatch(/path="audit"/);
     expect(ADMIN_NAV_GROUPS).toEqual(["Overview", "People", "Marketplace", "Money", "Trust", "Account"]);
     expect(adminNavByGroup("People").map((item) => item.id)).toEqual(["homeowners", "contractors"]);
-    expect(adminNavByGroup("Money")).toEqual([]);
+    expect(adminNavByGroup("Money").map((item) => item.id)).toEqual(["payments"]);
   });
 
   it("keeps the admin route tree out of the public bundle entry", () => {
@@ -39,6 +42,8 @@ describe("admin nav config", () => {
     expect(routes).toMatch(/lazy\(\(\) => import\("\.\.\/AdminPages"\)/);
     expect(app).not.toMatch(/^import \{ AdminShell \}/m);
     expect(app).not.toMatch(/from "\.\/pages\/app\/AdminPages"/);
+    expect(app).toContain('layout="inline" label="Loading admin…"');
+    expect(app).not.toContain('layout="page" label="Loading admin…"');
     expect(routes).toContain('import.meta.glob("./sections/*/routes.tsx"');
   });
 
@@ -73,7 +78,7 @@ describe("admin nav config", () => {
       },
     ]);
     expect(adminSearchHits("people").map((hit) => hit.label)).not.toContain("People");
-    expect(adminSearchHits("audit")).toEqual([]);
+    expect(adminSearchHits("audit").map((hit) => hit.label)).toEqual(["Audit log"]);
     expect(adminSearchHits("")).toEqual([]);
   });
 });

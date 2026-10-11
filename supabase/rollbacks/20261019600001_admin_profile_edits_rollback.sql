@@ -47,22 +47,24 @@ WHERE cp.approval_status = 'APPROVED'
     OR lower(btrim(sc.name)) IS DISTINCT FROM lower(btrim(cp.business_name))
   );
 
+-- LIVE definition captured 2026-10-11 before deploy (after #116/#118).
 CREATE OR REPLACE VIEW public.contractor_public_reviews
 WITH (security_invoker = false)
 AS
-SELECT
-  r.id,
-  r.contractor_profile_id,
-  r.rating,
-  public.public_review_body(r.body, cp.business_name, p.first_name, p.last_name) AS body
-FROM public.booking_reviews r
-JOIN public.contractor_profiles cp ON cp.id = r.contractor_profile_id
-JOIN public.profiles p ON p.id = cp.profile_id
-WHERE r.is_verified = true
-  AND r.reviewer_role = 'CUSTOMER'
-  AND cp.approval_status = 'APPROVED'
-  AND p.account_status = 'ACTIVE'
-  AND (NOT public.signup_fee_enabled() OR p.signup_fee_status IN ('PAID', 'NOT_REQUIRED') OR p.account_type NOT IN ('CUSTOMER', 'CONTRACTOR'));
+SELECT r.id,
+    r.contractor_profile_id,
+    r.rating,
+    public_review_body(r.body, cp.business_name, p.first_name, p.last_name) AS body,
+        CASE
+            WHEN r.contractor_response_hidden_at IS NOT NULL THEN NULL::text
+            WHEN r.contractor_response IS NULL OR btrim(r.contractor_response) = ''::text THEN NULL::text
+            WHEN text_contains_contact_info(r.contractor_response) THEN NULL::text
+            ELSE public_review_body(r.contractor_response, cp.business_name, p.first_name, p.last_name)
+        END AS contractor_response
+   FROM booking_reviews r
+     JOIN contractor_profiles cp ON cp.id = r.contractor_profile_id
+     JOIN profiles p ON p.id = cp.profile_id
+  WHERE r.is_verified = true AND r.reviewer_role = 'CUSTOMER'::text AND r.hidden_at IS NULL AND cp.approval_status = 'APPROVED'::approval_status AND p.account_status = 'ACTIVE'::account_status AND (NOT signup_fee_enabled() OR (p.signup_fee_status = ANY (ARRAY['PAID'::signup_fee_status, 'NOT_REQUIRED'::signup_fee_status])) OR (p.account_type <> ALL (ARRAY['CUSTOMER'::account_type, 'CONTRACTOR'::account_type])));
 
 CREATE OR REPLACE VIEW public.contractor_public_areas
 WITH (security_invoker = false)
@@ -99,22 +101,18 @@ WHERE pf.privacy_state = 'PUBLIC_SAFE'
   AND NOT public.text_contains_pre_hire_contact(pf.title)
   AND NOT public.text_contains_pre_hire_contact(coalesce(pf.description, ''));
 
+-- LIVE definition captured 2026-10-11 before deploy (after #116/#118).
 CREATE OR REPLACE VIEW public.contractor_public_ratings
 WITH (security_invoker = false)
 AS
-SELECT
-  r.contractor_profile_id,
-  round(avg(r.rating)::numeric, 1) AS rating_average,
-  count(*)::integer AS rating_count
-FROM public.booking_reviews r
-JOIN public.contractor_profiles cp ON cp.id = r.contractor_profile_id
-JOIN public.profiles p ON p.id = cp.profile_id
-WHERE r.is_verified = true
-  AND r.reviewer_role = 'CUSTOMER'
-  AND cp.approval_status = 'APPROVED'
-  AND p.account_status = 'ACTIVE'
-  AND (NOT public.signup_fee_enabled() OR p.signup_fee_status IN ('PAID', 'NOT_REQUIRED') OR p.account_type NOT IN ('CUSTOMER', 'CONTRACTOR'))
-GROUP BY r.contractor_profile_id;
+SELECT r.contractor_profile_id,
+    round(avg(r.rating), 1) AS rating_average,
+    count(*)::integer AS rating_count
+   FROM booking_reviews r
+     JOIN contractor_profiles cp ON cp.id = r.contractor_profile_id
+     JOIN profiles p ON p.id = cp.profile_id
+  WHERE r.is_verified = true AND r.reviewer_role = 'CUSTOMER'::text AND r.hidden_at IS NULL AND cp.approval_status = 'APPROVED'::approval_status AND p.account_status = 'ACTIVE'::account_status AND (NOT signup_fee_enabled() OR (p.signup_fee_status = ANY (ARRAY['PAID'::signup_fee_status, 'NOT_REQUIRED'::signup_fee_status])) OR (p.account_type <> ALL (ARRAY['CUSTOMER'::account_type, 'CONTRACTOR'::account_type])))
+  GROUP BY r.contractor_profile_id;
 
 CREATE OR REPLACE FUNCTION public.list_public_directory_contractors()
 RETURNS TABLE (
@@ -191,6 +189,8 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION public.contractor_is_directory_listed(uuid) FROM PUBLIC, anon, authenticated;
+COMMENT ON FUNCTION public.contractor_is_directory_listed(uuid) IS
+  'True only for APPROVED contractors whose account_status is ACTIVE and whose signup fee is satisfied. Used by public directory views.';
 
 CREATE OR REPLACE FUNCTION public.protect_contractor_approval()
 RETURNS trigger

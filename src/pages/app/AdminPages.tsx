@@ -21,7 +21,7 @@ import {
   formatContactAccessState,
   formatTimestamp,
   paymentsComingSoonCopy,
-  privateContactLockedCopy,
+  adminContactAccessIntro,
 } from "../../lib/marketplace/bookings";
 import type { BookingContactAccess } from "../../lib/marketplace/types";
 import { useToast } from "../../hooks/useToast";
@@ -307,7 +307,7 @@ export function AdminBookingsPage() {
 
       <section className="space-y-3 rounded-3xl border border-forest-800/10 px-5 py-4">
         <h2 className="font-display text-2xl text-forest-800">Grant contact access</h2>
-        <p className="text-sm text-ink-700">{privateContactLockedCopy()} This override is for one booking only and is audited.</p>
+        <p className="text-sm text-ink-700">{adminContactAccessIntro(access)} This override is for one booking only and is audited.</p>
         <label className="block">
           <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
             Reason (required)
