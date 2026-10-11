@@ -24,6 +24,24 @@ export const THREAD_EMPTY_BODY =
 export const MESSAGE_COMPOSER_HINT =
   "Phone numbers, emails, and street addresses stay out of this thread.";
 
+export const THREAD_HIDES_CONTACT_NOTICE = "This thread does not show phone, email, or street.";
+
+export const THREAD_CONTACT_BOX_NOTICE =
+  "Phone, email, and street are in the contact box. Messages in this thread still do not include them.";
+
+/** The message transcript and the contact box are different. Say which one is on screen. */
+export function threadContactNotice(contactLinesVisible: boolean): string {
+  return contactLinesVisible ? THREAD_CONTACT_BOX_NOTICE : THREAD_HIDES_CONTACT_NOTICE;
+}
+
+export const EMPTY_MESSAGE_BUBBLE = "No message text";
+
+/** Stored body only. A blank body does not fall back to the sender's name. */
+export function messageBubbleText(body: string | null | undefined): string {
+  const text = (body ?? "").replace(/\s+/g, " ").trim();
+  return text || EMPTY_MESSAGE_BUBBLE;
+}
+
 export function messageComposerHint(role: "customer" | "contractor", contactShared = false): string {
   const base = "Phone numbers, emails, and street addresses stay out of this thread.";
   if (role === "contractor") {
@@ -141,6 +159,17 @@ function textOrNull(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value : null;
 }
 
+export function coerceUnreadCount(value: unknown): number {
+  const raw =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && /^\d+$/.test(value.trim())
+        ? Number(value.trim())
+        : 0;
+  if (!Number.isFinite(raw) || raw <= 0) return 0;
+  return Math.min(999, Math.floor(raw));
+}
+
 /** Allowlist. Extra keys such as phone, email, or street are dropped. */
 export function sanitizeThreadSummary(value: unknown): MessageThreadSummary | null {
   if (!value || typeof value !== "object") return null;
@@ -160,7 +189,7 @@ export function sanitizeThreadSummary(value: unknown): MessageThreadSummary | nu
     last_message_at: textOrNull(row.last_message_at),
     last_preview: textOrNull(row.last_preview),
     last_sender_is_viewer: row.last_sender_is_viewer === true,
-    unread_count: typeof row.unread_count === "number" && row.unread_count > 0 ? Math.floor(row.unread_count) : 0,
+    unread_count: coerceUnreadCount(row.unread_count),
     last_read_at: textOrNull(row.last_read_at),
     booking_id: textOrNull(row.booking_id),
     opportunity_id: textOrNull(row.opportunity_id),
@@ -204,11 +233,9 @@ export function threadPlaceLabel(thread: Pick<MessageThreadSummary, "city" | "st
   return parts.length > 0 ? parts.join(", ") : null;
 }
 
-export function inboxPreview(preview: string | null | undefined, sentByViewer: boolean, senderLabel?: string | null): string {
-  const text = (preview ?? "").trim();
-  const name = (senderLabel ?? "").trim();
+export function inboxPreview(preview: string | null | undefined, sentByViewer: boolean, _senderLabel?: string | null): string {
+  const text = (preview ?? "").replace(/\s+/g, " ").trim();
   if (!text) return "No messages yet";
-  if (name && text.toLowerCase() === name.toLowerCase()) return "No message text yet";
   return sentByViewer ? `You: ${text}` : text;
 }
 
@@ -303,7 +330,7 @@ export function layoutThreadMessages(input: {
     items.push({
       kind: "message",
       id: message.id,
-      body: message.body,
+      body: messageBubbleText(message.body),
       createdAt: message.created_at,
       mine,
       showLabel: senderLabel !== lastSender,

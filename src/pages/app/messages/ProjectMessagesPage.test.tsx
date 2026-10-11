@@ -154,7 +154,8 @@ describe("project messages UI", () => {
     expect(await screen.findByRole("heading", { name: "Conversation not found" })).toBeInTheDocument();
     expect(ensureMessageThread).not.toHaveBeenCalled();
     expect(screen.queryByRole("heading", { name: "Fence repair" })).not.toBeInTheDocument();
-    expect(screen.getByText("No message text yet")).toBeInTheDocument();
+    expect(screen.getAllByText("Approved Fence Pro").length).toBeGreaterThan(0);
+    expect(screen.queryByText("No message text yet")).not.toBeInTheDocument();
   });
 
   it("explains that activation alone does not open a thread", async () => {
@@ -186,9 +187,11 @@ describe("project messages UI", () => {
     expect(await screen.findByRole("heading", { name: "Fence repair" })).toBeInTheDocument();
     expect(screen.getAllByText("Approved Fence Pro").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Decatur, GA").length).toBeGreaterThan(0);
-    expect(screen.getByText(/does not show phone, email, or street/i)).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: /share my contact & address/i })).toBeInTheDocument();
-    expect(screen.getByText("404-555-0199")).toBeInTheDocument();
+    expect(screen.getByText("(404) 555-0199")).toBeInTheDocument();
+    expect(screen.getByText(/contact box/i)).toBeInTheDocument();
+    expect(screen.queryByText(/this thread does not show phone, email, or street/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("404-555-0199")).not.toBeInTheDocument();
     expect(screen.getByText(/message box still blocks/i)).toBeInTheDocument();
     await user.type(screen.getByPlaceholderText(/write about the work/i), "Monday morning works.");
     await user.click(screen.getByRole("button", { name: "Send" }));
@@ -240,10 +243,156 @@ describe("project messages UI", () => {
     });
     renderAt("/app/pro/messages/p1/pro-1", <ProjectMessagesPage role="contractor" />);
     expect(await screen.findByText(/has not shared contact yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/this thread does not show phone, email, or street/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /share my contact/i })).not.toBeInTheDocument();
     expect(screen.queryByText("404-555-0199")).not.toBeInTheDocument();
+    expect(screen.queryByText("(404) 555-0199")).not.toBeInTheDocument();
     expect(screen.queryByText("pat@example.com")).not.toBeInTheDocument();
     expect(screen.queryByText(/12 Oak Street/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the stored message, the job number, and an unread mark at a phone width", async () => {
+    listMyMessageThreads.mockResolvedValue([
+      {
+        thread_id: "thread-1",
+        project_id: "p1",
+        contractor_profile_id: "pro-1",
+        project_title: "Fence repair",
+        project_reference_number: 1004,
+        city: "Decatur",
+        state: "GA",
+        contractor_label: "Plymate Property Maintenance",
+        other_party_label: "Plymate Property Maintenance",
+        last_message_at: "2026-10-08T18:00:00.000Z",
+        last_preview: "Plymate Property Maintenance",
+        last_sender_is_viewer: false,
+        unread_count: "2",
+      },
+    ]);
+    listProjectMessages.mockResolvedValue([
+      {
+        id: "m-blank",
+        thread_id: "thread-1",
+        sender_profile_id: "pro-user",
+        body: "   ",
+        created_at: "2026-10-08T17:00:00.000Z",
+      },
+      {
+        id: "m-name",
+        thread_id: "thread-1",
+        sender_profile_id: "pro-user",
+        body: "Plymate Property Maintenance",
+        created_at: "2026-10-08T18:00:00.000Z",
+      },
+    ]);
+    getSharedProjectContact.mockResolvedValue({
+      eligible: true,
+      customer_shared: true,
+      name: "Pat Lee",
+      phone: "9367188184",
+      email: "pat@example.com",
+      street_line1: "12 Oak Street",
+      city: "Decatur",
+      state: "GA",
+      zip_code: "30030",
+    });
+    render(
+      <AuthContext.Provider value={auth()}>
+        <MemoryRouter initialEntries={["/app/customer/messages"]}>
+          <div className="mx-auto w-[390px] max-w-[390px]">
+            <Routes>
+              <Route path="/app/customer/messages" element={<ProjectMessagesPage role="customer" />} />
+              <Route path="/app/customer/messages/:projectId/:contractorProfileId" element={<ProjectMessagesPage role="customer" />} />
+            </Routes>
+          </div>
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    );
+    expect(await screen.findByText("Unread 2")).toBeInTheDocument();
+    expect(screen.getByText("PPP-1004")).toBeInTheDocument();
+    expect(screen.getAllByText("Plymate Property Maintenance").length).toBeGreaterThan(0);
+    expect(screen.queryByText("No message text yet")).not.toBeInTheDocument();
+    expect(screen.queryByText("9367188184")).not.toBeInTheDocument();
+    expect(screen.queryByText(/12 Oak Street/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps a name-only stored message and formats an unlocked phone in the open thread", async () => {
+    const user = userEvent.setup();
+    listMyMessageThreads.mockResolvedValue([
+      {
+        thread_id: "thread-1",
+        project_id: "p1",
+        contractor_profile_id: "pro-1",
+        project_title: "Fence repair",
+        project_reference_number: 1004,
+        city: "Decatur",
+        state: "GA",
+        contractor_label: "Plymate Property Maintenance",
+        other_party_label: "Plymate Property Maintenance",
+        last_message_at: "2026-10-08T18:00:00.000Z",
+        last_preview: "Plymate Property Maintenance",
+        last_sender_is_viewer: false,
+        unread_count: 1,
+        booking_id: "book-1",
+      },
+    ]);
+    listProjectMessages.mockResolvedValue([
+      {
+        id: "m-blank",
+        thread_id: "thread-1",
+        sender_profile_id: "pro-user",
+        body: "   ",
+        created_at: "2026-10-08T17:00:00.000Z",
+      },
+      {
+        id: "m-name",
+        thread_id: "thread-1",
+        sender_profile_id: "pro-user",
+        body: "Plymate Property Maintenance",
+        created_at: "2026-10-08T18:00:00.000Z",
+      },
+    ]);
+    getSharedProjectContact.mockResolvedValue({
+      eligible: true,
+      customer_shared: true,
+      name: "Pat Lee",
+      phone: "9367188184",
+      email: "pat@example.com",
+      street_line1: "12 Oak Street",
+      city: "Decatur",
+      state: "GA",
+      zip_code: "30030",
+    });
+    renderAt("/app/customer/messages/p1/pro-1");
+    expect(await screen.findByRole("heading", { name: "PPP-1004 · Fence repair" })).toBeInTheDocument();
+    expect(await screen.findByText("No message text")).toBeInTheDocument();
+    expect(screen.getAllByText("Plymate Property Maintenance").length).toBeGreaterThan(0);
+    expect(screen.queryByText("No message text yet")).not.toBeInTheDocument();
+    expect(await screen.findByText("(936) 718-8184")).toBeInTheDocument();
+    expect(screen.getByText(/contact box/i)).toBeInTheDocument();
+    expect(screen.queryByText("9367188184")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View booking" })).toHaveAttribute("href", "/app/customer/bookings/book-1");
+    await user.click(screen.getByRole("link", { name: /back to messages/i }));
+  });
+
+  it("shows a contractor the shared phone only after the customer shares", async () => {
+    getSharedProjectContact.mockResolvedValue({
+      eligible: true,
+      customer_shared: true,
+      name: "Pat Lee",
+      phone: "9367188184",
+      email: "pat@example.com",
+      street_line1: "12 Oak Street",
+      city: "Decatur",
+      state: "GA",
+      zip_code: "30030",
+    });
+    renderAt("/app/pro/messages/p1/pro-1", <ProjectMessagesPage role="contractor" />);
+    expect(await screen.findByText("(936) 718-8184")).toBeInTheDocument();
+    expect(screen.getByText("12 Oak Street, Decatur, GA 30030")).toBeInTheDocument();
+    expect(screen.getByText(/contact box/i)).toBeInTheDocument();
+    expect(screen.queryByText("9367188184")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /share my contact/i })).not.toBeInTheDocument();
   });
 });
 
