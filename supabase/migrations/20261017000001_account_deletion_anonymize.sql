@@ -6,22 +6,37 @@
 --
 -- This keeps payment rows, audit logs, bookings, connections, and the other
 -- party's project. It anonymizes the closing account instead of cascading.
--- Active PENDING, AWAITING_PAYMENT, CONFIRMED, IN_PROGRESS, and DISPUTED
--- bookings block deletion.
+-- Active PENDING, AWAITING_PAYMENT, CONFIRMED, and IN_PROGRESS bookings block
+-- deletion. DISPUTED bookings and open Stripe disputes block with their own reason.
 --
 -- Guards below are the combined #88 + purge bodies. Apply #88 first, then this
 -- PR. These two functions keep contractor_end_job and add the purge UPDATE.
 -- Do not drop prod-only RPC names when diffing.
 --
 -- Prod dry run: rewriting email is rejected by protect_profile_columns, and
--- session_replication_role is permission denied. The profile row is removed
--- by the auth.users cascade, so email is left as-is. Owner-clearing project
+-- session_replication_role is permission denied. This function deletes the
+-- auth user itself, and the profile row goes with that cascade, so email is
+-- not rewritten first. Owner-clearing project
 -- updates skip enforce_signup_fee_on_projects. Signup-charge profile_id can
 -- be cleared only by this purge. audit_logs.actor_id, estimate_events.actor_id,
 -- and signup_fee_events.profile_id lose their foreign keys so the immutable
 -- history triggers do not block the auth.users delete. The ids stay as opaque
 -- uuids. protect_platform_review lets a server-side delete (no signed-in user)
 -- remove a deleted account's site review. Signed-in non-admins stay blocked.
+--
+-- One transaction: every detach, the audit row, and the auth-user delete.
+-- A failure rolls the whole close back. There is no second step that can
+-- leave an anonymized profile behind.
+--
+-- Pending projects: an empty DRAFT (no booking, connection, estimate,
+-- opportunity, or thread) is deleted. Every other project stays, with the
+-- owner and street address cleared. That is not a block.
+-- Active bookings (PENDING, AWAITING_PAYMENT, CONFIRMED, IN_PROGRESS) block.
+-- A DISPUTED booking or an open stripe_disputes row blocks with its own reason.
+-- needs_refund, or a refund still pending, blocks with its own reason.
+-- Payment, refund, ledger, dispute, checkout, and agreement rows are kept.
+-- Ledger and agreement links stay as opaque uuids because those rows cannot
+-- be updated. Other people's reviews, messages, and projects are not deleted.
 --
 -- Matching: setting account_status DELETED, approval_status SUSPENDED, and
 -- accepting_work false fires the existing rematch triggers. This migration
@@ -84,6 +99,19 @@ ALTER TABLE public.change_orders
   ADD CONSTRAINT change_orders_created_by_fkey
   FOREIGN KEY (created_by) REFERENCES public.profiles (id) ON DELETE SET NULL;
 
+-- Payments stay. Only the profile link is cleared. Stripe ids are not touched.
+ALTER TABLE public.payments DROP CONSTRAINT IF EXISTS payments_customer_id_fkey;
+ALTER TABLE public.payments ALTER COLUMN customer_id DROP NOT NULL;
+ALTER TABLE public.payments
+  ADD CONSTRAINT payments_customer_id_fkey
+  FOREIGN KEY (customer_id) REFERENCES public.profiles (id) ON DELETE SET NULL;
+
+-- Ledger rows are immutable, so the actor id stays and the foreign key goes.
+ALTER TABLE public.ledger_entries DROP CONSTRAINT IF EXISTS ledger_entries_actor_id_fkey;
+
+-- Terms and privacy acceptances stay, with the profile id kept as an opaque uuid.
+ALTER TABLE public.agreement_acceptances DROP CONSTRAINT IF EXISTS agreement_acceptances_profile_id_fkey;
+
 CREATE OR REPLACE FUNCTION public.purge_account_owned_rows(p_user_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -127,7 +155,73 @@ BEGIN
   IF EXISTS (
     SELECT 1
     FROM public.bookings b
-    WHERE b.status IN ('PENDING', 'AWAITING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS', 'DISPUTED')
+    WHERE b.status = 'DISPUTED'
+      AND (
+        b.customer_id = p_user_id
+        OR (v_contractor_id IS NOT NULL AND b.contractor_profile_id = v_contractor_id)
+      )
+  ) OR EXISTS (
+    SELECT 1
+    FROM public.stripe_disputes d
+    JOIN public.bookings b ON b.id = d.booking_id
+    WHERE d.status IN ('NEEDS_RESPONSE', 'UNDER_REVIEW', 'HELD')
+      AND (
+        b.customer_id = p_user_id
+        OR (v_contractor_id IS NOT NULL AND b.contractor_profile_id = v_contractor_id)
+      )
+  ) THEN
+    RAISE EXCEPTION 'Resolve the open dispute before deleting this account.';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM public.signup_fee_charges s
+    WHERE s.profile_id = p_user_id
+      AND s.needs_refund
+  ) OR EXISTS (
+    SELECT 1
+    FROM public.project_connections c
+    WHERE c.needs_refund
+      AND (
+        c.customer_id = p_user_id
+        OR (v_contractor_id IS NOT NULL AND c.contractor_profile_id = v_contractor_id)
+      )
+  ) OR EXISTS (
+    SELECT 1
+    FROM public.connection_checkout_sessions s
+    WHERE s.needs_refund
+      AND (
+        (v_contractor_id IS NOT NULL AND s.contractor_profile_id = v_contractor_id)
+        OR EXISTS (
+          SELECT 1
+          FROM public.project_connections c
+          WHERE c.id = s.connection_id
+            AND c.customer_id = p_user_id
+        )
+      )
+  ) OR EXISTS (
+    SELECT 1
+    FROM public.refunds r
+    JOIN public.payments pay ON pay.id = r.payment_id
+    WHERE pay.customer_id = p_user_id
+      AND lower(r.status) IN ('pending', 'requires_action', 'processing')
+  ) OR EXISTS (
+    SELECT 1
+    FROM public.refunds r
+    JOIN public.bookings b ON b.id = r.booking_id
+    WHERE lower(r.status) IN ('pending', 'requires_action', 'processing')
+      AND (
+        b.customer_id = p_user_id
+        OR (v_contractor_id IS NOT NULL AND b.contractor_profile_id = v_contractor_id)
+      )
+  ) THEN
+    RAISE EXCEPTION 'Wait until the outstanding refund is finished before deleting this account.';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM public.bookings b
+    WHERE b.status IN ('PENDING', 'AWAITING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS')
       AND (
         b.customer_id = p_user_id
         OR (v_contractor_id IS NOT NULL AND b.contractor_profile_id = v_contractor_id)
@@ -276,6 +370,30 @@ BEGIN
   SET created_by = NULL
   WHERE created_by = p_user_id;
 
+  UPDATE public.payments
+  SET customer_id = NULL
+  WHERE customer_id = p_user_id;
+
+  UPDATE public.refunds
+  SET created_by = NULL
+  WHERE created_by = p_user_id;
+
+  UPDATE public.booking_cancellations
+  SET created_by = NULL
+  WHERE created_by = p_user_id;
+
+  UPDATE public.payment_schedule_items
+  SET contractor_completed_by = NULL
+  WHERE contractor_completed_by = p_user_id;
+
+  UPDATE public.payment_schedule_items
+  SET customer_approved_by = NULL
+  WHERE customer_approved_by = p_user_id;
+
+  UPDATE public.admin_account_flags
+  SET set_by = NULL
+  WHERE set_by = p_user_id;
+
   DELETE FROM public.content_reports
   WHERE reporter_id = p_user_id;
 
@@ -287,8 +405,15 @@ BEGIN
     jsonb_build_object('self_service', true, 'anonymized', true)
   );
 
+  -- Same transaction as the detaches above. Profile cascade runs here.
+  DELETE FROM auth.users WHERE id = p_user_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'could not close the auth user';
+  END IF;
+
   RETURN jsonb_build_object(
     'ok', true,
+    'status', 'deleted',
     'contractor_profile_id', v_contractor_id,
     'anonymized', true
   );
@@ -299,7 +424,7 @@ REVOKE ALL ON FUNCTION public.purge_account_owned_rows(uuid) FROM PUBLIC, anon, 
 GRANT EXECUTE ON FUNCTION public.purge_account_owned_rows(uuid) TO service_role;
 
 COMMENT ON FUNCTION public.purge_account_owned_rows(uuid) IS
-  'Service-role account close. Blocks CONFIRMED, IN_PROGRESS, and DISPUTED bookings. Anonymizes the profile and pro card. Detaches customer_id on projects, bookings, and connections without changing connection status, fee_cents, paid_at, or payment flags. Never deletes payment rows, bookings, connections, checkout sessions, or audit logs.';
+  'Service-role account close in one transaction, including the auth user delete. Blocks active bookings, open disputes, and unfinished refunds. Anonymizes the pro card. Keeps projects except an empty draft. Never deletes payments, refunds, ledger rows, disputes, bookings, connections, checkout sessions, messages, booking reviews, agreement acceptances, or audit logs.';
 
 CREATE OR REPLACE FUNCTION public.protect_project_connection_row()
 RETURNS trigger

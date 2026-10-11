@@ -1,4 +1,6 @@
--- Exact rollback for 20261015000004_account_deletion_anonymize.sql.
+-- Exact rollback for 20261017000001_account_deletion_anonymize.sql.
+-- Revert the delete-account Edge Function with this file. The function no
+-- longer calls the auth admin API; this purge is what removes auth.users.
 -- Restores purge_account_owned_rows to the 20261008023600 body (it deletes
 -- bookings, connections, and change orders, and nulls selection columns).
 -- Restores the two connection guards to the 20260930000001 bodies, which allow
@@ -13,11 +15,29 @@
 -- ON DELETE SET NULL NOT VALID, because deleted accounts leave dangling ids.
 -- Restores protect_platform_review to the live body: DELETE requires an admin
 -- even when auth.uid() is null.
+-- Restores payments.customer_id NOT NULL ON DELETE RESTRICT. That SET NOT NULL
+-- fails if a payment was already detached. Do not delete the payment to force it.
+-- Re-adds ledger_entries_actor_id_fkey and agreement_acceptances_profile_id_fkey
+-- NOT VALID, because a closed account leaves those ids in place.
 -- Does not replace match_project, respond_change_order, or recompute_booking_money.
 
 ALTER TABLE public.audit_logs
   ADD CONSTRAINT audit_logs_actor_id_fkey
   FOREIGN KEY (actor_id) REFERENCES public.profiles (id) ON DELETE SET NULL;
+
+ALTER TABLE public.payments DROP CONSTRAINT IF EXISTS payments_customer_id_fkey;
+ALTER TABLE public.payments ALTER COLUMN customer_id SET NOT NULL;
+ALTER TABLE public.payments
+  ADD CONSTRAINT payments_customer_id_fkey
+  FOREIGN KEY (customer_id) REFERENCES public.profiles (id) ON DELETE RESTRICT;
+
+ALTER TABLE public.ledger_entries
+  ADD CONSTRAINT ledger_entries_actor_id_fkey
+  FOREIGN KEY (actor_id) REFERENCES public.profiles (id) NOT VALID;
+
+ALTER TABLE public.agreement_acceptances
+  ADD CONSTRAINT agreement_acceptances_profile_id_fkey
+  FOREIGN KEY (profile_id) REFERENCES public.profiles (id) ON DELETE CASCADE NOT VALID;
 
 
 ALTER TABLE public.signup_fee_charges DROP CONSTRAINT IF EXISTS signup_fee_charges_profile_id_fkey;

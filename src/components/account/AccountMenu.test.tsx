@@ -114,13 +114,12 @@ describe("Delete account confirmation gating", () => {
 
     const confirm = screen.getByRole("button", { name: /delete my account/i });
     expect(confirm).toBeDisabled();
-    await user.type(screen.getByLabelText(/type delete/i), "delete");
-    expect(confirm).toBeDisabled();
-    await user.clear(screen.getByLabelText(/type delete/i));
     await user.type(screen.getByLabelText(/type delete/i), "DELETE");
+    expect(confirm).toBeDisabled();
+    await user.type(screen.getByLabelText(/current password/i), "secret");
     expect(confirm).toBeEnabled();
     await user.click(confirm);
-    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onConfirm).toHaveBeenCalledWith("secret");
   });
 
   it("shows Delete account only on account settings, below Sign out", async () => {

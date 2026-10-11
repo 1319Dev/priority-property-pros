@@ -1,20 +1,22 @@
--- Walkthrough for 20261015000004_account_deletion_anonymize.sql.
+-- Walkthrough for 20261017000001_account_deletion_anonymize.sql.
 -- Do not run against production. Do not delete payment rows.
 --
--- 1. Customer with a PENDING, AWAITING_PAYMENT, CONFIRMED, IN_PROGRESS, or DISPUTED booking.
+-- 1. Customer with a PENDING, AWAITING_PAYMENT, CONFIRMED, or IN_PROGRESS booking.
 --    purge_account_owned_rows(user)
 --    Expect: exception 'Finish or cancel your active jobs before deleting this account.'
---    Bookings, connections, and signup_fee_charges are unchanged.
+--    Nothing is written. The auth user is still there.
+-- 1b. DISPUTED booking, or stripe_disputes NEEDS_RESPONSE / UNDER_REVIEW / HELD.
+--    Expect: 'Resolve the open dispute before deleting this account.'
 -- 2. Customer with only a COMPLETED booking and a PAID project_connection.
---    Expect: profiles.account_status = DELETED, email unchanged, phone null.
+--    Expect: one call removes auth.users and profiles. Email is gone with the profile.
 --    projects.customer_id null, selection columns unchanged.
 --    project_connections.status, fee_cents, paid_at, payments_live, charges_live unchanged.
 --    customer_id on that connection is null. signup_fee_charges row still exists,
 --    profile_id null, amount_cents still 999. No DELETE of those tables.
 -- 3. Contractor with a PAID connection and no active booking.
 --    Expect: contractor_profiles.business_name = 'Deleted Pro', approval_status
---    SUSPENDED, accepting_work false, profile_id still set until the auth user
---    is deleted (then ON DELETE SET NULL). The connection row remains.
+--    SUSPENDED, accepting_work false, profile_id null in the same call.
+--    The connection row remains. A NOT_REQUIRED signup fee (Plymate) is not a block.
 -- 4. Direct UPDATE of project_connections.status to PAID as the purge RPC.
 --    Expect: 'connection cannot be marked paid from the client' or the connection
 --    guard exception, because the purge branch requires status, fee, and paid_at
@@ -24,12 +26,20 @@
 -- 6. A DRAFT project with no booking, connection, estimate, opportunity, or thread
 --    is removed. A posted project is kept with customer_id null and street cleared.
 -- 7. account.deleted audit row exists. audit_logs are not deleted.
--- 8. Customer who accepted an estimate (estimate_events.actor_id set), paid the
+-- 8. Open dispute. A DISPUTED booking, or a stripe_disputes row in
+--    NEEDS_RESPONSE, UNDER_REVIEW, or HELD, raises
+--    'Resolve the open dispute before deleting this account.'
+--    The dispute row, booking, and payment stay.
+-- 9. Outstanding refund. needs_refund on a signup charge, connection, or
+--    checkout, or a refund status of pending, requires_action, or processing,
+--    raises 'Wait until the outstanding refund is finished before deleting this account.'
+--    The refund row stays.
+-- 10. Customer who accepted an estimate (estimate_events.actor_id set), paid the
 --    signup fee (signup_fee_charges plus signup_fee_events.profile_id set), and
 --    left a platform_reviews row. No PENDING, AWAITING_PAYMENT, CONFIRMED,
 --    IN_PROGRESS, or DISPUTED booking.
---    purge_account_owned_rows(user), then delete the auth user.
---    Expect: both succeed. payments, project_connections, bookings, change_orders,
+--    purge_account_owned_rows(user) deletes the auth user in the same transaction.
+--    Expect: success. payments, project_connections, bookings, change_orders,
 --    estimate_events, and signup_fee_events row counts are unchanged.
 --    signup_fee_charges.profile_id is null and amount_cents is still 999.
 --    estimate_events.actor_id and signup_fee_events.profile_id stay the old uuid.

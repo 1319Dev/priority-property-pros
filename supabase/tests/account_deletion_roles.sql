@@ -1,0 +1,56 @@
+-- Role and foreign-key walkthrough for 20261017000001_account_deletion_anonymize.sql.
+-- Run only on a copy of the current production schema, inside a transaction
+-- that ends in ROLLBACK. Do not run against production. Do not commit.
+--
+-- Set the service role first:
+--   SELECT set_config('request.jwt.claim.role', 'service_role', true);
+-- Then call public.purge_account_owned_rows(user_id).
+--
+-- Roles
+-- 1. CUSTOMER with no active booking, no open dispute, and no unfinished refund.
+--    Expect: auth.users and profiles are gone in the same call. An empty DRAFT
+--    project is gone. A POSTED project remains with customer_id null and the
+--    street cleared. payments, refunds, ledger_entries, stripe_disputes,
+--    signup_fee_charges, project_connections, bookings, change_orders,
+--    estimate_events, signup_fee_events, agreement_acceptances, and audit_logs
+--    row counts are unchanged. Stripe ids on the payment and refund stay.
+--    The customer's platform_reviews row is gone. A booking_reviews row they
+--    wrote stays, with customer_id null. Another user's booking review,
+--    message, and project are unchanged.
+-- 2. CONTRACTOR with signup_fee_status PAID and no active booking.
+--    Expect: success. contractor_profiles stays, business_name 'Deleted Pro',
+--    profile_id null, approval_status SUSPENDED. The other party's messages
+--    and booking stay. Opportunities and threads that point at the pro card stay.
+-- 3. CONTRACTOR with signup_fee_status NOT_REQUIRED (Plymate). Same result as
+--    role 2. NOT_REQUIRED is not a block and does not require a signup charge.
+-- 4. ADMIN when another ACTIVE admin exists. Expect: success, same as a customer
+--    with no jobs. ADMIN when this is the only ACTIVE admin.
+--    Expect: 'cannot delete the last active admin.' The auth user is still there.
+--
+-- Blocks, each leaving every row unchanged
+-- 5. Booking status PENDING, AWAITING_PAYMENT, CONFIRMED, or IN_PROGRESS, as
+--    customer or as the hired contractor.
+--    Expect: 'Finish or cancel your active jobs before deleting this account.'
+-- 6. Booking status DISPUTED, or stripe_disputes status NEEDS_RESPONSE,
+--    UNDER_REVIEW, or HELD.
+--    Expect: 'Resolve the open dispute before deleting this account.'
+-- 7. needs_refund on signup_fee_charges, project_connections, or
+--    connection_checkout_sessions, or refunds.status in pending,
+--    requires_action, or processing.
+--    Expect: 'Wait until the outstanding refund is finished before deleting this account.'
+--
+-- A finished refund (status succeeded) and a closed dispute (WON, LOST, CLOSED)
+-- do not block. Those rows stay.
+--
+-- Foreign keys that must not delete another person's rows or the money rows:
+-- profiles cascade removes only this account's own child rows (notifications,
+-- this user's platform review, this user's blocks).
+-- payments.customer_id, bookings.customer_id, projects.customer_id,
+-- project_connections.customer_id, and booking_reviews.customer_id are SET NULL.
+-- contractor_profiles.profile_id is SET NULL, so bookings, messages, reviews,
+-- and connections that point at the pro card stay.
+-- audit_logs, ledger_entries, estimate_events, signup_fee_events, and
+-- agreement_acceptances keep the old uuid with no foreign key.
+-- The purge body does not DELETE payments, refunds, ledger_entries,
+-- stripe_disputes, bookings, project_connections, project_messages,
+-- booking_reviews, change_orders, or agreement_acceptances.

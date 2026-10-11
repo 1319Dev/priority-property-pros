@@ -21,6 +21,7 @@ export function AccountPage() {
   const { profile, user, signOut, account_type, account_status, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteDone, setDeleteDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,7 +135,8 @@ export function AccountPage() {
       <section className="mt-10 border-t border-forest-800/10 pt-10">
         <h2 className="text-sm font-semibold text-ink-500">Delete account</h2>
         <p className="mt-2 text-sm leading-relaxed text-ink-500">
-          Permanently close this account and remove your profile. This cannot be undone.
+          Closes this account after you re-enter your password. Open jobs, an open dispute, or an
+          unfinished refund will block it. Payment records and other people's reviews and messages stay.
         </p>
         <button
           type="button"
@@ -150,26 +152,28 @@ export function AccountPage() {
       <DeleteAccountDialog
         open={deleteOpen}
         busy={busy}
+        deleted={deleteDone}
         error={error}
         onClose={() => {
-          if (busy) return;
+          if (busy || deleteDone) return;
           setDeleteOpen(false);
           setError(null);
         }}
-        onConfirm={() => {
+        onConfirm={(password) => {
           setBusy(true);
           setError(null);
-          void deleteOwnAccount()
-            .then(async (result) => {
-              if (result.error) {
-                setError(result.error);
+          void deleteOwnAccount(password)
+            .then((result) => {
+              if (result.error || !result.deleted) {
+                setError(result.error ?? "We couldn't delete this account. Nothing was changed and nothing was charged. If this keeps happening, contact support.");
                 return;
               }
-              await signOut();
-              setDeleteOpen(false);
-              navigate("/", { replace: true });
+              setDeleteDone(true);
             })
             .finally(() => setBusy(false));
+        }}
+        onFinished={() => {
+          void signOut().then(() => navigate("/", { replace: true }));
         }}
       />
     </div>

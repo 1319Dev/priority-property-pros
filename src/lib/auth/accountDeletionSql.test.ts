@@ -1,11 +1,11 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const migrationPath = path.join(repoRoot, "supabase/migrations/20261015000004_account_deletion_anonymize.sql");
-const rollbackPath = path.join(repoRoot, "supabase/rollbacks/20261015000004_account_deletion_anonymize_rollback.sql");
+const migrationPath = path.join(repoRoot, "supabase/migrations/20261017000001_account_deletion_anonymize.sql");
+const rollbackPath = path.join(repoRoot, "supabase/rollbacks/20261017000001_account_deletion_anonymize_rollback.sql");
 
 function functionBody(sql: string, name: string): string {
   const marker = `CREATE OR REPLACE FUNCTION public.${name}`;
@@ -17,6 +17,21 @@ function functionBody(sql: string, name: string): string {
 }
 
 describe("account deletion SQL", () => {
+  it("is the latest migration so it applies after the live blocks migration", () => {
+    const names = readdirSync(path.join(repoRoot, "supabase/migrations"))
+      .filter((name) => name.endsWith(".sql"))
+      .sort();
+    expect(names.at(-1)).toBe("20261017000001_account_deletion_anonymize.sql");
+    expect(names.includes("20261016000001_customer_contractor_blocks.sql")).toBe(true);
+    const roles = readFileSync(path.join(repoRoot, "supabase/tests/account_deletion_roles.sql"), "utf8");
+    expect(roles).toMatch(/CUSTOMER/);
+    expect(roles).toMatch(/CONTRACTOR/);
+    expect(roles).toMatch(/NOT_REQUIRED \(Plymate\)/);
+    expect(roles).toMatch(/only ACTIVE admin/);
+    expect(roles).toMatch(/payments, refunds, ledger_entries, stripe_disputes/);
+    expect(roles).toMatch(/Another user's booking review/);
+  });
+
   const migration = readFileSync(migrationPath, "utf8");
   const rollback = readFileSync(rollbackPath, "utf8");
   const purge = functionBody(migration, "purge_account_owned_rows");
@@ -25,7 +40,11 @@ describe("account deletion SQL", () => {
 
   it("anonymizes and never deletes payment rows", () => {
     expect(purge).toMatch(/Finish or cancel your active jobs before deleting this account/);
-    expect(purge).toMatch(/'PENDING', 'AWAITING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS', 'DISPUTED'/);
+    expect(purge).toMatch(/Resolve the open dispute before deleting this account/);
+    expect(purge).toMatch(/Wait until the outstanding refund is finished before deleting this account/);
+    expect(purge).toMatch(/'PENDING', 'AWAITING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS'/);
+    expect(purge).toMatch(/DELETE FROM auth\.users WHERE id = p_user_id/);
+    expect(purge).not.toMatch(/\bCOMMIT\b/);
     expect(purge).toMatch(/account_status = 'DELETED'/);
     expect(purge).toMatch(/Deleted Pro/);
     expect(purge).not.toMatch(/session_replication_role/);
@@ -39,6 +58,13 @@ describe("account deletion SQL", () => {
     expect(purge).not.toMatch(/DELETE FROM public\.change_orders/);
     expect(purge).not.toMatch(/DELETE FROM public\.estimate_events/);
     expect(purge).not.toMatch(/DELETE FROM public\.signup_fee_events/);
+    expect(purge).not.toMatch(/DELETE FROM public\.payments/);
+    expect(purge).not.toMatch(/DELETE FROM public\.refunds/);
+    expect(purge).not.toMatch(/DELETE FROM public\.ledger_entries/);
+    expect(purge).not.toMatch(/DELETE FROM public\.stripe_disputes/);
+    expect(purge).not.toMatch(/DELETE FROM public\.agreement_acceptances/);
+    expect(purge).not.toMatch(/DELETE FROM public\.project_messages/);
+    expect(purge).not.toMatch(/DELETE FROM public\.booking_reviews/);
     expect(purge).not.toMatch(/selected_contractor_profile_id = NULL/);
     expect(purge).not.toMatch(/fee_cents\s*=/);
     expect(migration).not.toMatch(/CREATE OR REPLACE FUNCTION public\.match_project/);
@@ -67,6 +93,9 @@ describe("account deletion SQL", () => {
     expect(migration).toMatch(/DROP CONSTRAINT IF EXISTS audit_logs_actor_id_fkey/);
     expect(migration).toMatch(/DROP CONSTRAINT IF EXISTS estimate_events_actor_id_fkey/);
     expect(migration).toMatch(/DROP CONSTRAINT IF EXISTS signup_fee_events_profile_id_fkey/);
+    expect(migration).toMatch(/DROP CONSTRAINT IF EXISTS ledger_entries_actor_id_fkey/);
+    expect(migration).toMatch(/DROP CONSTRAINT IF EXISTS agreement_acceptances_profile_id_fkey/);
+    expect(migration).toMatch(/payments_customer_id_fkey[\s\S]*ON DELETE SET NULL/);
     const reviewDelete = deleteBranch(functionBody(migration, "protect_platform_review"));
     expect(reviewDelete).toMatch(/auth\.uid\(\) IS NOT NULL AND NOT public\.is_admin\(\)/);
     expect(reviewDelete).toMatch(/only an admin can delete a platform review/);
@@ -95,6 +124,10 @@ describe("account deletion SQL", () => {
     expect(rollback).toMatch(
       /ADD CONSTRAINT signup_fee_events_profile_id_fkey[\s\S]*ON DELETE SET NULL NOT VALID/,
     );
+    expect(rollback).toMatch(/ADD CONSTRAINT payments_customer_id_fkey[\s\S]*ON DELETE RESTRICT/);
+    expect(rollback).toMatch(/ADD CONSTRAINT ledger_entries_actor_id_fkey/);
+    expect(rollback).toMatch(/ADD CONSTRAINT agreement_acceptances_profile_id_fkey[\s\S]*NOT VALID/);
+    expect(rollback).not.toMatch(/DELETE FROM auth\.users/);
     const reviewDelete = deleteBranch(functionBody(rollback, "protect_platform_review"));
     expect(reviewDelete).toMatch(/IF NOT public\.is_admin\(\) THEN/);
     expect(reviewDelete).toMatch(/only an admin can delete a platform review/);
