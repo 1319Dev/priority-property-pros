@@ -13,7 +13,7 @@ export function AdminPageHeader({
   return (
     <header className="flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Admin</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Admin</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{title}</h1>
         {description ? <p className="mt-3 max-w-2xl text-sm text-ink-700">{description}</p> : null}
       </div>

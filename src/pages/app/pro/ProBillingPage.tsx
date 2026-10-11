@@ -54,7 +54,7 @@ export function ProBillingPage() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Priority Pro</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Billing</h1>
         <p className="mt-2 max-w-xl text-sm text-ink-700">
           Your $4.99 Connect payments and your $9.99 account activation. PPP takes no share of job payments. Read-only.
