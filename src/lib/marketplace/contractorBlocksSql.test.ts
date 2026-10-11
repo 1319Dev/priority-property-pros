@@ -55,11 +55,17 @@ describe("customer contractor block SQL", () => {
     .sort();
 
   it("uses a version after 20261015000004 and does not reuse public_pro_labels", () => {
-    expect(names.at(-1)).toBe(migrationName);
     expect(migrationName > "20261015000004").toBe(true);
+    expect(names.includes(migrationName)).toBe(true);
     expect(names.includes("20261013000004_public_pro_labels.sql")).toBe(true);
     expect(names.filter((name) => name.startsWith("20261016000001"))).toEqual([migrationName]);
     expect(names.filter((name) => name.includes("customer_contractor_blocks"))).toEqual([migrationName]);
+    const later = names.filter((name) => name > migrationName);
+    for (const name of later) {
+      const sql = readMigration(name);
+      expect(sql).not.toMatch(/CREATE OR REPLACE FUNCTION public\.contractor_eligible_for_project/);
+      expect(sql).not.toMatch(/CREATE OR REPLACE FUNCTION public\.hire_again_contractors/);
+    }
   });
 
   it("adds only the block check to eligibility and hire again", () => {

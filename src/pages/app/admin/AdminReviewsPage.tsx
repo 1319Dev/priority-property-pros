@@ -8,12 +8,14 @@ import type { PlatformReview } from "../../../lib/marketplace/platformReviews";
 import { adminListPlatformReviews, adminSetPlatformReviewStatus } from "../../../lib/marketplace/platformReviewsApi";
 import { isSupabaseConfigured } from "../../../lib/supabase/config";
 import { StarRating } from "../../../features/reviews/ReviewCard";
+import { JobReviewModeration } from "./JobReviewModeration";
 
 export function AdminReviewsPage() {
   const [rows, setRows] = useState<PlatformReview[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [tab, setTab] = useState<"site" | "jobs">("site");
 
   useEffect(() => {
     let cancelled = false;
@@ -52,8 +54,29 @@ export function AdminReviewsPage() {
           both require a reason, and that reason is written to the audit log. These are not Google reviews.
         </p>
       </header>
-      <FormError message={error} />
-      {!loaded ? null : rows.length === 0 ? (
+      <div role="tablist" aria-label="Review moderation" className="flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "site"}
+          className={`min-h-11 w-full rounded-full px-4 text-sm font-semibold sm:w-auto ${tab === "site" ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-forest-800"}`}
+          onClick={() => setTab("site")}
+        >
+          Site reviews
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "jobs"}
+          className={`min-h-11 w-full rounded-full px-4 text-sm font-semibold sm:w-auto ${tab === "jobs" ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-forest-800"}`}
+          onClick={() => setTab("jobs")}
+        >
+          Job reviews
+        </button>
+      </div>
+      {tab === "jobs" ? <JobReviewModeration /> : null}
+      {tab === "site" ? <FormError message={error} /> : null}
+      {tab !== "site" ? null : !loaded ? null : rows.length === 0 ? (
         <EmptyState title="No platform reviews yet" body="Approved reviews will appear on /reviews and the homepage." />
       ) : (
         <ul className="space-y-3">
