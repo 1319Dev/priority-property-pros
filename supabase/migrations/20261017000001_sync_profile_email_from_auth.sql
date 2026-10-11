@@ -75,13 +75,15 @@ BEGIN
   WHERE id = NEW.id
     AND email IS DISTINCT FROM NEW.email;
 
-  PERFORM public.write_audit_log(
-    NEW.id,
-    'profile.email_synced',
-    'profiles',
-    NEW.id,
-    jsonb_build_object('previous_email', OLD.email, 'email', NEW.email)
-  );
+  IF FOUND THEN
+    PERFORM public.write_audit_log(
+      NEW.id,
+      'profile.email_synced',
+      'profiles',
+      NEW.id,
+      jsonb_build_object('previous_email', OLD.email, 'email', NEW.email)
+    );
+  END IF;
 
   RETURN NEW;
 END;

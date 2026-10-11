@@ -25,6 +25,7 @@ describe("profile email sync migration", () => {
     expect(migration).toMatch(/signup fee fields cannot be changed from the client/);
     expect(migration).toMatch(/REVOKE ALL ON FUNCTION public\.sync_profile_email_from_auth\(\) FROM PUBLIC, anon, authenticated/);
     expect(migration).toMatch(/GRANT EXECUTE ON FUNCTION public\.sync_profile_email_from_auth\(\) TO supabase_auth_admin/);
+    expect(migration).toMatch(/IF FOUND THEN/);
     expect(migration).toMatch(/profile\.email_synced/);
     expect(migration).not.toMatch(/signup_fee_status\s*=/);
   });
