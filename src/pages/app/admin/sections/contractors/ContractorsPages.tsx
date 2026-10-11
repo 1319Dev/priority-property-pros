@@ -5,6 +5,7 @@ import { AdminMasterDetail } from "../../../../../components/admin/shell/AdminMa
 import { AdminIncludeTestToggle, AdminPageHeader, initialIncludeTest } from "../../../../../components/admin/shell/AdminPageHeader";
 import { AdminStatusPill } from "../../../../../components/admin/shell/AdminStatusPill";
 import { useAdminDesktop } from "../../../../../components/admin/shell/useAdminDesktop";
+import { ContractorProfileEditor } from "../../../../../components/admin/profileEdit/ProfileEditors";
 import { ErrorState } from "../../../../../components/ui/PageState";
 import { Skeleton } from "../../../../../components/ui/Skeleton";
 import {
@@ -109,7 +110,7 @@ export function ContractorsLayout() {
     <div className="min-w-0 space-y-6">
       <AdminPageHeader
         title="Contractors"
-        description="Business names are visible here. This screen is read-only. Test accounts stay hidden unless you include them."
+        description="Business names are visible here. Open one to edit the profile; every save needs a reason and is audited. Test accounts stay hidden unless you include them."
         actions={<AdminIncludeTestToggle checked={includeTest} onChange={setIncludeTest} />}
       />
       <AdminMasterDetail
@@ -139,6 +140,7 @@ export function ContractorDetailPage() {
   const includeTest = outlet?.includeTest ?? initialIncludeTest();
   const [detail, setDetail] = useState<ContractorDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!contractorProfileId) return undefined;
@@ -155,7 +157,7 @@ export function ContractorDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [contractorProfileId, includeTest]);
+  }, [contractorProfileId, includeTest, reloadKey]);
 
   return (
     <div className="space-y-4">
@@ -164,12 +166,12 @@ export function ContractorDetailPage() {
       </Link>
       {error ? <ErrorState message={error} /> : null}
       {detail == null && !error ? <Skeleton className="h-40" /> : null}
-      {detail ? <ContractorDetailView detail={detail} /> : null}
+      {detail ? <ContractorDetailView detail={detail} onProfileSaved={() => setReloadKey((key) => key + 1)} /> : null}
     </div>
   );
 }
 
-export function ContractorDetailView({ detail }: { detail: ContractorDetail }) {
+export function ContractorDetailView({ detail, onProfileSaved }: { detail: ContractorDetail; onProfileSaved?: () => void }) {
   return (
     <article className="space-y-5 rounded-3xl border border-forest-800/10 bg-cream-50 px-4 py-4">
       <header>
@@ -185,6 +187,7 @@ export function ContractorDetailView({ detail }: { detail: ContractorDetail }) {
           {detail.flag ? <AdminStatusPill label={`Flag ${detail.flag}`} /> : null}
         </div>
       </header>
+      <ContractorProfileEditor key={detail.contractorProfileId} contractorProfileId={detail.contractorProfileId} onSaved={onProfileSaved} />
       <section>
         <h3 className="font-display text-xl text-forest-800">Jobs</h3>
         {detail.jobs.length === 0 ? <p className="mt-2 text-sm text-ink-700">No jobs yet.</p> : null}
