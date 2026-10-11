@@ -6,6 +6,7 @@ export type AdminIconName =
   | "reviews"
   | "bookings"
   | "security"
+  | "contact"
   | "account"
   | "search"
   | "menu"
@@ -66,6 +67,13 @@ function paths(name: AdminIconName) {
         <>
           <rect x="6" y="10" width="12" height="9" rx="2" {...stroke} />
           <path d="M8.5 10V8a3.5 3.5 0 0 1 7 0v2" {...stroke} />
+        </>
+      );
+    case "contact":
+      return (
+        <>
+          <rect x="3.5" y="5.5" width="17" height="13" rx="2" {...stroke} />
+          <path d="m4 7 8 6 8-6" {...stroke} />
         </>
       );
     case "account":

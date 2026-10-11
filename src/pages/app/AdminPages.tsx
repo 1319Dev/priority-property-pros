@@ -34,6 +34,7 @@ export function AdminHomePage() {
 
 export { AdminApprovalDetailPage, AdminApprovalsPage } from "./admin/AdminApprovalsPages";
 export { AdminReviewsPage } from "./admin/AdminReviewsPage";
+export { AdminContactMessagesPage } from "./admin/AdminContactMessagesPage";
 
 export type ContactAccessAuditEvent = {
   id: string;

@@ -17,6 +17,7 @@ import {
   type DashboardSummary,
   type DashboardTrends,
 } from "../../../lib/admin/dashboardApi";
+import { fetchUnhandledContactCount } from "../../../lib/admin/contactMessagesApi";
 import { friendlyAdminError } from "../../../lib/admin/friendlyAdminError";
 import { formatCents, formatCentralTimestamp, trendQuery, type TrendPreset } from "../../../lib/admin/money";
 
@@ -121,6 +122,7 @@ export function AdminOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [attention, setAttention] = useState<AttentionItem[] | null>(null);
+  const [openContacts, setOpenContacts] = useState(0);
   const [rows, setRows] = useState<ActivityRow[] | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [trends, setTrends] = useState<DashboardTrends | null>(null);
@@ -144,6 +146,7 @@ export function AdminOverviewPage() {
     setLoading(true);
     setSummary(null);
     setAttention(null);
+    setOpenContacts(0);
     setRows(null);
     setTrends(null);
     setSummaryFailed(false);
@@ -151,6 +154,13 @@ export function AdminOverviewPage() {
     setTrendsFailed(false);
     setError(null);
     const range = trendQuery(preset);
+    void fetchUnhandledContactCount()
+      .then((count) => {
+        if (!cancelled && generation.current === nextGeneration) setOpenContacts(count);
+      })
+      .catch(() => {
+        if (!cancelled && generation.current === nextGeneration) setOpenContacts(0);
+      });
     void Promise.allSettled([
       fetchAdminDashboardSummary(includeTest),
       fetchAdminNeedsAttention(includeTest),
@@ -284,13 +294,13 @@ export function AdminOverviewPage() {
         <h2 className="font-display text-2xl text-forest-800">Needs your attention</h2>
         {attention == null ? (
           <p className="text-sm text-ink-700">—</p>
-        ) : attention.length === 0 ? (
+        ) : withContactAttention(attention, openContacts).length === 0 ? (
           <p className="rounded-3xl border border-dashed border-forest-800/20 bg-cream-100 px-5 py-6 text-sm text-ink-700">
             Nothing needs a decision right now.
           </p>
         ) : (
           <ul className="space-y-2">
-            {attention.map((item) => (
+            {withContactAttention(attention, openContacts).map((item) => (
               <li key={item.kind} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-4 py-3">
                 {item.link ? (
                   <Link to={item.link} className="font-semibold text-forest-800 underline">
@@ -438,6 +448,20 @@ export function AdminOverviewPage() {
       </section>
     </div>
   );
+}
+
+function withContactAttention(items: AttentionItem[], openContacts: number): AttentionItem[] {
+  if (openContacts <= 0 || items.some((item) => item.kind === "contact_messages_open")) return items;
+  return [
+    ...items,
+    {
+      kind: "contact_messages_open",
+      count: openContacts,
+      severity: "medium",
+      link: "/app/admin/contact",
+      note: "Contact messages waiting to be handled",
+    },
+  ];
 }
 
 function series(

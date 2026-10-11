@@ -300,6 +300,33 @@ test.describe("admin cleanup copy", () => {
   }
 });
 
+test.describe("contact form stays inside 390 and 1280", () => {
+  for (const width of [390, 1280]) {
+    test(`contact form at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: width < 768 ? 844 : 900 });
+      await page.goto("/contact", { waitUntil: "domcontentloaded" });
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page.getByRole("heading", { name: /talk to priority property pros/i })).toBeVisible();
+      await page.getByRole("textbox", { name: /your name/i }).fill("Ada Lovelace");
+      await page.getByRole("textbox", { name: /^email$/i }).fill("ada@example.com");
+      await page.getByRole("textbox", { name: /phone/i }).fill("936-555-0100");
+      await page.getByLabel(/topic/i).selectOption("marketplace");
+      await page.getByRole("textbox", { name: /^message$/i }).fill("How do connection fees work for a side-yard fence?");
+      await page.getByRole("button", { name: /send message/i }).click();
+      await expect(page.getByRole("alert")).toContainText(/temporarily unavailable/i);
+      await expect(page.getByRole("link", { name: "support@prioritypropertypros.com" }).first()).toHaveAttribute(
+        "href",
+        "mailto:support@prioritypropertypros.com",
+      );
+      const box = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+      }));
+      expect(box.scrollWidth).toBeLessThanOrEqual(box.innerWidth + 1);
+    });
+  }
+});
+
 const adminOverviewWidths = [320, 390, 768, 1024, 1280];
 
 test.describe("admin overview stays within the viewport", () => {
@@ -331,6 +358,24 @@ test.describe("admin overview stays within the viewport", () => {
       }
     });
   }
+
+  test("contact messages stay inside 390 and 1280", async ({ page }) => {
+    for (const width of [390, 1280]) {
+      await page.setViewportSize({ width, height: width < 768 ? 844 : 900 });
+      await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=admin#/app/admin/contact", {
+        waitUntil: "domcontentloaded",
+      });
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page.getByRole("heading", { name: "Contact messages" })).toBeVisible();
+      await expect(page.getByText("Ada Lovelace")).toBeVisible();
+      await expect(page.getByText("Email sent")).toBeVisible();
+      const box = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+      }));
+      expect(box.scrollWidth).toBeLessThanOrEqual(box.innerWidth + 1);
+    }
+  });
 
   test("include-test switch responds to the keyboard", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });

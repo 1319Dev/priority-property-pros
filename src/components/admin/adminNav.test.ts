@@ -15,11 +15,13 @@ describe("admin nav config", () => {
       "/app/admin/approvals",
       "/app/admin/reviews",
       "/app/admin/bookings",
+      "/app/admin/contact",
       "/app/admin/security",
       "/app/admin/account",
     ]);
     expect(app).toContain('path="approvals"');
     expect(app).toContain('path="reviews"');
+    expect(app).toContain('path="contact"');
     expect(app).toContain('path="bookings"');
     expect(app).toContain('path="security"');
     expect(app).toContain('path="account"');
@@ -39,6 +41,11 @@ describe("admin nav config", () => {
     expect(adminBreadcrumbs("/app/admin/reviews")).toEqual([
       { label: "Overview", to: "/app/admin" },
       { label: "Reviews" },
+    ]);
+    expect(adminBreadcrumbs("/app/admin/contact/msg-1")).toEqual([
+      { label: "Overview", to: "/app/admin" },
+      { label: "Contact messages", to: "/app/admin/contact" },
+      { label: "Detail" },
     ]);
     expect(adminBreadcrumbs("/app/admin/approvals/cp-1")).toEqual([
       { label: "Overview", to: "/app/admin" },
@@ -64,6 +71,7 @@ describe("admin nav config", () => {
         to: "/app/admin/bookings?ref=PPP-1004",
       },
     ]);
+    expect(adminSearchHits("contact").map((hit) => hit.label)).toContain("Contact messages");
     expect(adminSearchHits("people").map((hit) => hit.label)).not.toContain("People");
     expect(adminSearchHits("audit")).toEqual([]);
     expect(adminSearchHits("")).toEqual([]);
