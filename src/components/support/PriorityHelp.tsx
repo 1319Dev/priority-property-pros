@@ -9,6 +9,7 @@ import {
   createBrowserHelpTransport,
   hasStoredGuestToken,
   helpErrorMessage,
+  previewForcesPriorityHelp,
   safeSupportText,
   type HelpAvailability,
   type HelpMessage,
@@ -22,6 +23,21 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([tabindex="-1"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const browserTransport = createBrowserHelpTransport();
+
+// One availability probe per page load for the real transport. Cached so the
+// public shell and the dashboard shell do not each ask.
+let browserEnabledProbe: Promise<boolean> | null = null;
+
+function probeEnabled(transport: HelpTransport, signedIn: boolean): Promise<boolean> {
+  const run = () =>
+    transport
+      .request({ action: "availability", signedIn })
+      .then((result) => result.ok && result.enabled === true)
+      .catch(() => false);
+  if (transport !== browserTransport) return run();
+  browserEnabledProbe ??= run();
+  return browserEnabledProbe;
+}
 
 const LAUNCHER_CLASS =
   "fixed z-[35] right-4 bottom-[calc(6.25rem+env(safe-area-inset-bottom))] inline-flex min-h-14 max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full bg-forest-800 px-4 text-cream-50 shadow-lg hover:bg-forest-700 lg:bottom-6 lg:right-6";
@@ -77,6 +93,8 @@ export function PriorityHelp({
   const panelRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(initialOpen);
+  // Hidden until the server confirms Priority Help is on (ships off).
+  const [enabled, setEnabled] = useState<boolean>(() => previewForcesPriorityHelp());
   const [intent, setIntent] = useState<"ask" | "human">(initialIntent);
   const [mode, setMode] = useState<HelpMode>("ai");
   const [availability, setAvailability] = useState<HelpAvailability>("offline");
@@ -90,6 +108,19 @@ export function PriorityHelp({
   const [turnstileToken, setTurnstileToken] = useState("");
   const siteKey = turnstileSiteKey();
   const humanComposer = mode === "human_only" || intent === "human";
+
+  useEffect(() => {
+    if (enabled) return undefined;
+    let stop = false;
+    void probeEnabled(transport, signedIn).then((on) => {
+      if (!stop && on) setEnabled(true);
+    });
+    return () => {
+      stop = true;
+    };
+    // Probe once per transport; the flag is re-checked on every server reply.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transport]);
 
   useEffect(() => {
     if (!siteKey) return undefined;
@@ -169,6 +200,13 @@ export function PriorityHelp({
   }, [open]);
 
   function applyResult(result: HelpResult, kind: "load" | "send" | "escalate") {
+    if (result.enabled === false && !previewForcesPriorityHelp()) {
+      // Turned off while the page was open (kill switch).
+      setEnabled(false);
+      setOpen(false);
+      setBusy(false);
+      return;
+    }
     setMode(result.mode);
     setAvailability(result.availability);
     setHumanJoined(result.humanJoined);
@@ -223,6 +261,7 @@ export function PriorityHelp({
   }
 
   if (pathname.startsWith("/app/admin")) return null;
+  if (!enabled) return null;
 
   const hint = humanComposer
     ? availability === "offline"

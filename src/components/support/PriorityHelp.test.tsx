@@ -13,6 +13,7 @@ import { PriorityHelp } from "./PriorityHelp";
 function idle(partial: Partial<HelpResult> = {}): HelpResult {
   return {
     ok: true,
+    enabled: true,
     mode: "ai",
     availability: "available",
     humanJoined: false,
@@ -39,7 +40,7 @@ describe("Priority Help widget", () => {
     const user = userEvent.setup();
     const transport: HelpTransport = { request: vi.fn(async () => idle()) };
     renderHelp(<PriorityHelp transport={transport} />);
-    const launcher = screen.getByRole("button", { name: "Priority Help AI assistant" });
+    const launcher = await screen.findByRole("button", { name: "Priority Help AI assistant" });
     expect(launcher.className).toContain("bottom-[calc(6.25rem+env(safe-area-inset-bottom))]");
     expect(launcher.className).toContain("lg:bottom-6");
     expect(launcher.className).not.toContain("z-40");
@@ -59,7 +60,7 @@ describe("Priority Help widget", () => {
     const user = userEvent.setup();
     const transport: HelpTransport = { request: vi.fn(async () => idle()) };
     renderHelp(<PriorityHelp transport={transport} />);
-    const launcher = screen.getByRole("button", { name: "Priority Help AI assistant" });
+    const launcher = await screen.findByRole("button", { name: "Priority Help AI assistant" });
     await user.click(launcher);
     await screen.findByRole("dialog", { name: "Priority Help AI assistant" });
     const talk = await screen.findByRole("button", { name: "Talk to Support" });
@@ -88,7 +89,7 @@ describe("Priority Help widget", () => {
       }),
     };
     renderHelp(<PriorityHelp transport={transport} />);
-    await user.click(screen.getByRole("button", { name: "Priority Help AI assistant" }));
+    await user.click(await screen.findByRole("button", { name: "Priority Help AI assistant" }));
     const box = await screen.findByRole("textbox", { name: "Your message" });
     await user.type(box, "What does activation cost?");
     await user.click(await screen.findByRole("button", { name: "Send" }));
@@ -124,7 +125,7 @@ describe("Priority Help widget", () => {
       }),
     };
     renderHelp(<PriorityHelp transport={transport} />);
-    await user.click(screen.getByRole("button", { name: "Priority Help AI assistant" }));
+    await user.click(await screen.findByRole("button", { name: "Priority Help AI assistant" }));
     expect(await screen.findByRole("status")).toHaveTextContent(/offline/i);
     expect(screen.getByRole("status")).not.toHaveTextContent(/your message is saved/i);
     expect(await screen.findByText(/Nobody is in this chat yet/i)).toBeInTheDocument();
@@ -147,7 +148,8 @@ describe("Priority Help widget", () => {
         <AppShell />
       </AuthContext.Provider>,
     );
-    expect(screen.getByRole("button", { name: "Priority Help AI assistant" })).toBeInTheDocument();
+    // No backend in tests, so the real transport cannot confirm Priority Help is on: hidden.
+    expect(screen.queryByRole("button", { name: "Priority Help AI assistant" })).not.toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "App" })).toBeInTheDocument();
   });
 
@@ -159,7 +161,7 @@ describe("Priority Help widget", () => {
         </MemoryRouter>
       </AuthContext.Provider>,
     );
-    expect(screen.getByRole("button", { name: "Priority Help AI assistant" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Priority Help AI assistant" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("navigation", { name: "Dashboard" }).length).toBeGreaterThan(0);
 
     const request = vi.fn(async () => idle({ messages: [{ id: "old", role: "assistant", body: "Activation is $9.99.", createdAt: "" }] }));
@@ -177,10 +179,41 @@ describe("Priority Help widget", () => {
   it("keeps the honeypot out of the tab order", async () => {
     const user = userEvent.setup();
     renderHelp(<PriorityHelp transport={{ request: vi.fn(async () => idle()) }} />);
-    await user.click(screen.getByRole("button", { name: "Priority Help AI assistant" }));
+    await user.click(await screen.findByRole("button", { name: "Priority Help AI assistant" }));
     await screen.findByRole("dialog");
     const trap = document.querySelector('input[name="company_website"]');
     expect(trap).toHaveAttribute("aria-hidden", "true");
     expect(trap).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("stays hidden until the server says Priority Help is on", async () => {
+    const off = vi.fn(async () => idle({ enabled: false }));
+    const { unmount } = renderHelp(<PriorityHelp transport={{ request: off }} />);
+    await waitFor(() => expect(off).toHaveBeenCalledWith(expect.objectContaining({ action: "availability" })));
+    expect(screen.queryByRole("button", { name: "Priority Help AI assistant" })).not.toBeInTheDocument();
+    unmount();
+
+    const failing = vi.fn(async () => idle({ ok: false, enabled: null, error: "support is unavailable" }));
+    const second = renderHelp(<PriorityHelp transport={{ request: failing }} />);
+    await waitFor(() => expect(failing).toHaveBeenCalled());
+    expect(screen.queryByRole("button", { name: "Priority Help AI assistant" })).not.toBeInTheDocument();
+    second.unmount();
+
+    renderHelp(<PriorityHelp transport={{ request: vi.fn(async () => idle()) }} />);
+    expect(await screen.findByRole("button", { name: "Priority Help AI assistant" })).toBeInTheDocument();
+  });
+
+  it("closes and hides when the kill switch turns Priority Help off mid-session", async () => {
+    const user = userEvent.setup();
+    let on = true;
+    const request = vi.fn(async (input: HelpRequest) => (input.action === "send" && !on ? idle({ ok: false, enabled: false, error: "priority help is off" }) : idle()));
+    renderHelp(<PriorityHelp transport={{ request }} />);
+    await user.click(await screen.findByRole("button", { name: "Priority Help AI assistant" }));
+    await screen.findByRole("dialog");
+    on = false;
+    await user.type(screen.getByRole("textbox", { name: "Your message" }), "How much is activation?");
+    await user.click(screen.getByRole("button", { name: /^(Send|Ask)/ }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: "Priority Help AI assistant" })).not.toBeInTheDocument();
   });
 });

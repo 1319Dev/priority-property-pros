@@ -6,6 +6,14 @@ export const GUEST_TOKEN_STORAGE_KEY = "ppp.priority-help.guest-token";
 export const SUPPORT_HANDOFF =
   "I can't share account or contact details here. Use Talk to Support so a person can help.";
 
+export const PRIORITY_HELP_PREVIEW_KEY = "ppp.priority-help.preview";
+
+// Priority Property Pros' own contact details may appear in an answer.
+const ALLOWED_CONTACT = [
+  /support@prioritypropertypros\.com/gi,
+  /(Priority Property Pros LLC,?\s*)?5900 Balcones Drive,? STE 100,? Austin,? TX 78731( US)?/gi,
+];
+
 const PRIVATE_LEAK =
   /contractor_fee|\b7\s*%|\b\d+\s*bps\b|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 
@@ -23,6 +31,8 @@ export type HelpMessage = {
 
 export type HelpResult = {
   ok: boolean;
+  /** true or false when the server said whether Priority Help is on; null when it did not say. */
+  enabled?: boolean | null;
   mode: HelpMode;
   availability: HelpAvailability;
   humanJoined: boolean;
@@ -63,7 +73,8 @@ export function availabilityNotice(availability: HelpAvailability, humanJoined: 
 
 export function safeSupportText(role: HelpRole, body: string): string {
   if (role === "customer") return body;
-  return PRIVATE_LEAK.test(body) ? SUPPORT_HANDOFF : body;
+  const checked = ALLOWED_CONTACT.reduce((acc, pattern) => acc.replace(pattern, " "), body);
+  return PRIVATE_LEAK.test(checked) ? SUPPORT_HANDOFF : body;
 }
 
 export function helpErrorMessage(code: string | null): string {
@@ -146,6 +157,7 @@ export function normalizeHelpPayload(data: unknown, fallbackError: string | null
   const refusal = typeof raw.refusal === "string" ? safeSupportText("assistant", raw.refusal) : null;
   return {
     ok: raw.ok === true && !error,
+    enabled: raw.enabled === true ? true : raw.enabled === false || error === "priority help is off" ? false : null,
     mode: raw.mode === "ai" ? "ai" : "human_only",
     availability: asAvailability(raw.availability ?? conversation.availability),
     humanJoined: raw.humanJoined === true || conversation.human_joined === true,
@@ -207,6 +219,20 @@ async function defaultInvoke(body: Record<string, unknown>) {
     data: result.data,
     error: result.error ? { message: result.error.message, context } : null,
   };
+}
+
+/**
+ * The launcher is shown only after the server says Priority Help is on.
+ * In the Vite dev server (tests and local preview) it can be forced on with
+ * localStorage "ppp.priority-help.preview" = "1". Production builds drop that.
+ */
+export function previewForcesPriorityHelp(): boolean {
+  if (!import.meta.env.DEV) return false;
+  try {
+    return globalThis.localStorage?.getItem(PRIORITY_HELP_PREVIEW_KEY) === "1";
+  } catch {
+    return false;
+  }
 }
 
 export function createBrowserHelpTransport(): HelpTransport {

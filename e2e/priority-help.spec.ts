@@ -29,6 +29,24 @@ async function visibleBottomNav(page: Page, name: string): Promise<Locator> {
   return match;
 }
 
+// Priority Help ships off and the launcher appears only after the server says it
+// is on. There is no backend here, so the dev-server preview switch shows it.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("ppp.priority-help.preview", "1");
+  });
+});
+
+test("Priority Help stays hidden without the preview switch when the server cannot confirm it is on", async ({ browser, baseURL }) => {
+  const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("navigation", { name: "App" }).first()).toBeAttached();
+  await page.waitForTimeout(500);
+  await expect(page.getByRole("button", { name: "Priority Help AI assistant" })).toHaveCount(0);
+  await context.close();
+});
+
 test("Priority Help stays above the public tab bar at 390 and 1280", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/", { waitUntil: "domcontentloaded" });

@@ -5,6 +5,7 @@ import { PriorityHelp } from "../../src/components/support/PriorityHelp";
 function idle(partial = {}) {
   return {
     ok: true,
+    enabled: true,
     mode: "ai",
     availability: "available",
     humanJoined: false,
