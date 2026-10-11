@@ -1,6 +1,7 @@
 import { lazy, type ReactElement } from "react";
 import { Route } from "react-router-dom";
 import { AccountPage } from "../CustomerPages";
+import { NotificationHistoryPage } from "../NotificationHistoryPage";
 import { NotificationSettingsPage } from "../NotificationSettingsPage";
 
 const AdminHomePage = lazy(() => import("../AdminPages").then((mod) => ({ default: mod.AdminHomePage })));
@@ -35,6 +36,7 @@ export const adminChildRoutes: ReactElement[] = [
   <Route key="security" path="security" element={<AdminTwoFactorPage />} />,
   <Route key="audit" path="audit" element={<AdminAuditPage />} />,
   <Route key="account" path="account" element={<AccountPage />} />,
+  <Route key="notifications" path="notifications" element={<NotificationHistoryPage />} />,
   <Route key="account-notifications" path="account/notifications" element={<NotificationSettingsPage />} />,
   ...adminExtensionRoutes,
 ];

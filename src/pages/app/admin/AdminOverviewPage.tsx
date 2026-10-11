@@ -21,7 +21,7 @@ import { friendlyAdminError } from "../../../lib/admin/friendlyAdminError";
 import { initialIncludeTest, AdminIncludeTestToggle } from "../../../components/admin/shell/AdminPageHeader";
 import { collapseActivity } from "../../../lib/admin/activityCollapse";
 import { formatCents, formatCentralTimestamp, trendQuery, type TrendPreset } from "../../../lib/admin/money";
-import { OVERVIEW_CARD_COPY } from "../../../lib/admin/overviewCardCopy";
+import { overviewCardDescription, overviewCardVisible } from "../../../lib/admin/overviewCopy";
 import { fetchPaymentsSummary, overlayNetRevenue } from "../../../lib/admin/paymentsApi";
 
 const FOREST = "var(--color-forest-800)";
@@ -76,7 +76,7 @@ const GROUPS: Array<{ title: string; cards: CardSpec[] }> = [
       { key: "platform_reviews_pending", label: "Platform reviews", href: "/app/admin/reviews" },
       { key: "content_reports_30d", label: "Reports, last 30 days" },
       { key: "disputed_bookings", label: "Disputed bookings" },
-      { key: "support_tickets", label: "Support tickets", support: true },
+      { key: "support_tickets", label: "Support tickets" },
     ],
   },
 ];
@@ -92,8 +92,7 @@ function readError(error: unknown, fallback: string): string {
 }
 
 function metricText(metric: DashboardMetric | undefined, money: boolean): string {
-  if (!metric || metric.status === "unavailable") return "Not set up yet";
-  if (metric.value == null) return "—";
+  if (!metric || metric.status === "unavailable" || metric.value == null) return "—";
   return money ? formatCents(metric.value) : metric.value.toLocaleString("en-US");
 }
 
@@ -248,24 +247,40 @@ export function AdminOverviewPage() {
           ))}
         </div>
       ) : (
-        GROUPS.map((group) => (
-          <section key={group.title} className="space-y-3">
-            <h2 className="font-display text-2xl text-forest-800">{group.title}</h2>
-            {group.title === "Money" && summary?.revenueNote ? (
-              <p className="max-w-2xl text-sm text-ink-700">{summary.revenueNote}</p>
-            ) : null}
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {group.cards.map((card) => (
-                <MetricCard
-                  key={card.key}
-                  card={card}
-                  metric={summary?.metrics[card.key]}
-                  failed={summaryFailed}
-                />
-              ))}
-            </div>
-          </section>
-        ))
+        GROUPS.map((group) => {
+          const cards = group.cards.filter((card) => overviewCardVisible(summary?.metrics[card.key], summaryFailed));
+          if (cards.length === 0) return null;
+          return (
+            <section key={group.title} className="space-y-3">
+              <h2 className="font-display text-2xl text-forest-800">{group.title}</h2>
+              {group.title === "Money" ? (
+                <p className="max-w-2xl text-sm text-ink-700">
+                  Money here is the $9.99 activation and $4.99 Connect fees only, before Stripe fees. Homeowners pay
+                  pros directly, so job payments are not included.
+                </p>
+              ) : null}
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {cards.map((card) => (
+                  <MetricCard
+                    key={card.key}
+                    card={card}
+                    metric={summary?.metrics[card.key]}
+                    failed={summaryFailed}
+                  />
+                ))}
+              </div>
+              {group.title === "Trust" ? (
+                <p className="max-w-2xl text-sm text-ink-700">
+                  Support requests arrive by email at{" "}
+                  <a className="font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
+                    {SUPPORT_EMAIL}
+                  </a>
+                  .
+                </p>
+              ) : null}
+            </section>
+          );
+        })
       )}
 
       <section className="space-y-3">
@@ -370,7 +385,7 @@ export function AdminOverviewPage() {
           <div className="grid gap-3 lg:grid-cols-2">
             <MiniChart
               title="Gross revenue"
-              description={trends.revenueNote || "Gross activation and Connect fees, before Stripe fees."}
+              description="Activation and Connect fees paid in each period, before Stripe fees."
               labels={trends.buckets.map((bucket) => bucketLabel(bucket.start, trends.granularity))}
               series={[
                 {
@@ -411,19 +426,13 @@ export function AdminOverviewPage() {
             />
             <MiniChart
               title="Checkouts completed and expired"
-              description={
-                trends.checkoutNote ||
-                "Completed means paid or consumed. Expired is an abandoned Checkout, not a recorded card decline."
-              }
+              description="Completed means paid. Expired means someone opened checkout and left without paying."
               labels={trends.buckets.map((bucket) => bucketLabel(bucket.start, trends.granularity))}
               series={[
                 series("completed-checkouts", "Completed", FOREST, trends, "checkoutsCompleted"),
                 series("expired-checkouts", "Expired", GOLD, trends, "checkoutsExpired"),
               ]}
             />
-            {trends.cardDeclinesUnavailable ? (
-              <p className="self-center text-sm text-ink-700">Card declines: Not set up yet</p>
-            ) : null}
           </div>
         )}
       </section>
@@ -459,14 +468,13 @@ function MetricCard({
   failed: boolean;
 }) {
   const text = failed ? "—" : metricText(metric, Boolean(card.money));
-  const definition = metric?.definition ?? "";
+  const description = overviewCardDescription(card.key);
   const body = (
     <>
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">{card.label}</p>
       <p className="mt-2 font-display text-3xl font-semibold text-forest-800">{text}</p>
-      {definition ? <p className="sr-only">{definition}</p> : null}
-      {OVERVIEW_CARD_COPY[card.key] ? <p className="mt-1 text-xs text-ink-500">{OVERVIEW_CARD_COPY[card.key]}</p> : null}
-      {card.grossNote && text !== "Not set up yet" && text !== "—" ? (
+      {description ? <p className="mt-1 text-sm text-ink-700">{description}</p> : null}
+      {card.grossNote && text !== "—" ? (
         <p className="mt-1 text-xs text-ink-500">Gross, before Stripe fees</p>
       ) : null}
       {card.key === "revenue_net_cents" && metric?.status === "available" ? (
