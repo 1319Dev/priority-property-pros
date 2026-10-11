@@ -119,6 +119,12 @@ describe("draft legal pages", () => {
     expect(combined).toMatch(/open, unaccepted offers/i);
     expect(combined).toMatch(/short-lived link/i);
     expect(combined).toMatch(/GPS coordinates/i);
+    expect(combined).toMatch(/the app removes location information a camera stored in the file/i);
+    expect(combined).toMatch(/If it cannot remove that information, the photo is not uploaded/);
+    expect(combined).toMatch(/Photos uploaded before this change/);
+    expect(combined).not.toMatch(/does not (currently )?remove (GPS )?location information/i);
+    expect(combined).not.toMatch(/server rejects a shorter password/i);
+    expect(combined).toMatch(/password-change screens do not accept a shorter one/);
     expect(combined).toMatch(/Deleted Pro/i);
     expect(combined).toMatch(/does not send Stripe a deletion notice/i);
     expect(combined).not.toMatch(/legal_acceptance_required/);
