@@ -89,6 +89,48 @@ const sampleItems: InAppNotification[] = [
   },
 ];
 
+const customerHistoryItems: InAppNotification[] = [
+  {
+    id: "customer-estimate",
+    kind: "estimate.received",
+    title: "New estimate received",
+    body: "A pro sent an estimate on your project.",
+    path: "/app/customer/projects/proj-1/estimates/est-1",
+    projectTitle: "Fence repair",
+    referenceNumber: 1004,
+    actionState: "open",
+    readAt: null,
+    createdAt: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+    category: "estimates",
+  },
+  {
+    id: "customer-change",
+    kind: "change_order.approved",
+    title: "Change order approved",
+    body: "A change order on your project was approved.",
+    path: "/app/customer/bookings/book-1",
+    projectTitle: "Fence repair",
+    referenceNumber: 1004,
+    actionState: "open",
+    readAt: null,
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    category: "change_orders",
+  },
+  {
+    id: "customer-past",
+    kind: "estimate.received",
+    title: "New estimate received",
+    body: "A pro sent an estimate on your project.",
+    path: "/app/customer/projects/proj-9/estimates/est-9",
+    projectTitle: "Deck stain",
+    referenceNumber: 900,
+    actionState: "historical",
+    readAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
+    category: "estimates",
+  },
+];
+
 const customerUpdateRows: InAppNotificationRow[] = [
   {
     id: "preview-estimate",
@@ -170,7 +212,12 @@ export function NotificationPreviewPage() {
   const view = params.get("view") ?? "bell";
   const chrome = params.get("chrome") ?? "dashboard";
   const role = roleFrom(params.get("role"));
-  const preview = { items: sampleItems, unread: sampleItems.filter((item) => !item.readAt).length, startOpen: view === "bell" };
+  const historyItems = role === "CUSTOMER" ? customerHistoryItems : sampleItems;
+  const preview = {
+    items: historyItems,
+    unread: historyItems.filter((item) => !item.readAt).length,
+    startOpen: view === "bell",
+  };
   const auth = signedInAuth(role, {
     profile: {
       ...profileFor(role),
@@ -190,7 +237,7 @@ export function NotificationPreviewPage() {
       <NotificationSettings mode="preview" forceIosGuide />
     ) : view === "history" || view === "history-empty" || view === "history-loading" ? (
       <NotificationHistoryView
-        items={view === "history" ? sampleItems : []}
+        items={view === "history" ? historyItems : []}
         ready={view !== "history-loading"}
         loadError={null}
         settingsPath={settingsPath(role)}
