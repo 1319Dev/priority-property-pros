@@ -227,7 +227,46 @@ test("signed-in header keeps the bell inside a 320px viewport", async ({ page })
   expect(panelBox!.x + panelBox!.width).toBeLessThanOrEqual(320 + 1);
 });
 
-const reviewWidths = [390, 768, 1280];
+const reviewWidths = [320, 390, 768, 1280];
+
+test.describe("platform review form at phone width", () => {
+  for (const width of [320, 390]) {
+    test(`activated /reviews at ${width}px stays in the viewport`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=customer#/reviews", {
+        waitUntil: "domcontentloaded",
+      });
+      await page.evaluate(() => document.fonts.ready);
+      const submit = page.getByRole("button", { name: "Submit review" });
+      await expect(submit).toBeVisible();
+      await expect(page.getByText(/waiting for admin approval|not public yet|admin approves/i).first()).toBeVisible();
+      const box = await submit.boundingBox();
+      const layout = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+      }));
+      expect(box).not.toBeNull();
+      expect(box!.width).toBeGreaterThanOrEqual(44);
+      expect(box!.x).toBeGreaterThanOrEqual(-1);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(layout.innerWidth + 1);
+      expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth + 1);
+    });
+
+    test(`unpaid /reviews at ${width}px does not offer a public submit`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=contractor&fee=unpaid#/reviews", {
+        waitUntil: "domcontentloaded",
+      });
+      await expect(page.getByText(/account activation is required/i)).toBeVisible();
+      await expect(page.getByRole("button", { name: "Submit review" })).toHaveCount(0);
+      const layout = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+      }));
+      expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth + 1);
+    });
+  }
+});
 
 test.describe("platform review moderation", () => {
   for (const width of reviewWidths) {
@@ -239,9 +278,14 @@ test.describe("platform review moderation", () => {
       await page.evaluate(() => document.fonts.ready);
       const reason = page.getByRole("textbox", { name: /Reason \(required\)/i });
       await expect(reason).toBeVisible();
-      await expect(page.getByRole("button", { name: "Approve" })).toBeDisabled();
+      await expect(page.getByRole("tab", { name: /Pending/ })).toHaveAttribute("aria-selected", "true");
+      await expect(page.getByRole("button", { name: "Approve", exact: true })).toBeDisabled();
       await reason.fill("Specific and on topic");
-      await expect(page.getByRole("button", { name: "Approve" })).toBeEnabled();
+      await expect(page.getByRole("button", { name: "Approve", exact: true })).toBeEnabled();
+      await page.getByRole("tab", { name: /Approved/ }).click();
+      await expect(page.getByText("The marketplace was easy to follow from posting to hiring.")).toHaveCount(0);
+      await page.getByRole("tab", { name: /Pending/ }).click();
+      await expect(page.getByText("The marketplace was easy to follow from posting to hiring.")).toBeVisible();
       const box = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         innerWidth: window.innerWidth,

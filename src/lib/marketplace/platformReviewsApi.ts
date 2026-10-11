@@ -1,9 +1,11 @@
 import { friendlyAdminError } from "../admin/friendlyAdminError";
 import { getSupabaseClient } from "../supabase/client";
 import {
+  accountCanSubmitPlatformReview,
   canInsertPlatformReview,
   isPublishablePlatformReview,
   normalizePlatformReviewDraft,
+  PLATFORM_REVIEWS_ACTIVATION_REQUIRED,
   validatePlatformReviewDraft,
   type PlatformReview,
   type PlatformReviewDraft,
@@ -46,10 +48,18 @@ export async function fetchOwnPlatformReview(userId: string): Promise<PlatformRe
 
 export async function submitPlatformReview(input: {
   viewerId: string | null;
+  signupFeeStatus: string | null;
   draft: PlatformReviewDraft;
 }): Promise<PlatformReview> {
-  if (!canInsertPlatformReview({ viewerId: input.viewerId })) {
+  if (!input.viewerId) {
     throw new Error("Sign in to leave a review of Priority Property Pros.");
+  }
+  if (!canInsertPlatformReview({ viewerId: input.viewerId, signupFeeStatus: input.signupFeeStatus })) {
+    throw new Error(
+      accountCanSubmitPlatformReview(input.signupFeeStatus)
+        ? "Sign in to leave a review of Priority Property Pros."
+        : PLATFORM_REVIEWS_ACTIVATION_REQUIRED,
+    );
   }
   const normalized = normalizePlatformReviewDraft(input.draft);
   const invalid = validatePlatformReviewDraft(normalized);
