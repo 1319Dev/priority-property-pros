@@ -1,7 +1,7 @@
 -- Walkthrough for 20261015000004_account_deletion_anonymize.sql.
 -- Do not run against production. Do not delete payment rows.
 --
--- 1. Customer with a CONFIRMED or IN_PROGRESS booking (also DISPUTED).
+-- 1. Customer with a PENDING, AWAITING_PAYMENT, CONFIRMED, IN_PROGRESS, or DISPUTED booking.
 --    purge_account_owned_rows(user)
 --    Expect: exception 'Finish or cancel your active jobs before deleting this account.'
 --    Bookings, connections, and signup_fee_charges are unchanged.

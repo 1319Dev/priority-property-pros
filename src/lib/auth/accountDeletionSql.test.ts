@@ -25,11 +25,12 @@ describe("account deletion SQL", () => {
 
   it("anonymizes and never deletes payment rows", () => {
     expect(purge).toMatch(/Finish or cancel your active jobs before deleting this account/);
-    expect(purge).toMatch(/'CONFIRMED', 'IN_PROGRESS', 'DISPUTED'/);
+    expect(purge).toMatch(/'PENDING', 'AWAITING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS', 'DISPUTED'/);
     expect(purge).toMatch(/account_status = 'DELETED'/);
     expect(purge).toMatch(/Deleted Pro/);
-    expect(purge).toMatch(/session_replication_role', 'replica'/);
-    expect(purge).toMatch(/session_replication_role', 'origin'/);
+    expect(purge).not.toMatch(/session_replication_role/);
+    expect(purge).not.toMatch(/deleted\+/);
+    expect(purge).not.toMatch(/@users\.invalid/);
     expect(purge).not.toMatch(/DELETE FROM public\.bookings/);
     expect(purge).not.toMatch(/DELETE FROM public\.project_connections/);
     expect(purge).not.toMatch(/DELETE FROM public\.signup_fee_charges/);
@@ -53,6 +54,14 @@ describe("account deletion SQL", () => {
     expect(money).toMatch(/OLD\.status = 'PAID'/);
     expect(money).toMatch(/NEW\.status = 'COMPLETED'/);
     expect(money).toMatch(/connection fee is server-authoritative and must be 499 cents/);
+    const signupProjects = functionBody(migration, "enforce_signup_fee_on_projects");
+    const signupCharges = functionBody(migration, "protect_signup_fee_charge_row");
+    expect(signupProjects).toMatch(/NEW\.customer_id IS NULL AND OLD\.customer_id IS NOT NULL/);
+    expect(signupProjects).toMatch(/assert_signup_fee_paid/);
+    expect(signupCharges).toMatch(/ppp_rpc_is\('purge_account_owned_rows'\)/);
+    expect(signupCharges).toMatch(/NEW\.profile_id IS NULL/);
+    expect(signupCharges).toMatch(/register_signup_fee_checkout/);
+    expect(migration).toMatch(/DROP CONSTRAINT IF EXISTS audit_logs_actor_id_fkey/);
   });
 
   it("rolls back to the deleting purge and drops the purge allow-list", () => {
@@ -64,5 +73,13 @@ describe("account deletion SQL", () => {
     expect(oldProtect).not.toMatch(/purge_account_owned_rows/);
     expect(rollback).toMatch(/ON DELETE CASCADE/);
     expect(rollback).toMatch(/ON DELETE RESTRICT/);
+    const signupProjects = functionBody(rollback, "enforce_signup_fee_on_projects");
+    const signupCharges = functionBody(rollback, "protect_signup_fee_charge_row");
+    expect(signupProjects).not.toMatch(/NEW\.customer_id IS NULL/);
+    expect(signupProjects).toMatch(/assert_signup_fee_paid/);
+    expect(signupCharges).not.toMatch(/purge_account_owned_rows/);
+    expect(signupCharges).toMatch(/signup fee charges cannot be written from the client/);
+    expect(rollback).toMatch(/ADD CONSTRAINT audit_logs_actor_id_fkey/);
+    expect(rollback).toMatch(/ON DELETE SET NULL/);
   });
 });

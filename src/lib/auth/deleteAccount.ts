@@ -5,7 +5,7 @@ export const DELETE_ACCOUNT_CONFIRM_WORD = "DELETE";
 export const DELETE_ACCOUNT_TITLE = "Delete this account?";
 
 export const DELETE_ACCOUNT_BODY =
-  "This closes your Priority Property Pros account and signs you out. Your name and contact details are removed. The other person's jobs and payment records stay, without your contact details. Finish or cancel in-progress jobs before you delete. This cannot be undone.";
+  "This closes your Priority Property Pros account and signs you out. Your name and contact details are removed. The other person's jobs and payment records stay, without your contact details. Finish or cancel open jobs, including ones still waiting to start, before you delete. This cannot be undone.";
 
 export const DELETE_ACCOUNT_ACTIVE_JOBS_ERROR =
   "Finish or cancel your active jobs before deleting this account.";

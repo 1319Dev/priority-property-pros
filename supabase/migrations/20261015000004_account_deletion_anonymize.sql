@@ -6,12 +6,19 @@
 --
 -- This keeps payment rows, audit logs, bookings, connections, and the other
 -- party's project. It anonymizes the closing account instead of cascading.
--- Active CONFIRMED, IN_PROGRESS, and DISPUTED bookings block deletion.
+-- Active PENDING, AWAITING_PAYMENT, CONFIRMED, IN_PROGRESS, and DISPUTED
+-- bookings block deletion.
 --
--- Guards below start from 20260930000001 (which already allows contractor_end_job)
--- and add one purge UPDATE branch. The end-job PR also replaces these two
--- functions. Whichever migration is applied last must keep BOTH allow-lists.
+-- Guards below are the combined #88 + purge bodies. Apply #88 first, then this
+-- PR. These two functions keep contractor_end_job and add the purge UPDATE.
 -- Do not drop prod-only RPC names when diffing.
+--
+-- Prod dry run: rewriting email is rejected by protect_profile_columns, and
+-- session_replication_role is permission denied. The profile row is removed
+-- by the auth.users cascade, so email is left as-is. Owner-clearing project
+-- updates skip enforce_signup_fee_on_projects. Signup-charge profile_id can
+-- be cleared only by this purge. audit_logs.actor_id loses its foreign key
+-- so the immutable audit trigger does not block the auth.users delete.
 --
 -- Matching: setting account_status DELETED, approval_status SUSPENDED, and
 -- accepting_work false fires the existing rematch triggers. This migration
@@ -22,6 +29,8 @@
 -- Replaces existing function purge_account_owned_rows; must be diffed against prod before apply.
 -- Replaces existing function protect_project_connection_row; must be diffed against prod before apply.
 -- Replaces existing function guard_project_connection_money; must be diffed against prod before apply.
+-- Replaces existing function enforce_signup_fee_on_projects; must be diffed against prod before apply.
+-- Replaces existing function protect_signup_fee_charge_row; must be diffed against prod before apply.
 
 ALTER TABLE public.signup_fee_charges DROP CONSTRAINT IF EXISTS signup_fee_charges_profile_id_fkey;
 ALTER TABLE public.signup_fee_charges ALTER COLUMN profile_id DROP NOT NULL;
@@ -114,7 +123,7 @@ BEGIN
   IF EXISTS (
     SELECT 1
     FROM public.bookings b
-    WHERE b.status IN ('CONFIRMED', 'IN_PROGRESS', 'DISPUTED')
+    WHERE b.status IN ('PENDING', 'AWAITING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS', 'DISPUTED')
       AND (
         b.customer_id = p_user_id
         OR (v_contractor_id IS NOT NULL AND b.contractor_profile_id = v_contractor_id)
@@ -125,7 +134,6 @@ BEGIN
 
   UPDATE public.profiles
   SET
-    email = 'deleted+' || p_user_id::text || '@users.invalid',
     first_name = '',
     last_name = '',
     phone = NULL,
@@ -214,33 +222,24 @@ BEGIN
   FROM public.projects p
   WHERE p.customer_id = p_user_id;
 
-  -- Skip contact-text and message-body triggers for these non-payment updates.
-  -- session_replication_role requires the function owner to be a superuser.
-  -- Payment tables are updated below, after triggers are turned back on.
-  PERFORM set_config('session_replication_role', 'replica', true);
-  BEGIN
-    UPDATE public.project_private_locations loc
-    SET street_line1 = NULL,
-        street_line2 = NULL,
-        lat = NULL,
-        lng = NULL,
-        updated_at = now()
-    WHERE loc.project_id = ANY (v_project_ids);
+  -- Owner-only updates. enforce_signup_fee_on_projects skips a customer_id clear.
+  PERFORM public.ppp_set_rpc('purge_account_owned_rows');
+  UPDATE public.project_private_locations loc
+  SET street_line1 = NULL,
+      street_line2 = NULL,
+      lat = NULL,
+      lng = NULL,
+      updated_at = now()
+  WHERE loc.project_id = ANY (v_project_ids);
 
-    UPDATE public.project_messages
-    SET sender_profile_id = NULL
-    WHERE sender_profile_id = p_user_id;
+  UPDATE public.project_messages
+  SET sender_profile_id = NULL
+  WHERE sender_profile_id = p_user_id;
 
-    UPDATE public.projects
-    SET customer_id = NULL,
-        updated_at = now()
-    WHERE id = ANY (v_project_ids);
-  EXCEPTION
-    WHEN OTHERS THEN
-      PERFORM set_config('session_replication_role', 'origin', true);
-      RAISE;
-  END;
-  PERFORM set_config('session_replication_role', 'origin', true);
+  UPDATE public.projects
+  SET customer_id = NULL,
+      updated_at = now()
+  WHERE id = ANY (v_project_ids);
   PERFORM public.ppp_set_rpc('purge_account_owned_rows');
 
   DELETE FROM public.projects p
@@ -378,3 +377,51 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+-- F2: live enforce_signup_fee_on_projects, plus an early return when an update
+-- only clears the project owner. Based on the live body from the prod dry run.
+CREATE OR REPLACE FUNCTION public.enforce_signup_fee_on_projects()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF TG_OP = 'UPDATE' AND NEW.customer_id IS NULL AND OLD.customer_id IS NOT NULL THEN
+    RETURN NEW;
+  END IF;
+  PERFORM public.assert_signup_fee_paid(NEW.customer_id);
+  RETURN NEW;
+END;
+$function$;
+
+-- F3: live protect_signup_fee_charge_row, plus a purge UPDATE that may set
+-- profile_id null and nothing else. Based on the live body from the prod dry run.
+CREATE OR REPLACE FUNCTION public.protect_signup_fee_charge_row()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF public.ppp_rpc_is('register_signup_fee_checkout')
+     OR public.ppp_rpc_is('fulfill_signup_fee_checkout')
+     OR public.ppp_rpc_is('record_signup_fee_event')
+     OR public.ppp_rpc_is('flag_signup_checkout_needs_refund') THEN
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+  END IF;
+  IF public.ppp_rpc_is('purge_account_owned_rows')
+     AND TG_OP = 'UPDATE'
+     AND NEW.profile_id IS NULL
+     AND (to_jsonb(NEW) - 'profile_id' - 'updated_at') = (to_jsonb(OLD) - 'profile_id' - 'updated_at') THEN
+    RETURN NEW;
+  END IF;
+  RAISE EXCEPTION 'signup fee charges cannot be written from the client';
+END;
+$function$;
+
+-- F4: audit_logs is immutable, so ON DELETE SET NULL on actor_id makes every
+-- auth.users delete fail once this purge writes an audit row. Keep the actor
+-- uuid. Drop only the foreign key.
+ALTER TABLE public.audit_logs DROP CONSTRAINT IF EXISTS audit_logs_actor_id_fkey;

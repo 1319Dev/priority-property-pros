@@ -5,7 +5,15 @@
 -- contractor_end_job and do not allow purge_account_owned_rows.
 -- FK rollback fails if any anonymized row already has a null owner. That is
 -- intentional: do not drop the kept payment history to make SET NOT NULL pass.
+-- Restores enforce_signup_fee_on_projects and protect_signup_fee_charge_row
+-- to the live bodies (no owner-clear skip, no purge allowance).
+-- Re-adds audit_logs_actor_id_fkey ON DELETE SET NULL. That ADD fails if an
+-- actor uuid no longer matches a profile. That is intentional.
 -- Does not replace match_project, respond_change_order, or recompute_booking_money.
+
+ALTER TABLE public.audit_logs
+  ADD CONSTRAINT audit_logs_actor_id_fkey
+  FOREIGN KEY (actor_id) REFERENCES public.profiles (id) ON DELETE SET NULL;
 
 
 ALTER TABLE public.signup_fee_charges DROP CONSTRAINT IF EXISTS signup_fee_charges_profile_id_fkey;
@@ -276,3 +284,35 @@ $$;
 
 -- Soft-end a contractor's opportunity / unpaid reservation, or complete a paid connection.
 -- Never grants #14. Never flips payment flags. Never hard-deletes purchase history.
+
+-- Live enforce_signup_fee_on_projects (prod dry-run body, without the owner-clear skip).
+CREATE OR REPLACE FUNCTION public.enforce_signup_fee_on_projects()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  PERFORM public.assert_signup_fee_paid(NEW.customer_id);
+  RETURN NEW;
+END;
+$function$;
+
+-- Live protect_signup_fee_charge_row (prod dry-run body, without the purge branch).
+CREATE OR REPLACE FUNCTION public.protect_signup_fee_charge_row()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF public.ppp_rpc_is('register_signup_fee_checkout')
+     OR public.ppp_rpc_is('fulfill_signup_fee_checkout')
+     OR public.ppp_rpc_is('record_signup_fee_event')
+     OR public.ppp_rpc_is('flag_signup_checkout_needs_refund') THEN
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+  END IF;
+  RAISE EXCEPTION 'signup fee charges cannot be written from the client';
+END;
+$function$;
