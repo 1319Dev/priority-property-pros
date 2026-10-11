@@ -13,6 +13,17 @@ export const UNKNOWN_ANSWER =
 export const AI_UNAVAILABLE =
   "I can't answer that automatically right now. Choose Talk to Support and leave a message.";
 
+export const INJECTION_REFUSAL =
+  "I can only answer questions about how Priority Property Pros works, from the published policy. Choose Talk to Support if you want a person.";
+
+/** Priority Property Pros' own public contact details. These may appear in an answer. */
+export const PPP_SUPPORT_EMAIL = "support@prioritypropertypros.com";
+export const PPP_MAILING_ADDRESS = "Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731";
+const ALLOWED_CONTACT: RegExp[] = [
+  /support@prioritypropertypros\.com/gi,
+  /(Priority Property Pros LLC,?\s*)?5900 Balcones Drive,? STE 100,? Austin,? TX 78731( US)?/gi,
+];
+
 export const COMPLAINT_HANDOFF =
   "Reports go to a person. Choose Talk to Support and describe what happened. Reviewing a report does not mean Priority Property Pros guarantees the work or decides a construction dispute. A person is not in this chat until they join.";
 
@@ -59,12 +70,54 @@ const LEAK: RegExp[] = [
   /\bI (approved|refunded|charged|cancelled)\b/i,
   /\b(a )?human is (here|responding|replying|on the way)\b/i,
   /\bI (have|'ve) joined\b/i,
+  /\b\d{1,6}\s+(?:[A-Za-z0-9.'-]+\s+){0,4}(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd|Court|Ct|Way|Circle|Cir|Parkway|Pkwy|Place|Pl|Trail|Trl|Highway|Hwy)\b/i,
+  // Echoes of the system prompt.
+  /You are Priority Help, the support assistant/i,
+  /Live platform settings\. Quote these amounts/i,
+  /Knowledge excerpts:/i,
+  /\bsk-[A-Za-z0-9_-]{8,}/,
 ];
+
+// Attempts to override the rules or pull out the prompt. Refused without a model call.
+const INJECTION: RegExp[] = [
+  /\b(ignore|disregard|forget|override|bypass)\b.{0,40}\b(instructions?|rules|prompt|guardrails?|system message)\b/i,
+  /\b(system|developer|hidden|initial|original)\s+(prompt|message|instructions?)\b/i,
+  /\b(reveal|show|print|repeat|output|tell me)\b.{0,30}\b(your|the)\s+(prompt|instructions|rules|system message|configuration)\b/i,
+  /\byou are (now|no longer)\b/i,
+  /\b(pretend|act as|roleplay as|role-play as)\b.{0,40}\b(admin|developer|owner|unrestricted|DAN|jailbroken|different (ai|assistant))\b/i,
+  /\b(jailbreak|DAN mode|developer mode|god mode)\b/i,
+  /<\/?(system|assistant|instructions?)>/i,
+  /\bBEGIN (SYSTEM|INSTRUCTIONS)\b/i,
+  /\b(api|secret|service[- ]role)\s*key\b/i,
+];
+
+// Personal details a customer typed. Redacted before the text goes to the model.
+// The stored support message keeps the original for the human teammate.
+const PII_REDACTIONS: Array<[RegExp, string]> = [
+  [/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email removed]"],
+  [/(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/g, "[phone removed]"],
+  [/\b\d{1,6}\s+(?:[A-Za-z0-9.'-]+\s+){0,4}(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd|Court|Ct|Way|Circle|Cir|Parkway|Pkwy|Place|Pl|Trail|Trl|Highway|Hwy)\b\.?(?:\s*(?:Apt|Unit|Suite|Ste|#)\s*[A-Za-z0-9-]+)?/gi, "[address removed]"],
+  [/\b(?:\d[ -]?){13,19}\b/g, "[number removed]"],
+  [/\b\d{3}-\d{2}-\d{4}\b/g, "[number removed]"],
+];
+
+export function redactPersonalDetails(text: string): string {
+  let out = text;
+  for (const [pattern, replacement] of PII_REDACTIONS) out = out.replace(pattern, replacement);
+  return out;
+}
+
+export function looksLikePromptInjection(text: string): boolean {
+  return INJECTION.some((pattern) => pattern.test(text));
+}
 
 export type GuardDecision = { action: "answer" } | { action: "refuse"; message: string };
 
 export function classifyCustomerMessage(text: string): GuardDecision {
   const value = text.trim();
+  if (looksLikePromptInjection(value)) {
+    return { action: "refuse", message: INJECTION_REFUSAL };
+  }
   if (COMPLAINT.some((pattern) => pattern.test(value))) {
     return { action: "refuse", message: COMPLAINT_HANDOFF };
   }
@@ -76,7 +129,10 @@ export function classifyCustomerMessage(text: string): GuardDecision {
 
 export function sanitizeAssistantReply(text: string): { text: string; blocked: boolean } {
   const value = text.trim();
-  if (!value || LEAK.some((pattern) => pattern.test(value)) || affirmativeDutyClaim(value)) {
+  // PPP's own support email and mailing address are allowed; everything else that
+  // looks like contact details is blocked.
+  const checked = ALLOWED_CONTACT.reduce((acc, pattern) => acc.replace(pattern, " "), value);
+  if (!value || LEAK.some((pattern) => pattern.test(checked)) || affirmativeDutyClaim(value)) {
     return { text: HUMAN_HANDOFF, blocked: true };
   }
   return { text: value, blocked: false };

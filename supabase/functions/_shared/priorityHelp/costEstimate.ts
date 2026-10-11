@@ -65,3 +65,19 @@ export function costPerConversationUsd(price: ModelPrice): number {
 export function monthlyCostUsd(price: ModelPrice, conversations: number): number {
   return costPerConversationUsd(price) * conversations;
 }
+
+export function priceForModel(model: string): ModelPrice | null {
+  return MODEL_PRICES.find((price) => price.id === model.trim()) ?? null;
+}
+
+/** Cost in micro-dollars (1,000,000 = $1.00), rounded up. */
+export function costUsdMicros(price: ModelPrice, inputTokens: number, outputTokens: number): number {
+  const micros = Math.max(0, inputTokens) * price.inputPerMillionUsd + Math.max(0, outputTokens) * price.outputPerMillionUsd;
+  return Math.ceil(micros);
+}
+
+/** Rough upper bound on prompt tokens: about 4 characters per token, plus 20%. */
+export function estimateInputTokens(texts: string[]): number {
+  const chars = texts.reduce((sum, text) => sum + text.length, 0);
+  return Math.ceil((chars / 4) * 1.2) + 50;
+}

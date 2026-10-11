@@ -1,5 +1,14 @@
 export const DEFAULT_PRIORITY_HELP_MODEL = "gpt-4.1-nano";
 export const DEFAULT_PRIORITY_HELP_BASE_URL = "https://api.openai.com/v1";
+export const DEFAULT_PRIORITY_HELP_TIMEOUT_MS = 12000;
+export const DEFAULT_PRIORITY_HELP_MAX_TOKENS = 500;
+
+/** Parses PRIORITY_HELP_AI_TIMEOUT_MS. Clamped to 1-30 seconds; anything else uses the default. */
+export function timeoutFromEnv(raw: string | undefined): number {
+  const value = (raw ?? "").trim();
+  if (!/^\d+$/.test(value)) return DEFAULT_PRIORITY_HELP_TIMEOUT_MS;
+  return Math.min(30000, Math.max(1000, Number(value)));
+}
 
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
@@ -13,9 +22,11 @@ export type ChatResult = {
 };
 
 export class ProviderError extends Error {
-  constructor(message: string) {
+  readonly timedOut: boolean;
+  constructor(message: string, timedOut = false) {
     super(message);
     this.name = "ProviderError";
+    this.timedOut = timedOut;
   }
 }
 
@@ -37,21 +48,35 @@ export async function completeChat(input: {
   messages: ChatMessage[];
   fetchImpl: typeof fetch;
   maxTokens?: number;
+  timeoutMs?: number;
 }): Promise<ChatResult> {
-  const response = await input.fetchImpl(chatCompletionsUrl(input.baseUrl), {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${input.apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: input.model,
-      temperature: 0.2,
-      max_tokens: input.maxTokens ?? 500,
-      messages: input.messages,
-    }),
-  });
-  const raw = await response.text();
+  // The request is aborted after timeoutMs, so a slow provider cannot hold the
+  // function open. A timed-out call is reported as ProviderError(timedOut).
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), input.timeoutMs ?? DEFAULT_PRIORITY_HELP_TIMEOUT_MS);
+  let raw: string;
+  let response: Response;
+  try {
+    response = await input.fetchImpl(chatCompletionsUrl(input.baseUrl), {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${input.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: input.model,
+        temperature: 0.2,
+        max_tokens: input.maxTokens ?? DEFAULT_PRIORITY_HELP_MAX_TOKENS,
+        messages: input.messages,
+      }),
+      signal: controller.signal,
+    });
+    raw = await response.text();
+  } catch {
+    throw new ProviderError(controller.signal.aborted ? "provider timeout" : "provider request failed", controller.signal.aborted);
+  } finally {
+    clearTimeout(timer);
+  }
   if (!response.ok) {
     throw new ProviderError(`provider status ${response.status}`);
   }

@@ -47,7 +47,7 @@ verify_jwt = false
 # Priority Help. verify_jwt is false because guests are not signed in.
 # The function validates a user JWT itself and calls support_service_* with
 # the service role. Do not deploy until the owner applies migration
-# 20261019500001_priority_help.sql. Secrets (Dashboard → Edge Functions),
+# 20261019600001_priority_help.sql. Secrets (Dashboard → Edge Functions),
 # never Vite and never platform_settings:
 #   PRIORITY_HELP_AI_API_KEY       required for AI answers; omit for Talk to Support only
 #   PRIORITY_HELP_AI_MODEL         optional, default gpt-4.1-nano
@@ -55,5 +55,9 @@ verify_jwt = false
 #   PRIORITY_HELP_TURNSTILE_SECRET optional; checked only when set
 #   PRIORITY_HELP_IP_HASH_SALT     optional pepper for IP hashes
 #   PRIORITY_HELP_DAILY_ANSWER_CAP optional override of the daily answer cap; 0 stops model calls
+#   PRIORITY_HELP_AI_TIMEOUT_MS    optional, default 12000, clamped to 1000-30000
+#   PRIORITY_HELP_DISABLED         optional kill switch; 1 turns the function off
+# Feature flags live in support_settings (priority_help_enabled, ai_answers_enabled),
+# both default false. The daily dollar budget is daily_ai_budget_usd_micros ($1.00).
 [functions.priority-help]
 verify_jwt = false

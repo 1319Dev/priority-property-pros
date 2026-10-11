@@ -1,7 +1,15 @@
-import { AI_UNAVAILABLE, classifyCustomerMessage, HUMAN_HANDOFF, sanitizeAssistantReply } from "./guardrails";
-import { formatLivePricing, type LivePricing } from "./pricing";
-import { buildPrompt, type KbExcerpt } from "./prompt";
-import { completeChat, DEFAULT_PRIORITY_HELP_BASE_URL, DEFAULT_PRIORITY_HELP_MODEL, ProviderError } from "./provider";
+import { costUsdMicros, estimateInputTokens, priceForModel } from "./costEstimate.ts";
+import { AI_UNAVAILABLE, classifyCustomerMessage, HUMAN_HANDOFF, sanitizeAssistantReply } from "./guardrails.ts";
+import { formatLivePricing, type LivePricing } from "./pricing.ts";
+import { buildPrompt, type KbExcerpt } from "./prompt.ts";
+import {
+  completeChat,
+  DEFAULT_PRIORITY_HELP_BASE_URL,
+  DEFAULT_PRIORITY_HELP_MAX_TOKENS,
+  DEFAULT_PRIORITY_HELP_MODEL,
+  ProviderError,
+  timeoutFromEnv,
+} from "./provider.ts";
 
 export type RpcResult = { data: unknown; error: string | null };
 
@@ -120,16 +128,23 @@ export async function handlePriorityHelp(req: Request, deps: PriorityHelpDeps): 
   const ipHash = ip ? await sha256Hex(`${salt}:${ip}`) : "";
 
   if (action === "availability") {
+    if (killSwitch(deps)) return json({ ok: true, enabled: false, mode: "human_only", availability: "offline", humanJoined: false });
     const context = await deps.rpc("support_service_context", { p_query: "" });
     if (context.error) return json({ error: "support is unavailable" }, 503);
     const row = asRecord(context.data);
+    if (row.enabled !== true) {
+      return json({ ok: true, enabled: false, mode: "human_only", availability: "offline", humanJoined: false });
+    }
     return json({
       ok: true,
-      mode: aiMode(deps),
+      enabled: true,
+      mode: row.ai_enabled === true ? aiMode(deps) : "human_only",
       availability: typeof row.availability === "string" ? row.availability : "offline",
       humanJoined: false,
     });
   }
+
+  if (killSwitch(deps)) return json({ error: "priority help is off", enabled: false }, 503);
 
   if ((action === "send" || action === "escalate") && honeypot.trim()) {
     return json({ ok: true, mode: aiMode(deps), availability: "offline", humanJoined: false });
@@ -188,7 +203,10 @@ export async function handlePriorityHelp(req: Request, deps: PriorityHelpDeps): 
     return json({ ok: true, mode: aiMode(deps), availability: session.availability, humanJoined: false, conversation: session.conversation });
   }
 
-  const apiKey = (deps.env("PRIORITY_HELP_AI_API_KEY") ?? "").trim();
+  const context = await deps.rpc("support_service_context", { p_query: body.slice(0, 240) });
+  const contextRow = asRecord(context.data);
+  const aiEnabled = !context.error && contextRow.ai_enabled === true;
+  const apiKey = aiEnabled ? (deps.env("PRIORITY_HELP_AI_API_KEY") ?? "").trim() : "";
   if (!apiKey || decision.action === "refuse") {
     const reply = decision.action === "refuse" ? decision.message : AI_UNAVAILABLE;
     if (decision.action === "refuse") {
@@ -208,8 +226,6 @@ export async function handlePriorityHelp(req: Request, deps: PriorityHelpDeps): 
     });
   }
 
-  const context = await deps.rpc("support_service_context", { p_query: body.slice(0, 240) });
-  const contextRow = asRecord(context.data);
   const pricing = asPricing(contextRow.pricing);
   const articles = asArticles(contextRow.articles);
   const history: Array<{ role: "customer" | "assistant"; body: string }> = [];
@@ -222,12 +238,21 @@ export async function handlePriorityHelp(req: Request, deps: PriorityHelpDeps): 
       }
     }
   }
+  // The stored payload already ends with this question; do not send it twice.
+  const last = history[history.length - 1];
+  if (last && last.role === "customer" && last.body.trim() === body) history.pop();
   const messages = buildPrompt({ pricing, articles, history, question: body });
   if (messages.some((message) => /contractor_fee|\b700\b/.test(message.content))) {
     return json({ ok: true, mode: "ai", answer: HUMAN_HANDOFF, refusal: HUMAN_HANDOFF, humanJoined: false, availability: session.availability });
   }
 
-  if (!(await modelBudgetAllows(deps))) {
+  const model = (deps.env("PRIORITY_HELP_AI_MODEL") ?? "").trim() || DEFAULT_PRIORITY_HELP_MODEL;
+  const price = priceForModel(model);
+  // Worst case for this call: the estimated prompt plus a full max_tokens answer.
+  const projectedMicros = price
+    ? costUsdMicros(price, estimateInputTokens(messages.map((message) => message.content)), DEFAULT_PRIORITY_HELP_MAX_TOKENS)
+    : null;
+  if (projectedMicros === null || !(await modelBudgetAllows(deps, projectedMicros))) {
     await deps.rpc("support_service_assistant_message", {
       p_conversation_id: session.conversationId,
       p_body: AI_UNAVAILABLE,
@@ -244,22 +269,44 @@ export async function handlePriorityHelp(req: Request, deps: PriorityHelpDeps): 
   }
 
   let draft: string;
+  let outcome: "answered" | "blocked" | "provider_error" | "timeout" = "answered";
+  let inputTokens: number | null = null;
+  let outputTokens: number | null = null;
   try {
     const completed = await completeChat({
       apiKey,
-      model: (deps.env("PRIORITY_HELP_AI_MODEL") ?? "").trim() || DEFAULT_PRIORITY_HELP_MODEL,
+      model,
       baseUrl: (deps.env("PRIORITY_HELP_AI_BASE_URL") ?? "").trim() || DEFAULT_PRIORITY_HELP_BASE_URL,
       messages,
       fetchImpl: deps.fetchImpl,
+      maxTokens: DEFAULT_PRIORITY_HELP_MAX_TOKENS,
+      timeoutMs: timeoutFromEnv(deps.env("PRIORITY_HELP_AI_TIMEOUT_MS")),
     });
     draft = completed.text;
+    inputTokens = completed.inputTokens;
+    outputTokens = completed.outputTokens;
   } catch (err) {
-    if (!(err instanceof ProviderError)) {
-      /* keep the provider body off the client either way */
-    }
+    // Keep the provider body off the client either way.
+    outcome = err instanceof ProviderError && err.timedOut ? "timeout" : "provider_error";
     draft = AI_UNAVAILABLE;
   }
   const safe = sanitizeAssistantReply(draft);
+  if (outcome === "answered" && safe.blocked) outcome = "blocked";
+  // Missing usage is charged at the projected worst case so the budget never undercounts.
+  const spentMicros =
+    inputTokens !== null && outputTokens !== null && price
+      ? costUsdMicros(price, inputTokens, outputTokens)
+      : outcome === "answered" || outcome === "blocked"
+        ? projectedMicros
+        : 0;
+  await deps.rpc("support_service_record_ai_usage", {
+    p_conversation_id: session.conversationId,
+    p_model: model,
+    p_outcome: outcome,
+    p_input_tokens: inputTokens,
+    p_output_tokens: outputTokens,
+    p_cost_usd_micros: spentMicros,
+  });
   await deps.rpc("support_service_assistant_message", {
     p_conversation_id: session.conversationId,
     p_body: safe.text,
@@ -276,17 +323,27 @@ export async function handlePriorityHelp(req: Request, deps: PriorityHelpDeps): 
   });
 }
 
+/** PRIORITY_HELP_DISABLED=1 (or true) turns the whole function off without a database change. */
+function killSwitch(deps: PriorityHelpDeps): boolean {
+  return /^(1|true|yes|on)$/i.test((deps.env("PRIORITY_HELP_DISABLED") ?? "").trim());
+}
+
 function aiMode(deps: PriorityHelpDeps): "ai" | "human_only" {
   return (deps.env("PRIORITY_HELP_AI_API_KEY") ?? "").trim() ? "ai" : "human_only";
 }
 
-async function modelBudgetAllows(deps: PriorityHelpDeps): Promise<boolean> {
+async function modelBudgetAllows(deps: PriorityHelpDeps, projectedMicros: number): Promise<boolean> {
   const result = await deps.rpc("support_service_ai_budget", {});
   if (result.error) return false;
   const row = asRecord(result.data);
+  if (row.allowed !== true) return false;
   const used = finiteNumber(row.used);
   const capFromDb = finiteNumber(row.cap);
-  if (used === null || capFromDb === null) return false;
+  const spent = finiteNumber(row.spent_usd_micros);
+  const budget = finiteNumber(row.budget_usd_micros);
+  if (used === null || capFromDb === null || spent === null || budget === null) return false;
+  // Dollar budget: refuse when this call could push the 24-hour spend past it.
+  if (budget <= 0 || spent + projectedMicros > budget) return false;
   const override = (deps.env("PRIORITY_HELP_DAILY_ANSWER_CAP") ?? "").trim();
   let cap = capFromDb;
   if (override !== "") {
@@ -340,7 +397,9 @@ async function openSession(input: {
     p_guest_token_hash: guestHash,
     p_ip_hash: input.ipHash,
   });
-  if (opened.error) return { error: "support is unavailable", status: 503 };
+  if (opened.error) {
+    return { error: /priority help is off/i.test(opened.error) ? "priority help is off" : "support is unavailable", status: 503 };
+  }
   const conversation = asRecord(opened.data);
   const conversationId = typeof conversation.id === "string" ? conversation.id : "";
   if (!UUID.test(conversationId)) return { error: "support is unavailable", status: 503 };
