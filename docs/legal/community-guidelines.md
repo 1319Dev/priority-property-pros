@@ -35,13 +35,13 @@ Do not:
 - Create an account for a person you are not allowed to bind, or hold yourself out as PPP.
 - Post a project you do not intend to consider, or a profile for work you do not do.
 - Impersonate another customer, contractor, or PPP.
-- Scrape the site, probe other people’s private rows, or attempt to bypass row-level security.
+- Scrape the site, try to read or change another person’s private information, or try to get around the access limits.
 - Upload malware or interfere with the service.
 - Use the site for anything illegal.
 
 ## 3. Contact details and the Connection Fee
 
-Before a paid Connect, do not put a phone number, email address, website, social handle, QR code, or exact street address in a project, profile, estimate, or message in order to hire off the platform and skip the $4.99 Connection Fee. The product rejects obvious contact text. The scanner is not a surveillance program and it does not catch every disguise.
+Before a paid Connect, do not put a phone number, email address, website, social handle, QR code, or exact street address in a project, profile, estimate, or message in order to hire off the platform and skip the $4.99 Connection Fee. The product rejects obvious contact text. That check is not a surveillance program and it does not catch every disguise.
 
 After a paid Connect, the customer may share their own contact and project address with that contractor through the share control. Do not publish the other person’s phone, email, or street on a public page or in a review. The message box still rejects phone numbers, email addresses, and street addresses.
 
@@ -51,7 +51,7 @@ A blocked message or a warning for this rule does not, by itself, refund a Conne
 
 Do not harass, threaten, or discriminate against another person through the marketplace. Do not send repeated unwanted contact after a project is cancelled or a connection is closed. Do not post another person’s private information.
 
-On an estimate or a booking, a customer can choose “Don't match me with this pro again.” That blocks the pro for that customer only. Matching skips that pro, the pro is left out of Hire Again, and the pro’s open, unaccepted offers on that customer’s other current projects close immediately. Paid connections and bookings are not changed. Work already underway stays as it is, and a paid Connection Fee stays paid. The customer can undo that from Blocked pros, and an admin can remove the block. A customer review of 3 stars or less creates the same kind of block. Raising that review to 4 or 5 stars does not remove it. A contractor’s review of a customer never creates a block. You can also cancel a project when the product allows it, stop new connections, and email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+On an estimate or a booking, a customer can choose “Don't match me with this pro again.” That blocks the pro for that customer only. Matching skips that pro, the pro is left out of Hire Again, and the pro’s open, unaccepted offers on that customer’s other current projects close immediately. Paid connections and bookings are not changed. Work already underway stays as it is, and a paid Connection Fee stays paid. The customer can undo that from Blocked pros, and an admin can remove the block. A customer review of 1, 2, or 3 stars creates the same kind of block. A review of 4 or 5 stars does not. Raising that review to 4 or 5 stars does not remove it. A contractor’s review of a customer never creates a block. You can also cancel a project when the product allows it, stop new connections, and email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
 ## 5. Reports
 
@@ -64,7 +64,7 @@ A homeowner or other account holder can report:
 - serious contractor misconduct
 - a violation of these guidelines or the Terms of Service
 
-Send the report by email to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). The site does not have a separate in-app complaint center. A contractor can also report a project photo in the product. That report stores the reporter, the target, and the reason. An admin can read photo reports. Marketplace reviews can be rejected with a written reason of 3 to 500 characters. That reason is stored in the audit log and is not shown on the public review. An admin can suspend, disable, or close an account.
+Send the report by email to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). The site does not have a separate in-app complaint center. A contractor can also report a project photo in the product. That report stores the reporter, the target, and the reason. An admin can read photo reports. The other person on a job can report that job review. An admin can hide a job review without deleting it. Marketplace reviews of PPP stay off the public page until an admin approves them. An admin who approves or rejects one records a written reason that is not shown on the public review. An admin can suspend, disable, or close an account.
 
 PPP may review a report, ask for more information, moderate the content, suspend an account, or remove a contractor from the marketplace. PPP keeps the report and the decision in its records. PPP does not publish the other person’s private information in a public decision. A person who wants another look can reply to the support email. PPP does not promise to investigate every report or to resolve every report.
 

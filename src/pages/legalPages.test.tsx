@@ -134,7 +134,15 @@ describe("draft legal pages", () => {
     expect(combined).toMatch(/do not require arbitration/i);
     expect(combined).toMatch(/Montgomery County, Texas/);
     expect(combined).toMatch(/These terms do not require those disputes to be filed in Montgomery County/);
-    expect(combined).toMatch(/reject_signup_or_connection_fee_refund/);
+    expect(combined).not.toMatch(/reject_signup_or_connection_fee_refund/);
+    expect(combined).not.toMatch(/needs_refund/);
+    expect(combined).not.toMatch(/max_participating_contractors/);
+    expect(combined).not.toMatch(/PKCE|VAPID|row-level security/i);
+    expect(combined).toMatch(/1, 2, or 3 stars/);
+    expect(combined).toMatch(/within 45 days/);
+    expect(readFileSync(path.join(repoRoot, "docs/SUPPORT_PROCESS.md"), "utf8")).toMatch(
+      /reject_signup_or_connection_fee_refund/,
+    );
     expect(combined).not.toContain("confirm the legal refund policy");
     expect(combined).toMatch(/The \$9\.99 account activation fee is non-refundable/);
     expect(combined).toMatch(/The \$4\.99 Connection Fee is non-refundable/);

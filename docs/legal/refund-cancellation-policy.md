@@ -27,7 +27,7 @@ PPP charges only these platform fees. Amounts are set on the server in US dollar
 
 **Rehires.** Hire Again lists contractors a customer has finished a job with and starts a new project. That new project is a new connection. The contractor pays $4.99 again to Connect on it. A past connection does not waive the fee. The connection checkout does not apply a rehire discount.
 
-While a checkout is turned off, PPP does not charge that fee. An unpaid or unverified connection does not unlock messaging or contact sharing. An abandoned unpaid Connect checkout can release a reserved slot after 30 minutes (1,800 seconds, unless that server setting is changed). Releasing an unpaid reservation is not a charge and is not a refund.
+While a checkout is turned off, PPP does not charge that fee. An unpaid or unverified connection does not unlock messaging or contact sharing. An abandoned unpaid Connect checkout can release a reserved slot after 30 minutes. Releasing an unpaid reservation is not a charge and is not a refund.
 
 ## 2. When a delivered fee stays paid
 
@@ -40,15 +40,17 @@ Once the applicable service is delivered, the fee is generally non-refundable:
 - A Connection Fee on a rehire follows the same rule.
 - Closing your account does not by itself refund either fee.
 
-A charge that does not deliver the service it was meant to buy — account activation not marked paid, or a connection not unlocked — is an erroneous charge for purposes of this policy. The product can flag that row `needs_refund`. Flagging a row is not a refund.
+A charge that does not deliver the service it was meant to buy — account activation not marked paid, or a connection not unlocked — is an erroneous charge for purposes of this policy. The product can mark that charge for review. Marking it for review is not a refund.
 
-The application has no refund button for these fees and does not call Stripe to create a refund. The database function `reject_signup_or_connection_fee_refund()` always raises an error and cannot issue a refund. Until a refund workflow is approved, a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception is handled manually in the Stripe Dashboard by the owner. That manual step is outside this app. This policy does not promise that the app will send the refund.
+This app has no refund button for these fees and does not send a refund to Stripe. A duplicate charge, an erroneous charge, a refund the law requires, or an approved exception is reviewed by the owner. If the owner approves it, the refund is issued in the Stripe Dashboard. That step is outside this app. This policy does not promise that every request will be approved.
+
+**How to ask.** Email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Include the account email, which fee ($9.99 activation or $4.99 Connection Fee), the amount, the date if you have it, and why you believe the charge is a duplicate, an erroneous charge, required by law, or another exception. The owner decides. PPP keeps a record of the request, the decision, and the Stripe refund reference when a refund is issued. Sending the email does not by itself create a refund.
 
 Nothing in this policy takes away a right that a Texas or federal law does not let a business waive.
 
 ## 3. Stripe
 
-When checkout is on, you pay on Stripe Checkout. You enter the card at Stripe. PPP does not store the card number, the CVC, or the full card data. PPP stores payment metadata: checkout session id, payment intent id, amount ($9.99 or $4.99), currency (USD), status, and whether the fee was paid. Stripe’s own terms and privacy policy cover Stripe’s processing.
+When checkout is on, you pay on Stripe Checkout. You enter the card at Stripe. PPP does not store the card number, the security code, or the full card data. PPP stores the payment references Stripe assigns, the amount ($9.99 or $4.99), the currency (US dollars), the status, and whether the fee was paid. Stripe’s own terms and privacy policy cover Stripe’s processing.
 
 PPP does not use Stripe to collect, hold, or refund the customer’s payment for the work itself.
 

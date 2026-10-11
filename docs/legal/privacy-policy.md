@@ -20,9 +20,9 @@ The [Terms of Service](/terms) are part of the same agreement, along with the [R
 
 ## 1. Who this policy covers
 
-Priority Property Pros LLC (“PPP,” “we”) operates prioritypropertypros.com. This policy describes personal information the marketplace handles for customers (homeowners and businesses), contractors, and the admins who run the site. The verifier role exists in the database and is not a public signup. This policy does not describe a verifier inspecting your home.
+Priority Property Pros LLC (“PPP,” “we”) operates prioritypropertypros.com. This policy describes personal information the marketplace handles for customers (homeowners and businesses), contractors, and the admins who run the site. A verifier role is not a public signup. This policy does not describe a verifier inspecting your home.
 
-The contact published on the site is [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). This policy does not publish a street address.
+The contact published on the site is [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). This policy does not publish a street address. Privacy requests go to that address, as section 9 describes.
 
 ## 2. Information the product collects
 
@@ -32,19 +32,19 @@ The contact published on the site is [support@prioritypropertypros.com](mailto:s
 
 **Agreement records.** The signup checkbox is on the form. Until the requirement to accept these versions is turned on, PPP does not reject a new account for these versions and does not prompt existing accounts. After that requirement is turned on, a new account stores one record per current document with the version and the time. An existing account is prompted at the next sign-in. Accepting then stores a separate record with the version and the time. The version number is copied from the current agreement. The prompt does not hide projects, messages, or other account information. If you do not accept, you can still view that information and delete the account. The product does not include an in-app export. While the requirement is on, new marketplace actions are refused until you accept. Accepting does not delete older records or the account.
 
-**Projects.** Title, description, project type, city, state, ZIP, timing, optional budget, and photos of the work. The street and precise coordinates are stored in a private location record, not on the public project. An unposted wizard draft stays in that browser tab (session storage) until you post. Photos in an unposted draft are not kept if you reload the tab.
+**Projects.** Title, description, project type, city, state, ZIP, timing, optional budget, and photos of the work. The street and precise coordinates are stored privately, not on the public project. An unposted draft stays in that browser tab until you post. Photos in an unposted draft are not kept if you reload the tab.
 
 **Messages and contact share.** Message text, time, and read state for a project thread. The message box is not a place for phone numbers, email addresses, or street addresses. Those are rejected in the text. If a customer uses “Share my contact & address,” PPP shows that customer’s name, phone, email, and project address to that one connected contractor.
 
 **Reviews.** For a job review: a rating from 1 to 5, the text, and the time it was posted or edited. For a marketplace review: rating, text, display name, and an optional city. Marketplace reviews are not Google reviews.
 
-**Photos.** Project photos and contractor portfolio photos, including the file stored in private storage and the caption. Portfolio photos are not public until an admin approves them. After approval, public pages show that approved photo through a short-lived link. The storage stays private, and the original file name is not published as a public address. PPP does not currently remove location information a camera stored in the file, such as GPS coordinates, so that information can travel with an approved photo.
+**Photos.** Project photos, and contractor portfolio photos with their captions. A contractor uploads a portfolio photo. It stays in review until an admin approves it. Public pages show only an approved photo, through a short-lived link. Unapproved photos are not shown. The file stays in private storage, and the original file name is not published as a public address. PPP does not currently remove location information a camera stored in the file, such as GPS coordinates, so that information can travel with an approved photo.
 
-**Payments.** When Stripe Checkout is enabled, Stripe collects the card data. PPP stores the checkout session id, the payment intent id, the amount ($9.99 or $4.99), the currency, the status, and when it was paid. PPP does not store the card number. PPP does not collect the payment for the job itself.
+**Payments.** When Stripe Checkout is enabled, Stripe collects the card data. PPP stores the payment references Stripe assigns, the amount ($9.99 or $4.99), the currency, the status, and when it was paid. PPP does not store the card number. PPP does not collect the payment for the job itself.
 
-**Notifications.** Your on/off choices for in-app, push, and email. If you turn on web push, PPP stores the push endpoint (an https address), the browser encryption keys for that subscription, a user-agent string, and when it was last used.
+**Notifications.** Your on/off choices for in-app, push, and email. If you turn on web push, PPP stores the address the browser gives for that subscription, the keys that subscription uses, a short description of the browser, and when it was last used.
 
-**Reports and admin records.** A contractor can report a project photo. PPP stores the reporter, the target, and the reason. Admins record reasons when they approve or reject a marketplace review, and when they grant or revoke contact access. Those reasons go to an audit log. The review reason is not shown on the public review. Reports sent by email to support@prioritypropertypros.com are handled in that mailbox. The site does not have a separate in-app complaint center.
+**Reports and admin records.** A contractor can report a project photo. PPP stores the reporter, the target, and the reason. Admins record reasons when they approve or reject a marketplace review, and when they grant or revoke contact access. Those reasons are kept in PPP’s admin records. The review reason is not shown on the public review. Reports sent by email to support@prioritypropertypros.com are handled in that mailbox. The site does not have a separate in-app complaint center.
 
 **Support.** The contact page opens an email in your own mail app to support@prioritypropertypros.com. PPP does not store that form on its servers.
 
@@ -71,7 +71,7 @@ PPP does not use this information to sell ads, and the current website does not 
 
 ## 4. Public and private
 
-**Public, or shown to visitors who are not logged in.** Approved contractor cards: a neutral trade-and-city label, categories, a general service area, years of experience if provided, a short description with contact details removed, aggregate PPP ratings when real reviews exist, generic credential badges, approved portfolio captions, and, once a portfolio photo is approved, that photo through a short-lived link. Approved marketplace reviews of PPP. The public card does not include the business name, personal name, phone, email, website, street, or license number. The original file name is not published as a public address. Location information a camera stored in an approved photo can still be in that file.
+**Public, or shown to visitors who are not logged in.** Approved contractor cards: a neutral trade-and-city label, categories, a general service area, years of experience if provided, a short description with contact details removed, ratings from visible verified job reviews when those reviews exist, generic credential badges, approved portfolio captions, and the approved portfolio photo through a short-lived link. A hidden job review is left out of that public rating. Marketplace reviews of PPP appear only after an admin approves them. The public card does not include the business name, personal name, phone, email, website, street, or license number. The original file name is not published as a public address. Location information a camera stored in an approved photo can still be in that file.
 
 **Shown to a matched contractor before Connect.** Project description and an approximate location. The jobs list can include city, state, and ZIP. The street, the customer’s phone, and the customer’s email stay hidden.
 
@@ -83,11 +83,11 @@ PPP does not use this information to sell ads, and the current website does not 
 
 PPP uses these services to run the product:
 
-- **Supabase** hosts the database, login, file storage, and server functions. Row-level security limits which rows a signed-in person can read. The anon key in the website is public by design. It is not a password to other people’s data.
+- **Supabase** hosts the database, login, file storage, and server functions. A signed-in person can read only the records the product is built to show them.
 - **Stripe** processes the $9.99 and $4.99 Checkout payments when those checkouts are enabled. Stripe’s own privacy policy covers the card data Stripe collects.
 - **GitHub Pages** hosts the static website at prioritypropertypros.com.
 - **Resend** sends notification email.
-- **Your browser’s push service** (for example the service behind Chrome, Firefox, or Safari) delivers web push if you turn it on. PPP holds the VAPID keys used to send those pushes. The private key is not in the website code.
+- **Your browser’s push service** (for example the service behind Chrome, Firefox, or Safari) delivers web push if you turn it on. PPP holds the keys used to send those pushes. The private key is not in the website code.
 - **An AI provider, conditional.** Priority Help chat is not in the product today. If PPP launches it, chat text would be sent to that provider to generate a reply, and this policy would name the provider before that launch. Until then, no AI provider receives your projects, messages, or photos.
 
 PPP does not sell personal information to these companies. They process it to provide the service.
@@ -96,7 +96,7 @@ PPP does not sell personal information to these companies. They process it to pr
 
 PPP does not run an ad-cookie banner because the current site does not use advertising cookies. The browser storage the product does use:
 
-- **Login session.** Supabase Auth keeps the session in the browser’s local storage so you stay signed in. The main client uses PKCE. A password-reset request uses a separate storage key and does not replace that session.
+- **Login session.** The login service keeps the session in the browser’s local storage so you stay signed in. A password-reset request uses separate browser storage and does not replace that session.
 - **Unposted project draft and a few site-update flags.** Session storage holds the project wizard until you post, and it holds a short flag so a site update does not reload in the middle of a form.
 - **PWA cache.** The site can install a service worker that caches the app shell so pages load again and so web push can be delivered. That cache is the site’s files, not a profile sold to advertisers.
 
@@ -110,7 +110,7 @@ PPP does not sell personal information. PPP does not share it for targeted adver
 
 PPP keeps account and project information while the account is open and the marketplace needs it to show the job, the messages, and the reviews.
 
-When you delete your account, you type DELETE. The product asks for your current password, or it accepts a sign-in from the last 10 minutes. Deletion is refused while you have an open dispute, a refund that is still unfinished, an active booking, or you are the last active admin.
+When you delete your account, you type DELETE. The product asks for your current password, or it accepts a sign-in from the last 10 minutes. Deletion is refused while a job is still active (not yet finished or cancelled), while a booking is disputed or a card dispute with Stripe is still open, while a refund is unfinished, or while you are the last active admin.
 
 The product then removes the login and the email address, and it clears the profile name, phone, and profile photo before the profile itself is deleted. It clears the street address and precise map coordinates on your projects. It deletes empty draft projects that have no booking, connection, estimate, offer, or message thread. It clears free-text reasons on refund rows, cancellation notes, and payment-schedule descriptions, and a category can remain in place of that text. It deletes content reports you filed, your reviews of the PPP marketplace, your notifications, push subscriptions, notification preferences, and blocks between you and a contractor. References you left on someone else’s record, such as an approval you performed, are cleared off that record rather than deleting the other person’s account.
 
@@ -118,10 +118,10 @@ Files stored under your account in project photos and contractor documents are r
 
 These records stay, with the link to your account removed:
 
-- Projects other than those empty drafts.
-- Bookings, connections, job reviews, change orders, and project messages. Message text stays, so the other person can still read what was written.
-- Payment, refund, and cancellation records, including amounts, status, dates, and the Stripe ids on those rows. The $9.99 activation charge stays in that same way, with the link to your account removed.
-- The record of which agreement version you accepted and when. It is kept with an opaque id, not on a live profile.
+- Projects other than those empty drafts. The street and precise coordinates are cleared, as above.
+- Bookings, connections, job reviews, change orders, and project messages. Message text stays, so the other person can still read what was written. Job-review text stays. Change-order descriptions stay because they are the other person’s job history. Reviews of the PPP marketplace itself are removed.
+- Payment, refund, cancellation, and accounting records, including amounts, status, dates, and the Stripe references on those rows. A typed refund reason or cancellation note is cleared. An accounting note that cannot be rewritten, and Stripe’s own dispute classification, can remain. The $9.99 activation charge stays in that same way, with the link to your account removed.
+- The record of which agreement version you accepted and when. It is kept with an id that is no longer a live profile.
 - A contractor profile can remain under the name “Deleted Pro,” suspended and not accepting work, with the headline, bio, website, license note, insurance note, trade, and service-area text cleared.
 
 This deletion does not clear every row on that contractor profile. Portfolio photo rows, including titles, captions, and storage paths, credential rows, service rows, service-area rows, and the Stripe Connect account id are not cleared. The image files are part of the storage cleanup above. Project-photo rows on a project that is kept can still point at a file the cleanup tried to delete. Audit log entries can still contain an email address or an admin note from before the deletion.
@@ -132,13 +132,15 @@ The product does not publish a separate multi-year retention table. There is no 
 
 ## 9. Your choices and your rights
 
-You can update profile and notification settings in the app, turn push and email categories off, unsubscribe from a notification email, and delete your account as described in the [Terms of Service](/terms).
+You can update profile and notification settings in the app, turn push and email categories off, unsubscribe from a notification email, ask to change your email (the change waits until both addresses confirm it), and delete your account as described in the [Terms of Service](/terms).
 
-The product does not include an in-app export or a download of your personal information. You can still view the account information the product shows you, and you can email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) to ask for access, a correction, a copy, or deletion.
+The product does not include an in-app export or a download of your personal information. You can still view the account information the product shows you.
 
-This policy is written for people in the United States, including Texas. The Texas Data Privacy and Security Act (TDPSA) gives consumers of a covered business the right to access, correct, delete, and obtain a copy of personal data, and to opt out of sale, targeted advertising, and certain profiling. PPP does not sell personal data and does not run targeted advertising or ad profiling. You may email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) to ask for access, a correction, a copy, or deletion. PPP will not discriminate against you for asking. If PPP denies a request, you may reply to that email and ask for another look.
+**Privacy requests.** Email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Say whether you want access, a correction, a copy, deletion, or an opt-out, and include the email on the account. PPP may ask you to confirm that you control that email before it acts, for example by replying from that address. PPP does not sell personal information and does not use it for targeted advertising, so there is no sale list or ad profile to remove. You can turn notification email off from the unsubscribe link in a message or from notification settings in the app.
 
-PPP will respond within the time the law that applies to the request requires.
+PPP will answer within 45 days. If the request needs more time, PPP may take up to 45 more days and will tell you before the first 45 days end. PPP keeps a record of the request and how it was handled. PPP will not discriminate against you for asking. If PPP denies a request, you may reply to that email and ask for another look. Deleting the account from the account screen is separate from this email and follows section 8.
+
+This policy is written for people in the United States, including Texas. The Texas Data Privacy and Security Act (TDPSA) gives consumers of a covered business the right to access, correct, delete, and obtain a copy of personal data, and to opt out of sale, targeted advertising, and certain profiling. PPP does not sell personal data and does not run targeted advertising or ad profiling. The request process above is how PPP handles those asks.
 
 If you decline an updated version of the agreements, you can still view your account information and delete your account. While acceptance of the current versions is required, new marketplace actions stay unavailable until you accept. That limit does not apply while the requirement to accept these versions is off.
 
@@ -148,7 +150,7 @@ The marketplace is for adults hiring and doing property work. It is not directed
 
 ## 11. Security
 
-The site is served over HTTPS. Database access for signed-in users goes through row-level security and checked server functions. Admin accounts can be required to use a second factor. No method of storage or transmission is perfect. Email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) if you believe your account is being misused.
+The site is served over HTTPS. Signed-in access is limited to the records the product is built to show that person, and sensitive actions go through checked server steps. Admin accounts can be required to use a second factor. No method of storage or transmission is perfect. Email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) if you believe your account is being misused.
 
 ## 12. Changes
 

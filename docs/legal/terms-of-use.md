@@ -45,7 +45,7 @@ The customer pays the contractor directly for any job cost. PPP does not collect
 
 ## 3. Accounts and acceptance
 
-You may sign up as a customer or as a contractor. A customer account is how homeowners and businesses post projects. Admin and verifier accounts are not offered on the public signup form. The verifier role exists in the database. These terms do not say a verifier inspected or certified any work.
+You may sign up as a customer or as a contractor. A customer account is how homeowners and businesses post projects. Admin accounts and a verifier role are not offered on the public signup form. These terms do not say a verifier inspected or certified any work.
 
 The signup form has a required checkbox. Checking it is your agreement to the documents that apply to that account. Links to these Terms of Service and the Privacy Policy are on that form when the legal pages are published. Until these pages are published and the requirement to accept these versions is turned on, the server still creates the account and records acceptance of the shorter terms already in the product. It does not reject the account for these versions, and it does not ask for an age affirmation. After that requirement is turned on, the server refuses to create the account if that acceptance is missing, if the versions you accepted are not the current versions, or if you did not affirm that you are 18 or older. PPP stores, for each document, the agreement version and the time. PPP copies the version from the current agreement. It does not use a version number chosen only in the browser.
 
@@ -53,7 +53,7 @@ If you already have an account when the requirement is turned on, the next sign-
 
 If you decline the updated versions, you can still view your account information and delete your account. The product does not include an in-app export of your data. While the requirement is on, new marketplace actions are refused until you accept: posting a project, sending an estimate, sending a project message, or creating a project connection. Viewing what is already there, marking a message read, and deleting the account stay available. While the requirement is off, those new actions are not refused for these versions.
 
-You agree to give accurate information and to keep your login to yourself. Passwords on the form must be at least 8 characters. Email confirmation is part of signup when the auth service asks for it. A contractor is not matched to jobs until the account is active and an admin has approved the contractor profile. Paying the $9.99 activation fee does not approve a contractor, does not reveal anyone’s contact details, and does not start a job.
+You agree to give accurate information and to keep your login to yourself. Passwords must be at least 8 characters. The server rejects a shorter password. Email confirmation is part of signup when the login service asks for it. You can ask to change the email on the account. The address stays the same until both the current address and the new address confirm the change. A contractor is not matched to jobs until the account is active and an admin has approved the contractor profile. Paying the $9.99 activation fee does not approve a contractor, does not reveal anyone’s contact details, and does not start a job.
 
 You must be 18 or older to create an account. That is an affirmation you make. It is not a verification of your age, a date of birth, or an identity document. The form does not ask for a date of birth. Until the requirement to accept these versions is turned on, the form does not require the affirmation and does not reject a signup for it. After that requirement is on, a new signup asks for the affirmation and PPP records the time. An existing account is asked for the same affirmation on the sign-in prompt described above.
 
@@ -64,17 +64,19 @@ PPP may refuse, suspend, or disable an account. Account statuses used in the pro
 Two platform fees exist. Both are in US dollars. The customer’s browser does not set the price. Refunds and cancellations are in the [Refund & Cancellation Policy](/refunds). That policy is part of these terms.
 
 - **Account activation: $9.99, one time.** Customers and contractors pay it. It is not $9.99 a month. There is no monthly charge to keep an account. Admin and verifier accounts are not charged this fee. It purchases account activation only. It does not approve a contractor, unlock contact, or start a job. Checkout is Stripe Checkout, and only when PPP has turned that checkout on. The service is delivered when the server verifies the Stripe Checkout session and marks the fee paid. A success page does not mark the fee paid by itself. Once that service is delivered, the fee is generally non-refundable, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
-- **Connection Fee: $4.99 per project connection.** The contractor pays it, and only when that contractor chooses to Connect. A later project with the same customer, including Hire Again, is a new project connection and is another $4.99. There is no bid fee and no rehire waiver in the connection checkout. Customers do not pay a PPP Connection Fee. It purchases messaging for that customer and that contractor on that project, and the customer’s option to share contact details. It does not promise a hire. Clicking Connect is not delivery. The service is delivered when the server verifies the payment and unlocks that connection. An abandoned unpaid Connect checkout can release its reserved slot after 30 minutes (1,800 seconds, unless that server setting is changed). Releasing an unpaid reservation is not a charge and is not delivery. Once the connection is delivered, the fee is generally non-refundable, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
+- **Connection Fee: $4.99 per project connection.** The contractor pays it, and only when that contractor chooses to Connect. A later project with the same customer, including Hire Again, is a new project connection and is another $4.99. There is no bid fee and no rehire waiver in the connection checkout. Customers do not pay a PPP Connection Fee. It purchases messaging for that customer and that contractor on that project, and the customer’s option to share contact details. It does not promise a hire. Clicking Connect is not delivery. The service is delivered when the server verifies the payment and unlocks that connection. An abandoned unpaid Connect checkout can release its reserved slot after 30 minutes. Releasing an unpaid reservation is not a charge and is not delivery. Once the connection is delivered, the fee is generally non-refundable, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
 
-While either checkout is turned off, PPP does not charge that fee. A connection that is not verified as paid does not unlock messaging or contact. A charge that does not unlock the service it was meant to buy can be flagged `needs_refund`. That flag is not a refund.
+While either checkout is turned off, PPP does not charge that fee. A connection that is not verified as paid does not unlock messaging or contact. A charge that does not unlock the service it was meant to buy is an erroneous charge for review. Marking it for review is not a refund.
 
-Card numbers are entered on Stripe’s page. PPP does not store card numbers. PPP stores payment metadata such as the checkout session id, the payment intent id, the amount, and whether the fee was paid.
+Card numbers are entered on Stripe’s page. PPP does not store card numbers. PPP stores the payment references Stripe assigns, the amount, and whether the fee was paid.
+
+To ask for one of the refund exceptions, email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). The request, who decides it, and how an approved refund is sent are in the [Refund & Cancellation Policy](/refunds).
 
 ## 5. Projects and the three connection slots
 
 A customer posts a project: the kind of work, a description, city, state, ZIP, timing, and an optional budget range. The street address and precise coordinates are stored separately and are not part of the public listing. Until you post, a draft can sit in that browser tab only. It is not saved on PPP’s servers until you post.
 
-PPP offers the project to matched contractors in the trade and service area. Up to three contractors can occupy connection slots on that project at the same time. The cap is the server setting `max_participating_contractors`, which is 3. If a contractor passes, that offer can go to the next eligible contractor. More than three people can be offered the job over its life. No more than three occupy a slot at once.
+PPP offers the project to matched contractors in the trade and service area. Up to three contractors can occupy connection slots on that project at the same time. If a contractor passes, that offer can go to the next eligible contractor. More than three people can be offered the job over its life. No more than three occupy a slot at once.
 
 A customer can stop new connections. Pros already connected can still message. A customer can decline an estimate, cancel a project when the product allows it, and choose who to hire. Choosing a pro starts a booking. Both sides confirm Hired before that booking is a mutual hire. PPP does not rank a “best” estimate and does not choose the contractor for the homeowner.
 
@@ -82,7 +84,7 @@ The $4.99 Connection Fee is for that project connection. It is not a promise tha
 
 ## 6. Names, messages, and contact
 
-On the public Find a Pro directory, a contractor is shown with a neutral label such as a trade and city, not the business name. The public card also omits phone, email, website, social handles, street address, license numbers, and the original portfolio file. A general service area, such as a city and radius, can be shown.
+On the public Find a Pro directory, a contractor is shown with a neutral label such as a trade and city, not the business name. The public card also omits phone, email, website, social handles, street address, and license numbers. A general service area, such as a city and radius, can be shown. A portfolio photo appears there only after an admin approves it, and then only through a short-lived link. Unapproved photos are not shown. Public ratings, when they appear, come from visible verified job reviews. A review an admin has hidden is left out of that public rating.
 
 After a paid Connect on a project, or an admin override for that same pair:
 
@@ -91,7 +93,7 @@ After a paid Connect on a project, or an admin override for that same pair:
 - The message box still rejects phone numbers, email addresses, and street addresses, even after Connect.
 - The customer can choose “Share my contact & address.” That shares the customer’s name, phone, email, and the address on the profile and project with that contractor only. Other pros on the same project do not get it. The customer can keep messaging without sharing.
 
-Before that share, a contractor offered the job can see an approximate location (city and state, and the ZIP on the jobs list), not the street. An admin can unlock or revoke contact access for one specific record. The reason is stored in an audit log.
+Before that share, a contractor offered the job can see an approximate location (city and state, and the ZIP on the jobs list), not the street. An admin can unlock or revoke contact access for one specific record and records the reason. That reason is not published.
 
 ## 7. Do not route around the Connection Fee
 
@@ -105,9 +107,11 @@ After a legitimate Connect between those two people, ordinary contact may be sha
 
 Job reviews, marketplace reviews, portfolio photos, and project photos follow the [Review & Content Guidelines](/content-guidelines). Day-to-day conduct follows the [Community Guidelines](/community-guidelines). Both are part of these terms.
 
-A job review can be edited for 30 days after it is posted. Marketplace reviews are moderated. Portfolio photos are not public until an admin approves them. After approval, public pages show that approved photo through a short-lived link. PPP does not currently remove location information a camera stored in the file, such as GPS coordinates.
+A job review can be edited for 30 days after it is posted. The other person on that job can report the review. An admin can hide a job review or a contractor’s reply. Hiding keeps the review. It does not delete it. A low star rating by itself is not a reason to hide it. A review of the PPP marketplace stays off the public page until an admin approves it.
 
-On an estimate or a booking, a customer can choose “Don't match me with this pro again.” That blocks the pro for that customer only. Matching skips that pro, the pro is left out of Hire Again, and the pro’s open, unaccepted offers on that customer’s other current projects close immediately. Paid connections and bookings are not changed. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros, and an admin can remove the block. A customer review of 3 stars or less creates the same kind of block. Raising that review to 4 or 5 stars does not remove it. A contractor’s review of a customer never creates a block.
+A contractor uploads a portfolio photo. It stays in review until an admin approves it. Public pages show only that approved photo, through a short-lived link. An admin can hide a photo instead. PPP does not currently remove location information a camera stored in the file, such as GPS coordinates.
+
+On an estimate or a booking, a customer can choose “Don't match me with this pro again.” That blocks the pro for that customer only. Matching skips that pro, the pro is left out of Hire Again, and the pro’s open, unaccepted offers on that customer’s other current projects close immediately. Paid connections and bookings are not changed. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros, and an admin can remove the block. A customer review of 1, 2, or 3 stars creates the same kind of block. A review of 4 or 5 stars does not. Raising a 1-, 2-, or 3-star review to 4 or 5 stars does not remove the block. A contractor’s review of a customer never creates a block.
 
 Reports of fraud or impersonation, harassment or threats, misleading profiles, suspected fake reviews, serious contractor misconduct, and rule violations follow the Community Guidelines. Reviewing a report is not a guarantee of workmanship, not an assumption of responsibility for the job, and not a decision of a construction dispute.
 
@@ -149,8 +153,10 @@ PPP will post updated terms on this page. The effective date of a version is its
 
 A new version becomes the one PPP can require when these pages are published and the requirement to accept them is turned on. Until that requirement is on, these versions are not the required acceptance. After it is on, new accounts must accept the current version and affirm that they are 18 or older, or the account is not created. Existing users are prompted on the next sign-in, as section 3 describes, including that age affirmation. They are not locked out of viewing their information or deleting the account. While the requirement is on, new marketplace actions wait on acceptance of the current versions. The version and the time are the record of what was accepted. The acceptance from a later sign-in is stored separately from the acceptance recorded when the account was created.
 
-## 16. Contact
+## 16. Contact and requests
 
 Questions about these terms: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+
+Privacy requests (access, correction, a copy, deletion, or an opt-out) and refund-exception requests use that same address. The [Privacy Policy](/privacy) describes privacy requests. The [Refund & Cancellation Policy](/refunds) describes refund exceptions, including who reviews them and that an approved refund is sent from Stripe’s dashboard. Emailing does not by itself change an account or create a refund.
 
 Email PPP for marketplace questions. Job responsibility is in Independent Marketplace and Contractor Responsibility.
