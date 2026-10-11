@@ -102,5 +102,9 @@ describe("admin support pages", () => {
     const body = screen.getByRole("textbox", { name: "Article body" });
     expect(body.tagName).toBe("TEXTAREA");
     expect(body).toHaveValue("Activation is $9.99.");
+    expect(screen.getByText(/does not guarantee the work is allowed/i)).toBeInTheDocument();
+    await user.clear(body);
+    await user.type(body, "Priority Property Pros does not guarantee the work.");
+    expect(screen.queryByText(/HTML is not allowed/i)).not.toBeInTheDocument();
   });
 });

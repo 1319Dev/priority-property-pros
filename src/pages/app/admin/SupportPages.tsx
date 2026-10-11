@@ -445,7 +445,10 @@ export function AdminSupportKnowledgePage() {
 
   return (
     <div className="space-y-8">
-      <PageIntro title="Knowledge" body="Articles and canned responses are plain text or Markdown. Raw HTML is rejected." />
+      <PageIntro
+        title="Knowledge"
+        body="Articles and canned responses are plain text or Markdown. Raw HTML is rejected. Published articles must not say Priority Property Pros guarantees, employs, supervises, inspects, insures, or verifies contractors' work, or that it resolves construction disputes. Saying it does not guarantee the work is allowed."
+      />
       <FormError message={error} />
       <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
         <ul className="space-y-2">
