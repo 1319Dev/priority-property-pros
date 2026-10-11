@@ -5,6 +5,7 @@ import { AdminMasterDetail } from "../../../../../components/admin/shell/AdminMa
 import { AdminIncludeTestToggle, AdminPageHeader, initialIncludeTest } from "../../../../../components/admin/shell/AdminPageHeader";
 import { AdminStatusPill } from "../../../../../components/admin/shell/AdminStatusPill";
 import { useAdminDesktop } from "../../../../../components/admin/shell/useAdminDesktop";
+import { CustomerProfileEditor } from "../../../../../components/admin/profileEdit/ProfileEditors";
 import { ErrorState } from "../../../../../components/ui/PageState";
 import { Skeleton } from "../../../../../components/ui/Skeleton";
 import { friendlyAdminError } from "../../../../../lib/admin/friendlyAdminError";
@@ -114,7 +115,7 @@ export function HomeownersLayout() {
     <div className="min-w-0 space-y-6">
       <AdminPageHeader
         title="Homeowners"
-        description="Search homeowner accounts. This screen is read-only. Test accounts stay hidden unless you include them."
+        description="Search homeowner accounts. Open one to edit the profile; every save needs a reason and is audited. Test accounts stay hidden unless you include them."
         actions={<AdminIncludeTestToggle checked={includeTest} onChange={setIncludeTest} />}
       />
       <AdminMasterDetail
@@ -144,6 +145,7 @@ export function HomeownerDetailPage() {
   const includeTest = outlet?.includeTest ?? initialIncludeTest();
   const [detail, setDetail] = useState<HomeownerDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!profileId) return undefined;
@@ -160,7 +162,7 @@ export function HomeownerDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [profileId, includeTest]);
+  }, [profileId, includeTest, reloadKey]);
 
   return (
     <div className="space-y-4">
@@ -169,12 +171,12 @@ export function HomeownerDetailPage() {
       </Link>
       {error ? <ErrorState message={error} /> : null}
       {detail == null && !error ? <Skeleton className="h-40" /> : null}
-      {detail ? <HomeownerDetailView detail={detail} /> : null}
+      {detail ? <HomeownerDetailView detail={detail} onProfileSaved={() => setReloadKey((key) => key + 1)} /> : null}
     </div>
   );
 }
 
-export function HomeownerDetailView({ detail }: { detail: HomeownerDetail }) {
+export function HomeownerDetailView({ detail, onProfileSaved }: { detail: HomeownerDetail; onProfileSaved?: () => void }) {
   return (
     <article className="space-y-5 rounded-3xl border border-forest-800/10 bg-cream-50 px-4 py-4">
       <header>
@@ -188,6 +190,7 @@ export function HomeownerDetailView({ detail }: { detail: HomeownerDetail }) {
         </div>
         {detail.flagNote ? <p className="mt-2 text-sm text-ink-700">{detail.flagNote}</p> : null}
       </header>
+      <CustomerProfileEditor key={detail.profileId} profileId={detail.profileId} onSaved={onProfileSaved} />
       <section>
         <h3 className="font-display text-xl text-forest-800">Projects</h3>
         {detail.projects.length === 0 ? <p className="mt-2 text-sm text-ink-700">No projects yet.</p> : null}
