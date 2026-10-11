@@ -10,6 +10,7 @@ import { DeleteAccountDialog } from "./DeleteAccountDialog";
 import { Header } from "../layout/Header";
 import { DashboardShell } from "../layout/DashboardShell";
 import { AccountPage } from "../../pages/app/CustomerPages";
+import { ACCOUNT_DELETION_PAUSED } from "../../lib/auth/deleteAccount";
 
 function profile(type: AccountType = "CUSTOMER", status: AccountStatus = "ACTIVE"): Profile {
   return {
@@ -123,7 +124,27 @@ describe("Delete account confirmation gating", () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
-  it("shows Delete account only on account settings, below Sign out", async () => {
+  it("shows the support-email notice instead of a Delete account button while paused", () => {
+    renderWithAuth(<AccountPage />);
+
+    expect(ACCOUNT_DELETION_PAUSED).toBe(true);
+    const notice = screen.getByTestId("account-deletion-paused");
+    expect(notice).toHaveTextContent(
+      "Account deletion is temporarily handled by our support team. To request deletion, email support@prioritypropertypros.com from the email on your account, and we will process it.",
+    );
+    const link = screen.getByRole("link", { name: "support@prioritypropertypros.com" });
+    expect(link).toHaveAttribute(
+      "href",
+      "mailto:support@prioritypropertypros.com?subject=Account%20deletion%20request",
+    );
+    // The email address is rendered once, only as the link text.
+    expect(notice.textContent?.match(/support@prioritypropertypros\.com/g)).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /delete account/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /delete my account/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /delete this account/i })).not.toBeInTheDocument();
+  });
+
+  it.skipIf(ACCOUNT_DELETION_PAUSED)("shows Delete account only on account settings, below Sign out", async () => {
     const user = userEvent.setup();
     renderWithAuth(<AccountPage />);
 
