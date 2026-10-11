@@ -62,7 +62,7 @@ export function BrowseIllustration({ kind, className = "" }: { kind: Illustratio
 }
 
 const REVIEWED_PROS_INTRO_WITHOUT_PLATFORM_FEE =
-  "This preview shows contractors only after a customer reviews them on Priority Property Pros. It is not a directory. Customers do not browse contractors or message them from here. PPP does not take a cut of the job.";
+  "These are approved contractors who already have customer reviews on Priority Property Pros. See every approved pro, including new ones, in Find a Pro. Contact details stay private until you and a pro connect on a project. PPP does not take a cut of the job.";
 
 export function HomeBrowsePreview() {
   const { cards, failed, loading, retry } = useReviewedContractors();
