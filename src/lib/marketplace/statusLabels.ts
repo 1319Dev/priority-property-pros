@@ -116,7 +116,8 @@ export function customerNextActions(input: {
     case "active":
       return [
         ...(awaitingHire && booking ? [{ label: "Confirm hired", to: booking }] : []),
-        ...(booking ? [{ label: "View booking", to: booking, variant: awaitingHire ? "outline" as const : undefined }] : [{ label: "View project", to: detail }]),
+        ...(booking ? [{ label: "View booking", to: booking, variant: awaitingHire ? "outline" as const : undefined }] : []),
+        { label: "View project", to: detail, variant: booking ? "outline" as const : undefined },
       ];
     case "completed":
       return [
@@ -192,3 +193,14 @@ export const CUSTOMER_DASHBOARD_TABS = [
 ] as const;
 
 export type CustomerDashboardTab = (typeof CUSTOMER_DASHBOARD_TABS)[number]["key"];
+
+/**
+ * Dashboard cards show at most three actions. A project-page link is always kept,
+ * so a Hired project is not left with only "View booking".
+ */
+export function dashboardCardActions(actions: readonly NextAction[], limit = 3): NextAction[] {
+  const head = actions.slice(0, limit);
+  const project = actions.find((action) => action.label === "View project");
+  if (!project || head.includes(project)) return head;
+  return [...head.slice(0, Math.max(0, limit - 1)), project];
+}

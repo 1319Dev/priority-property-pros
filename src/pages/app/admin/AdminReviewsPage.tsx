@@ -4,16 +4,19 @@ import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { EmptyState } from "../../../components/layout/DashboardShell";
 import { FormError } from "../../../lib/auth/AuthCard";
 import { friendlyAdminError } from "../../../lib/admin/friendlyAdminError";
-import type { PlatformReview } from "../../../lib/marketplace/platformReviews";
+import { PLATFORM_REVIEW_STATUSES, type PlatformReview, type PlatformReviewStatus } from "../../../lib/marketplace/platformReviews";
 import { adminListPlatformReviews, adminSetPlatformReviewStatus } from "../../../lib/marketplace/platformReviewsApi";
 import { isSupabaseConfigured } from "../../../lib/supabase/config";
 import { StarRating } from "../../../features/reviews/ReviewCard";
+import { JobReviewModeration } from "./JobReviewModeration";
 
 export function AdminReviewsPage() {
   const [rows, setRows] = useState<PlatformReview[]>([]);
+  const [queue, setQueue] = useState<PlatformReviewStatus>("PENDING");
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [tab, setTab] = useState<"site" | "jobs">("site");
 
   useEffect(() => {
     let cancelled = false;
@@ -48,16 +51,63 @@ export function AdminReviewsPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Admin</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Platform reviews</h1>
         <p className="mt-3 max-w-xl text-ink-700">
-          Signed-in users auto-approve. Reject anything that is spam, contact-leaking, or off-topic. Approve and reject
-          both require a reason, and that reason is written to the audit log. These are not Google reviews.
+          New reviews stay pending until you approve them. Only activated accounts can submit. Rejecting requires a
+          reason, and that reason is written to the audit log. Do not reject a review only because of its star rating.
+          These are not Google reviews.
         </p>
       </header>
-      <FormError message={error} />
-      {!loaded ? null : rows.length === 0 ? (
-        <EmptyState title="No platform reviews yet" body="Approved reviews will appear on /reviews and the homepage." />
+      <div role="tablist" aria-label="Review moderation" className="flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "site"}
+          className={`min-h-11 w-full rounded-full px-4 text-sm font-semibold sm:w-auto ${tab === "site" ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-forest-800"}`}
+          onClick={() => setTab("site")}
+        >
+          Site reviews
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "jobs"}
+          className={`min-h-11 w-full rounded-full px-4 text-sm font-semibold sm:w-auto ${tab === "jobs" ? "bg-forest-800 text-cream-50" : "bg-cream-100 text-forest-800"}`}
+          onClick={() => setTab("jobs")}
+        >
+          Job reviews
+        </button>
+      </div>
+      {tab === "jobs" ? <JobReviewModeration /> : null}
+      {tab !== "site" ? null : (
+        <div className="flex flex-col gap-2 sm:flex-row" role="tablist" aria-label="Platform review queue">
+          {PLATFORM_REVIEW_STATUSES.map((status) => {
+            const count = rows.filter((row) => row.status === status).length;
+            const label = status === "PENDING" ? "Pending" : status === "APPROVED" ? "Approved" : "Rejected";
+            return (
+              <button
+                key={status}
+                type="button"
+                role="tab"
+                aria-selected={queue === status}
+                className={`min-h-11 w-full rounded-full px-4 text-sm font-semibold sm:w-auto ${
+                  queue === status ? "bg-forest-800 text-cream-50" : "border border-forest-800/15 bg-cream-50 text-forest-800"
+                }`}
+                onClick={() => setQueue(status)}
+              >
+                {label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {tab === "site" ? <FormError message={error} /> : null}
+      {tab !== "site" ? null : !loaded ? null : rows.filter((row) => row.status === queue).length === 0 ? (
+        <EmptyState
+          title={`No ${queue.toLowerCase()} reviews`}
+          body="Approved reviews appear on /reviews and the homepage. Pending reviews stay off the public page."
+        />
       ) : (
         <ul className="space-y-3">
-          {rows.map((row) => (
+          {rows.filter((row) => row.status === queue).map((row) => (
             <ReviewModerationCard
               key={row.id}
               row={row}
@@ -126,10 +176,11 @@ function ReviewModerationCard({
           placeholder="Why this review should be approved or rejected"
         />
       </label>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <Button
           size="sm"
           variant="outline"
+          className="min-h-11 w-full sm:w-auto"
           disabled={busy || !reasonReady || row.status === "APPROVED"}
           onClick={() => setPending("APPROVED")}
         >
@@ -138,6 +189,7 @@ function ReviewModerationCard({
         <Button
           size="sm"
           variant="ghost"
+          className="min-h-11 w-full sm:w-auto"
           disabled={busy || !reasonReady || row.status === "REJECTED"}
           onClick={() => setPending("REJECTED")}
         >
