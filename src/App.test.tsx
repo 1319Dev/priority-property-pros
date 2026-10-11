@@ -319,10 +319,10 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
     faq.unmount();
     const contact = renderApp("/contact");
     expect(screen.getByRole("heading", { name: /talk to priority property pros/i })).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /prioritypropertypros@gmail.com/i }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: /prioritypropertypros@gmail.com/i })[0]).toHaveAttribute(
+    expect(screen.getAllByRole("link", { name: /support@prioritypropertypros.com/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /support@prioritypropertypros.com/i })[0]).toHaveAttribute(
       "href",
-      "mailto:prioritypropertypros@gmail.com",
+      "mailto:support@prioritypropertypros.com",
     );
     contact.unmount();
     const reviews = renderApp("/reviews");

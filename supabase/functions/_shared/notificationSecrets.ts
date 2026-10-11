@@ -11,7 +11,7 @@ export type NotificationRuntimeSecrets = {
   resendApiKey: string;
 };
 
-const DEFAULT_SUBJECT = "mailto:prioritypropertypros@gmail.com";
+const DEFAULT_SUBJECT = "mailto:support@prioritypropertypros.com";
 const DEFAULT_FROM = "Priority Property Pros <notifications@prioritypropertypros.com>";
 const DEFAULT_SITE = "https://prioritypropertypros.com";
 
