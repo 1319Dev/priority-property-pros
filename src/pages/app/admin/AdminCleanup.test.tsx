@@ -50,7 +50,7 @@ describe("admin cleanup", () => {
     expect(screen.queryByText(/Audit log viewer later/i)).not.toBeInTheDocument();
   });
 
-  it("does not link to People or Audit", () => {
+  it("does not link to People and links to the audit log", () => {
     render(
       <MemoryRouter>
         <AuthContext.Provider value={auth}>
@@ -59,7 +59,7 @@ describe("admin cleanup", () => {
       </MemoryRouter>,
     );
     expect(screen.queryByRole("link", { name: "People" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Audit" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Audit log" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "Booking tools" }).length).toBeGreaterThan(0);
   });
 
