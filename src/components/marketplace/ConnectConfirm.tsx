@@ -1,3 +1,4 @@
+import { CheckoutRefundNotice } from "../payments/CheckoutRefundNotice";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import {
   CONNECT_CHECKOUT_CONFIRM_EXTRA,
@@ -26,6 +27,7 @@ export function ConnectConfirmDialog({
       cancelLabel="Not now"
       tone="primary"
       busy={busy}
+      notice={<CheckoutRefundNotice />}
       onConfirm={onConfirm}
       onClose={onClose}
     />
