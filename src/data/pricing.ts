@@ -33,6 +33,19 @@ export const SIGNUP_FEE_CHECKOUT_NOTE =
 export const SIGNUP_FEE_CHECKOUT_LIVE_NOTE =
   "$9.99 one-time account activation. Non-refundable. Not a monthly subscription. After you verify your email, you will pay $9.99 to activate.";
 
+/** Shown on the signup form before the create-account button. Does not change the fee. */
+export const SIGNUP_BEFORE_CHECKOUT =
+  "Creating an account does not charge you. After you verify your email, checkout is the one-time $9.99 account activation. It is not a monthly subscription, not the job payment, and not the $4.99 Connection Fee. The $9.99 account activation fee is non-refundable.";
+
+export const SIGNUP_BEFORE_CHECKOUT_NOT_LIVE =
+  "Creating an account does not charge you. Checkout is not live yet. The one-time $9.99 account activation is not a monthly subscription, not the job payment, and not the $4.99 Connection Fee. The $9.99 account activation fee is non-refundable.";
+
+export const CUSTOMER_ACCOUNT_DIFFERENCE =
+  "A customer account is for homeowners and businesses who need work done. You post projects, review connections, and hire. There is no PPP Connection Fee. You pay the contractor directly for the job.";
+
+export const CONTRACTOR_ACCOUNT_DIFFERENCE =
+  "A contractor account is for independent pros who want to get hired. Priority Property Pros is not your employer. Browse first, then pay $4.99 only when you choose to connect. The $4.99 Connection Fee is non-refundable and does not guarantee a hire.";
+
 export const SIGNUP_TERMS_ACCEPTANCE =
   "I agree to the Terms of Use and Privacy Policy. The $9.99 account activation fee is non-refundable. PPP is a marketplace, not the contractor.";
 
@@ -92,7 +105,7 @@ export const PRO_DASHBOARD_PRICING_NOTE =
   "After the one-time $9.99 activation, it is $0/month. Browse first. Pay $4.99 only when you choose to connect. No percentage of the job. The $9.99 activation fee and the $4.99 Connection Fee are non-refundable.";
 
 export const CONNECTION_FEE_NO_HIRE_GUARANTEE =
-  "The $4.99 Connection Fee purchases connection access. It does not guarantee a hire or the work. The $4.99 Connection Fee is non-refundable.";
+  "The $4.99 Connection Fee opens messaging with that customer on that project. The customer decides if and when to share contact details. It does not guarantee a hire or the work. The $4.99 Connection Fee is non-refundable.";
 
 export const PRICING_FAQ = [
   {
@@ -111,17 +124,22 @@ export const PRICING_FAQ = [
       "After the one-time $9.99 account activation, contractors pay $0/month and browse eligible opportunities. The $4.99 Connection Fee is paid only when a contractor chooses to connect. There is no bid fee and no percentage of the job.",
   },
   {
+    question: "Does paying $4.99 show me the customer's phone number or address?",
+    answer:
+      "No. The $4.99 Connection Fee opens messaging with that customer on that project. The customer decides if and when to share their phone, email, and exact address. Paying does not reveal them automatically.",
+  },
+  {
     question: "Who pays for the job?",
     answer: JOB_PAYMENT_PLAIN,
   },
   {
     question: "Does the Connection Fee guarantee a hire?",
     answer:
-      "No. $4.99 buys connection access, not a guaranteed job. The $4.99 Connection Fee is non-refundable. Project payment is between the customer and the contractor. PPP does not take a percentage of that payment.",
+      "No. $4.99 opens messaging with the customer, not a guaranteed job. The $4.99 Connection Fee is non-refundable. Project payment is between the customer and the contractor. PPP does not take a percentage of that payment.",
   },
   {
     question: "Are the $9.99 activation fee and $4.99 Connection Fee refundable?",
     answer:
-      "No. Both fees are non-refundable. The $9.99 account activation is a one-time fee to open an account. The $4.99 Connection Fee buys connection access only — it does not guarantee a hire. You will not get a refund if you are not hired, the customer chooses someone else, the customer cancels, or you change your mind.",
+      "No. Both fees are non-refundable. The $9.99 account activation is a one-time fee to open an account. The $4.99 Connection Fee opens messaging only — it does not guarantee a hire or reveal contact details. You will not get a refund if you are not hired, the customer chooses someone else, the customer cancels, or you change your mind.",
   },
 ] as const;
