@@ -963,6 +963,10 @@ export type Database = {
     };
     Functions: {
       is_admin: { Args: Record<string, never>; Returns: boolean };
+      admin_set_platform_review_status: {
+        Args: { p_review_id: string; p_status: string; p_reason: string };
+        Returns: Json;
+      };
       admin_mfa_required: { Args: Record<string, never>; Returns: boolean };
       admin_dashboard_summary: { Args: { p_include_test?: boolean }; Returns: Json };
       admin_needs_attention: { Args: { p_include_test?: boolean }; Returns: Json };

@@ -135,6 +135,12 @@ const swaps: Array<{ id: string; match: RegExp; real: string; names: string[] }>
       "adminSetPortfolioPrivacy",
     ],
   },
+  {
+    id: "\0ppp-platform-reviews-api",
+    match: /\/marketplace\/platformReviewsApi(?:\.ts)?$/,
+    real: path.resolve(rootDir, "src/lib/marketplace/platformReviewsApi.ts"),
+    names: ["adminListPlatformReviews", "adminSetPlatformReviewStatus"],
+  },
 ];
 
 function harnessMocks(): Plugin {

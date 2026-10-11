@@ -88,7 +88,19 @@ export async function adminListPlatformReviews(): Promise<PlatformReview[]> {
 export async function adminSetPlatformReviewStatus(
   id: string,
   status: PlatformReviewStatus,
+  reason: string,
 ): Promise<void> {
-  const { error } = await client().from("platform_reviews").update({ status }).eq("id", id);
+  const trimmed = reason.trim();
+  if (status !== "APPROVED" && status !== "REJECTED") {
+    throw new Error("That status isn't allowed.");
+  }
+  if (trimmed.length < 3 || trimmed.length > 500) {
+    throw new Error("Add a reason of at least 3 characters.");
+  }
+  const { error } = await client().rpc("admin_set_platform_review_status", {
+    p_review_id: id,
+    p_status: status,
+    p_reason: trimmed,
+  });
   if (error) throw new Error(friendlyAdminError(error, "Could not update that review."));
 }
