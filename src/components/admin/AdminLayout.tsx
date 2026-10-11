@@ -2,6 +2,7 @@ import { Suspense, useEffect, useId, useRef, useState, type ReactNode } from "re
 import { Outlet, useLocation } from "react-router-dom";
 import { BrandLoader } from "../brand/BrandLoader";
 import { SUPPORT_EMAIL } from "../../data/brand";
+import { AdminStepUpHost } from "../../lib/auth/AdminStepUpDialog";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopBar } from "./AdminTopBar";
 
@@ -93,6 +94,7 @@ export function AdminLayout({
         </p>
       </div>
 
+      <AdminStepUpHost />
       {drawerOpen ? (
         <div className="fixed inset-0 z-50 md:hidden">
           <button
