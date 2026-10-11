@@ -21,7 +21,8 @@
 --   support_canned_responses  admin reply snippets (markdown, no raw HTML)
 --   support_agent_status      available / away / offline plus a heartbeat
 --   support_rate_limits       per IP-hash and per session counters
---   support_settings          retention days (purge is manual, not scheduled)
+--   support_settings          retention days and the daily AI answer cap
+--                             (purge is manual, not scheduled)
 --
 -- Guests have no anon table privileges. The Edge Function calls the
 -- support_service_* functions with the service role after it hashes the token.
@@ -118,6 +119,10 @@ CREATE INDEX support_messages_conversation_idx
 CREATE INDEX support_messages_fts_idx
   ON public.support_messages USING gin (to_tsvector('english', body));
 
+CREATE INDEX support_messages_assistant_recent_idx
+  ON public.support_messages (created_at)
+  WHERE author_role = 'assistant';
+
 CREATE TABLE public.support_assignments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id uuid NOT NULL REFERENCES public.support_conversations (id) ON DELETE CASCADE,
@@ -187,10 +192,12 @@ CREATE TABLE public.support_rate_limits (
 CREATE TABLE public.support_settings (
   id boolean PRIMARY KEY DEFAULT true,
   retention_days integer NOT NULL DEFAULT 365,
+  daily_ai_answer_cap integer NOT NULL DEFAULT 200,
   updated_by uuid REFERENCES public.profiles (id) ON DELETE SET NULL,
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT support_settings_singleton_chk CHECK (id),
-  CONSTRAINT support_settings_retention_chk CHECK (retention_days BETWEEN 30 AND 3650)
+  CONSTRAINT support_settings_retention_chk CHECK (retention_days BETWEEN 30 AND 3650),
+  CONSTRAINT support_settings_ai_cap_chk CHECK (daily_ai_answer_cap BETWEEN 0 AND 100000)
 );
 
 INSERT INTO public.support_settings (id, retention_days)
@@ -958,6 +965,36 @@ BEGIN
     'pricing', public.support_public_pricing(),
     'articles', public.support_search_kb(p_query, 4),
     'availability', public.support_desk_availability()
+  );
+END;
+$$;
+
+-- Count of assistant replies in the last 24 hours against the daily cap.
+-- Cap 0 means the model must not be called. Granted only to service_role.
+CREATE FUNCTION public.support_service_ai_budget()
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_cap integer;
+  v_used integer;
+BEGIN
+  PERFORM public.require_service_role();
+  SELECT daily_ai_answer_cap INTO v_cap
+  FROM public.support_settings
+  WHERE id = true;
+  v_cap := coalesce(v_cap, 0);
+  SELECT count(*)::integer INTO v_used
+  FROM public.support_messages
+  WHERE author_role = 'assistant'
+    AND created_at >= now() - interval '24 hours';
+  RETURN jsonb_build_object(
+    'allowed', v_cap > 0 AND v_used < v_cap,
+    'used', coalesce(v_used, 0),
+    'cap', v_cap
   );
 END;
 $$;
@@ -1753,6 +1790,7 @@ REVOKE ALL ON FUNCTION public.support_service_customer_message(uuid, text, uuid,
 REVOKE ALL ON FUNCTION public.support_service_assistant_message(uuid, text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.support_service_escalate(uuid, text, uuid, text, text, text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.support_service_context(text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.support_service_ai_budget() FROM PUBLIC, anon, authenticated;
 
 GRANT EXECUTE ON FUNCTION public.support_service_open(uuid, text, text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.support_service_history(uuid, text, uuid) TO service_role;
@@ -1760,6 +1798,7 @@ GRANT EXECUTE ON FUNCTION public.support_service_customer_message(uuid, text, uu
 GRANT EXECUTE ON FUNCTION public.support_service_assistant_message(uuid, text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.support_service_escalate(uuid, text, uuid, text, text, text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.support_service_context(text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.support_service_ai_budget() TO service_role;
 GRANT EXECUTE ON FUNCTION public.support_public_pricing() TO service_role;
 GRANT EXECUTE ON FUNCTION public.support_search_kb(text, integer) TO service_role;
 GRANT EXECUTE ON FUNCTION public.support_desk_availability() TO service_role;
@@ -1875,10 +1914,32 @@ END $$;
 -- Seed knowledge. Plain markdown. Live prices are still read from
 -- platform_settings at answer time; these articles describe the public rules.
 -- Idempotent: slug conflict does nothing, so a re-run does not overwrite edits.
+--
+-- Policy limits (owner, 2026-10-11): Priority Property Pros is a marketplace.
+-- It does not guarantee, employ, supervise, inspect, insure, or verify
+-- contractors' work, and it does not resolve construction disputes. Fees are
+-- generally non-refundable once delivered. Exception requests and complaints
+-- go to a person. This seed does not change Stripe or payment functions.
 -- ---------------------------------------------------------------------------
 
 INSERT INTO public.support_kb_articles (slug, title, body_md, status)
 VALUES
+(
+  'independent-marketplace',
+  'Independent marketplace and contractor responsibility',
+  $md$
+Priority Property Pros is an online platform that connects homeowners with independent contractors. It is not a construction company. It does not perform the work.
+
+Contractors are independent third parties. They are not employees or agents of Priority Property Pros. Priority Property Pros does not employ contractors. It is not a party to the agreement between a homeowner and a contractor.
+
+Contractors are responsible for their workmanship, their employees, their subcontractors, the licenses they need, their insurance obligations, safety, permits, warranties, and damage they cause. Homeowners are responsible for selecting a contractor, reviewing estimates, and agreeing to the project terms.
+
+Priority Property Pros does not guarantee a contractor's performance, qualifications, or the outcome of a job. It does not supervise the work. It does not manage the project. It does not inspect the work. It does not insure the work. It does not verify the contractor's work.
+
+Approving a contractor profile is not verification of workmanship, a license, or insurance, and it is not employment. A public listing is not a promise that Priority Property Pros checked the work.
+  $md$,
+  'PUBLISHED'
+),
 (
   'registration-and-activation',
   'Registration and the one-time activation',
@@ -1887,9 +1948,9 @@ Homeowners and contractors both create an account and confirm their email.
 
 A one-time account activation applies to homeowners and to contractors. The amount is the live signup fee (currently $9.99 when signup_fee_cents is 999 and signup_fee_enabled is on). It is charged once through Stripe Checkout. It is not a subscription and it is not a commission.
 
-Activation has to be satisfied before a homeowner can post a project into matching and before a contractor can use the paid parts of the marketplace. The assistant must quote the live signup_fee_cents value it was given, not a remembered number.
+The activation service is delivered when activation checkout succeeds. That purchase is the right to use the paid marketplace: a homeowner can post a project into matching, and a contractor can use the paid parts of the account. The assistant must quote the live signup_fee_cents value it was given, not a remembered number.
 
-The assistant cannot see whether a specific person has paid, and it cannot mark an account paid.
+Once that service is delivered, the activation fee is generally non-refundable. This chat cannot see whether a specific person has paid, and it cannot mark an account paid.
   $md$,
   'PUBLISHED'
 ),
@@ -1901,6 +1962,8 @@ New contractors submit a profile. An admin reviews it. Statuses are pending, app
 
 Approval is a person at Priority Property Pros. This chat cannot approve, reject, or speed up a review.
 
+Approval of a profile is not verification of workmanship, a license, or insurance. It does not mean Priority Property Pros employs the contractor or guarantees the work.
+
 Find a Pro shows an approved contractor only in the public-safe way: no business name until a paid Connect, and no phone, email, or street address.
   $md$,
   'PUBLISHED'
@@ -1911,9 +1974,9 @@ Find a Pro shows an approved contractor only in the public-safe way: no business
   $md$
 A homeowner describes the work, the property city and ZIP, timing, and photos if they want. Drafts stay private. Posting sends the project into matching after activation is satisfied.
 
-The project gets a PPP reference number. Contractors in range can be offered the job. The homeowner compares estimates on the project. They do not get the contractor's private contact details from the posting itself.
+The project gets a PPP reference number. Contractors in range can be offered the job. The homeowner compares estimates on the project and chooses who to hire. Priority Property Pros does not supervise the job and does not select the contractor for the homeowner.
 
-The assistant must not repeat a private project description, address, or photo back as if it looked the account up. It does not have that access.
+The homeowner does not get the contractor's private contact details from the posting itself. The assistant must not repeat a private project description, address, or photo back as if it looked the account up. It does not have that access.
   $md$,
   'PUBLISHED'
 ),
@@ -1923,7 +1986,7 @@ The assistant must not repeat a private project description, address, or photo b
   $md$
 An approved contractor who accepted an opportunity can send an estimate. The homeowner can view, compare, decline, or select one estimate.
 
-Selecting an estimate starts the hire path. It does not by itself publish the contractor's business name or contact details.
+Selecting an estimate starts the hire path. It does not by itself publish the contractor's business name or contact details. The homeowner and the contractor agree the project terms between themselves. Priority Property Pros is not a party to that agreement and does not guarantee the estimate.
 
 There is no platform commission on the estimate. Any percentage shown in an old estimate preview is not a fee Priority Property Pros charges. Do not describe a contractor percentage fee.
   $md$,
@@ -1933,14 +1996,16 @@ There is no platform commission on the estimate. Any percentage shown in an old 
   'payments-and-fees',
   'Payments and fees',
   $md$
-Two public fees exist:
+Two public fees exist. There is no subscription and no commission on the job.
 
-1. One-time account activation for homeowners and contractors. Live amount is signup_fee_cents (currently $9.99).
-2. Contractor Connect, also called the contact unlock. Live amount is connection_fee_cents (currently $4.99). The contractor pays it to unlock contact on a project. There is no commission on the job.
+1. One-time account activation for homeowners and contractors. Live amount is signup_fee_cents (currently $9.99). The activation service is delivered when activation checkout succeeds.
+2. Contractor Connect, also called the contact unlock. Live amount is connection_fee_cents (currently $4.99). The contractor pays it to unlock contact on one project. The Connect service is delivered when Connect checkout succeeds and contact for that project is unlocked.
 
-Job payments through the platform are not live. Priority Property Pros does not take a cut of the contractor's price.
+Job payments through the platform are not live. Priority Property Pros does not take a cut of the contractor's price. Workmanship payments are between the homeowner and the contractor.
 
-Activation and Connect are collected by Stripe Checkout. This chat cannot refund a payment, change a card, or see a receipt. Refund questions go to a person through Talk to Support. Do not promise a refund.
+Activation and Connect are collected by Stripe Checkout. Fees are generally non-refundable once the applicable service is delivered.
+
+The exceptions are a duplicate charge, an erroneous charge, a legally required refund, or an approved exception. This chat cannot start any of those. Ask the person to use Talk to Support. A person reviews the exception. Until a refund workflow is approved, an approved exception is handled manually in the Stripe dashboard by the owner. Do not promise a refund.
 
 Never mention a hidden legacy contractor percentage. It is not charged.
   $md$,
@@ -1952,9 +2017,9 @@ Never mention a hidden legacy contractor percentage. It is not charged.
   $md$
 After a booked job, the people on that job can leave a review. Reviews can be edited inside the published edit window.
 
-Platform reviews on the public reviews page are separate. They are moderated.
+Platform reviews on the public reviews page are separate. They are moderated. Moderating a review is not a guarantee of the contractor's work.
 
-The assistant cannot delete a review, change a star rating, or confirm what a specific review says.
+The assistant cannot delete a review, change a star rating, or confirm what a specific review says. A report about a suspected fake review goes to a person through Talk to Support.
   $md$,
   'PUBLISHED'
 ),
@@ -1966,7 +2031,23 @@ Find a Pro is the public directory. Visitors can browse approved pros by service
 
 Until a contractor pays the Connect fee on a project, the public card does not show the business name. It also never shows phone, email, or a street address. Contact stays inside the project after Connect.
 
+A directory card is not verification of the contractor's work, license, or insurance. Priority Property Pros does not insure the contractor and does not employ the contractor.
+
 The assistant must not invent a contractor name, license, insurance, or rating. If it was not in the knowledge excerpt, say so and point the person to Find a Pro.
+  $md$,
+  'PUBLISHED'
+),
+(
+  'complaints-and-reports',
+  'Complaints and reports',
+  $md$
+A homeowner can report fraud or impersonation, harassment or threats, a misleading profile, a suspected fake review, serious contractor misconduct, or a marketplace rule violation. That report goes to a person through Talk to Support. This chat cannot file, investigate, or close the report.
+
+Priority Property Pros may review a report, ask for evidence, moderate content, suspend an account, or remove a contractor. Reviewing a complaint is not guaranteeing workmanship, taking responsibility for the work, or deciding a construction dispute. Priority Property Pros does not resolve construction disputes. It does not promise to investigate or resolve every complaint.
+
+Workmanship, job payments, damage, delays, and warranties are between the homeowner and the contractor. Priority Property Pros is not automatically part of those disagreements. Court and venue for a homeowner-and-contractor disagreement follow applicable law and any enforceable agreement between them.
+
+A disagreement that is directly with Priority Property Pros is separate. Where the law allows, Texas law applies, and Montgomery County, Texas is the proposed venue when that venue is legally enforceable. There is no mandatory arbitration.
   $md$,
   'PUBLISHED'
 ),
@@ -1974,16 +2055,20 @@ The assistant must not invent a contractor name, license, insurance, or rating. 
   'what-support-can-and-cannot-do',
   'What Priority Help can and cannot do',
   $md$
-Priority Help answers general questions about registration, contractor approval, posting a project, estimates, the activation fee, the Connect fee, reviews, and Find a Pro.
+Priority Help answers general questions from the published policy: registration, contractor approval, posting a project, estimates, the activation fee, the Connect fee, reviews, Find a Pro, and what the marketplace does not do.
+
+If the published policy does not cover the question, it says so and offers Talk to Support. It does not guess.
 
 It cannot:
-- look up an account, a project, a payment, or a refund
-- approve a contractor or change an account
-- promise a refund, a hire, or a credential
+- look up another person's account, project, payment, or message
+- read admin-only notes or settings
+- approve a contractor, post a project, accept an offer, pay, or change an account
+- start a refund, even for a duplicate charge, an erroneous charge, a legally required refund, or an approved exception
 - share contact details or a contractor business name
-- change prices
+- say that Priority Property Pros guarantees, employs, supervises, inspects, insures, or verifies a contractor's work
+- say that Priority Property Pros resolves a construction dispute
 
-Those requests should be refused and offered Talk to Support. A ticket reference is created only when the person chooses Talk to Support. A human is not in the chat until a teammate actually joins.
+Those requests are handed to a person through Talk to Support. A ticket reference is created only when the person chooses Talk to Support. A human is not in the chat until a teammate actually joins.
   $md$,
   'PUBLISHED'
 )
@@ -2003,11 +2088,15 @@ FROM (
     ),
     (
       'No refund from chat',
-      'I can look into the payment with you here. I cannot start a refund from this note. If a refund is appropriate I will say what happens next.'
+      'Activation and Connect fees are generally non-refundable once the service is delivered. I cannot start a refund from this chat. A duplicate charge, an erroneous charge, a legally required refund, or an approved exception has to be reviewed by a person. I will not promise a refund.'
     ),
     (
       'Pricing',
-      'Account activation is a one-time fee for homeowners and contractors. Connect is a one-time fee a contractor pays to unlock contact on a project. There is no commission. I will confirm the live amounts in settings before I quote them.'
+      'Account activation is a one-time fee for homeowners and contractors. It is delivered when activation checkout succeeds. Connect is a one-time fee a contractor pays to unlock contact on a project. It is delivered when that checkout succeeds. There is no subscription and no commission. Both fees are generally non-refundable once delivered. I will confirm the live amounts in settings before I quote them.'
+    ),
+    (
+      'Complaint report',
+      'Thank you for the report. I will review what you sent. Reviewing a report is not a guarantee of the contractor''s work, and it is not a decision of a construction dispute. Workmanship, job payments, damage, delays, and warranties stay between you and the contractor. I will say if I need more evidence.'
     )
 ) AS seed(title, body_md)
 WHERE NOT EXISTS (
@@ -2031,7 +2120,10 @@ COMMENT ON TABLE public.support_agent_status IS
 COMMENT ON TABLE public.support_rate_limits IS
   'Server-side counters keyed by a hash, never a raw IP.';
 COMMENT ON TABLE public.support_settings IS
-  'Retention days. admin_support_purge_expired is manual and is not scheduled.';
+  'Retention days and the daily AI answer cap. admin_support_purge_expired is manual and is not scheduled. Cap 0 stops model answers.';
+
+COMMENT ON FUNCTION public.support_service_ai_budget() IS
+  'Assistant replies in the last 24 hours versus daily_ai_answer_cap. Service role only. allowed is false when the cap is 0 or already used.';
 
 COMMENT ON FUNCTION public.support_public_pricing() IS
   'Live activation and Connect amounts from platform_settings. Does not read the legacy basis-point setting.';

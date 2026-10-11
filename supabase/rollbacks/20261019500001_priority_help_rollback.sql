@@ -1,4 +1,4 @@
--- Rolls back 20261014000001_priority_help.sql.
+-- Rolls back 20261019500001_priority_help.sql.
 -- Drops only objects that migration created. Does not restore dropped data.
 -- Does not change is_admin(), purge_account_owned_rows(), fees, or Stripe.
 
@@ -61,6 +61,7 @@ DROP FUNCTION IF EXISTS public.admin_support_set_status(uuid, text);
 DROP FUNCTION IF EXISTS public.admin_support_search(text);
 DROP FUNCTION IF EXISTS public.admin_support_get(uuid);
 DROP FUNCTION IF EXISTS public.admin_support_list(text, integer);
+DROP FUNCTION IF EXISTS public.support_service_ai_budget();
 DROP FUNCTION IF EXISTS public.support_service_context(text);
 DROP FUNCTION IF EXISTS public.support_service_escalate(uuid, text, uuid, text, text, text);
 DROP FUNCTION IF EXISTS public.support_service_assistant_message(uuid, text);

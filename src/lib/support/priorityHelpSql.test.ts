@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const migrationName = "20261014000001_priority_help.sql";
+const migrationName = "20261019500001_priority_help.sql";
 
 function read(relative: string): string {
   return readFileSync(path.join(root, relative), "utf8");
@@ -20,11 +20,12 @@ function executable(sql: string): string {
 describe("Priority Help migration contract", () => {
   const sql = read(`supabase/migrations/${migrationName}`);
   const body = executable(sql);
-  const rollback = read("supabase/rollbacks/20261014000001_priority_help_rollback.sql");
+  const rollback = read("supabase/rollbacks/20261019500001_priority_help_rollback.sql");
   const roleTest = read("supabase/tests/priority_help.sql");
 
   it("is additive and does not replace existing functions", () => {
-    expect(migrationName > "20261013000005").toBe(true);
+    expect(migrationName > "20261016000001").toBe(true);
+    expect(migrationName > "20261019400001").toBe(true);
     expect(body).not.toMatch(/CREATE OR REPLACE FUNCTION/);
     expect(body).not.toMatch(/ALTER FUNCTION public\.is_admin/);
     expect(body).not.toMatch(/purge_account_owned_rows/);
@@ -68,8 +69,36 @@ describe("Priority Help migration contract", () => {
     expect(body).toMatch(/connection_fee_checkout_enabled/);
     expect(body).toMatch(/registration-and-activation/);
     expect(body).toMatch(/find-a-pro/);
+    expect(body).toMatch(/independent-marketplace/);
+    expect(body).toMatch(/complaints-and-reports/);
+    expect(body).toMatch(/does not guarantee/);
+    expect(body).toMatch(/does not employ contractors/);
+    expect(body).toMatch(/does not supervise the work/);
+    expect(body).toMatch(/does not inspect the work/);
+    expect(body).toMatch(/does not insure the work/);
+    expect(body).toMatch(/does not verify the contractor's work/);
+    expect(body).toMatch(/does not resolve construction disputes/);
+    expect(body).toMatch(/generally non-refundable once/);
+    expect(body).toMatch(/duplicate charge/);
+    expect(body).toMatch(/erroneous charge/);
+    expect(body).toMatch(/legally required refund/);
+    expect(body).toMatch(/approved exception/);
+    expect(body).toMatch(/not employees or agents/);
     expect(body).toMatch(/to_tsvector\('english'/);
     expect(body).toMatch(/websearch_to_tsquery\('english'/);
+  });
+
+  it("caps assistant answers per day and fails closed at zero", () => {
+    expect(body).toMatch(/daily_ai_answer_cap integer NOT NULL DEFAULT 200/);
+    expect(body).toMatch(/daily_ai_answer_cap BETWEEN 0 AND 100000/);
+    expect(body).toMatch(/CREATE FUNCTION public\.support_service_ai_budget\(\)/);
+    expect(body).toMatch(/author_role = 'assistant'/);
+    expect(body).toMatch(/'allowed', v_cap > 0 AND v_used < v_cap/);
+    expect(body).toMatch(
+      /REVOKE ALL ON FUNCTION public\.support_service_ai_budget\(\) FROM PUBLIC, anon, authenticated/,
+    );
+    expect(body).toMatch(/GRANT EXECUTE ON FUNCTION public\.support_service_ai_budget\(\) TO service_role/);
+    expect(rollback).toMatch(/DROP FUNCTION IF EXISTS public\.support_service_ai_budget\(\)/);
   });
 
   it("ships a rollback and a role-access script for anon, guests, and staff", () => {

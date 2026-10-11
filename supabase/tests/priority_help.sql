@@ -235,7 +235,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public._ph_ok(boolean, text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION public._ph_raises(text, text) TO PUBLIC;
 
-\ir ../migrations/20261014000001_priority_help.sql
+\ir ../migrations/20261019500001_priority_help.sql
 
 SELECT public._ph_ok(
   NOT has_table_privilege('anon', 'public.support_conversations', 'SELECT'),
@@ -549,6 +549,11 @@ SELECT public._ph_ok(public.support_desk_availability() = 'offline', 'stale hear
 
 UPDATE public.platform_settings SET value_int = 0 WHERE key = 'admin_mfa_required';
 
+SELECT count(*)::int AS assistant_used
+FROM public.support_messages
+WHERE author_role = 'assistant'
+  AND created_at >= now() - interval '24 hours' \gset
+
 SELECT set_config('request.jwt.claims', '{"role":"service_role"}', false);
 SET ROLE service_role;
 SELECT public._ph_ok(
@@ -572,7 +577,74 @@ SELECT public._ph_ok(
   public.support_search_kb('activation fee', 4)::text ILIKE '%one-time%',
   'full-text search finds the activation article'
 );
+SELECT public._ph_ok(
+  (public.support_service_ai_budget() ->> 'cap')::int = 200
+  AND (public.support_service_ai_budget() ->> 'used')::int = :assistant_used
+  AND (public.support_service_ai_budget() ->> 'allowed') = 'true',
+  'daily AI cap is 200 and still allows answers under that count'
+);
 RESET ROLE;
+UPDATE public.support_settings SET daily_ai_answer_cap = 0 WHERE id = true;
+SELECT set_config('request.jwt.claims', '{"role":"service_role"}', false);
+SET ROLE service_role;
+SELECT public._ph_ok(
+  (public.support_service_ai_budget() ->> 'allowed') = 'false',
+  'a zero daily cap refuses model answers'
+);
+RESET ROLE;
+UPDATE public.support_settings SET daily_ai_answer_cap = 200 WHERE id = true;
+SELECT set_config('request.jwt.claims', '{"role":"anon"}', false);
+SET ROLE anon;
+SELECT public._ph_raises('SELECT public.support_service_ai_budget()', '42501');
+RESET ROLE;
+
+SELECT public._ph_ok(
+  EXISTS (
+    SELECT 1 FROM public.support_kb_articles
+    WHERE status = 'PUBLISHED' AND body_md ILIKE '%does not guarantee%'
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.support_kb_articles
+    WHERE status = 'PUBLISHED' AND body_md ILIKE '%does not employ contractors%'
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.support_kb_articles
+    WHERE status = 'PUBLISHED' AND body_md ILIKE '%does not supervise the work%'
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.support_kb_articles
+    WHERE status = 'PUBLISHED' AND body_md ILIKE '%does not inspect the work%'
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.support_kb_articles
+    WHERE status = 'PUBLISHED' AND body_md ILIKE '%does not insure the work%'
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.support_kb_articles
+    WHERE status = 'PUBLISHED' AND body_md ILIKE '%does not verify the contractor''s work%'
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.support_kb_articles
+    WHERE status = 'PUBLISHED' AND body_md ILIKE '%does not resolve construction disputes%'
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.support_kb_articles
+    WHERE status = 'PUBLISHED' AND body_md ILIKE '%generally non-refundable once%'
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.support_kb_articles
+    WHERE status = 'PUBLISHED'
+      AND body_md ILIKE '%duplicate charge%'
+      AND body_md ILIKE '%erroneous charge%'
+      AND body_md ILIKE '%legally required refund%'
+      AND body_md ILIKE '%approved exception%'
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.support_kb_articles
+    WHERE slug = 'complaints-and-reports' AND status = 'PUBLISHED'
+  ),
+  'published policy keeps marketplace limits, fee exceptions, and the human report flow'
+);
 
 SELECT set_config('request.jwt.claims', '{"role":"service_role"}', false);
 SET ROLE service_role;
