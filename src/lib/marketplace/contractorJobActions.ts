@@ -45,6 +45,15 @@ export function opportunityAllowsConnectCta(status: OpportunityStatus | null | u
   return status === "AVAILABLE" || status === "ACCEPTED";
 }
 
+/** Passed, closed, expired, and cancelled jobs have no Connect, Pass, or spot count. */
+export function connectionActionsOpen(input: {
+  opportunityStatus?: string | null;
+  projectStatus?: string | null;
+}): boolean {
+  if (input.projectStatus === "CANCELLED") return false;
+  return input.opportunityStatus === "AVAILABLE" || input.opportunityStatus === "ACCEPTED";
+}
+
 export function shouldAcceptOpportunityOnConnect(status: OpportunityStatus | null | undefined): boolean {
   return status === "AVAILABLE";
 }

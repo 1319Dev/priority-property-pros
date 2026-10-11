@@ -11,8 +11,12 @@ export const PLATFORM_REVIEW_MAX_NAME = 80;
 export const PLATFORM_REVIEW_MAX_CITY = 80;
 export const PLATFORM_REVIEWS_EMPTY_COPY = "Be the first to review.";
 export const PLATFORM_REVIEWS_AUTH_REQUIRED = "Sign in to leave a review of Priority Property Pros.";
+export const PLATFORM_REVIEWS_ACTIVATION_REQUIRED =
+  "Account activation is required before you can submit a review. Activation does not publish it. An admin approves it first.";
+export const PLATFORM_REVIEWS_PENDING_SUCCESS =
+  "Thanks. Your review was submitted and is waiting for admin approval. It is not public yet.";
 export const PLATFORM_REVIEWS_NOT_GOOGLE =
-  "These are reviews of the Priority Property Pros marketplace from signed-in users. They are not Google reviews.";
+  "These are reviews of the Priority Property Pros marketplace from signed-in users. They are not Google reviews. New reviews stay pending until an admin approves them.";
 
 export type PlatformReview = {
   id: string;
@@ -103,8 +107,15 @@ export function canSelectPlatformReview(input: {
   return Boolean(input.viewerId) && input.viewerId === input.rowUserId;
 }
 
-export function canInsertPlatformReview(input: { viewerId: string | null }): boolean {
-  return Boolean(input.viewerId);
+export function accountCanSubmitPlatformReview(signupFeeStatus: string | null | undefined): boolean {
+  return signupFeeStatus === "PAID" || signupFeeStatus === "NOT_REQUIRED";
+}
+
+export function canInsertPlatformReview(input: {
+  viewerId: string | null;
+  signupFeeStatus?: string | null;
+}): boolean {
+  return Boolean(input.viewerId) && accountCanSubmitPlatformReview(input.signupFeeStatus);
 }
 
 export function canModeratePlatformReview(input: { viewerIsAdmin: boolean }): boolean {

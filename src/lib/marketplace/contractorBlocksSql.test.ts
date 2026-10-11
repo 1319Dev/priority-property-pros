@@ -57,13 +57,14 @@ describe("customer contractor block SQL", () => {
   it("uses a version after 20261015000004 and does not reuse public_pro_labels", () => {
     expect(names).toContain(migrationName);
     expect(migrationName > "20261015000004").toBe(true);
+    expect(names.includes(migrationName)).toBe(true);
     expect(names.includes("20261013000004_public_pro_labels.sql")).toBe(true);
     expect(names.filter((name) => name.startsWith("20261016000001"))).toEqual([migrationName]);
     expect(names.filter((name) => name.includes("customer_contractor_blocks"))).toEqual([migrationName]);
-    for (const name of names.filter((item) => item > migrationName)) {
+    for (const name of names.filter((file) => file > migrationName)) {
       const later = readMigration(name);
-      expect(later).not.toMatch(/CREATE OR REPLACE FUNCTION public\.contractor_eligible_for_project/);
-      expect(later).not.toMatch(/CREATE OR REPLACE FUNCTION public\.hire_again_contractors/);
+      expect(later, name).not.toMatch(/FUNCTION public\.contractor_eligible_for_project/);
+      expect(later, name).not.toMatch(/FUNCTION public\.hire_again_contractors/);
     }
   });
 

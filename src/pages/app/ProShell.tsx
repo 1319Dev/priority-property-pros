@@ -1,5 +1,6 @@
 import { HowFeesWork } from "../../components/marketplace/HowFeesWork";
 import { DashboardShell, type DashNavItem } from "../../components/layout/DashboardShell";
+import { useAuth } from "../../lib/auth/useAuth";
 import { useMessageUnreadCount } from "../../lib/marketplace/useMessageUnread";
 
 const baseItems: DashNavItem[] = [
@@ -13,8 +14,15 @@ const baseItems: DashNavItem[] = [
 
 export function ProShell() {
   const unread = useMessageUnreadCount();
+  const { signup_fee_status } = useAuth();
   const items = baseItems.map((item) =>
     item.to === "/app/pro/messages" ? { ...item, badge: unread } : item,
   );
-  return <DashboardShell items={items} eyebrow="Priority Pro" notice={<HowFeesWork />} />;
+  return (
+    <DashboardShell
+      items={items}
+      eyebrow="Priority Pro"
+      notice={<HowFeesWork signupFeeStatus={signup_fee_status} />}
+    />
+  );
 }
