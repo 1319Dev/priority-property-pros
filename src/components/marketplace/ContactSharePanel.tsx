@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "../ui/Button";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { FormError } from "../../lib/auth/AuthCard";
+import { formatPhoneDisplay } from "../../lib/marketplace/contractorPolish";
 import {
   getSharedProjectContact,
   shareProjectContact,
@@ -21,6 +22,7 @@ import {
   type ContactShareAudience,
   type SharedContactView,
 } from "../../lib/marketplace/contactShare";
+import { threadContactNotice } from "../../lib/marketplace/messaging";
 
 const POLL_MS = 12_000;
 
@@ -34,7 +36,7 @@ function ContactLines({ view }: { view: SharedContactView }) {
       </div>
       <div>
         <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Phone</dt>
-        <dd className="mt-1 break-words font-semibold text-forest-800">{view.phone || "Not on file"}</dd>
+        <dd className="mt-1 break-words font-semibold text-forest-800">{formatPhoneDisplay(view.phone) || "Not on file"}</dd>
       </div>
       <div>
         <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Email</dt>
@@ -52,10 +54,16 @@ export function ContactSharePanel({
   role,
   projectId,
   contractorProfileId,
+  announceThreadPrivacy = false,
+  onSharedChange,
 }: {
   role: ContactShareAudience;
   projectId: string;
   contractorProfileId: string;
+  /** On a message thread, the privacy line has to match the contact box in the same render. */
+  announceThreadPrivacy?: boolean;
+  /** Tells the thread whether contact has been shared, so the composer hint can match. */
+  onSharedChange?: (shared: boolean) => void;
 }) {
   const [view, setView] = useState<SharedContactView | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +76,10 @@ export function ContactSharePanel({
       role,
     );
     setView(next);
+  }, [projectId, contractorProfileId, role]);
+
+  useEffect(() => {
+    setView(null);
   }, [projectId, contractorProfileId, role]);
 
   useEffect(() => {
@@ -84,6 +96,20 @@ export function ContactSharePanel({
     };
   }, [load]);
 
+  const linesVisible = Boolean(
+    view?.eligible && (role === "customer" || contractorMaySeeSharedContact(view)),
+  );
+  const shared = Boolean(
+    view?.eligible && (role === "customer" ? view.customer_shared : contractorMaySeeSharedContact(view)),
+  );
+  useEffect(() => {
+    onSharedChange?.(shared);
+  }, [shared, onSharedChange]);
+  const noticeText = threadContactNotice(linesVisible, shared);
+  const privacyNotice = announceThreadPrivacy && noticeText ? (
+    <p className="text-sm text-ink-500">{noticeText}</p>
+  ) : null;
+
   if (error && !view) {
     return (
       <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4" aria-label="Share contact">
@@ -92,7 +118,7 @@ export function ContactSharePanel({
     );
   }
 
-  if (!view?.eligible) return null;
+  if (!view?.eligible) return privacyNotice;
 
   const showButton = role === "customer" && shareButtonVisible(view);
   const showShared = role === "customer" ? view.customer_shared : contractorMaySeeSharedContact(view);
@@ -113,6 +139,7 @@ export function ContactSharePanel({
 
   return (
     <section className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm" aria-label="Share contact">
+      {privacyNotice}
       <h2 className="font-display text-2xl text-forest-800">
         {showShared ? SHARE_CONTACT_DONE_TITLE : "Contact & address"}
       </h2>

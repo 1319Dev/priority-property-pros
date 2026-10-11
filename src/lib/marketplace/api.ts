@@ -1,9 +1,12 @@
 import { friendlyAdminError } from "../admin/friendlyAdminError";
+import { dedupeNotificationRows } from "../notifications/presentation";
+import { runSensitiveAdminCall } from "../auth/adminStepUp";
 import { getSupabaseClient } from "../supabase/client";
 import type { Database, Json } from "../supabase/database.types";
 import { assertNoPreHireContact } from "./antiCircumvention";
 import { looksLikeFilename } from "./publicDirectory";
 import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
+import { stripImageMetadata } from "../media/stripImageMetadata";
 import { detectContactLeak } from "./contactLeak";
 import { projectInsertForPost, runProjectSubmit } from "./projectPost";
 import { isMissingReferenceColumn, parseProjectReference } from "./projectReference";
@@ -200,10 +203,13 @@ export async function uploadProjectPhoto(params: {
 }): Promise<string> {
   if (!isAllowedImage(params.file.type)) throw new Error("Use a JPEG, PNG, or WebP photo.");
   if (params.file.size > 10 * 1024 * 1024) throw new Error("Photos must be 10 MB or smaller.");
-  const path = `${params.userId}/${params.projectId}/${crypto.randomUUID()}-${sanitizeUploadName(params.file.name)}`;
+  // Remove GPS and other photo metadata before the file leaves the browser.
+  const file = await stripImageMetadata(params.file);
+  if (file.size > 10 * 1024 * 1024) throw new Error("Photos must be 10 MB or smaller.");
+  const path = `${params.userId}/${params.projectId}/${crypto.randomUUID()}-${sanitizeUploadName(file.name)}`;
   const supabase = client();
-  const { error: uploadError } = await supabase.storage.from("project-photos").upload(path, params.file, {
-    contentType: params.file.type,
+  const { error: uploadError } = await supabase.storage.from("project-photos").upload(path, file, {
+    contentType: file.type,
     upsert: false,
   });
   if (uploadError) throw new Error(uploadError.message);
@@ -444,6 +450,36 @@ export async function fetchMyEstimates(): Promise<ContractorEstimateListItem[]> 
   return Array.isArray(data) ? (data as ContractorEstimateListItem[]) : [];
 }
 
+export type OpportunityLabelRow = {
+  opportunity_id: string;
+  project_id: string;
+  project_title: string | null;
+  project_reference_number: number | string | null;
+};
+
+/** Own-job title and PPP number. Missing until the label migration is applied. */
+export async function fetchMyOpportunityLabels(): Promise<OpportunityLabelRow[]> {
+  const { data, error } = await client().rpc("list_my_opportunity_labels");
+  if (error) throw new Error(asError(error, "Could not load job numbers."));
+  if (!Array.isArray(data)) return [];
+  return data.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const item = row as Record<string, unknown>;
+    if (typeof item.project_id !== "string" || typeof item.opportunity_id !== "string") return [];
+    return [
+      {
+        opportunity_id: item.opportunity_id,
+        project_id: item.project_id,
+        project_title: typeof item.project_title === "string" ? item.project_title : null,
+        project_reference_number:
+          typeof item.project_reference_number === "number" || typeof item.project_reference_number === "string"
+            ? item.project_reference_number
+            : null,
+      },
+    ];
+  });
+}
+
 export type InAppNotificationRow = {
   id: string;
   kind: string;
@@ -455,12 +491,14 @@ export type InAppNotificationRow = {
   channel: "in_app";
   read_at: string | null;
   created_at: string;
+  action_state?: string | null;
 };
 
 export async function fetchMyNotifications(): Promise<InAppNotificationRow[]> {
   const { data, error } = await client().rpc("list_my_notifications");
   if (error) throw new Error(asError(error, "Could not load notifications."));
-  return Array.isArray(data) ? (data as InAppNotificationRow[]) : [];
+  const rows = Array.isArray(data) ? (data as InAppNotificationRow[]) : [];
+  return dedupeNotificationRows(rows);
 }
 
 export async function markNotificationRead(id: string): Promise<RpcJson> {
@@ -620,6 +658,24 @@ export async function updateBookingReview(bookingId: string, rating: number, bod
   return (data ?? {}) as RpcJson;
 }
 
+export async function reportBookingReview(reviewId: string, reason: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("report_booking_review", {
+    p_review_id: reviewId,
+    p_reason: reason.trim(),
+  });
+  if (error) throw new Error(asError(error, "Could not send that report."));
+  return (data ?? {}) as RpcJson;
+}
+
+export async function submitBookingReviewResponse(reviewId: string, body: string): Promise<RpcJson> {
+  const { data, error } = await client().rpc("submit_booking_review_response", {
+    p_review_id: reviewId,
+    p_body: body.trim(),
+  });
+  if (error) throw new Error(asError(error, "Could not post that response."));
+  return (data ?? {}) as RpcJson;
+}
+
 export async function confirmBookingHired(bookingId: string): Promise<RpcJson> {
   const { data, error } = await client().rpc("confirm_booking_hired", { p_booking_id: bookingId });
   if (error) throw new Error(asError(error, "Could not confirm Hired."));
@@ -670,20 +726,28 @@ export async function fetchConnectionContactAccess(
 }
 
 export async function adminGrantBookingContactAccess(bookingId: string, reason: string): Promise<RpcJson> {
-  const { data, error } = await client().rpc("admin_grant_booking_contact_access", {
-    p_booking_id: bookingId,
-    p_reason: reason,
-  });
-  if (error) throw new Error(friendlyAdminError(error, "Could not grant contact access."));
+  const data = await runSensitiveAdminCall(
+    () =>
+      client().rpc("admin_grant_booking_contact_access", {
+        p_booking_id: bookingId,
+        p_reason: reason,
+      }),
+    "Could not grant contact access.",
+    { requireData: false },
+  );
   return (data ?? {}) as RpcJson;
 }
 
 export async function adminRevokeBookingContactAccess(bookingId: string, reason: string): Promise<RpcJson> {
-  const { data, error } = await client().rpc("admin_revoke_booking_contact_access", {
-    p_booking_id: bookingId,
-    p_reason: reason,
-  });
-  if (error) throw new Error(friendlyAdminError(error, "Could not revoke contact access."));
+  const data = await runSensitiveAdminCall(
+    () =>
+      client().rpc("admin_revoke_booking_contact_access", {
+        p_booking_id: bookingId,
+        p_reason: reason,
+      }),
+    "Could not revoke contact access.",
+    { requireData: false },
+  );
   return (data ?? {}) as RpcJson;
 }
 
@@ -991,9 +1055,12 @@ export async function uploadContractorDoc(params: {
 }) {
   if (!isAllowedContractorDoc(params.file.type)) throw new Error("Use a JPEG, PNG, WebP, or PDF.");
   if (params.file.size > 10 * 1024 * 1024) throw new Error("Files must be 10 MB or smaller.");
-  const path = `${params.userId}/${params.folder}/${crypto.randomUUID()}-${sanitizeUploadName(params.file.name)}`;
-  const { error } = await client().storage.from("contractor-docs").upload(path, params.file, {
-    contentType: params.file.type,
+  // Portfolio and credential photos lose GPS and other metadata before upload. PDFs pass through unchanged.
+  const file = await stripImageMetadata(params.file);
+  if (file.size > 10 * 1024 * 1024) throw new Error("Files must be 10 MB or smaller.");
+  const path = `${params.userId}/${params.folder}/${crypto.randomUUID()}-${sanitizeUploadName(file.name)}`;
+  const { error } = await client().storage.from("contractor-docs").upload(path, file, {
+    contentType: file.type,
     upsert: false,
   });
   if (error) throw new Error(error.message);
@@ -1207,6 +1274,7 @@ export type PublicDirectoryReviewRow = {
   id: string;
   rating: number;
   body: string;
+  contractor_response?: string | null;
 };
 
 function parseDirectoryBadges(value: Json | null | undefined): Array<{ kind: string; label: string }> {
