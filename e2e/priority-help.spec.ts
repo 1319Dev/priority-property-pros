@@ -1,5 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+test.use({ serviceWorkers: "block" });
+
 const harness = "http://127.0.0.1:5174/e2e/harness/index.html";
 
 async function noHorizontalOverflow(page: Page) {

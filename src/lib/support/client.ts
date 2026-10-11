@@ -51,11 +51,14 @@ type Invoke = (body: Record<string, unknown>) => Promise<{ data: unknown; error:
 
 const ROLES = new Set<HelpRole>(["customer", "assistant", "admin", "system"]);
 
-export function availabilityNotice(availability: HelpAvailability, humanJoined: boolean): string {
+export function availabilityNotice(availability: HelpAvailability, humanJoined: boolean, saved = false): string {
   if (humanJoined) return "A support teammate has joined this conversation.";
   if (availability === "available") return "Support is available. A person has not joined this chat yet.";
-  if (availability === "away") return "Support is away. Your message is saved. A person has not joined this chat.";
-  return "Support is offline. Your message is saved. A person has not joined this chat.";
+  const followUp = saved
+    ? "Your message is saved. A person has not joined this chat."
+    : "Leave a message and it will be saved. A person has not joined this chat.";
+  if (availability === "away") return `Support is away. ${followUp}`;
+  return `Support is offline. ${followUp}`;
 }
 
 export function safeSupportText(role: HelpRole, body: string): string {
