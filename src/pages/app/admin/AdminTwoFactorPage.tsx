@@ -131,7 +131,7 @@ export function AdminTwoFactorPage() {
   return (
     <div className="max-w-lg space-y-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Admin</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Admin</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Two-factor sign-in</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-700">
           Sign-in codes come from an authenticator app on a device you keep. Supabase does not issue recovery

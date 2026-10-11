@@ -18,7 +18,7 @@ export function AuthCard({
   return (
     <section className="py-12 sm:py-16">
       <Container className="max-w-lg">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">{eyebrow}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">{eyebrow}</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">{title}</h1>
         {lede ? <p className="mt-3 text-base leading-relaxed text-ink-700">{lede}</p> : null}
         {!isSupabaseConfigured() ? <NotConfiguredBanner /> : null}

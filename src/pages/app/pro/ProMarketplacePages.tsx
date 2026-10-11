@@ -119,7 +119,7 @@ export function ProHomePage() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Priority Pro</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">{name}</h1>
       </header>
       <HiredJobsPanel />

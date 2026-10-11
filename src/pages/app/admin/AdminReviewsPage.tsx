@@ -45,7 +45,7 @@ export function AdminReviewsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Admin</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Admin</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Platform reviews</h1>
         <p className="mt-3 max-w-xl text-ink-700">
           Signed-in users auto-approve. Reject anything that is spam, contact-leaking, or off-topic. Approve and reject

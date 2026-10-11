@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BrandLoader } from "./components/brand/BrandLoader";
 import { AppShell } from "./components/layout/AppShell";
 import { ScrollToTop } from "./components/layout/ScrollToTop";
+import { RouteMetaSync } from "./lib/seo/RouteMetaSync";
 import { RequireAdmin, RequireAuth, RequireRole } from "./lib/auth/guards";
 import { BecomeAProPage } from "./pages/BecomeAProPage";
 import { ContactPage } from "./pages/ContactPage";
@@ -92,6 +93,7 @@ export default function App() {
     <>
       <StripTrailingSlash />
       <ScrollToTop />
+      <RouteMetaSync />
       <Routes>
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />

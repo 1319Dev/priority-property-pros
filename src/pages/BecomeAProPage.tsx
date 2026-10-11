@@ -53,7 +53,7 @@ export function BecomeAProPage() {
             sizes="(max-width: 768px) 100vw, 672px"
           />
         </div>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Become a Pro</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Become a Pro</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">
           Real projects. Real customers. Fair competition.
         </h1>
@@ -86,7 +86,7 @@ export function BecomeAProPage() {
         <ol className="mt-10 grid gap-4">
           {steps.map((step) => (
             <li key={step.n} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-5">
-              <p className="font-display text-2xl italic text-gold-600">{step.n}</p>
+              <p className="font-display text-2xl italic text-gold-700">{step.n}</p>
               <h2 className="mt-1 font-display text-2xl text-forest-800">{step.title}</h2>
               <p className="mt-2 text-sm leading-relaxed text-ink-700">
                 {hidePricing && step.n === "01"
