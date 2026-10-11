@@ -17,15 +17,16 @@ describe("admin nav config", () => {
       "/app/admin/reviews",
       "/app/admin/bookings",
       "/app/admin/security",
+      "/app/admin/audit",
       "/app/admin/account",
     ]);
     expect(routes).toContain('path="approvals"');
     expect(routes).toContain('path="reviews"');
     expect(routes).toContain('path="bookings"');
     expect(routes).toContain('path="security"');
+    expect(routes).toContain('path="audit"');
     expect(routes).toContain('path="account"');
     expect(routes).not.toMatch(/path="people"/);
-    expect(routes).not.toMatch(/path="audit"/);
     expect(ADMIN_NAV_GROUPS).toEqual(["Overview", "People", "Marketplace", "Money", "Trust", "Account"]);
     expect(adminNavByGroup("People")).toEqual([]);
     expect(adminNavByGroup("Money")).toEqual([]);
@@ -71,7 +72,7 @@ describe("admin nav config", () => {
       },
     ]);
     expect(adminSearchHits("people").map((hit) => hit.label)).not.toContain("People");
-    expect(adminSearchHits("audit")).toEqual([]);
+    expect(adminSearchHits("audit").map((hit) => hit.label)).toEqual(["Audit log"]);
     expect(adminSearchHits("")).toEqual([]);
   });
 });
