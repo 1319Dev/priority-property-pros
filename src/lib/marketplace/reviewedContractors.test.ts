@@ -57,7 +57,8 @@ describe("review-backed contractor preview", () => {
 
   it("does not describe a free public directory", () => {
     expect(REVIEWED_PROS_INTRO).toMatch(/\$4\.99/);
-    expect(REVIEWED_PROS_INTRO).toMatch(/not a directory/i);
+    expect(REVIEWED_PROS_INTRO).not.toMatch(/not a directory/i);
+    expect(REVIEWED_PROS_INTRO).toMatch(/Find a Pro/);
     expect(REVIEWED_PROS_INTRO).toMatch(/does not take a cut of the job/i);
     expect(REVIEWED_PROS_EMPTY_BODY).toMatch(/No contractor has a customer review/i);
     expect(`${REVIEWED_PROS_INTRO} ${REVIEWED_PROS_EMPTY_BODY}`).not.toMatch(/browse and message/i);

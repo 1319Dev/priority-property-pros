@@ -65,7 +65,7 @@ describe("Find a Pro directory loader", () => {
   it("keeps a zero-review approved contractor and a reviewed contractor", async () => {
     directory.mockResolvedValue([
       row(zeroId, 0),
-      row(reviewedId, 2),
+      { ...row(reviewedId, 2), business_name: "Northside Fence Co." } as ReturnType<typeof row>,
       row(SMOKE_TESTER_CONTRACTOR_PROFILE_ID, 3),
     ]);
     reviews.mockImplementation(async (id) => {
@@ -86,10 +86,12 @@ describe("Find a Pro directory loader", () => {
     expect(zero?.ratingLabel).toBeNull();
     expect(zero?.acceptingWork).toBe(true);
     expect(zero?.portfolio).toEqual([]);
-    expect(reviewed?.ratingLabel).toBe("4.5 ★ · 2 reviews");
+    expect(reviewed?.ratingLabel).toBe("5.0 ★ · 2 reviews");
     expect(reviewed?.portfolio.map((item) => item.caption)).toEqual(["Rehung a gate"]);
     expect(reviews).not.toHaveBeenCalledWith(zeroId);
     expect(JSON.stringify(cards)).not.toMatch(/phone|email|street_line|@|512-/i);
+    expect(JSON.stringify(cards)).not.toMatch(/business_name|businessName|Northside/i);
+    expect(reviewed?.displayLabel).toBe("Approved Handyman Pro");
   });
 
   it("does not open a contractor the public RPC omits", async () => {

@@ -3,7 +3,8 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { BrandLoader } from "../../components/brand/BrandLoader";
 import { AdminMfaBlocked, AdminMfaChallenge } from "./AdminMfaChallenge";
 import { loadAdminMfaGate, verifyAdminSignInCode, type AdminMfaGateState } from "./adminMfaApi";
-import { BLOCKED_STATUSES, ROLE_HOME, postLoginPath } from "./roles";
+import { BLOCKED_STATUSES, ROLE_HOME, pathForRole, postLoginPath } from "./roles";
+import { returnPathFromLocation } from "./sessionReturn";
 import { useAuth } from "./useAuth";
 import type { AccountType } from "./types";
 
@@ -16,12 +17,22 @@ function AuthLoadingScreen() {
 }
 
 export function RequireAuth() {
-  const { loading, user, profile, account_status, account_type, signup_fee_enabled, signup_fee_status } = useAuth();
+  const { loading, user, profile, account_status, account_type, signup_fee_enabled, signup_fee_status, sessionNotice } =
+    useAuth();
   const location = useLocation();
 
   if (loading) return <AuthLoadingScreen />;
   if (!user) {
-    return <Navigate to="/sign-in" replace state={{ from: location.pathname }} />;
+    return (
+      <Navigate
+        to="/sign-in"
+        replace
+        state={{
+          from: returnPathFromLocation(location.pathname, location.search),
+          notice: sessionNotice === "expired" ? "expired" : undefined,
+        }}
+      />
+    );
   }
   if (account_status && BLOCKED_STATUSES.includes(account_status)) {
     return <Navigate to="/account/status" replace />;
@@ -41,12 +52,15 @@ export function RequireAuth() {
 
 export function RequireRole({ role }: { role: AccountType }) {
   const { loading, profile, account_type } = useAuth();
+  const location = useLocation();
   if (loading) return <AuthLoadingScreen />;
   if (!account_type || !profile) {
     return <Navigate to="/sign-in" replace />;
   }
   if (account_type !== role) {
-    return <Navigate to={ROLE_HOME[account_type]} replace />;
+    // Another role's page (for example /app/customer/account for a contractor): open the
+    // same page under this role's prefix, or its dashboard, so the address bar matches.
+    return <Navigate to={pathForRole(`${location.pathname}${location.search}`, account_type)} replace />;
   }
   return <Outlet />;
 }

@@ -45,6 +45,28 @@ export function getSupabaseRecoveryRequestClient(): TypedSupabaseClient | null {
   return recoveryRequestClient;
 }
 
+let passwordCheckClient: TypedSupabaseClient | null = null;
+
+/**
+ * Account password change only. Checks the current password in a separate
+ * in-memory session so the signed-in session (and an admin's MFA level) is not
+ * replaced. Nothing is stored in the browser.
+ */
+export function getSupabasePasswordCheckClient(): TypedSupabaseClient | null {
+  if (!isSupabaseConfigured()) return null;
+  if (!passwordCheckClient) {
+    passwordCheckClient = createClient<Database>(getSupabaseUrl(), getSupabaseAnonKey(), {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        storageKey: "ppp-password-check",
+      },
+    });
+  }
+  return passwordCheckClient;
+}
+
 /** Test-only: replace the singleton (used by mocked suites). */
 export function __setSupabaseClientForTests(next: TypedSupabaseClient | null): void {
   client = next;

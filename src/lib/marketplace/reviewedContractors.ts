@@ -10,7 +10,7 @@ export const REVIEWED_PROS_NAV_LABEL = "Reviewed pros";
 export const REVIEWED_PROS_TITLE = "Contractors with reviews";
 
 export const REVIEWED_PROS_INTRO =
-  "This preview shows contractors only after a customer reviews them on Priority Property Pros. It is not a directory. Customers do not browse contractors or message them from here. A contractor pays a $4.99 connection fee to communicate with you. PPP does not take a cut of the job.";
+  "These are approved contractors who already have customer reviews on Priority Property Pros. See every approved pro, including new ones, in Find a Pro. Contact details stay private until you and a pro connect on a project. A contractor pays a $4.99 connection fee to communicate with you. PPP does not take a cut of the job.";
 
 export const REVIEWED_PROS_EMPTY_TITLE = "No reviewed contractors yet";
 
