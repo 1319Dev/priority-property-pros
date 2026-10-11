@@ -105,6 +105,7 @@ describe("admin layout", () => {
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("Overview");
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("Reviews");
     expect(screen.queryByRole("link", { name: "People" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Contractors" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "Homeowners" }).length).toBeGreaterThan(0);
     expect(screen.queryByRole("link", { name: "Payments" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Audit log" }).length).toBeGreaterThan(0);
