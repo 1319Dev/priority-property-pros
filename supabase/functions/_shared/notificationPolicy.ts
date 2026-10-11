@@ -16,6 +16,14 @@ export const NOTIFICATION_CATEGORIES = [
 
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
+/** New-job offers are contractor alerts. Other roles never see that setting. */
+const CONTRACTOR_ONLY_CATEGORIES = new Set<NotificationCategory>(["new_job"]);
+
+export function categoriesForAccount(accountType: string | null | undefined): NotificationCategory[] {
+  if (accountType === "CONTRACTOR") return [...NOTIFICATION_CATEGORIES];
+  return NOTIFICATION_CATEGORIES.filter((category) => !CONTRACTOR_ONLY_CATEGORIES.has(category));
+}
+
 export type NotificationChannel = "in_app" | "push" | "email";
 
 export type PreferenceFlags = {

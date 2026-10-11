@@ -101,6 +101,7 @@ export type PublicSafeReview = {
   rating: number;
   body: string;
   demo?: boolean;
+  contractorResponse?: string;
 };
 
 export type PublicContractorCard = {
@@ -282,6 +283,9 @@ export function shortPublicDescription(headline: string | null | undefined, bio:
   return "Independent local contractor.";
 }
 
+export const PUBLIC_ABOUT_FALLBACK =
+  "Independent local contractor. Contact is shared after you connect through Priority Property Pros.";
+
 export function publicAboutText(bio: string | null | undefined, headline: string | null | undefined): string {
   const candidates = [bio, headline];
   for (const candidate of candidates) {
@@ -289,7 +293,16 @@ export function publicAboutText(bio: string | null | undefined, headline: string
     if (!text || publicTextLooksUnsafe(text)) continue;
     return text.length > 600 ? `${text.slice(0, 597).trim()}…` : text;
   }
-  return "Independent local contractor. Contact is shared after you connect through Priority Property Pros.";
+  return PUBLIC_ABOUT_FALLBACK;
+}
+
+/** Signed-out and unconnected visitors keep the public sentence. A connected customer does not see a business name here. */
+export function publicAboutForViewer(about: string, alreadyConnected: boolean): string {
+  if (!alreadyConnected) return about;
+  return about.replace(
+    /Contact is shared after you connect through Priority Property Pros\.?/g,
+    "You are already connected with this pro on your project.",
+  );
 }
 
 export function formatPublicRating(
@@ -513,15 +526,21 @@ export function toPublicSafeReview(input: {
   demo?: boolean;
   customerName?: string | null;
   bookingId?: string | null;
+  contractorResponse?: string | null;
 }): PublicSafeReview | null {
   if (input.rating < 1 || input.rating > 5) return null;
   const raw = input.body?.trim().replace(/\s+/g, " ") ?? "";
   const body = raw && !publicTextLooksUnsafe(raw) ? (raw.length > 280 ? `${raw.slice(0, 277).trim()}…` : raw) : "Verified PPP review.";
+  const response = input.contractorResponse?.trim().replace(/\s+/g, " ") ?? "";
+  let contractorResponse = response && !publicTextLooksUnsafe(response) ? response.slice(0, 500) : undefined;
+  if (contractorResponse && input.customerName && contractorResponse.includes(input.customerName)) contractorResponse = undefined;
+  if (contractorResponse && input.bookingId && contractorResponse.includes(input.bookingId)) contractorResponse = undefined;
   const review: PublicSafeReview = {
     id: input.id,
     rating: input.rating,
     body: input.demo ? `${body} (Example review — not a real customer.)` : body,
     demo: input.demo,
+    ...(contractorResponse ? { contractorResponse } : {}),
   };
   const blob = JSON.stringify(review);
   if (input.customerName && blob.includes(input.customerName)) return { ...review, body: input.demo ? "Example review — not a real customer." : "Verified PPP review." };

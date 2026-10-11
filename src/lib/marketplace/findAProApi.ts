@@ -75,6 +75,8 @@ async function cardFromRow(
     acceptingWork,
     portfolio,
     reviews: publicDirectoryReviews(reviewRows),
+    ratingAverage: row.rating_average,
+    ratingCount: row.rating_count ?? 0,
   });
 }
 

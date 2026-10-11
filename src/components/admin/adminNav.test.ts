@@ -16,15 +16,16 @@ describe("admin nav config", () => {
       "/app/admin/reviews",
       "/app/admin/bookings",
       "/app/admin/security",
+      "/app/admin/audit",
       "/app/admin/account",
     ]);
     expect(app).toContain('path="approvals"');
     expect(app).toContain('path="reviews"');
     expect(app).toContain('path="bookings"');
     expect(app).toContain('path="security"');
+    expect(app).toContain('path="audit"');
     expect(app).toContain('path="account"');
     expect(app).not.toMatch(/path="people"/);
-    expect(app).not.toMatch(/path="audit"/);
   });
 
   it("keeps the admin route tree out of the public bundle entry", () => {
@@ -65,7 +66,7 @@ describe("admin nav config", () => {
       },
     ]);
     expect(adminSearchHits("people").map((hit) => hit.label)).not.toContain("People");
-    expect(adminSearchHits("audit")).toEqual([]);
+    expect(adminSearchHits("audit").map((hit) => hit.label)).toEqual(["Audit log"]);
     expect(adminSearchHits("")).toEqual([]);
   });
 });

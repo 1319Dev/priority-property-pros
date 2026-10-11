@@ -115,6 +115,12 @@ export function ContractorStorefront({ profile }: { profile: FindAProProfile }) 
                   <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-forest-800">{VERIFIED_PROJECT_LABEL}</p>
                 ) : null}
                 <p className="mt-1 text-ink-700">{review.body}</p>
+                {review.contractorResponse ? (
+                  <p className="mt-2 break-words text-ink-700">
+                    <span className="font-semibold text-forest-800">Pro response. </span>
+                    {review.contractorResponse}
+                  </p>
+                ) : null}
               </li>
             ))}
           </ul>
