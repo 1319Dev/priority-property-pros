@@ -289,7 +289,7 @@ export function ManageProfileView() {
   return (
     <div className="mx-auto max-w-xl space-y-5">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Priority Pro</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Your Pro Profile</h1>
         <p className="mt-2 text-sm text-ink-700">Update the public card customers see. Onboarding answers stay on file.</p>
         {!photoUrl || !headline.trim() || !bio.trim() ? (

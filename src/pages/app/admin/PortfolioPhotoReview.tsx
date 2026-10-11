@@ -38,7 +38,7 @@ export function PortfolioPhotoReviewList({
         const busy = busyId === item.id;
         return (
           <li key={item.id} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-4 py-4 sm:px-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-600">Pending review</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Pending review</p>
             <h2 className="mt-1 font-display text-2xl font-semibold text-forest-800">{item.contractor_label}</h2>
             <p className="mt-1 text-sm text-ink-500">{formatApprovalDate(item.created_at)}</p>
             <PortfolioPhotoFrame

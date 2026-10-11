@@ -291,7 +291,7 @@ export function ProjectWizardPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6" data-pwa-form="project-wizard">
       <header className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Post a project</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Post a project</p>
         <h1 className="font-display text-4xl font-semibold text-forest-800">
           {WIZARD_STEPS[step - 1]?.label ?? "Project"}
         </h1>

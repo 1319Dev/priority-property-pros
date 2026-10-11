@@ -40,14 +40,39 @@ describe("GitHub Pages SPA shells", () => {
     const shell = "<!doctype html><title>Priority Property Pros</title>";
     writeFileSync(path.join(distDir, "index.html"), shell);
     writeSpaShells(distDir);
-    expect(readFileSync(path.join(distDir, "404.html"), "utf8")).toBe(shell);
-    for (const relativePath of spaShellDestinations("/faq")) {
-      expect(readFileSync(path.join(distDir, relativePath), "utf8")).toBe(shell);
+    for (const relativePath of ["404.html", ...spaShellDestinations("/faq"), "trust/index.html", "trust.html", "auth/reset-password/index.html", "auth/reset-password.html"]) {
+      expect(readFileSync(path.join(distDir, relativePath), "utf8")).toMatch(/^<!doctype html><title>[^<]+<\/title>/);
     }
-    expect(readFileSync(path.join(distDir, "trust/index.html"), "utf8")).toBe(shell);
-    expect(readFileSync(path.join(distDir, "trust.html"), "utf8")).toBe(shell);
-    expect(readFileSync(path.join(distDir, "auth/reset-password/index.html"), "utf8")).toBe(shell);
-    expect(readFileSync(path.join(distDir, "auth/reset-password.html"), "utf8")).toBe(shell);
+  });
+
+  it("gives each route shell its own title, description, canonical, and robots tags", () => {
+    const distDir = mkdtempSync(path.join(tmpdir(), "ppp-spa-meta-"));
+    const index = readFileSync(path.join(repoRoot, "index.html"), "utf8");
+    writeFileSync(path.join(distDir, "index.html"), index);
+    writeSpaShells(distDir);
+    const read = (p: string) => readFileSync(path.join(distDir, p), "utf8");
+
+    const pricing = read("pricing/index.html");
+    expect(pricing).toMatch(/<title>Pricing \| Priority Property Pros<\/title>/);
+    expect(pricing).toMatch(/<link rel="canonical" href="https:\/\/prioritypropertypros\.com\/pricing"/);
+    expect(pricing).toMatch(/property="og:url" content="https:\/\/prioritypropertypros\.com\/pricing"/);
+    expect(pricing).toMatch(/name="description"\s+content="A one-time \$9\.99 account activation/);
+    expect(pricing).not.toMatch(/name="robots"/);
+    expect(read("pricing.html")).toBe(pricing);
+
+    expect(read("find-a-pro/index.html")).toMatch(/<link rel="canonical" href="https:\/\/prioritypropertypros\.com\/find-a-pro"/);
+    expect(read("app/admin/index.html")).toMatch(/<meta name="robots" content="noindex" \/>/);
+    expect(read("sign-in/index.html")).toMatch(/<meta name="robots" content="noindex" \/>/);
+    expect(read("auth/reset-password/index.html")).toMatch(/<meta name="robots" content="noindex" \/>/);
+
+    const notFound = read("404.html");
+    expect(notFound).toMatch(/<meta name="robots" content="noindex" \/>/);
+    expect(notFound).toMatch(/<title>Page not found \| Priority Property Pros<\/title>/);
+    expect(notFound).not.toMatch(/rel="canonical"/);
+    expect(notFound).not.toMatch(/property="og:url"/);
+    // Fragment-preserving behavior is untouched: still the full app shell, no redirect script.
+    expect(notFound).toMatch(/<div id="root"><\/div>/);
+    expect(notFound).not.toMatch(/location\.replace/);
   });
 
   it("does not rewrite /auth/reset-password through a fragment-dropping 404 redirect", () => {

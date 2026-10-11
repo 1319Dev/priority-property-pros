@@ -260,7 +260,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
     <div className="space-y-4 lg:grid lg:min-h-[70vh] lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-stretch lg:gap-6 lg:space-y-0">
       <section className={threadRoute ? "hidden lg:block" : "block"} aria-label="Conversations">
         <header className="mb-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Messages</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Messages</p>
           <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Messages</h1>
         </header>
         {loading ? <BrandLoader layout="section" label="Loading conversations…" /> : null}

@@ -223,7 +223,7 @@ export function AdminOverviewPage() {
     <div className="min-w-0 space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Admin</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Admin</p>
           <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Overview</h1>
           <p className="mt-3 max-w-2xl text-sm text-ink-700">
             Counts exclude accounts flagged TEST unless you include them. Owner accounts stay in the counts.
