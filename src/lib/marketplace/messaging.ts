@@ -82,7 +82,7 @@ export type MessageThreadSummary = {
 export type ProjectMessage = {
   id: string;
   thread_id: string;
-  sender_profile_id: string;
+  sender_profile_id: string | null;
   body: string;
   created_at: string;
 };
@@ -173,7 +173,7 @@ export function sanitizeProjectMessage(value: unknown): ProjectMessage | null {
   if (
     typeof row.id !== "string" ||
     typeof row.thread_id !== "string" ||
-    typeof row.sender_profile_id !== "string" ||
+    (row.sender_profile_id != null && typeof row.sender_profile_id !== "string") ||
     typeof row.body !== "string" ||
     typeof row.created_at !== "string"
   ) {
@@ -182,7 +182,7 @@ export function sanitizeProjectMessage(value: unknown): ProjectMessage | null {
   return {
     id: row.id,
     thread_id: row.thread_id,
-    sender_profile_id: row.sender_profile_id,
+    sender_profile_id: typeof row.sender_profile_id === "string" ? row.sender_profile_id : null,
     body: row.body,
     created_at: row.created_at,
   };
@@ -282,7 +282,7 @@ export type ThreadBubble = {
 };
 
 export function layoutThreadMessages(input: {
-  messages: Array<{ id: string; sender_profile_id: string; body: string; created_at: string }>;
+  messages: Array<{ id: string; sender_profile_id: string | null; body: string; created_at: string }>;
   viewerId: string;
   otherLabel: string;
   now?: Date;
@@ -298,8 +298,8 @@ export function layoutThreadMessages(input: {
       lastDay = day;
       lastSender = "";
     }
-    const mine = message.sender_profile_id === input.viewerId;
-    const senderLabel = mine ? "You" : input.otherLabel;
+    const mine = message.sender_profile_id != null && message.sender_profile_id === input.viewerId;
+    const senderLabel = message.sender_profile_id == null ? "Deleted account" : mine ? "You" : input.otherLabel;
     items.push({
       kind: "message",
       id: message.id,

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { AuthContext, type AuthContextValue } from "../../lib/auth/AuthContext";
+import { signedInAuth } from "../../lib/auth/authFixture";
 import type { AccountStatus, AccountType, Profile } from "../../lib/auth/types";
 import { AccountMenu } from "./AccountMenu";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
@@ -115,36 +116,23 @@ describe("Delete account confirmation gating", () => {
 
     const confirm = screen.getByRole("button", { name: /delete my account/i });
     expect(confirm).toBeDisabled();
-    await user.type(screen.getByLabelText(/type delete/i), "delete");
-    expect(confirm).toBeDisabled();
-    await user.clear(screen.getByLabelText(/type delete/i));
     await user.type(screen.getByLabelText(/type delete/i), "DELETE");
+    expect(confirm).toBeDisabled();
+    await user.type(screen.getByLabelText(/current password/i), "secret");
     expect(confirm).toBeEnabled();
     await user.click(confirm);
-    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onConfirm).toHaveBeenCalledWith("secret");
   });
 
-  it("shows the support-email notice instead of a Delete account button while paused", () => {
+  it("ships with the #120 pause off, so the Delete button is back and the support notice is gone", () => {
     renderWithAuth(<AccountPage />);
 
-    expect(ACCOUNT_DELETION_PAUSED).toBe(true);
-    const notice = screen.getByTestId("account-deletion-paused");
-    expect(notice).toHaveTextContent(
-      "Account deletion is temporarily handled by our support team. To request deletion, email support@prioritypropertypros.com from the email on your account, and we will process it.",
-    );
-    const link = screen.getByRole("link", { name: "support@prioritypropertypros.com" });
-    expect(link).toHaveAttribute(
-      "href",
-      "mailto:support@prioritypropertypros.com?subject=Account%20deletion%20request",
-    );
-    // The email address is rendered once, only as the link text.
-    expect(notice.textContent?.match(/support@prioritypropertypros\.com/g)).toHaveLength(1);
-    expect(screen.queryByRole("button", { name: /delete account/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /delete my account/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: /delete this account/i })).not.toBeInTheDocument();
+    expect(ACCOUNT_DELETION_PAUSED).toBe(false);
+    expect(screen.queryByTestId("account-deletion-paused")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^delete account$/i })).toBeInTheDocument();
   });
 
-  it.skipIf(ACCOUNT_DELETION_PAUSED)("shows Delete account only on account settings, below Sign out", async () => {
+  it("shows Delete account only on account settings, below Sign out", async () => {
     const user = userEvent.setup();
     renderWithAuth(<AccountPage />);
 
@@ -156,5 +144,44 @@ describe("Delete account confirmation gating", () => {
     await user.click(deleteAccount);
     expect(screen.getByRole("heading", { name: /delete this account/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /delete my account/i })).toBeDisabled();
+  });
+});
+
+describe("Delete account for each role at a phone width", () => {
+  const roles = [
+    ["CUSTOMER", "Customer"],
+    ["CONTRACTOR", "Contractor"],
+    ["ADMIN", "Admin"],
+  ] as const;
+
+  it.each(roles)("opens a full-width sheet for %s without someone else's private details", async (role, label) => {
+    const user = userEvent.setup();
+    renderWithAuth(<AccountPage />, signedInAuth(role));
+
+    expect(screen.getByText(label)).toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^delete account$/i }));
+    const dialog = screen.getByRole("dialog", { name: /delete this account/i });
+    expect(dialog.className).toContain("inset-x-0");
+    expect(dialog.className).toContain("max-h-[100dvh]");
+    expect(dialog.className).toContain("safe-area-inset-bottom");
+    expect(dialog.querySelector("img")).toBeNull();
+    expect(dialog.textContent ?? "").not.toMatch(/@/);
+    expect(dialog.textContent ?? "").not.toMatch(/\d{3}[-.\s]\d{3}/);
+    expect(dialog.textContent ?? "").not.toMatch(/\d+\s+\w+\s+(street|avenue|road|drive)/i);
+    expect(dialog.textContent ?? "").not.toMatch(/deleted pro/i);
+
+    const password = screen.getByLabelText(/current password/i);
+    const confirmWord = screen.getByLabelText(/type delete/i);
+    const confirm = screen.getByRole("button", { name: /delete my account/i });
+    const keep = screen.getByRole("button", { name: /keep my account/i });
+    for (const control of [password, confirmWord, confirm]) {
+      expect(control.className).toContain("w-full");
+      expect(control.className).toContain("min-h-14");
+    }
+    expect(keep.className).toContain("w-full");
+    expect(keep.className).toContain("min-h-12");
+    expect(confirm).toBeDisabled();
   });
 });
