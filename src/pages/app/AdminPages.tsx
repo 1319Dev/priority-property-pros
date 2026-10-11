@@ -11,17 +11,19 @@ import {
   expireStalePendingBookings,
   fetchBooking,
   fetchBookingContactAccess,
+  fetchConnectionContactAccess,
   fetchBookingEvents,
   fetchProject,
   findAdminBookingsByReference,
   type AdminReferenceBooking,
 } from "../../lib/marketplace/api";
 import {
+  adminContactAccessSummary,
+  adminEffectiveContactAccess,
   contactAccessRowAllowsReveal,
   formatContactAccessState,
   formatTimestamp,
   paymentsComingSoonCopy,
-  adminContactAccessIntro,
 } from "../../lib/marketplace/bookings";
 import type { BookingContactAccess } from "../../lib/marketplace/types";
 import { useToast } from "../../hooks/useToast";
@@ -44,20 +46,27 @@ export type ContactAccessAuditEvent = {
 
 export function AdminContactAccessPanel({
   access,
+  connectionAccess = [],
   audit,
 }: {
   access: BookingContactAccess | null;
+  connectionAccess?: BookingContactAccess[];
   audit: ContactAccessAuditEvent[];
 }) {
-  const state = formatContactAccessState(access);
+  const view = adminEffectiveContactAccess(access, connectionAccess);
+  const state = view.unlocked ? (view.viaConnect ? "UNLOCKED" : "ADMIN_OVERRIDE") : formatContactAccessState(access);
   const grantedAt = formatTimestamp(access?.granted_at);
   const revokedAt = formatTimestamp(access?.revoked_at);
+  const connectPaidAt =
+    view.viaConnect && view.viaConnect !== access ? formatTimestamp(view.viaConnect.granted_at) : null;
   return (
     <div className="space-y-3 text-sm">
       <p>
         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">Contact Access</span>
         <span className="mt-1 block font-semibold text-forest-800">{state}</span>
       </p>
+      <p>{adminContactAccessSummary(view)}</p>
+      {connectPaidAt ? <p>Paid Connect unlocked contact at {connectPaidAt}.</p> : null}
       {access?.granted_by ? (
         <p>
           Granted by <span className="break-all font-mono text-xs">{access.granted_by}</span>
@@ -98,6 +107,7 @@ export function AdminBookingsPage() {
   const [jobTitle, setJobTitle] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [access, setAccess] = useState<BookingContactAccess | null>(null);
+  const [connectionAccess, setConnectionAccess] = useState<BookingContactAccess[]>([]);
   const [audit, setAudit] = useState<ContactAccessAuditEvent[]>([]);
   const [reason, setReason] = useState("");
   const [confirmGrant, setConfirmGrant] = useState(false);
@@ -105,6 +115,7 @@ export function AdminBookingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const lookedUp = status !== null;
+  const effective = adminEffectiveContactAccess(access, connectionAccess);
 
   useEffect(() => {
     void expireStalePendingBookings().catch(() => undefined);
@@ -150,6 +161,11 @@ export function AdminBookingsPage() {
     setJobReference(project?.reference_number ?? null);
     const rowAccess = await fetchBookingContactAccess(id).catch(() => null);
     setAccess(rowAccess);
+    const connectRows =
+      row.project_id && row.contractor_profile_id
+        ? await fetchConnectionContactAccess(row.project_id, row.contractor_profile_id).catch(() => [])
+        : [];
+    setConnectionAccess(connectRows);
     const events = await fetchBookingEvents(id).catch(() => []);
     setAudit(
       events
@@ -282,7 +298,7 @@ export function AdminBookingsPage() {
           <p>Current status: {status.replaceAll("_", " ")}</p>
         </div>
       ) : null}
-      {lookedUp ? <AdminContactAccessPanel access={access} audit={audit} /> : null}
+      {lookedUp ? <AdminContactAccessPanel access={access} connectionAccess={connectionAccess} audit={audit} /> : null}
       {showTestingConfirmButton() ? (
         <Button
           type="button"
@@ -305,41 +321,61 @@ export function AdminBookingsPage() {
         </Button>
       ) : null}
 
-      <section className="space-y-3 rounded-3xl border border-forest-800/10 px-5 py-4">
-        <h2 className="font-display text-2xl text-forest-800">Grant contact access</h2>
-        <p className="text-sm text-ink-700">{adminContactAccessIntro(access)} This override is for one booking only and is audited.</p>
-        <label className="block">
-          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
-            Reason (required)
-          </span>
-          <textarea
-            className="min-h-24 w-full rounded-2xl border border-forest-800/15 px-4 py-3"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Why this customer↔contractor pair should see private contact"
-          />
-        </label>
-        <Button
-          type="button"
-          variant="outline"
-          className="min-h-14 w-full"
-          disabled={busy || !bookingId.trim() || reason.trim().length < 3}
-          onClick={() => setConfirmGrant(true)}
-        >
-          Grant contact access
-        </Button>
-        {contactAccessRowAllowsReveal(access) ? (
-          <Button
-            type="button"
-            variant="ghost"
-            className="min-h-12 w-full"
-            disabled={busy || !bookingId.trim() || reason.trim().length < 3}
-            onClick={() => setConfirmRevoke(true)}
-          >
-            Revoke contact access
-          </Button>
-        ) : null}
-      </section>
+      {lookedUp ? (
+        <section className="space-y-3 rounded-3xl border border-forest-800/10 px-5 py-4">
+          <h2 className="font-display text-2xl text-forest-800">
+            {effective.unlocked ? "Contact access" : "Grant contact access"}
+          </h2>
+          <p className="text-sm text-ink-700">
+            {adminContactAccessSummary(effective)}
+            {effective.unlocked ? "" : " This override is for one booking only and is audited."}
+          </p>
+          {effective.viaOverride && effective.viaConnect ? (
+            <p className="text-sm text-ink-700">
+              Revoking the admin override does not remove access from the paid Connect.
+            </p>
+          ) : null}
+          {!effective.unlocked || contactAccessRowAllowsReveal(access) ? (
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
+                Reason (required)
+              </span>
+              <textarea
+                className="min-h-24 w-full rounded-2xl border border-forest-800/15 px-4 py-3"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder={
+                  effective.unlocked
+                    ? "Why this override should be removed"
+                    : "Why this customer↔contractor pair should see private contact"
+                }
+              />
+            </label>
+          ) : null}
+          {!effective.unlocked ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-14 w-full"
+              disabled={busy || !bookingId.trim() || reason.trim().length < 3}
+              onClick={() => setConfirmGrant(true)}
+            >
+              Grant contact access
+            </Button>
+          ) : null}
+          {contactAccessRowAllowsReveal(access) ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-12 w-full"
+              disabled={busy || !bookingId.trim() || reason.trim().length < 3}
+              onClick={() => setConfirmRevoke(true)}
+            >
+              {effective.viaOverride ? "Revoke admin override" : "Revoke contact access"}
+            </Button>
+          ) : null}
+        </section>
+      ) : null}
 
       <ConfirmDialog
         open={confirmGrant}
@@ -366,7 +402,11 @@ export function AdminBookingsPage() {
       <ConfirmDialog
         open={confirmRevoke}
         title="Revoke private contact access?"
-        body="The hired contractor loses street, phone, and email immediately. This is audited with your admin id, time, and reason."
+        body={
+          effective.viaOverride && effective.viaConnect
+            ? "This removes the admin override on this booking. The contractor keeps access through the paid Connect. This is audited with your admin id, time, and reason."
+            : "The hired contractor loses street, phone, and email immediately. This is audited with your admin id, time, and reason."
+        }
         confirmLabel="Revoke access"
         cancelLabel="Cancel"
         tone="danger"
