@@ -14,6 +14,7 @@ describe("admin nav config", () => {
     expect(ADMIN_NAV.map((item) => item.to)).toEqual([
       "/app/admin",
       "/app/admin/homeowners",
+      "/app/admin/contractors",
       "/app/admin/approvals",
       "/app/admin/reviews",
       "/app/admin/bookings",
@@ -28,7 +29,7 @@ describe("admin nav config", () => {
     expect(routes).not.toMatch(/path="people"/);
     expect(routes).not.toMatch(/path="audit"/);
     expect(ADMIN_NAV_GROUPS).toEqual(["Overview", "People", "Marketplace", "Money", "Trust", "Account"]);
-    expect(adminNavByGroup("People").map((item) => item.id)).toEqual(["homeowners"]);
+    expect(adminNavByGroup("People").map((item) => item.id)).toEqual(["homeowners", "contractors"]);
     expect(adminNavByGroup("Money")).toEqual([]);
   });
 
