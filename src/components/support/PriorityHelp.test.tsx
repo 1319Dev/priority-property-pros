@@ -124,6 +124,7 @@ describe("Priority Help widget", () => {
     renderHelp(<PriorityHelp transport={transport} />);
     await user.click(screen.getByRole("button", { name: "Priority Help" }));
     expect(await screen.findByRole("status")).toHaveTextContent(/offline/i);
+    expect(screen.getByRole("status")).not.toHaveTextContent(/your message is saved/i);
     expect(await screen.findByText(/Nobody is in this chat yet/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Send" })).not.toBeInTheDocument();
     await user.type(screen.getByRole("textbox", { name: "Your message" }), "Please look at my registration.");

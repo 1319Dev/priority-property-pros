@@ -275,7 +275,7 @@ export function PriorityHelp({
             </button>
           </div>
           <p role="status" className="border-b border-forest-800/10 bg-cream-100 px-4 py-2 text-sm text-forest-800">
-            {availabilityNotice(availability, humanJoined)}
+            {availabilityNotice(availability, humanJoined, Boolean(reference) || messages.some((message) => message.role === "customer"))}
           </p>
           <div role="log" aria-live="polite" aria-relevant="additions" aria-label="Priority Help messages" className="min-h-24 flex-1 space-y-3 overflow-y-auto px-4 py-3">
             {messages.length === 0 ? (
