@@ -1,3 +1,5 @@
+import { originIsAllowed } from "./returnOrigin.ts";
+
 export async function restRpc(
   name: string,
   args: Record<string, unknown>,
@@ -32,17 +34,8 @@ export async function userIdFromRequest(req: Request): Promise<string> {
 }
 
 export function allowedOrigin(origin: string): boolean {
-  const value = origin.trim().replace(/\/$/, "");
-  if (!value) return false;
-  const site = (Deno.env.get("SITE_URL") ?? "").replace(/\/$/, "");
-  if (site && value === site) return true;
-  try {
-    const url = new URL(value);
-    if (url.protocol === "http:" && (url.hostname === "localhost" || url.hostname === "127.0.0.1")) return true;
-    if (url.protocol !== "https:") return false;
-    if (url.username || url.password || url.search || url.hash) return false;
-    return Boolean(url.hostname);
-  } catch {
-    return false;
-  }
+  return originIsAllowed(origin, {
+    siteUrl: Deno.env.get("SITE_URL"),
+    extraOrigins: Deno.env.get("ALLOWED_RETURN_ORIGINS"),
+  });
 }
