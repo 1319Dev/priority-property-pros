@@ -87,6 +87,29 @@ describe("Find a Pro cards", () => {
     expect(screen.getByText("Not accepting work")).toBeInTheDocument();
   });
 
+  it("shows the directory rating at 320px without a business name", () => {
+    const rated = card({
+      displayLabel: "Handyman pro in Houston",
+      ratingAverage: 5,
+      ratingCount: 2,
+      reviews: publicDirectoryReviews([
+        { id: "r1", rating: 5, body: "Finished the indoor repair." },
+        { id: "r2", rating: 4, body: "Clear about the schedule." },
+        { id: "hidden", rating: 1, body: "This row was hidden by an admin.", hidden: true },
+      ]),
+    });
+    renderCard(
+      <div className="w-[320px] max-w-[320px]">
+        <FindAProCardView card={rated} />
+      </div>,
+    );
+    expect(screen.getByRole("heading", { name: "Handyman pro in Houston" })).toBeInTheDocument();
+    expect(screen.getByText("5.0 ★ · 2 reviews")).toBeInTheDocument();
+    expect(screen.queryByText("4.5 ★ · 2 reviews")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Northside/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/hidden by an admin/i)).not.toBeInTheDocument();
+  });
+
   it("keeps the directory from using a horizontal overflow layout at 390px", () => {
     const { container } = renderCard(
       <div className="w-[390px] max-w-[390px]">

@@ -67,10 +67,12 @@ test("homepage hero headline stays in the first laptop viewport", async ({ page 
   expect(layout.image!.width / layout.image!.height).toBeLessThanOrEqual(layout.naturalAspect! + 0.02);
 });
 
-test("mocked Find a Pro directory and storefront stay inside 390 and 1280", async ({ page }) => {
+test("mocked Find a Pro directory and storefront stay inside 320, 390, and 1280", async ({ page }) => {
   const shots = [
+    { view: "directory", width: 320, height: 700, file: "find-a-pro-directory-320.png" },
     { view: "directory", width: 390, height: 844, file: "find-a-pro-directory-390.png" },
     { view: "directory", width: 1280, height: 900, file: "find-a-pro-directory-1280.png" },
+    { view: "storefront", width: 320, height: 700, file: "find-a-pro-storefront-320.png" },
     { view: "storefront", width: 390, height: 844, file: "find-a-pro-storefront-390.png" },
     { view: "storefront", width: 1280, height: 900, file: "find-a-pro-storefront-1280.png" },
   ];
@@ -83,7 +85,11 @@ test("mocked Find a Pro directory and storefront stay inside 390 and 1280", asyn
     await expect(page.getByRole("heading", { name: "Fence Repair & Handyman pro in Conroe" })).toBeVisible();
     await expect(page.getByText("Serves within 25 miles of Conroe, TX", { exact: true })).toBeVisible();
     await expect(page.getByText("Plymate")).toHaveCount(0);
+    await expect(page.getByText("Northside Fence Co.")).toHaveCount(0);
     if (shot.view === "directory") {
+      await expect(page.getByRole("heading", { name: "Handyman pro in Houston" })).toBeVisible();
+      await expect(page.getByText("5.0 ★ · 2 reviews", { exact: true })).toBeVisible();
+      await expect(page.getByText("No reviews yet", { exact: true })).toBeVisible();
       await expect(page.getByText(/contact details stay private until you and a pro connect on a project/i)).toBeVisible();
     } else {
       await expect(page.getByText("No portfolio yet", { exact: true })).toHaveCount(1);
