@@ -2,9 +2,8 @@ import { formatProjectReference, parseProjectReference } from "../../lib/marketp
 import type { AdminIconName } from "./AdminIcon";
 
 /**
- * Working admin sections only. People, Audit, Payments, Support, and Analytics
- * stay out of the nav until they have a real page. Direct placeholder routes
- * are removed in the cleanup PR.
+ * Working admin sections only. People, Payments, Support, and Analytics
+ * stay out of the nav until they have a real page.
  */
 export type AdminNavItem = {
   id: string;
@@ -58,6 +57,14 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     icon: "security",
     group: "Trust",
     searchAliases: ["two-factor", "two factor", "2fa", "security", "mfa", "authenticator"],
+  },
+  {
+    id: "audit",
+    to: "/app/admin/audit",
+    label: "Audit log",
+    icon: "audit",
+    group: "Trust",
+    searchAliases: ["audit", "audit log", "activity"],
   },
   {
     id: "account",
