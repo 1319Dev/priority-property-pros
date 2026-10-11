@@ -285,6 +285,7 @@ export function CustomerBookingDetailPage() {
           role="customer"
           orders={orders}
           referenceNumber={referenceNumber}
+          jobTotalCents={booking.billable_amount_cents ?? booking.amount_cents}
           onPropose={async (description, cents) => {
             await proposeChangeOrder(booking.id, description, cents);
             await reload();

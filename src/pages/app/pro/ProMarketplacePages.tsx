@@ -85,6 +85,7 @@ import {
   declineJobButtonLabel,
   declineJobToast,
   canContractorEndJob,
+  friendlyEndJobError,
   opportunityAllowsConnectCta,
   runContractorConnect,
 } from "../../../lib/marketplace/contractorJobActions";
@@ -599,7 +600,7 @@ export function OpportunitiesPage() {
               setPassId(null);
               return reload();
             })
-            .catch((err: Error) => setError(err.message))
+            .catch((err: Error) => setError(friendlyEndJobError(err.message)))
             .finally(() => setBusy(false));
         }}
       />
@@ -913,7 +914,7 @@ export function OpportunityDetailPage() {
               setEndOpen(false);
               return navigate("/app/pro/opportunities");
             })
-            .catch((err: Error) => setError(err.message))
+            .catch((err: Error) => setError(friendlyEndJobError(err.message)))
             .finally(() => setBusy(false));
         }}
       />
