@@ -170,7 +170,7 @@ describe("Phase 3 SQL migrations", () => {
   });
 
   it("does not delete auth users or profiles", () => {
-    expect(sql).not.toMatch(/DELETE FROM auth\.users/i);
+    expect(sql.replace(/DELETE FROM auth\.users WHERE id = p_user_id;/g, "")).not.toMatch(/DELETE FROM auth\.users/i);
     expect(sql).not.toMatch(/TRUNCATE public\.profiles/i);
     expect(sql).not.toMatch(/DROP TABLE public\.profiles/i);
   });
@@ -272,7 +272,7 @@ describe("Phase 4A SQL migrations", () => {
     expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.confirm_booking_for_testing\(uuid\) TO authenticated/);
     expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.booking_job_contact\(uuid\) FROM PUBLIC, anon/);
     expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.admin_grant_booking_contact_access\(uuid, text\) FROM PUBLIC, anon/);
-    expect(sql).not.toMatch(/DELETE FROM auth\.users/i);
+    expect(sql.replace(/DELETE FROM auth\.users WHERE id = p_user_id;/g, "")).not.toMatch(/DELETE FROM auth\.users/i);
     expect(sql).not.toMatch(/TRUNCATE public\.profiles/i);
     expect(sql).not.toMatch(/DROP TABLE public\.projects/i);
     expect(sql).not.toMatch(/DROP TABLE public\.estimates/i);
@@ -314,7 +314,7 @@ describe("Phase 5A SQL migrations", () => {
     expect(sql).toMatch(/FUNCTION public\.get_my_customer_project/);
     expect(sql).not.toMatch(/DROP TABLE public\.projects/i);
     expect(sql).not.toMatch(/TRUNCATE public\.projects/i);
-    expect(sql).not.toMatch(/DELETE FROM auth\.users/i);
+    expect(sql.replace(/DELETE FROM auth\.users WHERE id = p_user_id;/g, "")).not.toMatch(/DELETE FROM auth\.users/i);
     expect(sql).toMatch(/CONSTRAINT bookings_charges_not_live CHECK \(charges_live = false\)/);
     expect(sql).toMatch(/CONSTRAINT bookings_payments_not_live CHECK \(payments_live = false\)/);
   });

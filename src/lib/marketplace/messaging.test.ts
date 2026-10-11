@@ -136,6 +136,15 @@ describe("message privacy", () => {
       body: "Monday works.",
       created_at: "2026-10-05T12:00:00Z",
     });
+    expect(
+      sanitizeProjectMessage({
+        id: "m2",
+        thread_id: "t1",
+        sender_profile_id: null,
+        body: "Monday works.",
+        created_at: "2026-10-05T12:00:00Z",
+      })?.sender_profile_id,
+    ).toBeNull();
   });
 
   it("keeps new-message notifications free of contact fields", () => {
@@ -198,6 +207,17 @@ describe("message privacy", () => {
     });
     expect(laid.filter((item) => item.kind === "day").map((item) => item.label)).toEqual(["Today"]);
     expect(laid.filter((item) => item.kind === "message").map((item) => item.showLabel)).toEqual([true, false, true]);
+    const deleted = layoutThreadMessages({
+      viewerId: "me",
+      otherLabel: "Pat",
+      now,
+      messages: [{ id: "d", sender_profile_id: null, body: "Still here", created_at: "2026-10-08T12:03:00" }],
+    });
+    expect(deleted.find((item) => item.kind === "message")).toMatchObject({
+      senderLabel: "Deleted account",
+      mine: false,
+      body: "Still here",
+    });
   });
 
   it("tells people a thread opens after a pro connects, not from activation or Hired", () => {
