@@ -753,12 +753,12 @@ export function AdminSupportAnalyticsPage() {
         onSubmit={(event) => {
           event.preventDefault();
           void setSupportRetention(Number(retention))
-            .then((days) => setNotice(`Retention is ${days} days. Nothing is deleted until you purge.`))
+            .then((days) => setNotice(`Retention is ${days} days for signed-in conversations. The daily job applies it.`))
             .catch((err: unknown) => setError(err instanceof Error ? err.message : "Could not save retention."));
         }}
       >
         <label htmlFor="support-retention" className="text-sm font-semibold text-forest-800">
-          Keep resolved and closed conversations (days)
+          Keep signed-in conversations after they are resolved or closed (days)
           <input id="support-retention" value={retention} onChange={(event) => setRetention(event.target.value)} inputMode="numeric" className="mt-1 min-h-12 w-32 rounded-2xl border border-forest-800/15 px-3" />
         </label>
         <div className="flex flex-wrap gap-2">
@@ -771,14 +771,14 @@ export function AdminSupportAnalyticsPage() {
             variant="outline"
             onClick={() => {
               void purgeExpiredSupport()
-                .then((count) => setNotice(`Purged ${count} expired conversations. This is not on a schedule.`))
+                .then((count) => setNotice(`Purged ${count} expired conversations now.`))
                 .catch((err: unknown) => setError(err instanceof Error ? err.message : "Could not purge."));
             }}
           >
             Purge expired
           </Button>
         </div>
-        <p className="text-xs text-ink-500">Purge deletes resolved and closed tickets older than the retention window. It does not run unless you click it.</p>
+        <p className="text-xs text-ink-500">A daily job deletes guest chats 90 days after their last message (unless a ticket is still open) and signed-in conversations after this many days once resolved or closed. Purge expired runs the same rules now.</p>
       </form>
     </div>
   );
