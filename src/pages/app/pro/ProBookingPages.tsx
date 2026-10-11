@@ -23,7 +23,9 @@ import {
   proposeChangeOrder,
   respondChangeOrder,
   startBooking,
+  reportBookingReview,
   submitBookingReview,
+  submitBookingReviewResponse,
   updateBookingReview,
 } from "../../../lib/marketplace/api";
 import { BOOKING_STATUS_LABELS, paymentsComingSoonCopy } from "../../../lib/marketplace/bookings";
@@ -36,6 +38,7 @@ import {
   MARK_COMPLETE_TITLE,
   customerPlaceLine,
   formatPhoneDisplay,
+  jobLocationHeading,
   projectContactFromRpc,
   type ProjectContactView,
 } from "../../../lib/marketplace/contractorPolish";
@@ -52,6 +55,7 @@ import { listMyMessageThreads } from "../../../lib/marketplace/messagingApi";
 import { ESTIMATE_ITEM_KIND_LABELS, type Booking, type BookingReview, type BookingStatus, type ChangeOrder, type EstimateItemKind } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
 import { HiredConfirmationCard, ProfileReviewForm } from "../../../components/marketplace/HiredConfirmation";
+import { BookingReviewPartySection } from "../../../components/marketplace/BookingReviewPartySection";
 
 function statusLabel(status: string) {
   return BOOKING_STATUS_LABELS[status as BookingStatus] ?? status.replaceAll("_", " ");
@@ -118,7 +122,7 @@ export function ProBookingDetailPage() {
   const [orders, setOrders] = useState<ChangeOrder[]>([]);
   const [reviews, setReviews] = useState<BookingReview[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [rating, setRating] = useState("5");
+  const [rating, setRating] = useState("");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
@@ -226,9 +230,13 @@ export function ProBookingDetailPage() {
         }}
       />
       <section className="rounded-3xl border border-forest-800/10 px-5 py-4 text-sm">
-        <p className="font-semibold">Approximate location</p>
-        <p>{cityZip}</p>
-        <p className="mt-3">Job {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
+        {jobLocationHeading(contactView.state === "shared") ? (
+          <div className="mb-3" aria-label="Approximate location">
+            <p className="font-semibold">{jobLocationHeading(contactView.state === "shared")}</p>
+            <p>{cityZip}</p>
+          </div>
+        ) : null}
+        <p>Job {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
         <p className="text-ink-500">{paymentsComingSoonCopy()}</p>
       </section>
       {estimateMeta ? (
@@ -311,6 +319,12 @@ export function ProBookingDetailPage() {
             .catch((err: Error) => setError(err.message))
             .finally(() => setBusy(false));
         }}
+      />
+      <BookingReviewPartySection
+        role="contractor"
+        reviews={reviews}
+        onReport={(reviewId, reason) => reportBookingReview(reviewId, reason).then(() => undefined)}
+        onRespond={(reviewId, body) => submitBookingReviewResponse(reviewId, body).then(() => reload())}
       />
       <ProfileReviewForm
         role="contractor"
