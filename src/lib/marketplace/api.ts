@@ -1,9 +1,11 @@
 import { friendlyAdminError } from "../admin/friendlyAdminError";
+import { runSensitiveAdminCall } from "../auth/adminStepUp";
 import { getSupabaseClient } from "../supabase/client";
 import type { Database, Json } from "../supabase/database.types";
 import { assertNoPreHireContact } from "./antiCircumvention";
 import { looksLikeFilename } from "./publicDirectory";
 import { isAllowedContractorDoc, isAllowedImage, sanitizeUploadName } from "./privacy";
+import { stripImageMetadata } from "../media/stripImageMetadata";
 import { detectContactLeak } from "./contactLeak";
 import { projectInsertForPost, runProjectSubmit } from "./projectPost";
 import { isMissingReferenceColumn, parseProjectReference } from "./projectReference";
@@ -200,10 +202,13 @@ export async function uploadProjectPhoto(params: {
 }): Promise<string> {
   if (!isAllowedImage(params.file.type)) throw new Error("Use a JPEG, PNG, or WebP photo.");
   if (params.file.size > 10 * 1024 * 1024) throw new Error("Photos must be 10 MB or smaller.");
-  const path = `${params.userId}/${params.projectId}/${crypto.randomUUID()}-${sanitizeUploadName(params.file.name)}`;
+  // Remove GPS and other photo metadata before the file leaves the browser.
+  const file = await stripImageMetadata(params.file);
+  if (file.size > 10 * 1024 * 1024) throw new Error("Photos must be 10 MB or smaller.");
+  const path = `${params.userId}/${params.projectId}/${crypto.randomUUID()}-${sanitizeUploadName(file.name)}`;
   const supabase = client();
-  const { error: uploadError } = await supabase.storage.from("project-photos").upload(path, params.file, {
-    contentType: params.file.type,
+  const { error: uploadError } = await supabase.storage.from("project-photos").upload(path, file, {
+    contentType: file.type,
     upsert: false,
   });
   if (uploadError) throw new Error(uploadError.message);
@@ -670,20 +675,28 @@ export async function fetchBookingContactAccess(bookingId: string): Promise<Book
 }
 
 export async function adminGrantBookingContactAccess(bookingId: string, reason: string): Promise<RpcJson> {
-  const { data, error } = await client().rpc("admin_grant_booking_contact_access", {
-    p_booking_id: bookingId,
-    p_reason: reason,
-  });
-  if (error) throw new Error(friendlyAdminError(error, "Could not grant contact access."));
+  const data = await runSensitiveAdminCall(
+    () =>
+      client().rpc("admin_grant_booking_contact_access", {
+        p_booking_id: bookingId,
+        p_reason: reason,
+      }),
+    "Could not grant contact access.",
+    { requireData: false },
+  );
   return (data ?? {}) as RpcJson;
 }
 
 export async function adminRevokeBookingContactAccess(bookingId: string, reason: string): Promise<RpcJson> {
-  const { data, error } = await client().rpc("admin_revoke_booking_contact_access", {
-    p_booking_id: bookingId,
-    p_reason: reason,
-  });
-  if (error) throw new Error(friendlyAdminError(error, "Could not revoke contact access."));
+  const data = await runSensitiveAdminCall(
+    () =>
+      client().rpc("admin_revoke_booking_contact_access", {
+        p_booking_id: bookingId,
+        p_reason: reason,
+      }),
+    "Could not revoke contact access.",
+    { requireData: false },
+  );
   return (data ?? {}) as RpcJson;
 }
 
@@ -991,9 +1004,12 @@ export async function uploadContractorDoc(params: {
 }) {
   if (!isAllowedContractorDoc(params.file.type)) throw new Error("Use a JPEG, PNG, WebP, or PDF.");
   if (params.file.size > 10 * 1024 * 1024) throw new Error("Files must be 10 MB or smaller.");
-  const path = `${params.userId}/${params.folder}/${crypto.randomUUID()}-${sanitizeUploadName(params.file.name)}`;
-  const { error } = await client().storage.from("contractor-docs").upload(path, params.file, {
-    contentType: params.file.type,
+  // Portfolio and credential photos lose GPS and other metadata before upload. PDFs pass through unchanged.
+  const file = await stripImageMetadata(params.file);
+  if (file.size > 10 * 1024 * 1024) throw new Error("Files must be 10 MB or smaller.");
+  const path = `${params.userId}/${params.folder}/${crypto.randomUUID()}-${sanitizeUploadName(file.name)}`;
+  const { error } = await client().storage.from("contractor-docs").upload(path, file, {
+    contentType: file.type,
     upsert: false,
   });
   if (error) throw new Error(error.message);

@@ -85,8 +85,8 @@ describe("platform review moderation", () => {
   it("requires a reason before approve or reject and sends that reason", async () => {
     const user = userEvent.setup();
     render(<AdminReviewsPage />);
-    const approve = await screen.findByRole("button", { name: "Approve" });
-    const reject = screen.getByRole("button", { name: "Reject" });
+    const approve = await screen.findByRole("button", { name: /^Approve$/ });
+    const reject = screen.getByRole("button", { name: /^Reject$/ });
     expect(approve).toBeDisabled();
     expect(reject).toBeDisabled();
 
@@ -133,5 +133,27 @@ describe("platform review moderation", () => {
     );
     expect(await screen.findByText(/Hidden from the public profile/)).toBeInTheDocument();
     expect(screen.getByText("The fence line is straight and the yard was cleaned up the same day.")).toBeInTheDocument();
+  });
+
+  it("keeps pending reviews in the pending queue and off the approved tab", async () => {
+    const user = userEvent.setup();
+    adminListPlatformReviews.mockResolvedValue([
+      pending,
+      {
+        ...pending,
+        id: "review-approved",
+        display_name: "Already Public",
+        body: "This one was approved before the queue changed.",
+        status: "APPROVED",
+      },
+    ]);
+    render(<AdminReviewsPage />);
+    expect(await screen.findByRole("tab", { name: /Pending \(1\)/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText(pending.body)).toBeInTheDocument();
+    expect(screen.queryByText("This one was approved before the queue changed.")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: /Approved \(1\)/ }));
+    expect(screen.getByText("This one was approved before the queue changed.")).toBeInTheDocument();
+    expect(screen.queryByText(pending.body)).not.toBeInTheDocument();
   });
 });

@@ -227,7 +227,46 @@ test("signed-in header keeps the bell inside a 320px viewport", async ({ page })
   expect(panelBox!.x + panelBox!.width).toBeLessThanOrEqual(320 + 1);
 });
 
-const reviewWidths = [390, 768, 1280];
+const reviewWidths = [320, 390, 768, 1280];
+
+test.describe("platform review form at phone width", () => {
+  for (const width of [320, 390]) {
+    test(`activated /reviews at ${width}px stays in the viewport`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=customer#/reviews", {
+        waitUntil: "domcontentloaded",
+      });
+      await page.evaluate(() => document.fonts.ready);
+      const submit = page.getByRole("button", { name: "Submit review" });
+      await expect(submit).toBeVisible();
+      await expect(page.getByText(/waiting for admin approval|not public yet|admin approves/i).first()).toBeVisible();
+      const box = await submit.boundingBox();
+      const layout = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+      }));
+      expect(box).not.toBeNull();
+      expect(box!.width).toBeGreaterThanOrEqual(44);
+      expect(box!.x).toBeGreaterThanOrEqual(-1);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(layout.innerWidth + 1);
+      expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth + 1);
+    });
+
+    test(`unpaid /reviews at ${width}px does not offer a public submit`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto("http://127.0.0.1:5174/e2e/harness/index.html?as=contractor&fee=unpaid#/reviews", {
+        waitUntil: "domcontentloaded",
+      });
+      await expect(page.getByText(/account activation is required/i)).toBeVisible();
+      await expect(page.getByRole("button", { name: "Submit review" })).toHaveCount(0);
+      const layout = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+      }));
+      expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth + 1);
+    });
+  }
+});
 
 test.describe("platform review moderation", () => {
   for (const width of reviewWidths) {
@@ -239,9 +278,14 @@ test.describe("platform review moderation", () => {
       await page.evaluate(() => document.fonts.ready);
       const reason = page.getByRole("textbox", { name: /Reason \(required\)/i });
       await expect(reason).toBeVisible();
-      await expect(page.getByRole("button", { name: "Approve" })).toBeDisabled();
+      await expect(page.getByRole("tab", { name: /Pending/ })).toHaveAttribute("aria-selected", "true");
+      await expect(page.getByRole("button", { name: "Approve", exact: true })).toBeDisabled();
       await reason.fill("Specific and on topic");
-      await expect(page.getByRole("button", { name: "Approve" })).toBeEnabled();
+      await expect(page.getByRole("button", { name: "Approve", exact: true })).toBeEnabled();
+      await page.getByRole("tab", { name: /Approved/ }).click();
+      await expect(page.getByText("The marketplace was easy to follow from posting to hiring.")).toHaveCount(0);
+      await page.getByRole("tab", { name: /Pending/ }).click();
+      await expect(page.getByText("The marketplace was easy to follow from posting to hiring.")).toBeVisible();
       const box = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         innerWidth: window.innerWidth,
@@ -342,4 +386,65 @@ test.describe("admin overview stays within the viewport", () => {
     await page.keyboard.press("Space");
     await expect(page.getByText("$24.97").first()).toBeVisible();
   });
+});
+
+test("account deletion sheet fits a phone and hides other people's private details", async ({ page }) => {
+  const roles = [
+    { as: "customer", path: "/app/customer/account", label: "Customer" },
+    { as: "contractor", path: "/app/pro/account", label: "Contractor" },
+    { as: "admin", path: "/app/admin/account", label: "Admin" },
+  ];
+  const widths = [320, 375];
+  for (const role of roles) {
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(`http://127.0.0.1:5174/e2e/harness/index.html?as=${role.as}#${role.path}`, {
+        waitUntil: "domcontentloaded",
+      });
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page.getByRole("heading", { name: "Account settings" })).toBeVisible();
+      await expect(page.locator("dd").filter({ hasText: new RegExp(`^${role.label}$`) })).toBeVisible();
+      await expect(page.locator("main img")).toHaveCount(0);
+
+      await page.getByRole("button", { name: "Delete account" }).click();
+      const dialog = page.getByRole("dialog", { name: "Delete this account?" });
+      await expect(dialog).toBeVisible();
+      await expect(dialog.locator("img")).toHaveCount(0);
+      const copy = (await dialog.innerText()).toLowerCase();
+      expect(copy).not.toMatch(/@/);
+      expect(copy).not.toMatch(/\d{3}[-.\s]\d{3}/);
+      expect(copy).not.toMatch(/\d+\s+\w+\s+(street|avenue|road|drive)/);
+      expect(copy).not.toContain("deleted pro");
+
+      const confirm = dialog.getByRole("button", { name: "Delete my account" });
+      await expect(confirm).toBeDisabled();
+      await dialog.getByLabel("Current password").fill("secret");
+      await dialog.getByLabel("Type DELETE").fill("DELETE");
+      await expect(confirm).toBeEnabled();
+
+      const layout = await page.evaluate(() => {
+        const sheet = document.querySelector("[role='dialog']");
+        const controls = sheet
+          ? [...sheet.querySelectorAll("input, button")].map((el) => {
+              const rect = el.getBoundingClientRect();
+              return { left: rect.left, right: rect.right, height: rect.height, width: rect.width };
+            })
+          : [];
+        return {
+          scrollWidth: document.documentElement.scrollWidth,
+          innerWidth: window.innerWidth,
+          controls,
+        };
+      });
+      expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth + 1);
+      expect(layout.controls.length).toBeGreaterThan(0);
+      for (const control of layout.controls) {
+        expect(control.left).toBeGreaterThanOrEqual(-1);
+        expect(control.right).toBeLessThanOrEqual(layout.innerWidth + 1);
+        expect(control.height).toBeGreaterThanOrEqual(44);
+        expect(control.width).toBeGreaterThanOrEqual(width - 80);
+      }
+      await page.keyboard.press("Escape");
+    }
+  }
 });

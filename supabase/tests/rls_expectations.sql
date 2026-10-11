@@ -73,12 +73,16 @@
 --   author and a third party report_booking_review → only the other party
 --   contractor response with a phone number → rejected; one response only
 
--- Platform reviews (after 20261003000001):
+-- Platform reviews (after 20261003000001, tightened by 20261019200001):
 --   anon SELECT approved platform_reviews → rows
+--   anon SELECT pending or rejected platform_reviews → 0 rows
 --   anon INSERT platform_reviews → denied
---   authenticated INSERT own review → auto-approved
---   authenticated UPDATE another user's review → denied
---   admin UPDATE status → allowed
+--   authenticated INSERT requires signup_fee_status PAID or NOT_REQUIRED and stores PENDING
+--   existing APPROVED rows stay APPROVED
+--   authenticated UPDATE status → denied (including admins; use admin_set_platform_review_status)
+--   non-admin EXECUTE admin_set_platform_review_status → not authorized
+--   admin reject without a 3-500 character reason → denied
+--   admin reject with a reason → REJECTED plus audit_logs platform_review.rejected
 --   anon EXECUTE booking_job_contact / contractor_is_directory_listed → denied
 --   authenticated EXECUTE assert_no_pre_hire_contact → allowed (write path)
 
