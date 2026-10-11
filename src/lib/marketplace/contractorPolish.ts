@@ -61,6 +61,15 @@ export function activationStatusLine(input: {
   return { text: "Activation: Not required", showActivate: false };
 }
 
+/** The $9.99 note is for pros who still owe activation. Paid and exempt accounts already say so on Account. */
+export function showActivationFeeNote(status?: SignupFeeStatus | null): boolean {
+  return status !== "PAID" && status !== "NOT_REQUIRED";
+}
+
+export function jobLocationHeading(contactShared: boolean): string {
+  return contactShared ? "Job location" : "Approximate location";
+}
+
 export function notificationCategoryDescription(
   category: NotificationCategory,
   accountType: AccountType | null | undefined,
@@ -132,9 +141,21 @@ export function changeOrderStatusLabel(status: string): string {
     .join(" ");
 }
 
-export function changeOrderAmountLabel(cents: number, formatUsd: (value: number) => string): string {
-  if (cents === 0) return "No price change";
-  return formatUsd(cents);
+function coerceChangeOrderCents(cents: number | string | null | undefined): number | null {
+  if (typeof cents === "number" && Number.isFinite(cents)) return Math.trunc(cents);
+  if (typeof cents === "string" && /^-?\d+$/.test(cents.trim())) return Number(cents.trim());
+  return null;
+}
+
+/** Uses the stored cent amount. A description is not parsed into a price. */
+export function changeOrderAmountLabel(
+  cents: number | string | null | undefined,
+  formatUsd: (value: number) => string,
+): string {
+  const value = coerceChangeOrderCents(cents);
+  if (value == null) return "Amount not on file";
+  if (value === 0) return "No price change";
+  return formatUsd(value);
 }
 
 export function friendlyTimestamp(iso: string | null | undefined, now = new Date()): string | null {

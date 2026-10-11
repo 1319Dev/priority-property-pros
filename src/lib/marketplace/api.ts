@@ -444,6 +444,36 @@ export async function fetchMyEstimates(): Promise<ContractorEstimateListItem[]> 
   return Array.isArray(data) ? (data as ContractorEstimateListItem[]) : [];
 }
 
+export type OpportunityLabelRow = {
+  opportunity_id: string;
+  project_id: string;
+  project_title: string | null;
+  project_reference_number: number | string | null;
+};
+
+/** Own-job title and PPP number. Missing until the label migration is applied. */
+export async function fetchMyOpportunityLabels(): Promise<OpportunityLabelRow[]> {
+  const { data, error } = await client().rpc("list_my_opportunity_labels");
+  if (error) throw new Error(asError(error, "Could not load job numbers."));
+  if (!Array.isArray(data)) return [];
+  return data.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const item = row as Record<string, unknown>;
+    if (typeof item.project_id !== "string" || typeof item.opportunity_id !== "string") return [];
+    return [
+      {
+        opportunity_id: item.opportunity_id,
+        project_id: item.project_id,
+        project_title: typeof item.project_title === "string" ? item.project_title : null,
+        project_reference_number:
+          typeof item.project_reference_number === "number" || typeof item.project_reference_number === "string"
+            ? item.project_reference_number
+            : null,
+      },
+    ];
+  });
+}
+
 export type InAppNotificationRow = {
   id: string;
   kind: string;

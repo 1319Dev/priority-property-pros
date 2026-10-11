@@ -1050,6 +1050,7 @@ export type Database = {
       mark_estimate_viewed: { Args: { p_estimate_id: string; p_project_id?: string | null }; Returns: Json };
       decline_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       list_my_estimates: { Args: Record<string, never>; Returns: Json };
+      list_my_opportunity_labels: { Args: Record<string, never>; Returns: Json };
       list_my_notifications: { Args: Record<string, never>; Returns: Json };
       list_my_message_threads: { Args: Record<string, never>; Returns: Json };
       mark_message_thread_read: { Args: { p_thread_id: string }; Returns: Json };

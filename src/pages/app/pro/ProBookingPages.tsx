@@ -36,6 +36,7 @@ import {
   MARK_COMPLETE_TITLE,
   customerPlaceLine,
   formatPhoneDisplay,
+  jobLocationHeading,
   projectContactFromRpc,
   type ProjectContactView,
 } from "../../../lib/marketplace/contractorPolish";
@@ -118,7 +119,7 @@ export function ProBookingDetailPage() {
   const [orders, setOrders] = useState<ChangeOrder[]>([]);
   const [reviews, setReviews] = useState<BookingReview[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [rating, setRating] = useState("5");
+  const [rating, setRating] = useState("");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
@@ -226,7 +227,7 @@ export function ProBookingDetailPage() {
         }}
       />
       <section className="rounded-3xl border border-forest-800/10 px-5 py-4 text-sm">
-        <p className="font-semibold">Approximate location</p>
+        <p className="font-semibold">{jobLocationHeading(contactView.state === "shared")}</p>
         <p>{cityZip}</p>
         <p className="mt-3">Job {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
         <p className="text-ink-500">{paymentsComingSoonCopy()}</p>

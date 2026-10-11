@@ -122,7 +122,7 @@ export function CustomerBookingDetailPage() {
   const [orders, setOrders] = useState<ChangeOrder[]>([]);
   const [reviews, setReviews] = useState<BookingReview[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [rating, setRating] = useState("5");
+  const [rating, setRating] = useState("");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [disputeOpen, setDisputeOpen] = useState(false);

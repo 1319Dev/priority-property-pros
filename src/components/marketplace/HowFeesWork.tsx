@@ -1,7 +1,9 @@
-import { HOW_FEES_WORK_BODY, HOW_FEES_WORK_SUMMARY } from "../../lib/marketplace/contractorPolish";
+import { HOW_FEES_WORK_BODY, HOW_FEES_WORK_SUMMARY, showActivationFeeNote } from "../../lib/marketplace/contractorPolish";
+import type { SignupFeeStatus } from "../../lib/signupFee/constants";
 
-/** One contractor-only fee note. Customers do not render this. */
-export function HowFeesWork() {
+/** One contractor-only fee note. Hidden once activation is paid or not required. */
+export function HowFeesWork({ signupFeeStatus = null }: { signupFeeStatus?: SignupFeeStatus | null }) {
+  if (!showActivationFeeNote(signupFeeStatus)) return null;
   return (
     <details className="rounded-3xl border border-gold-500/40 bg-cream-50 px-5 py-3 text-forest-800">
       <summary className="flex min-h-11 cursor-pointer list-none items-center text-sm font-semibold [&::-webkit-details-marker]:hidden">
