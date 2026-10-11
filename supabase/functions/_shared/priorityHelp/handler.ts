@@ -227,6 +227,22 @@ export async function handlePriorityHelp(req: Request, deps: PriorityHelpDeps): 
     return json({ ok: true, mode: "ai", answer: HUMAN_HANDOFF, refusal: HUMAN_HANDOFF, humanJoined: false, availability: session.availability });
   }
 
+  if (!(await modelBudgetAllows(deps))) {
+    await deps.rpc("support_service_assistant_message", {
+      p_conversation_id: session.conversationId,
+      p_body: AI_UNAVAILABLE,
+    });
+    return json({
+      ok: true,
+      mode: "human_only",
+      availability: session.availability,
+      humanJoined: false,
+      answer: null,
+      refusal: AI_UNAVAILABLE,
+      conversation: asRecord(stored.data),
+    });
+  }
+
   let draft: string;
   try {
     const completed = await completeChat({
@@ -262,6 +278,30 @@ export async function handlePriorityHelp(req: Request, deps: PriorityHelpDeps): 
 
 function aiMode(deps: PriorityHelpDeps): "ai" | "human_only" {
   return (deps.env("PRIORITY_HELP_AI_API_KEY") ?? "").trim() ? "ai" : "human_only";
+}
+
+async function modelBudgetAllows(deps: PriorityHelpDeps): Promise<boolean> {
+  const result = await deps.rpc("support_service_ai_budget", {});
+  if (result.error) return false;
+  const row = asRecord(result.data);
+  const used = finiteNumber(row.used);
+  const capFromDb = finiteNumber(row.cap);
+  if (used === null || capFromDb === null) return false;
+  const override = (deps.env("PRIORITY_HELP_DAILY_ANSWER_CAP") ?? "").trim();
+  let cap = capFromDb;
+  if (override !== "") {
+    if (!/^\d+$/.test(override)) return false;
+    const parsed = Number(override);
+    if (parsed > 100000) return false;
+    cap = parsed;
+  }
+  return cap > 0 && used < cap;
+}
+
+function finiteNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && /^\d+$/.test(value)) return Number(value);
+  return null;
 }
 
 function publicRpcError(error: string): string {

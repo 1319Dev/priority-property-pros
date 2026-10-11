@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { monthlyCostUsd, MODEL_PRICES, TYPICAL_INPUT_TOKENS, TYPICAL_OUTPUT_TOKENS } from "../../../supabase/functions/_shared/priorityHelp/costEstimate";
-import { classifyCustomerMessage, containsLegacyFeeLanguage, HUMAN_HANDOFF, sanitizeAssistantReply } from "../../../supabase/functions/_shared/priorityHelp/guardrails";
+import { classifyCustomerMessage, COMPLAINT_HANDOFF, containsLegacyFeeLanguage, HUMAN_HANDOFF, sanitizeAssistantReply } from "../../../supabase/functions/_shared/priorityHelp/guardrails";
 import { handlePriorityHelp, sha256Hex, type PriorityHelpDeps, type RpcResult } from "../../../supabase/functions/_shared/priorityHelp/handler";
 import { formatLivePricing } from "../../../supabase/functions/_shared/priorityHelp/pricing";
 import { buildPrompt } from "../../../supabase/functions/_shared/priorityHelp/prompt";
@@ -54,6 +54,9 @@ function deps(overrides: Partial<PriorityHelpDeps> = {}): PriorityHelpDeps & { c
         },
         error: null,
       };
+    }
+    if (name === "support_service_ai_budget") {
+      return { data: { allowed: true, used: 0, cap: 200 }, error: null };
     }
     if (name === "support_service_customer_message") {
       return { data: { id: conversationId, messages: [{ role: "customer", body: args.p_body }], human_joined: false }, error: null };
@@ -111,12 +114,20 @@ describe("Priority Help guardrails and pricing", () => {
     expect(classifyCustomerMessage("How do I post a project?").action).toBe("answer");
     expect(classifyCustomerMessage("Is there a commission?").action).toBe("answer");
     expect(classifyCustomerMessage("How does contractor approval work?").action).toBe("answer");
+    expect(classifyCustomerMessage("Are fees refundable?").action).toBe("answer");
+    expect(classifyCustomerMessage("Do you guarantee the work?").action).toBe("answer");
+    expect(classifyCustomerMessage("Are contractors employees?").action).toBe("answer");
+    expect(classifyCustomerMessage("I want to report fraud").action).toBe("refuse");
+    expect(classifyCustomerMessage("I want to report fraud")).toEqual({ action: "refuse", message: COMPLAINT_HANDOFF });
   });
 
   it("replaces leaked contact details and legacy fee language", () => {
     expect(sanitizeAssistantReply("Email ada@example.com and I approved the refund.").blocked).toBe(true);
     expect(sanitizeAssistantReply("The contractor fee is 7%.").text).toBe(HUMAN_HANDOFF);
     expect(sanitizeAssistantReply("Activation is a one-time fee.").blocked).toBe(false);
+    expect(sanitizeAssistantReply("We guarantee the contractor's work.").blocked).toBe(true);
+    expect(sanitizeAssistantReply("We will resolve the dispute.").blocked).toBe(true);
+    expect(sanitizeAssistantReply("Priority Property Pros does not guarantee the work. Contractors are not employees.").blocked).toBe(false);
   });
 
   it("keeps the legacy fee setting out of the model prompt", () => {
@@ -132,6 +143,9 @@ describe("Priority Help guardrails and pricing", () => {
     expect(joined).not.toMatch(/contractor_fee/);
     expect(joined).not.toMatch(/\b700\b/);
     expect(joined).not.toMatch(/function_call|tool_choice/);
+    expect(joined).toContain("does not guarantee");
+    expect(joined).toContain("generally non-refundable");
+    expect(joined).toContain("does not resolve construction disputes");
   });
 });
 
@@ -163,6 +177,7 @@ describe("Priority Help Edge Function", () => {
       "support_service_open",
       "support_service_customer_message",
       "support_service_context",
+      "support_service_ai_budget",
       "support_service_assistant_message",
     ]);
     const hash = await sha256Hex("guest-token-one");
@@ -176,6 +191,45 @@ describe("Priority Help Edge Function", () => {
     expect(sent.json.refusal).toBe(HUMAN_HANDOFF);
     expect(harness.fetches).toHaveLength(0);
     expect(harness.calls.some((call) => call.name === "support_service_assistant_message")).toBe(true);
+  });
+
+  it("answers fee and guarantee policy from the model and sends a complaint to a person", async () => {
+    const policy = deps();
+    const refundable = await post({ action: "send", guestToken: "guest-token-one", body: "Are fees refundable?" }, policy);
+    expect(refundable.json.answer).toMatch(/\$9\.99/);
+    expect(policy.fetches).toHaveLength(1);
+    const guarantee = deps();
+    const guaranteed = await post({ action: "send", guestToken: "guest-token-one", body: "Do you guarantee the work?" }, guarantee);
+    expect(guaranteed.json.answer).toMatch(/\$9\.99/);
+    expect(guarantee.fetches).toHaveLength(1);
+    const complaint = deps();
+    const reported = await post({ action: "send", guestToken: "guest-token-one", body: "I want to report fraud" }, complaint);
+    expect(reported.json.refusal).toBe(COMPLAINT_HANDOFF);
+    expect(complaint.fetches).toHaveLength(0);
+  });
+
+  it("does not call the model when the daily cap is closed or the budget call fails", async () => {
+    const closed = deps({
+      env: (key) => {
+        if (key === "PRIORITY_HELP_DAILY_ANSWER_CAP") return "0";
+        if (key === "PRIORITY_HELP_AI_API_KEY") return "sk-test";
+        return undefined;
+      },
+    });
+    const capped = await post({ action: "send", guestToken: "guest-token-one", body: "How much is activation?" }, closed);
+    expect(capped.json.mode).toBe("human_only");
+    expect(capped.json.answer).toBeNull();
+    expect(closed.fetches).toHaveLength(0);
+
+    const broken = deps();
+    const inner = broken.rpc;
+    broken.rpc = async (name, args) => {
+      if (name === "support_service_ai_budget") return { data: null, error: "budget down" };
+      return inner(name, args);
+    };
+    const failed = await post({ action: "send", guestToken: "guest-token-one", body: "How much is activation?" }, broken);
+    expect(failed.json.mode).toBe("human_only");
+    expect(broken.fetches).toHaveLength(0);
   });
 
   it("drops a honeypot without opening a conversation or calling the model", async () => {
