@@ -11,6 +11,7 @@ import { DeleteAccountDialog } from "./DeleteAccountDialog";
 import { Header } from "../layout/Header";
 import { DashboardShell } from "../layout/DashboardShell";
 import { AccountPage } from "../../pages/app/CustomerPages";
+import { ACCOUNT_DELETION_PAUSED } from "../../lib/auth/deleteAccount";
 
 function profile(type: AccountType = "CUSTOMER", status: AccountStatus = "ACTIVE"): Profile {
   return {
@@ -121,6 +122,14 @@ describe("Delete account confirmation gating", () => {
     expect(confirm).toBeEnabled();
     await user.click(confirm);
     expect(onConfirm).toHaveBeenCalledWith("secret");
+  });
+
+  it("ships with the #120 pause off, so the Delete button is back and the support notice is gone", () => {
+    renderWithAuth(<AccountPage />);
+
+    expect(ACCOUNT_DELETION_PAUSED).toBe(false);
+    expect(screen.queryByTestId("account-deletion-paused")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^delete account$/i })).toBeInTheDocument();
   });
 
   it("shows Delete account only on account settings, below Sign out", async () => {

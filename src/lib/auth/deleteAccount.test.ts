@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   DELETE_ACCOUNT_ACTIVE_JOBS_ERROR,
   DELETE_ACCOUNT_DELETED_STATUS,
@@ -46,5 +46,37 @@ describe("delete account confirmation", () => {
     expect(DELETE_ACCOUNT_INCOMPLETE_ERROR).toMatch(/Nothing was changed/);
     expect(DELETE_ACCOUNT_GENERIC_ERROR).toMatch(/Nothing was changed/);
     expect(DELETE_ACCOUNT_DELETED_STATUS).toMatch(/Payment, refund, and dispute records stay/);
+  });
+});
+
+describe("account deletion pause", () => {
+  it("still maps a paused server (503 account_deletion_paused) to the support-email notice", async () => {
+    vi.resetModules();
+    const invoke = vi.fn().mockResolvedValue({
+      data: null,
+      error: {
+        message: "Edge Function returned a non-2xx status code",
+        context: new Response(
+          JSON.stringify({ error: "account_deletion_paused", message: "paused" }),
+          { status: 503, headers: { "Content-Type": "application/json" } },
+        ),
+      },
+    });
+    vi.doMock("../supabase/client", () => ({
+      getSupabaseClient: () => ({ functions: { invoke } }),
+    }));
+    const mod = await import("./deleteAccount");
+    expect(mod.ACCOUNT_DELETION_PAUSED).toBe(false);
+    expect(mod.ACCOUNT_DELETION_REQUEST_MAILTO).toBe(
+      "mailto:support@prioritypropertypros.com?subject=Account%20deletion%20request",
+    );
+    await expect(mod.deleteOwnAccount("secret")).resolves.toEqual({
+      error: mod.ACCOUNT_DELETION_PAUSED_MESSAGE,
+      deleted: false,
+    });
+    expect(mod.ACCOUNT_DELETION_PAUSED_MESSAGE).toBe(
+      "Account deletion is temporarily handled by our support team. To request deletion, email support@prioritypropertypros.com from the email on your account, and we will process it.",
+    );
+    vi.doUnmock("../supabase/client");
   });
 });

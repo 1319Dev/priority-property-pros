@@ -1,4 +1,22 @@
+import { SUPPORT_EMAIL } from "../../data/brand";
 import { getSupabaseClient } from "../supabase/client";
+
+/**
+ * Emergency pause switch from #120. PR #90 ships the atomic delete-account
+ * function, so the Delete button is back. Set this to true (and redeploy the
+ * paused delete-account function from #120) only to pause self-serve deletion again.
+ */
+export const ACCOUNT_DELETION_PAUSED = false;
+
+export const ACCOUNT_DELETION_PAUSED_ERROR = "account_deletion_paused";
+
+export const ACCOUNT_DELETION_REQUEST_SUBJECT = "Account deletion request";
+
+export const ACCOUNT_DELETION_REQUEST_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+  ACCOUNT_DELETION_REQUEST_SUBJECT,
+)}`;
+
+export const ACCOUNT_DELETION_PAUSED_MESSAGE = `Account deletion is temporarily handled by our support team. To request deletion, email ${SUPPORT_EMAIL} from the email on your account, and we will process it.`;
 
 export const DELETE_ACCOUNT_CONFIRM_WORD = "DELETE";
 
@@ -72,6 +90,16 @@ function functionsErrorMessage(data: unknown, fallback: string): string {
   return fallback;
 }
 
+async function readFunctionErrorBody(error: unknown): Promise<unknown> {
+  const context = (error as { context?: unknown } | null)?.context;
+  if (!context || typeof (context as Response).clone !== "function") return null;
+  try {
+    return await (context as Response).clone().json();
+  } catch {
+    return null;
+  }
+}
+
 export async function deleteOwnAccount(password: string): Promise<{ error: string | null; deleted: boolean }> {
   const supabase = getSupabaseClient();
   if (!supabase) return { error: "Supabase is not configured yet.", deleted: false };
@@ -81,7 +109,15 @@ export async function deleteOwnAccount(password: string): Promise<{ error: strin
   });
 
   if (error) {
-    const message = functionsErrorMessage(data, error.message || "");
+    const body = data ?? (await readFunctionErrorBody(error));
+    if (
+      body &&
+      typeof body === "object" &&
+      (body as { error?: unknown }).error === ACCOUNT_DELETION_PAUSED_ERROR
+    ) {
+      return { error: ACCOUNT_DELETION_PAUSED_MESSAGE, deleted: false };
+    }
+    const message = functionsErrorMessage(body ?? data, error.message || "");
     return { error: friendlyDeleteAccountError(message), deleted: false };
   }
 
