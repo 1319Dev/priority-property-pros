@@ -215,9 +215,18 @@ export function publicPortfolioItems(
 }
 
 export function publicDirectoryReviews(
-  rows: Array<{ id: string; rating: number; body?: string | null; demo?: boolean; contractor_response?: string | null }>,
+  rows: Array<{
+    id: string;
+    rating: number;
+    body?: string | null;
+    demo?: boolean;
+    contractor_response?: string | null;
+    hidden?: boolean;
+    verified?: boolean;
+  }>,
 ): FindAProReview[] {
   const safe = rows
+    .filter((row) => row.hidden !== true && row.verified !== false)
     .map((row) =>
       toPublicSafeReview({
         id: row.id,
@@ -246,10 +255,20 @@ export function toFindAProCard(input: {
   acceptingWork?: boolean | null;
   portfolio?: PublicSafePortfolioItem[];
   reviews?: FindAProReview[];
+  /** Directory RPC aggregate. When ratingCount is set, including 0, it wins over the snippet list. */
+  ratingAverage?: number | null;
+  ratingCount?: number | null;
 }): FindAProCard {
   const reviews = input.reviews ?? [];
-  const ratingCount = reviews.length;
-  const ratingAverage = ratingCount > 0 ? reviewedContractorAverage(reviews) : null;
+  const ratingCount = input.ratingCount == null ? reviews.length : input.ratingCount;
+  const ratingAverage =
+    input.ratingCount == null
+      ? ratingCount > 0
+        ? reviewedContractorAverage(reviews)
+        : null
+      : ratingCount > 0
+        ? (input.ratingAverage ?? null)
+        : null;
   const categories = (input.categories ?? [])
     .map((name) => name.trim())
     .filter((name) => Boolean(name) && !publicServiceIsOther(name));
