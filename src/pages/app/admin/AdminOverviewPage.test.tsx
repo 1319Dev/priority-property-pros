@@ -141,9 +141,9 @@ describe("Admin overview", () => {
     renderOverview();
     expect((await screen.findAllByText("$14.98")).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Not set up yet").length).toBeGreaterThanOrEqual(3);
-    expect(screen.getByRole("link", { name: /Email prioritypropertypros@gmail.com/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Email support@prioritypropertypros.com/i })).toHaveAttribute(
       "href",
-      "mailto:prioritypropertypros@gmail.com",
+      "mailto:support@prioritypropertypros.com",
     );
     expect(screen.getByRole("link", { name: /Awaiting approval/i })).toHaveAttribute("href", "/app/admin/approvals");
     expect(screen.getByRole("link", { name: /Platform reviews/i })).toHaveAttribute("href", "/app/admin/reviews");
