@@ -51,7 +51,7 @@ describe("AccountPage email change", () => {
     });
     expect(screen.getByText("next@example.com")).toBeInTheDocument();
     await user.type(screen.getByLabelText(/new email/i), "other@example.com");
-    await user.type(screen.getByLabelText(/current password/i), "correct-horse");
+    await user.type(screen.getByLabelText(/current password/i, { selector: "#currentPassword" }), "correct-horse");
     await user.click(screen.getByRole("button", { name: /send confirmation/i }));
     expect(requestEmailChange).toHaveBeenCalledWith("other@example.com", "correct-horse");
     expect(await screen.findByText(EMAIL_CHANGE_SENT_MESSAGE)).toBeInTheDocument();
