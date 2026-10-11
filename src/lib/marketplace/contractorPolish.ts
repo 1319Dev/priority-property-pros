@@ -66,8 +66,12 @@ export function showActivationFeeNote(status?: SignupFeeStatus | null): boolean 
   return status !== "PAID" && status !== "NOT_REQUIRED";
 }
 
-export function jobLocationHeading(contactShared: boolean): string {
-  return contactShared ? "Job location" : "Approximate location";
+/**
+ * City/state is only a stand-in until the customer shares contact. After the share the
+ * street is in Project Contact, so the approximate card is not shown (null).
+ */
+export function jobLocationHeading(contactShared: boolean): string | null {
+  return contactShared ? null : "Approximate location";
 }
 
 export function notificationCategoryDescription(

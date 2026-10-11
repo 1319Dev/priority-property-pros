@@ -44,7 +44,7 @@ describe("contractor account and fee copy", () => {
     expect(showActivationFeeNote("PAID")).toBe(false);
     expect(showActivationFeeNote("NOT_REQUIRED")).toBe(false);
     expect(jobLocationHeading(false)).toBe("Approximate location");
-    expect(jobLocationHeading(true)).toBe("Job location");
+    expect(jobLocationHeading(true)).toBeNull();
     expect(activationStatusLine({ status: "UNPAID" })).toEqual({
       text: "Activation: Not activated",
       showActivate: true,

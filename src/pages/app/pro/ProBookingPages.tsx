@@ -227,9 +227,13 @@ export function ProBookingDetailPage() {
         }}
       />
       <section className="rounded-3xl border border-forest-800/10 px-5 py-4 text-sm">
-        <p className="font-semibold">{jobLocationHeading(contactView.state === "shared")}</p>
-        <p>{cityZip}</p>
-        <p className="mt-3">Job {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
+        {jobLocationHeading(contactView.state === "shared") ? (
+          <div className="mb-3" aria-label="Approximate location">
+            <p className="font-semibold">{jobLocationHeading(contactView.state === "shared")}</p>
+            <p>{cityZip}</p>
+          </div>
+        ) : null}
+        <p>Job {formatUsdFromCents(booking.billable_amount_cents || booking.amount_cents)}</p>
         <p className="text-ink-500">{paymentsComingSoonCopy()}</p>
       </section>
       {estimateMeta ? (
