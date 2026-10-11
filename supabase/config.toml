@@ -47,7 +47,7 @@ verify_jwt = false
 # Priority Help. verify_jwt is false because guests are not signed in.
 # The function validates a user JWT itself and calls support_service_* with
 # the service role. Do not deploy until the owner applies migration
-# 20261019600001_priority_help.sql. Secrets (Dashboard → Edge Functions),
+# 20261019700001_priority_help.sql. Secrets (Dashboard → Edge Functions),
 # never Vite and never platform_settings:
 #   PRIORITY_HELP_AI_API_KEY       required for AI answers; omit for Talk to Support only
 #   PRIORITY_HELP_AI_MODEL         optional, default gpt-4.1-nano
