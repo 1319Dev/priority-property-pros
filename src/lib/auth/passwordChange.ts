@@ -1,10 +1,11 @@
 import { getSupabaseClient, getSupabasePasswordCheckClient } from "../supabase/client";
+import { MIN_PASSWORD_LENGTH } from "./passwordPolicy";
 
 /**
  * Same 8-character rule as sign-up and reset (#99). The Supabase Auth dashboard
  * minimum is the real server enforcement; this keeps the Account form consistent.
  */
-export const PASSWORD_CHANGE_MIN_LENGTH = 8;
+export const PASSWORD_CHANGE_MIN_LENGTH = MIN_PASSWORD_LENGTH;
 
 export type PasswordChangeInput = {
   email: string | null | undefined;

@@ -243,4 +243,25 @@ describe("profile review CTA", () => {
     expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /submit review/i })).not.toBeInTheDocument();
   });
+
+  it("does not preselect a star rating", () => {
+    render(
+      <ProfileReviewForm
+        role="customer"
+        bookingStatus="IN_PROGRESS"
+        mutuallyHired
+        reviews={[]}
+        rating=""
+        body=""
+        onRatingChange={() => undefined}
+        onBodyChange={() => undefined}
+        onSubmit={() => undefined}
+      />,
+    );
+    expect(screen.getByText(/choose 1 to 5 stars/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Submit review" })).toBeDisabled();
+    for (const value of ["1", "2", "3", "4", "5"]) {
+      expect(screen.getByRole("button", { name: value })).toHaveAttribute("aria-pressed", "false");
+    }
+  });
 });

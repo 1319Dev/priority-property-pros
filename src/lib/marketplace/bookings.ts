@@ -125,6 +125,23 @@ export function privateContactLockedCopy(): string {
   return "Project contact is locked. Street, phone, and email stay hidden until this contractor has a paid $4.99 connection entitlement or an admin unlocks this specific record.";
 }
 
+/** Admin grant panel. Reads the access row. Does not grant or revoke. */
+export function adminContactAccessIntro(
+  access:
+    | { status: ContactAccessStatus; revoked_at?: string | null; grant_source?: string | null }
+    | null
+    | undefined,
+): string {
+  if (!contactAccessRowAllowsReveal(access)) return privateContactLockedCopy();
+  if (access?.status === "ADMIN_OVERRIDE" || access?.grant_source === "ADMIN_OVERRIDE") {
+    return "Project contact is unlocked by an admin override for this booking. Street, phone, and email stay available until you revoke them.";
+  }
+  if (access?.grant_source === "CONNECTION_FEE_PAYMENT") {
+    return "Project contact is unlocked. Connect was paid for this booking, so street, phone, and email stay available until you revoke them.";
+  }
+  return "Project contact is unlocked for this booking. Street, phone, and email stay available until you revoke them.";
+}
+
 export function privateContactHintCopy(): string {
   return "Stays private until a paid $4.99 connection entitlement or an admin unlock.";
 }
