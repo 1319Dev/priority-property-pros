@@ -37,7 +37,7 @@ export function ReviewsPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState<number | null>(null);
   const [display, setDisplay] = useState("");
   const [city, setCity] = useState("");
   const [body, setBody] = useState("");
@@ -74,6 +74,10 @@ export function ReviewsPage() {
     setSuccess(null);
     setBusy(true);
     try {
+      if (rating == null) {
+        setFormError("Choose a rating from 1 to 5 stars.");
+        return;
+      }
       const saved = await submitPlatformReview({
         viewerId: user?.id ?? null,
         signupFeeStatus: signup_fee_status,
@@ -166,7 +170,9 @@ export function ReviewsPage() {
                     </button>
                   ))}
                 </div>
-                <StarRating rating={rating} className="mt-2" />
+                {rating != null ? <StarRating rating={rating} className="mt-2" /> : (
+                  <p className="mt-2 text-sm text-ink-500">Choose 1 to 5 stars.</p>
+                )}
               </fieldset>
               <TextInput
                 label="Display name"
@@ -204,7 +210,7 @@ export function ReviewsPage() {
               </label>
               <FormError message={formError} />
               {success ? <p className="text-sm font-semibold text-forest-800">{success}</p> : null}
-              <Button type="submit" disabled={busy} className="min-h-11 w-full sm:w-auto">
+              <Button type="submit" disabled={busy || rating == null} className="min-h-11 w-full sm:w-auto">
                 {busy ? "Saving…" : "Submit review"}
               </Button>
             </form>

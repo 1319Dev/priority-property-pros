@@ -79,6 +79,8 @@ describe("platform review submission", () => {
       screen.getByRole("textbox", { name: /Your review/ }),
       "Posting a project and comparing estimates was straightforward.",
     );
+    // #101: no default rating, so pick one before submitting.
+    await user.click(screen.getByRole("button", { name: "5 stars" }));
     await user.click(screen.getByRole("button", { name: "Submit review" }));
     expect(submitPlatformReview).toHaveBeenCalledWith(
       expect.objectContaining({ viewerId: "user-1", signupFeeStatus: "NOT_REQUIRED" }),
