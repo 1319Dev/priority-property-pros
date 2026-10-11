@@ -1,6 +1,6 @@
 /**
  * Current legal documents. Version numbers must match the agreements rows in
- * supabase/migrations/20261015000001_legal_agreement_acceptance.sql.
+ * supabase/migrations/20261018000001_legal_agreement_acceptance.sql.
  * This file does not include the document text. The pages load that text only
  * when VITE_PUBLISH_LEGAL_PAGES is "true".
  */

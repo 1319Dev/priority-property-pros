@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest";
 import { LEGAL_DOCUMENTS } from "./catalog";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const migrationPath = path.join(repoRoot, "supabase/migrations/20261015000001_legal_agreement_acceptance.sql");
+const migrationPath = path.join(repoRoot, "supabase/migrations/20261018000001_legal_agreement_acceptance.sql");
+const rollbackPath = path.join(repoRoot, "supabase/rollbacks/20261018000001_legal_agreement_acceptance_rollback.sql");
 
 function quotedBody(sql: string, slug: string): string {
   const tag = `$ppp_legal_${slug.replaceAll("-", "_")}$`;
@@ -83,5 +84,23 @@ describe("legal agreement acceptance migration", () => {
     expect(sql).toMatch(/Does not block reads of projects, messages, or profiles/);
     expect(sql).toMatch(/does not delete acceptances, profiles, projects, messages, reviews, photos, or payment rows/);
     expect(sql).not.toMatch(/CREATE POLICY[^;]*ON public\.profiles[^;]*agreement/i);
+    expect(path.basename(migrationPath)).toBe("20261018000001_legal_agreement_acceptance.sql");
+    expect(sql).not.toMatch(/20261015000001_legal_agreement_acceptance/);
+  });
+
+  it("rolls this version back without deleting account data or touching Stripe", () => {
+    const rollback = readFileSync(rollbackPath, "utf8");
+    expect(path.basename(rollbackPath)).toBe("20261018000001_legal_agreement_acceptance_rollback.sql");
+    expect(rollback).toMatch(/20261018000001_legal_agreement_acceptance\.sql/);
+    expect(rollback).not.toMatch(/20261015000001/);
+    expect(rollback).toMatch(/DROP FUNCTION IF EXISTS public\.legal_acceptance_required\(\)/);
+    expect(rollback).toMatch(/DROP FUNCTION IF EXISTS public\.set_legal_acceptance_required\(boolean\)/);
+    expect(rollback).toMatch(/CREATE OR REPLACE FUNCTION public\.handle_new_user\(\)/);
+    expect(rollback).toMatch(/USING \(is_current\);/);
+    expect(rollback).toMatch(/DELETE FROM public\.platform_settings WHERE key = 'legal_acceptance_required'/);
+    expect(rollback).not.toMatch(/DELETE FROM public\.(profiles|projects|project_messages|booking_reviews|platform_reviews)/);
+    expect(rollback).not.toMatch(/signup_fee_charges|connection_fee/);
+    expect(rollback).not.toMatch(/stripe\.refunds|refunds\.create|\/v1\/refunds/);
+    expect(rollback).not.toMatch(/payments_live|charges_live|signup_fee_enabled|connection_fee_checkout_enabled/);
   });
 });

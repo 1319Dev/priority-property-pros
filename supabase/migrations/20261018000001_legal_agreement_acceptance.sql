@@ -1,4 +1,6 @@
 -- Legal agreement versions for owner review.
+-- Version 20261018000001. 20261015000001 is already used on main by
+-- paid_connection_booking_contact.
 -- NOT APPLIED. Do not run this against the hosted database until the owner
 -- approves the wording in docs/legal/ and a Texas attorney has reviewed it.
 -- Applying it does NOT replace the current Terms of Use or Privacy Policy and
