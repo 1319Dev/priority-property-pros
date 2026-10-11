@@ -136,7 +136,7 @@ These Terms of Use, the [Privacy Policy](/privacy), the [Refund & Cancellation P
 
 Priority Property Pros LLC (“PPP,” “we,” “us”) operates the Priority Property Pros marketplace at prioritypropertypros.com. PPP is a Texas limited liability company. The product is a home-services marketplace focused on the Conroe and Montgomery County area, with room to grow across Texas. Matching uses the project ZIP and the trades and service area a contractor enters. It is not a hard fence around one county.
 
-The only contact address the product publishes today is [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
+The only contact address the product publishes today is [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
 [OWNER DECISION: provide a mailing address if you want one in these terms. The product has no street address on file. This draft does not invent one.]
 
@@ -210,7 +210,7 @@ After a legitimate Connect between those two people, ordinary contact may be sha
 
 Job reviews, marketplace reviews, portfolio photos, and project photos follow the [Review & Content Guidelines](/content-guidelines). Day-to-day conduct follows the [Community Guidelines](/community-guidelines). Both are part of these terms.
 
-A job review can be edited for 30 days after it is posted. Marketplace reviews are moderated. Portfolio photos are not public until an admin approves them. The website does not currently give a customer a “block this pro” button.
+A job review can be edited for 30 days after it is posted. Marketplace reviews are moderated. Portfolio photos are not public until an admin approves them. On an estimate or a booking, a customer can choose “Don't match me with this pro again.” Future projects skip that pro. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros. A customer review of 3 stars or less also keeps that pro off future projects until the customer unblocks them.
 
 ## 9. Notifications
 
@@ -252,7 +252,7 @@ A new version can be made the current row when PPP turns `legal_acceptance_requi
 
 ## 16. Contact
 
-Questions about these terms: [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
+Questions about these terms: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
 Job payment, scheduling, and workmanship stay between the customer and the contractor. Email PPP for marketplace questions.
 $ppp_legal_terms_of_use$,
@@ -292,7 +292,7 @@ The [Terms of Use](/terms) are part of the same agreement, along with the [Refun
 
 Priority Property Pros LLC (“PPP,” “we”) operates prioritypropertypros.com. This policy describes personal information the marketplace handles for customers (homeowners and businesses), contractors, and the admins who run the site. The verifier role exists in the database and is not a public signup. This policy does not describe a verifier inspecting your home.
 
-The contact address in the product is [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
+The contact address in the product is [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
 [OWNER DECISION: provide a mailing address if you want one published. This draft does not invent a street address.]
 
@@ -316,7 +316,7 @@ The contact address in the product is [prioritypropertypros@gmail.com](mailto:pr
 
 **Reports and admin records.** A contractor can report a project photo. PPP stores the reporter, the target, and the reason. Admins record reasons when they approve or reject a marketplace review, and when they grant or revoke contact access. Those reasons go to an audit log. The review reason is not shown on the public review.
 
-**Support.** The contact page opens an email in your own mail app to prioritypropertypros@gmail.com. PPP does not store that form on its servers.
+**Support.** The contact page opens an email in your own mail app to support@prioritypropertypros.com. PPP does not store that form on its servers.
 
 PPP does not ask for a Social Security number, a government ID image, or a background-check report. PPP does not collect a bond.
 
@@ -389,7 +389,7 @@ The product does not publish a separate multi-year retention table. There is no 
 
 You can update profile and notification settings in the app, turn push and email categories off, unsubscribe from a notification email, and delete your account as described in the [Terms of Use](/terms).
 
-This policy is written for people in the United States, including Texas. The Texas Data Privacy and Security Act (TDPSA) gives covered businesses’ consumers the right to access, correct, delete, and obtain a copy of personal data, and to opt out of sale, targeted advertising, and certain profiling. PPP does not sell personal data and does not run targeted advertising or ad profiling. A Texas attorney should confirm whether the TDPSA’s revenue and volume thresholds make PPP a covered business. You may email [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com) to ask for access, a correction, a copy, or deletion either way. PPP will not discriminate against you for asking. If PPP denies a request, you may reply to that email and ask for another look.
+This policy is written for people in the United States, including Texas. The Texas Data Privacy and Security Act (TDPSA) gives covered businesses’ consumers the right to access, correct, delete, and obtain a copy of personal data, and to opt out of sale, targeted advertising, and certain profiling. PPP does not sell personal data and does not run targeted advertising or ad profiling. A Texas attorney should confirm whether the TDPSA’s revenue and volume thresholds make PPP a covered business. You may email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) to ask for access, a correction, a copy, or deletion either way. PPP will not discriminate against you for asking. If PPP denies a request, you may reply to that email and ask for another look.
 
 PPP will respond within the time the law that applies to the request requires. This draft does not invent a shorter promise.
 
@@ -401,7 +401,7 @@ The marketplace is for adults hiring and doing property work. It is not directed
 
 ## 11. Security
 
-The site is served over HTTPS. Database access for signed-in users goes through row-level security and checked server functions. Admin accounts can be required to use a second factor. No method of storage or transmission is perfect. Email [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com) if you believe your account is being misused.
+The site is served over HTTPS. Database access for signed-in users goes through row-level security and checked server functions. Admin accounts can be required to use a second factor. No method of storage or transmission is perfect. Email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) if you believe your account is being misused.
 
 ## 12. Changes
 
@@ -409,7 +409,7 @@ PPP will post an updated policy on this page and change the effective date at th
 
 ## 13. Contact
 
-Privacy questions and privacy requests: [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
+Privacy questions and privacy requests: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 $ppp_legal_privacy_policy$,
   false,
   'ALL',
@@ -493,7 +493,7 @@ A booking status of Disputed, when it is set, is a label on the marketplace reco
 
 ## 6. Contact
 
-Questions about a platform fee: [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com). Include the account email and, if you have it, the project. Emailing does not by itself create a refund.
+Questions about a platform fee: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Include the account email and, if you have it, the project. Emailing does not by itself create a refund.
 $ppp_legal_refund_cancellation$,
   false,
   'ALL',
@@ -559,7 +559,7 @@ There is no refund of a Connection Fee because a message was blocked or an accou
 
 Do not harass, threaten, or discriminate against another person through the marketplace. Do not send repeated unwanted contact after a project is cancelled or a connection is closed. Do not post another person’s private information.
 
-PPP does not provide a “block this pro” button today. The database has a relationship status that would remove a pro from Hire Again. These guidelines do not promise that button. You can cancel a project when the product allows it, stop new connections, and email [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
+On an estimate or a booking, a customer can choose “Don't match me with this pro again.” Future projects skip that pro. Work already underway stays as it is, and a paid Connection Fee stays paid. The customer can undo that from Blocked pros. A customer review of 3 stars or less also keeps that pro off future projects until the customer unblocks them. Raising that review to 4 or 5 stars does not remove the block. You can also cancel a project when the product allows it, stop new connections, and email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
 ## 5. Enforcement
 
@@ -569,7 +569,7 @@ Enforcement is not a finding that someone is licensed, insured, bonded, or backg
 
 ## 6. Contact
 
-Report a marketplace problem to [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com). Job-site disputes stay between the customer and the contractor.
+Report a marketplace problem to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Job-site disputes stay between the customer and the contractor.
 $ppp_legal_community_guidelines$,
   false,
   'ALL',
@@ -621,7 +621,7 @@ Profile text, estimates, and messages follow the same contact rule as the [Commu
 
 A review, a star rating, a portfolio caption, or an “Approved platform profile” badge is not a PPP inspection of the work. It is not a statement that the contractor is licensed, insured, bonded, or background-checked. Contractor-provided license or insurance fields stay contractor-provided. PPP does not currently verify licenses, insurance, or workmanship.
 
-The website does not currently give a customer a “block this pro” button. A relationship status named blocked exists in the database and would remove a pro from Hire Again. These guidelines do not promise the button. You may still decline an estimate, stop new connections, and cancel a project when the product allows it.
+A customer review of 3 stars or less keeps that pro off the customer’s future projects until the customer unblocks them. Editing that review up to 4 or 5 stars does not remove the block. On an estimate or a booking, the customer can also choose “Don't match me with this pro again.” Future projects skip that pro. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros. You may still decline an estimate, stop new connections, and cancel a project when the product allows it.
 
 ## 4. Moderation
 
@@ -629,7 +629,7 @@ PPP may refuse, edit display of, or remove content that breaks these guidelines,
 
 ## 5. Contact
 
-Questions about a review or a photo: [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
+Questions about a review or a photo: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 $ppp_legal_review_content$,
   false,
   'ALL',

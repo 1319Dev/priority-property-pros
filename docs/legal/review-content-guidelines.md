@@ -36,7 +36,7 @@ Profile text, estimates, and messages follow the same contact rule as the [Commu
 
 A review, a star rating, a portfolio caption, or an “Approved platform profile” badge is not a PPP inspection of the work. It is not a statement that the contractor is licensed, insured, bonded, or background-checked. Contractor-provided license or insurance fields stay contractor-provided. PPP does not currently verify licenses, insurance, or workmanship.
 
-The website does not currently give a customer a “block this pro” button. A relationship status named blocked exists in the database and would remove a pro from Hire Again. These guidelines do not promise the button. You may still decline an estimate, stop new connections, and cancel a project when the product allows it.
+A customer review of 3 stars or less keeps that pro off the customer’s future projects until the customer unblocks them. Editing that review up to 4 or 5 stars does not remove the block. On an estimate or a booking, the customer can also choose “Don't match me with this pro again.” Future projects skip that pro. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros. You may still decline an estimate, stop new connections, and cancel a project when the product allows it.
 
 ## 4. Moderation
 
@@ -44,4 +44,4 @@ PPP may refuse, edit display of, or remove content that breaks these guidelines,
 
 ## 5. Contact
 
-Questions about a review or a photo: [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
+Questions about a review or a photo: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).

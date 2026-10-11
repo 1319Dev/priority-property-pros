@@ -68,4 +68,4 @@ A booking status of Disputed, when it is set, is a label on the marketplace reco
 
 ## 6. Contact
 
-Questions about a platform fee: [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com). Include the account email and, if you have it, the project. Emailing does not by itself create a refund.
+Questions about a platform fee: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Include the account email and, if you have it, the project. Emailing does not by itself create a refund.

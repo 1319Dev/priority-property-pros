@@ -50,7 +50,7 @@ There is no refund of a Connection Fee because a message was blocked or an accou
 
 Do not harass, threaten, or discriminate against another person through the marketplace. Do not send repeated unwanted contact after a project is cancelled or a connection is closed. Do not post another person’s private information.
 
-PPP does not provide a “block this pro” button today. The database has a relationship status that would remove a pro from Hire Again. These guidelines do not promise that button. You can cancel a project when the product allows it, stop new connections, and email [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
+On an estimate or a booking, a customer can choose “Don't match me with this pro again.” Future projects skip that pro. Work already underway stays as it is, and a paid Connection Fee stays paid. The customer can undo that from Blocked pros. A customer review of 3 stars or less also keeps that pro off future projects until the customer unblocks them. Raising that review to 4 or 5 stars does not remove the block. You can also cancel a project when the product allows it, stop new connections, and email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
 ## 5. Enforcement
 
@@ -60,4 +60,4 @@ Enforcement is not a finding that someone is licensed, insured, bonded, or backg
 
 ## 6. Contact
 
-Report a marketplace problem to [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com). Job-site disputes stay between the customer and the contractor.
+Report a marketplace problem to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Job-site disputes stay between the customer and the contractor.

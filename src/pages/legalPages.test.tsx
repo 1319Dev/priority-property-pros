@@ -76,7 +76,9 @@ describe("draft legal pages", () => {
     expect(combined).toMatch(/does not currently verify licenses, insurance, or workmanship/i);
     expect(combined).toMatch(/background-checked/);
     expect(combined).toMatch(/30 days after it is posted/i);
-    expect(combined).toMatch(/does not currently give a customer a “block this pro” button/i);
+    expect(combined).toMatch(/Don't match me with this pro again/);
+    expect(combined).toMatch(/support@prioritypropertypros.com/);
+    expect(combined).not.toMatch(/prioritypropertypros@gmail.com/);
     expect(combined).toMatch(/does not store card numbers/i);
     expect(combined).toMatch(/does not sell personal information/i);
     expect(combined).toMatch(/Supabase/);

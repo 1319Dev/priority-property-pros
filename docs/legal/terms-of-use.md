@@ -21,7 +21,7 @@ These Terms of Use, the [Privacy Policy](/privacy), the [Refund & Cancellation P
 
 Priority Property Pros LLC (“PPP,” “we,” “us”) operates the Priority Property Pros marketplace at prioritypropertypros.com. PPP is a Texas limited liability company. The product is a home-services marketplace focused on the Conroe and Montgomery County area, with room to grow across Texas. Matching uses the project ZIP and the trades and service area a contractor enters. It is not a hard fence around one county.
 
-The only contact address the product publishes today is [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
+The only contact address the product publishes today is [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
 [OWNER DECISION: provide a mailing address if you want one in these terms. The product has no street address on file. This draft does not invent one.]
 
@@ -95,7 +95,7 @@ After a legitimate Connect between those two people, ordinary contact may be sha
 
 Job reviews, marketplace reviews, portfolio photos, and project photos follow the [Review & Content Guidelines](/content-guidelines). Day-to-day conduct follows the [Community Guidelines](/community-guidelines). Both are part of these terms.
 
-A job review can be edited for 30 days after it is posted. Marketplace reviews are moderated. Portfolio photos are not public until an admin approves them. The website does not currently give a customer a “block this pro” button.
+A job review can be edited for 30 days after it is posted. Marketplace reviews are moderated. Portfolio photos are not public until an admin approves them. On an estimate or a booking, a customer can choose “Don't match me with this pro again.” Future projects skip that pro. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros. A customer review of 3 stars or less also keeps that pro off future projects until the customer unblocks them.
 
 ## 9. Notifications
 
@@ -137,6 +137,6 @@ A new version can be made the current row when PPP turns `legal_acceptance_requi
 
 ## 16. Contact
 
-Questions about these terms: [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
+Questions about these terms: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
 Job payment, scheduling, and workmanship stay between the customer and the contractor. Email PPP for marketplace questions.

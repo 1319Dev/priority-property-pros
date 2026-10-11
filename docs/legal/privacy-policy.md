@@ -22,7 +22,7 @@ The [Terms of Use](/terms) are part of the same agreement, along with the [Refun
 
 Priority Property Pros LLC (“PPP,” “we”) operates prioritypropertypros.com. This policy describes personal information the marketplace handles for customers (homeowners and businesses), contractors, and the admins who run the site. The verifier role exists in the database and is not a public signup. This policy does not describe a verifier inspecting your home.
 
-The contact address in the product is [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
+The contact address in the product is [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
 [OWNER DECISION: provide a mailing address if you want one published. This draft does not invent a street address.]
 
@@ -46,7 +46,7 @@ The contact address in the product is [prioritypropertypros@gmail.com](mailto:pr
 
 **Reports and admin records.** A contractor can report a project photo. PPP stores the reporter, the target, and the reason. Admins record reasons when they approve or reject a marketplace review, and when they grant or revoke contact access. Those reasons go to an audit log. The review reason is not shown on the public review.
 
-**Support.** The contact page opens an email in your own mail app to prioritypropertypros@gmail.com. PPP does not store that form on its servers.
+**Support.** The contact page opens an email in your own mail app to support@prioritypropertypros.com. PPP does not store that form on its servers.
 
 PPP does not ask for a Social Security number, a government ID image, or a background-check report. PPP does not collect a bond.
 
@@ -119,7 +119,7 @@ The product does not publish a separate multi-year retention table. There is no 
 
 You can update profile and notification settings in the app, turn push and email categories off, unsubscribe from a notification email, and delete your account as described in the [Terms of Use](/terms).
 
-This policy is written for people in the United States, including Texas. The Texas Data Privacy and Security Act (TDPSA) gives covered businesses’ consumers the right to access, correct, delete, and obtain a copy of personal data, and to opt out of sale, targeted advertising, and certain profiling. PPP does not sell personal data and does not run targeted advertising or ad profiling. A Texas attorney should confirm whether the TDPSA’s revenue and volume thresholds make PPP a covered business. You may email [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com) to ask for access, a correction, a copy, or deletion either way. PPP will not discriminate against you for asking. If PPP denies a request, you may reply to that email and ask for another look.
+This policy is written for people in the United States, including Texas. The Texas Data Privacy and Security Act (TDPSA) gives covered businesses’ consumers the right to access, correct, delete, and obtain a copy of personal data, and to opt out of sale, targeted advertising, and certain profiling. PPP does not sell personal data and does not run targeted advertising or ad profiling. A Texas attorney should confirm whether the TDPSA’s revenue and volume thresholds make PPP a covered business. You may email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) to ask for access, a correction, a copy, or deletion either way. PPP will not discriminate against you for asking. If PPP denies a request, you may reply to that email and ask for another look.
 
 PPP will respond within the time the law that applies to the request requires. This draft does not invent a shorter promise.
 
@@ -131,7 +131,7 @@ The marketplace is for adults hiring and doing property work. It is not directed
 
 ## 11. Security
 
-The site is served over HTTPS. Database access for signed-in users goes through row-level security and checked server functions. Admin accounts can be required to use a second factor. No method of storage or transmission is perfect. Email [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com) if you believe your account is being misused.
+The site is served over HTTPS. Database access for signed-in users goes through row-level security and checked server functions. Admin accounts can be required to use a second factor. No method of storage or transmission is perfect. Email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) if you believe your account is being misused.
 
 ## 12. Changes
 
@@ -139,4 +139,4 @@ PPP will post an updated policy on this page and change the effective date at th
 
 ## 13. Contact
 
-Privacy questions and privacy requests: [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com).
+Privacy questions and privacy requests: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
