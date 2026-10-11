@@ -1,25 +1,12 @@
--- Stop contractor_end_job from writing connection checkout sessions.
--- The #88 guard let that RPC marker pass protect_connection_checkout_session_row,
--- so any write while the marker was set (including amount, price, and payment
--- status) was accepted. End-job still completes a PAID connection, still
--- completes a hired PAID connection without touching the booking, and still
--- cancels an unpaid occupying row. An OPEN session on that unpaid row is
--- expired by expire_open_connection_checkout_sessions, whose marker can change
--- only status OPEN -> EXPIRED and updated_at.
+-- Rollback for 20261019400001_end_job_checkout_session_guard.sql
+-- Restores the #88 checkout-session allow-list (contractor_end_job can write
+-- sessions again) and the end-job body that expires OPEN sessions directly.
+-- Diff against a saved prod definition before applying. Does not change
+-- fee_cents or payment amounts.
 --
--- Does not change fee_cents (499), the $9.99 activation fee, price IDs, or
--- fulfillment. Does not grant contact. Does not mark a connection PAID.
---
--- Version 20261019100001 is after every migration on open PRs as of 2026-10-11:
--- 20261018000001, 20261017000002, 20261017000001, 20261016000004,
--- 20261016000003, 20261016000002, 20261015120000, 20261014000001.
--- This file does not replace protect_project_connection_row, so the account
--- deletion PR's purge_account_owned_rows allow-list is left intact.
--- Prod protect_connection_checkout_session_row was read on 2026-10-11 and
--- matched the allow-list in 20261015000002, including contractor_end_job.
 -- Replaces existing function protect_connection_checkout_session_row; must be diffed against prod before apply.
 -- Replaces existing function contractor_end_job; must be diffed against prod before apply.
--- Creates function expire_open_connection_checkout_sessions.
+-- Drops function expire_open_connection_checkout_sessions.
 
 CREATE OR REPLACE FUNCTION public.protect_connection_checkout_session_row()
 RETURNS trigger
@@ -28,40 +15,12 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  -- End-job may expire an OPEN session only through this dedicated marker.
-  -- contractor_end_job itself is not allowed to insert, update, or delete a session.
-  IF public.ppp_rpc_is('expire_open_connection_checkout_sessions') THEN
-    IF TG_OP = 'UPDATE'
-       AND OLD.status = 'OPEN'
-       AND NEW.status = 'EXPIRED'
-       AND NEW.id IS NOT DISTINCT FROM OLD.id
-       AND NEW.connection_id IS NOT DISTINCT FROM OLD.connection_id
-       AND NEW.project_id IS NOT DISTINCT FROM OLD.project_id
-       AND NEW.contractor_profile_id IS NOT DISTINCT FROM OLD.contractor_profile_id
-       AND NEW.stripe_checkout_session_id IS NOT DISTINCT FROM OLD.stripe_checkout_session_id
-       AND NEW.stripe_payment_intent_id IS NOT DISTINCT FROM OLD.stripe_payment_intent_id
-       AND NEW.price_id IS NOT DISTINCT FROM OLD.price_id
-       AND NEW.amount_cents IS NOT DISTINCT FROM OLD.amount_cents
-       AND NEW.currency IS NOT DISTINCT FROM OLD.currency
-       AND NEW.livemode IS NOT DISTINCT FROM OLD.livemode
-       AND NEW.payment_status IS NOT DISTINCT FROM OLD.payment_status
-       AND NEW.consumed_at IS NOT DISTINCT FROM OLD.consumed_at
-       AND NEW.fulfilled_at IS NOT DISTINCT FROM OLD.fulfilled_at
-       AND NEW.needs_refund IS NOT DISTINCT FROM OLD.needs_refund
-       AND NEW.refund_reason IS NOT DISTINCT FROM OLD.refund_reason
-       AND NEW.created_at IS NOT DISTINCT FROM OLD.created_at
-       AND NEW.fulfillment_reference IS NOT DISTINCT FROM OLD.fulfillment_reference
-    THEN
-      RETURN NEW;
-    END IF;
-    RAISE EXCEPTION 'connection checkout sessions cannot be written from the client';
-  END IF;
-
   IF public.ppp_rpc_is('attach_connection_checkout_session')
      OR public.ppp_rpc_is('fulfill_connection_fee_checkout')
      OR public.ppp_rpc_is('expire_connection_checkout_session')
      OR public.ppp_rpc_is('flag_connection_checkout_needs_refund')
-     OR public.ppp_rpc_is('record_connection_checkout_event') THEN
+     OR public.ppp_rpc_is('record_connection_checkout_event')
+     OR public.ppp_rpc_is('contractor_end_job') THEN
     IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
     RETURN NEW;
   END IF;
@@ -69,29 +28,6 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.expire_open_connection_checkout_sessions(p_connection_id uuid)
-RETURNS integer
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  n integer := 0;
-BEGIN
-  PERFORM public.ppp_set_rpc('expire_open_connection_checkout_sessions');
-  UPDATE public.connection_checkout_sessions
-  SET status = 'EXPIRED', updated_at = now()
-  WHERE connection_id = p_connection_id
-    AND status = 'OPEN';
-  GET DIAGNOSTICS n = ROW_COUNT;
-  RETURN n;
-END;
-$$;
-
-REVOKE ALL ON FUNCTION public.expire_open_connection_checkout_sessions(uuid) FROM PUBLIC, anon, authenticated, service_role;
-
-COMMENT ON FUNCTION public.expire_open_connection_checkout_sessions(uuid) IS
-  'Internal. Called by contractor_end_job. Sets only OPEN checkout sessions to EXPIRED. Not granted to clients or service_role.';
 
 CREATE OR REPLACE FUNCTION public.contractor_end_job(p_opportunity_id uuid)
 RETURNS jsonb
@@ -220,11 +156,10 @@ BEGIN
 
   -- Unpaid occupying rows: cancel and free the max-3 slot. No #14 row is created or granted.
   IF conn.id IS NOT NULL AND conn.status IN ('INITIATED', 'RESERVED', 'PAYMENT_DISABLED') THEN
-    -- contractor_end_job is not on the checkout-session guard. Expire OPEN
-    -- sessions through a marker that cannot change amount, price, or status
-    -- other than OPEN -> EXPIRED, then restore this RPC before the slot write.
-    PERFORM public.expire_open_connection_checkout_sessions(conn.id);
-    PERFORM public.ppp_set_rpc('contractor_end_job');
+    UPDATE public.connection_checkout_sessions
+    SET status = 'EXPIRED', updated_at = now()
+    WHERE connection_id = conn.id
+      AND status = 'OPEN';
     DELETE FROM public.connection_slots WHERE connection_id = conn.id;
     released_connection_slot := true;
     UPDATE public.project_connections
@@ -327,4 +262,7 @@ REVOKE ALL ON FUNCTION public.contractor_end_job(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.contractor_end_job(uuid) TO authenticated;
 
 COMMENT ON FUNCTION public.contractor_end_job(uuid) IS
-  'Contractor soft-end via SECURITY DEFINER. Unpaid occupying rows are cancelled and the slot is freed. PAID becomes COMPLETED only (never PAID from the client). Restores ppp.rpc after expire_stale_connection_reservations. Never grants contact. Never changes the $4.99 fee. Cannot write connection_checkout_sessions; OPEN sessions are expired by expire_open_connection_checkout_sessions.';
+  'Contractor soft-end via SECURITY DEFINER. Unpaid occupying rows are cancelled and the slot is freed. PAID becomes COMPLETED only (never PAID from the client). Restores ppp.rpc after expire_stale_connection_reservations. Never grants contact. Never changes the $4.99 fee.';
+
+
+DROP FUNCTION IF EXISTS public.expire_open_connection_checkout_sessions(uuid);

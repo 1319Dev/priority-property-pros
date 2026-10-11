@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const migrationName = "20261019100001_end_job_checkout_session_guard.sql";
+const migrationName = "20261019400001_end_job_checkout_session_guard.sql";
 
 function read(name: string): string {
   return readFileSync(path.join(root, name), "utf8");
@@ -29,7 +29,7 @@ function between(sql: string, startMarker: string, endMarker: string): string {
 
 describe("end-job cannot write checkout sessions", () => {
   const sql = read(`supabase/migrations/${migrationName}`);
-  const rollback = read("supabase/rollbacks/20261019100001_end_job_checkout_session_guard_rollback.sql");
+  const rollback = read("supabase/rollbacks/20261019400001_end_job_checkout_session_guard_rollback.sql");
   const guard = functionBody(sql, "protect_connection_checkout_session_row");
   const helper = functionBody(sql, "expire_open_connection_checkout_sessions");
   const endJob = functionBody(sql, "contractor_end_job");

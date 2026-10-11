@@ -1,4 +1,4 @@
--- Walkthrough for 20261019100001_end_job_checkout_session_guard.sql.
+-- Walkthrough for 20261019400001_end_job_checkout_session_guard.sql.
 -- Do not run this against production. Call contractor_end_job as the contractor.
 -- The contractor_end_job marker must not be able to UPDATE connection_checkout_sessions.
 --
