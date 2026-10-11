@@ -9,6 +9,7 @@ describe("Project Contact section", () => {
     render(<ProjectContactSection view={{ state: "locked" }} />);
     expect(screen.getByRole("heading", { name: /project contact/i })).toBeInTheDocument();
     expect(screen.getByText(/project contact is locked/i)).toBeInTheDocument();
+    expect(screen.getByText(/\$4\.99/)).toBeInTheDocument();
     expect(screen.queryByText(/clicking connect/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^phone$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^email$/i)).not.toBeInTheDocument();
@@ -19,6 +20,8 @@ describe("Project Contact section", () => {
   it("hides street, phone, and email when the connection is unlocked but the customer has not shared", () => {
     render(<ProjectContactSection view={{ state: "waiting" }} />);
     expect(screen.getByText(/has not shared contact yet/i)).toBeInTheDocument();
+    expect(screen.queryByText(/\$4\.99/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/project contact is locked/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/share my contact/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^phone$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^email$/i)).not.toBeInTheDocument();
