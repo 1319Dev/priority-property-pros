@@ -2,6 +2,7 @@ import { Suspense, useEffect, useId, useRef, useState, type ReactNode } from "re
 import { Outlet, useLocation } from "react-router-dom";
 import { BrandLoader } from "../brand/BrandLoader";
 import { SUPPORT_EMAIL } from "../../data/brand";
+import { AgreementAcceptancePrompt } from "../legal/AgreementAcceptancePrompt";
 import { LegalFooterLinks } from "../legal/LegalFooterLinks";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopBar } from "./AdminTopBar";
@@ -84,6 +85,7 @@ export function AdminLayout({
 
       <div className="flex min-h-dvh min-w-0 flex-col md:pl-16 lg:pl-64">
         <AdminTopBar pathname={location.pathname} onOpenMenu={() => setDrawerOpen(true)} menuButtonRef={menuButtonRef} />
+        <AgreementAcceptancePrompt />
         <main id="main" className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:py-8">
           <Suspense fallback={<BrandLoader layout="section" label="Loading…" />}>{children ?? <Outlet />}</Suspense>
         </main>

@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = getSupabaseClient();
     if (!supabase) return { error: "Supabase is not configured yet.", needsEmailConfirm: false };
     if (!input.acceptedTerms) {
-      return { error: "You must accept the Terms of Use and Privacy Policy.", needsEmailConfirm: false };
+      return { error: "You must accept the Terms of Use, Privacy Policy, and the other agreements on the signup form.", needsEmailConfirm: false };
     }
     if (requestsVerifierSignup([input.accountType])) {
       return { error: "That account type is not available.", needsEmailConfirm: false };

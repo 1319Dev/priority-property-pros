@@ -1,3 +1,4 @@
+import { agreementVersionPayload } from "../legal/catalog";
 import type { SignUpInput } from "./types";
 import { sanitizeSignupAccountType } from "./roles";
 
@@ -10,6 +11,7 @@ export function buildSignupMetadata(input: SignUpInput): Record<string, string> 
     last_name: input.lastName.trim(),
     phone: (input.phone ?? "").trim(),
     accepted_terms: input.acceptedTerms ? "true" : "false",
+    accepted_agreement_versions: agreementVersionPayload(accountType),
     business_name: (input.businessName ?? "").trim(),
     primary_trade: (input.primaryTrade ?? "").trim(),
     service_area: (input.serviceArea ?? "").trim(),

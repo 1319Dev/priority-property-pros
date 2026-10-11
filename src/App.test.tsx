@@ -181,6 +181,15 @@ describe("Phase 2 auth surfaces", () => {
     renderApp("/sign-up/contractor");
     expect(screen.getByLabelText(/business name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/primary trade/i)).toBeInTheDocument();
+    expect(screen.getByText(/Contractor Participation Terms/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /contractor participation terms/i })).not.toBeInTheDocument();
+  });
+
+  it("names the customer agreements on signup without linking unpublished drafts", () => {
+    renderApp("/sign-up/customer");
+    expect(screen.getByText(/Refund & Cancellation Policy/)).toBeInTheDocument();
+    expect(screen.getByText(/Review & Content Guidelines/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /refund & cancellation policy/i })).not.toBeInTheDocument();
   });
 
   it("shows email verification check-email state", () => {

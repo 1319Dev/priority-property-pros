@@ -152,6 +152,8 @@ export type Database = {
           version: number;
           body: string;
           is_current: boolean;
+          audience: "ALL" | "CONTRACTOR";
+          published: boolean;
           created_at: string;
         };
         Insert: {
@@ -160,11 +162,15 @@ export type Database = {
           version?: number;
           body: string;
           is_current?: boolean;
+          audience?: "ALL" | "CONTRACTOR";
+          published?: boolean;
         };
         Update: {
           title?: string;
           body?: string;
           is_current?: boolean;
+          audience?: "ALL" | "CONTRACTOR";
+          published?: boolean;
         };
         Relationships: [];
       };
@@ -173,12 +179,15 @@ export type Database = {
           id: string;
           agreement_id: string;
           profile_id: string;
+          agreement_version: number;
           accepted_at: string;
           user_agent: string | null;
         };
         Insert: {
           agreement_id: string;
           profile_id: string;
+          agreement_version?: number;
+          accepted_at?: string;
           user_agent?: string | null;
         };
         Update: never;
@@ -962,6 +971,11 @@ export type Database = {
       };
     };
     Functions: {
+      missing_current_agreements: {
+        Args: Record<string, never>;
+        Returns: { slug: string; title: string; version: number }[];
+      };
+      accept_current_agreements: { Args: { p_user_agent?: string | null }; Returns: Json };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       admin_set_platform_review_status: {
         Args: { p_review_id: string; p_status: string; p_reason: string };

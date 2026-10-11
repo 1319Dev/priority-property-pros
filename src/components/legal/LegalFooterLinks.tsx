@@ -1,10 +1,22 @@
 import { Link } from "react-router-dom";
+import { LEGAL_DOCUMENTS } from "../../lib/legal/catalog";
 import { legalPagesPublished } from "../../lib/legal/publish";
 
-const LINKS = [
-  { to: "/terms", label: "Terms" },
-  { to: "/privacy", label: "Privacy" },
-] as const;
+const LINKS = LEGAL_DOCUMENTS.map((doc) => ({
+  to: doc.path,
+  label:
+    doc.slug === "terms-of-use"
+      ? "Terms"
+      : doc.slug === "privacy-policy"
+        ? "Privacy"
+        : doc.slug === "refund-cancellation"
+          ? "Refunds"
+          : doc.slug === "community-guidelines"
+            ? "Community"
+            : doc.slug === "contractor-participation"
+              ? "Contractor terms"
+              : "Review guidelines",
+}));
 
 export function LegalFooterLinks({
   published = legalPagesPublished(),

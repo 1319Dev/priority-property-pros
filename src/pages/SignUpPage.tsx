@@ -8,12 +8,12 @@ import { dashboardPath } from "../lib/auth/publicEntry";
 import { isPublicSignupType, requestsVerifierSignup } from "../lib/auth/roles";
 import type { PublicSignupType } from "../lib/auth/types";
 import { useAuth } from "../lib/auth/useAuth";
+import { SignupAgreementLabel } from "../components/legal/SignupAgreementLabel";
 import {
   CONTRACTOR_SIGNUP_LEDE,
   CUSTOMER_SIGNUP_LEDE,
   SIGNUP_FEE_CHECKOUT_NOTE,
   SIGNUP_FEE_CHECKOUT_LIVE_NOTE,
-  SIGNUP_TERMS_ACCEPTANCE,
 } from "../data/pricing";
 import { preHireContactError } from "../lib/marketplace/antiCircumvention";
 import { fetchSignupFeeCheckoutFlags } from "../lib/signupFee/api";
@@ -223,9 +223,7 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
             onChange={(e) => setAccepted(e.target.checked)}
             required
           />
-          <span>
-            {SIGNUP_TERMS_ACCEPTANCE}
-          </span>
+          <SignupAgreementLabel accountType={accountType} />
         </label>
         <FormError message={error} />
         <Button type="submit" disabled={busy || !configured} aria-describedby="signup-fee-note">

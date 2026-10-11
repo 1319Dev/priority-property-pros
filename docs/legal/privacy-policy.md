@@ -1,6 +1,6 @@
 # Privacy Policy
 
-> Draft for owner review. This is not legal advice, and it is not the privacy policy stored in the product yet. Have a Texas attorney review it before anyone relies on it or before it is published. Signup still records acceptance of the shorter policy in the agreements table. This draft does not replace that record until you approve it and update the record.
+> Draft for owner review. This is not legal advice. Have a Texas attorney review it before anyone relies on it and before it is published. These pages stay off prioritypropertypros.com until the owner approves the wording and turns them on. This draft does not change the live signup record until the new database migration is applied. Do not apply that migration until the wording is approved.
 
 Effective date: [OWNER DECISION: the calendar date this policy takes effect]
 
@@ -11,12 +11,12 @@ Effective date: [OWNER DECISION: the calendar date this policy takes effect]
 - Card numbers are entered at Stripe. PPP does not store card numbers. PPP stores payment metadata for the $9.99 activation and the $4.99 Connect.
 - The site is hosted as a static site on GitHub Pages. Accounts, database, files, and login are on Supabase. Email goes through Resend. Web push goes through the browser’s push service. There is no advertising tracker in the current site.
 - PPP does not sell personal information.
-- You can delete your account from the account screen. Some audit and payment records can remain, as described below.
+- You can delete your account from the account screen. Agreement acceptances go with the profile. An audit entry and Stripe’s own payment record can remain, as described below.
 - The service is not for children. The minimum age is an owner decision, and the form does not ask for a birthday today.
 - A Priority Help chat is not part of the product. If it launches, an AI provider would be an extra processor. That is marked conditional below.
 - Texas privacy rights and general US practices are described below. A Texas attorney should confirm how the Texas Data Privacy and Security Act applies.
 
-The Terms of Service are at [/terms](/terms).
+The [Terms of Use](/terms) are part of the same agreement, along with the [Refund & Cancellation Policy](/refunds), the [Community Guidelines](/community-guidelines), and the [Review & Content Guidelines](/content-guidelines). Contractor accounts also accept the [Contractor Participation Terms](/contractor-terms).
 
 ## 1. Who this policy covers
 
@@ -28,7 +28,9 @@ The contact address in the product is [prioritypropertypros@gmail.com](mailto:pr
 
 ## 2. Information the product collects
 
-**Account.** Name, email, password (stored by Supabase Auth, not in the PPP application tables), phone if you add one, and whether you are a customer or a contractor. A contractor also adds a business name, trade, and service area at signup, and can later add a headline, bio, years of experience, website, job-size range, service radius or ZIP list, a profile photo, contractor-provided license or insurance fields, and credentials. Signup stores a short user-agent string (up to 180 characters) and, when you check the box, a record that you accepted the current terms and privacy policy, with that user-agent string.
+**Account.** Name, email, password (stored by Supabase Auth, not in the PPP application tables), phone if you add one, and whether you are a customer or a contractor. A contractor also adds a business name, trade, and service area at signup, and can later add a headline, bio, years of experience, website, job-size range, service radius or ZIP list, a profile photo, contractor-provided license or insurance fields, and credentials. Those credential fields are what the contractor typed. PPP does not treat them as a license check, an insurance check, a bond, or a background check.
+
+**Agreement records.** When you check the signup box, or when you accept an updated set after sign-in, PPP stores one row per document: which version you accepted, the time, and a short user-agent string (up to 180 characters). The version number is copied from the current agreement on the server. The checkbox is required for a new account. People who already have accounts can still open their projects, messages, and other data before they accept a later version.
 
 **Projects.** Title, description, project type, city, state, ZIP, timing, optional budget, and photos of the work. The street and precise coordinates are stored in a private location record, not on the public project. An unposted wizard draft stays in that browser tab (session storage) until you post. Photos in an unposted draft are not kept if you reload the tab.
 
@@ -46,7 +48,7 @@ The contact address in the product is [prioritypropertypros@gmail.com](mailto:pr
 
 **Support.** The contact page opens an email in your own mail app to prioritypropertypros@gmail.com. PPP does not store that form on its servers.
 
-PPP does not ask for a Social Security number, a government ID image, or a background-check report.
+PPP does not ask for a Social Security number, a government ID image, or a background-check report. PPP does not collect a bond.
 
 ## 3. How that information is used
 
@@ -107,13 +109,15 @@ PPP does not sell personal information. PPP does not share it for targeted adver
 
 PPP keeps account and project information while the account is open and the marketplace needs it to show the job, the messages, and the reviews.
 
-When you delete your account, the product deletes the login and the rows the deletion function removes, including that person’s bookings, connections, estimates, and the files under that account in project-photo and contractor-document storage. It also writes an audit entry that the account was deleted. References you left on someone else’s record, such as an approval you performed, are cleared off that record rather than deleting the other person’s account. Stripe keeps the payment record under Stripe’s policy. PPP cannot delete the card data it never stored.
+When you delete your account, you type DELETE. The product then deletes the login and the rows tied to that account, including that person’s bookings, connections, and estimates, and it removes files stored under that account in project photos and contractor documents. Agreement-acceptance rows are removed with the profile. The $9.99 charge rows tied to the profile are removed with it. Processor event rows can remain with the profile id cleared. It also writes an audit entry that the account was deleted. References you left on someone else’s record, such as an approval you performed, are cleared off that record rather than deleting the other person’s account. You cannot delete the last active admin account.
 
-The product does not publish a separate multi-year retention table. There is no fixed “we keep everything for X years” rule in the software.
+Stripe keeps the payment record under Stripe’s policy. PPP cannot delete the card data it never stored. Deleting an account does not refund the $9.99 or a $4.99 Connection Fee.
+
+The product does not publish a separate multi-year retention table. There is no fixed “we keep everything for X years” rule in the software. An acceptance row stays while the account stays, including older versions you accepted before a later one.
 
 ## 9. Your choices and your rights
 
-You can update profile and notification settings in the app, turn push and email categories off, unsubscribe from a notification email, and delete your account as described in the Terms of Service.
+You can update profile and notification settings in the app, turn push and email categories off, unsubscribe from a notification email, and delete your account as described in the [Terms of Use](/terms).
 
 This policy is written for people in the United States, including Texas. The Texas Data Privacy and Security Act (TDPSA) gives covered businesses’ consumers the right to access, correct, delete, and obtain a copy of personal data, and to opt out of sale, targeted advertising, and certain profiling. PPP does not sell personal data and does not run targeted advertising or ad profiling. A Texas attorney should confirm whether the TDPSA’s revenue and volume thresholds make PPP a covered business. You may email [prioritypropertypros@gmail.com](mailto:prioritypropertypros@gmail.com) to ask for access, a correction, a copy, or deletion either way. PPP will not discriminate against you for asking. If PPP denies a request, you may reply to that email and ask for another look.
 
@@ -131,7 +135,7 @@ The site is served over HTTPS. Database access for signed-in users goes through 
 
 ## 12. Changes
 
-PPP will post an updated policy on this page and change the effective date at the top. That posting is the notice. For a material change, PPP will also email the address on the account. Notification settings do not have a separate switch for legal updates. The copy in the agreements table is what a new signup accepts until that record is updated.
+PPP will post an updated policy on this page and change the effective date at the top. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates. The new version becomes the current agreement. A new signup must accept it or the server will not create the account. If you already have an account, the next sign-in asks you to accept. You can still view your data before you do. Accepting stores the version and the time.
 
 ## 13. Contact
 

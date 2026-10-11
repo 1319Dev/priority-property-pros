@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { render, screen } from "@testing-library/react";
@@ -6,8 +6,14 @@ import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { LegalFooterLinks } from "../components/legal/LegalFooterLinks";
+import { SignupAgreementLabel } from "../components/legal/SignupAgreementLabel";
+import { LEGAL_DOCUMENTS } from "../lib/legal/catalog";
 import { legalPagesPublished } from "../lib/legal/publish";
+import { CommunityGuidelinesPage } from "./CommunityGuidelinesPage";
+import { ContractorTermsPage } from "./ContractorTermsPage";
 import { PrivacyPage } from "./PrivacyPage";
+import { RefundPolicyPage } from "./RefundPolicyPage";
+import { ReviewGuidelinesPage } from "./ReviewGuidelinesPage";
 import { TermsPage } from "./TermsPage";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -32,71 +38,110 @@ describe("draft legal pages", () => {
       "src/components/layout/Footer.tsx",
       "src/components/layout/DashboardShell.tsx",
       "src/components/admin/AdminLayout.tsx",
+      "src/pages/SignUpPage.tsx",
     ]) {
-      expect(readFileSync(path.join(repoRoot, relativePath), "utf8")).toMatch(/LegalFooterLinks/);
+      expect(readFileSync(path.join(repoRoot, relativePath), "utf8")).toMatch(/LegalFooterLinks|SignupAgreementLabel/);
+    }
+    for (const route of LEGAL_DOCUMENTS.map((doc) => doc.path)) {
+      expect(app).toContain(`path="${route}"`);
     }
   });
 
-  it("renders the terms draft with the product rules and owner decisions", () => {
-    const view = renderPage(<TermsPage />);
-    const text = view.container.textContent ?? "";
-    expect(screen.getByRole("heading", { name: /^terms of service$/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /plain-language summary/i })).toBeInTheDocument();
-    expect(text).toMatch(/this is not legal advice/i);
-    expect(text).toMatch(/texas attorney/i);
-    expect(text).toMatch(/Effective date:/);
-    expect(text).toMatch(/\$9\.99/);
-    expect(text).toMatch(/\$4\.99/);
-    expect(text).toMatch(/up to three occupying connection slots/i);
-    expect(text).toMatch(/independent business/i);
-    expect(text).toMatch(/does not currently verify licenses, insurance, or workmanship/i);
-    expect(text).toMatch(/30 days after it is posted/i);
-    expect(text).toMatch(/does not currently give a customer a “block this pro” button/i);
-    expect(screen.getAllByRole("link", { name: /prioritypropertypros@gmail.com/i }).length).toBeGreaterThan(0);
+  it("renders every draft with the attorney notice and the product rules", () => {
+    const pages = [
+      TermsPage,
+      PrivacyPage,
+      RefundPolicyPage,
+      CommunityGuidelinesPage,
+      ContractorTermsPage,
+      ReviewGuidelinesPage,
+    ];
+    const combined = pages
+      .map((Page) => {
+        const view = renderPage(<Page />);
+        const text = view.container.textContent ?? "";
+        view.unmount();
+        return text;
+      })
+      .join("\n");
+    expect(combined).toMatch(/this is not legal advice/i);
+    expect(combined).toMatch(/texas attorney/i);
+    expect(combined).toMatch(/Effective date:/);
+    expect(combined).toMatch(/\$9\.99/);
+    expect(combined).toMatch(/\$4\.99/);
+    expect(combined).toMatch(/including a later project/i);
+    expect(combined).toMatch(/up to three occupying connection slots/i);
+    expect(combined).toMatch(/not the customer’s employer/i);
+    expect(combined).toMatch(/not the general contractor/i);
+    expect(combined).toMatch(/does not currently verify licenses, insurance, or workmanship/i);
+    expect(combined).toMatch(/background-checked/);
+    expect(combined).toMatch(/30 days after it is posted/i);
+    expect(combined).toMatch(/does not currently give a customer a “block this pro” button/i);
+    expect(combined).toMatch(/does not store card numbers/i);
+    expect(combined).toMatch(/does not sell personal information/i);
+    expect(combined).toMatch(/Supabase/);
+    expect(combined).toMatch(/Stripe/);
+    expect(combined).toMatch(/GitHub Pages/);
+    expect(combined).toMatch(/Resend/);
+    expect(combined).toMatch(/local storage/i);
+    expect(combined).toMatch(/Texas Data Privacy and Security Act/);
+    expect(combined).toMatch(/Priority Help chat is not in the product today/);
+    expect(combined).toMatch(/non-refundable/i);
+    expect(combined).not.toMatch(/contractors are licensed, insured, and bonded/i);
+    expect(combined).not.toMatch(/we background-check/i);
+    expect(combined).not.toMatch(/must carry insurance/i);
+    expect(screen.queryByText(/this is not legal advice/i)).not.toBeInTheDocument();
   });
 
-  it("renders the privacy draft with processors, storage, and deletion", () => {
-    const view = renderPage(<PrivacyPage />);
-    const text = view.container.textContent ?? "";
-    expect(screen.getByRole("heading", { name: /^privacy policy$/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /plain-language summary/i })).toBeInTheDocument();
-    expect(text).toMatch(/this is not legal advice/i);
-    expect(text).toMatch(/does not store card numbers/i);
-    expect(text).toMatch(/does not sell personal information/i);
-    expect(text).toMatch(/Supabase/);
-    expect(text).toMatch(/Stripe/);
-    expect(text).toMatch(/GitHub Pages/);
-    expect(text).toMatch(/Resend/);
-    expect(text).toMatch(/local storage/i);
-    expect(text).toMatch(/Texas Data Privacy and Security Act/);
-    expect(text).toMatch(/Priority Help chat is not in the product today/);
-    expect(screen.getByRole("link", { name: "/terms" })).toHaveAttribute("href", "/terms");
-  });
-
-  it("lists every owner decision the draft still needs", () => {
-    const terms = readFileSync(path.join(repoRoot, "docs/legal/terms-of-service.md"), "utf8");
-    const privacy = readFileSync(path.join(repoRoot, "docs/legal/privacy-policy.md"), "utf8");
-    const combined = `${terms}\n${privacy}`;
+  it("lists the owner decisions the drafts still need", () => {
+    const legalDir = path.join(repoRoot, "docs/legal");
+    const combined = readdirSync(legalDir)
+      .filter((name) => name.endsWith(".md"))
+      .map((name) => readFileSync(path.join(legalDir, name), "utf8"))
+      .join("\n");
     for (const phrase of [
       "Effective date: [OWNER DECISION:",
       "provide a mailing address",
       "set the minimum age",
-      "confirm the legal refund policy",
       "choose arbitration or the courts",
       "choose the governing law and the Texas county for venue",
     ]) {
       expect(combined).toContain(phrase);
     }
-    expect(terms).not.toMatch(/sk_live_/);
-    expect(privacy).not.toMatch(/\d{1,5}\s+[A-Za-z]+\s+(Street|Avenue|Road)/);
+    expect(combined).not.toContain("confirm the legal refund policy");
+    expect(combined).toMatch(/The \$9\.99 account activation fee is non-refundable/);
+    expect(combined).toMatch(/The \$4\.99 Connection Fee is non-refundable/);
+    expect(combined).not.toMatch(/sk_live_/);
+    expect(combined).not.toMatch(/\d{1,5}\s+[A-Za-z]+\s+(Street|Avenue|Road)/);
   });
 
-  it("shows footer links only when legal pages are published", () => {
+  it("shows footer and signup links only when legal pages are published", () => {
     const hidden = renderPage(<LegalFooterLinks linkClassName="underline" />);
     expect(screen.queryByRole("link", { name: /^terms$/i })).not.toBeInTheDocument();
     hidden.unmount();
+
     renderPage(<LegalFooterLinks published linkClassName="underline" />);
     expect(screen.getByRole("link", { name: /^terms$/i })).toHaveAttribute("href", "/terms");
     expect(screen.getByRole("link", { name: /^privacy$/i })).toHaveAttribute("href", "/privacy");
+    expect(screen.getByRole("link", { name: /^refunds$/i })).toHaveAttribute("href", "/refunds");
+    expect(screen.getByRole("link", { name: /^community$/i })).toHaveAttribute("href", "/community-guidelines");
+    expect(screen.getByRole("link", { name: /^contractor terms$/i })).toHaveAttribute("href", "/contractor-terms");
+    expect(screen.getByRole("link", { name: /^review guidelines$/i })).toHaveAttribute("href", "/content-guidelines");
+  });
+
+  it("names every required agreement on both signup forms and links them only when published", () => {
+    const unpublished = renderPage(<SignupAgreementLabel accountType="CUSTOMER" published={false} />);
+    expect(unpublished.container.textContent).toMatch(/Terms of Use/);
+    expect(unpublished.container.textContent).toMatch(/Privacy Policy/);
+    expect(unpublished.container.textContent).toMatch(/Refund & Cancellation Policy/);
+    expect(unpublished.container.textContent).toMatch(/non-refundable/);
+    expect(unpublished.container.textContent).not.toMatch(/Contractor Participation Terms/);
+    expect(screen.queryByRole("link", { name: /terms of use/i })).not.toBeInTheDocument();
+    unpublished.unmount();
+
+    renderPage(<SignupAgreementLabel accountType="CONTRACTOR" published />);
+    expect(screen.getByRole("link", { name: /contractor participation terms/i })).toHaveAttribute("href", "/contractor-terms");
+    expect(screen.getByRole("link", { name: /refund & cancellation policy/i })).toHaveAttribute("href", "/refunds");
+    expect(screen.getByText(/\$4\.99 Connection Fee are non-refundable/i)).toBeInTheDocument();
   });
 });

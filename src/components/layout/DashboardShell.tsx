@@ -6,6 +6,7 @@ import { NotificationBell } from "../notifications/NotificationBell";
 import { useAuth } from "../../lib/auth/useAuth";
 import { displayName } from "../../lib/auth/roles";
 import { SUPPORT_EMAIL } from "../../data/brand";
+import { AgreementAcceptancePrompt } from "../legal/AgreementAcceptancePrompt";
 import { LegalFooterLinks } from "../legal/LegalFooterLinks";
 
 export type DashNavItem = {
@@ -74,6 +75,7 @@ export function DashboardShell({
         </div>
       ) : null}
       {notice ? <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6">{notice}</div> : null}
+      <AgreementAcceptancePrompt />
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:pb-10">
         {children ?? <Outlet />}
       </main>

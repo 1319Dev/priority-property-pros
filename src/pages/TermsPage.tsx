@@ -1,4 +1,4 @@
-import terms from "../../docs/legal/terms-of-service.md?raw";
+import terms from "../../docs/legal/terms-of-use.md?raw";
 import { LegalDocumentPage } from "./LegalDocumentPage";
 
 export function TermsPage() {

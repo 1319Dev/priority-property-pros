@@ -86,6 +86,18 @@ const TermsPage = publishLegalPages
 const PrivacyPage = publishLegalPages
   ? lazy(() => import("./pages/PrivacyPage").then((mod) => ({ default: mod.PrivacyPage })))
   : null;
+const RefundPolicyPage = publishLegalPages
+  ? lazy(() => import("./pages/RefundPolicyPage").then((mod) => ({ default: mod.RefundPolicyPage })))
+  : null;
+const CommunityGuidelinesPage = publishLegalPages
+  ? lazy(() => import("./pages/CommunityGuidelinesPage").then((mod) => ({ default: mod.CommunityGuidelinesPage })))
+  : null;
+const ContractorTermsPage = publishLegalPages
+  ? lazy(() => import("./pages/ContractorTermsPage").then((mod) => ({ default: mod.ContractorTermsPage })))
+  : null;
+const ReviewGuidelinesPage = publishLegalPages
+  ? lazy(() => import("./pages/ReviewGuidelinesPage").then((mod) => ({ default: mod.ReviewGuidelinesPage })))
+  : null;
 
 function StripTrailingSlash() {
   const location = useLocation();
@@ -146,6 +158,46 @@ export default function App() {
             element={
               <Suspense fallback={<BrandLoader layout="page" label="Loading privacy policy…" />}>
                 <PrivacyPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {RefundPolicyPage ? (
+          <Route
+            path="/refunds"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading refund policy…" />}>
+                <RefundPolicyPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {CommunityGuidelinesPage ? (
+          <Route
+            path="/community-guidelines"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading community guidelines…" />}>
+                <CommunityGuidelinesPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {ContractorTermsPage ? (
+          <Route
+            path="/contractor-terms"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading contractor terms…" />}>
+                <ContractorTermsPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {ReviewGuidelinesPage ? (
+          <Route
+            path="/content-guidelines"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading review guidelines…" />}>
+                <ReviewGuidelinesPage />
               </Suspense>
             }
           />
