@@ -125,6 +125,18 @@ dd a {
   min-height: 2.75rem;
 }
 
+/*
+ * Short text links inside auth cards get a 44px touch target.
+ * Role-picker cards opt out with data-auth-card. Those anchors are block
+ * flex columns; inline-flex on them collapses each paragraph to one word
+ * per line at every viewport width.
+ */
+.auth-card-body a:not([data-auth-card]) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
 .paper-grain {
   background-color: var(--color-cream-50);
   background-image:

@@ -6,16 +6,20 @@ import { TextInput } from "../components/ui/Input";
 import { AuthCard, FormError } from "../lib/auth/AuthCard";
 import { dashboardPath } from "../lib/auth/publicEntry";
 import { isPublicSignupType, requestsVerifierSignup } from "../lib/auth/roles";
+import { firstSignupField, validateSignupForm, type SignupField, type SignupFieldErrors } from "../lib/auth/signupForm";
 import type { PublicSignupType } from "../lib/auth/types";
 import { useAuth } from "../lib/auth/useAuth";
 import {
+  CONTRACTOR_ACCOUNT_DIFFERENCE,
   CONTRACTOR_SIGNUP_LEDE,
+  CUSTOMER_ACCOUNT_DIFFERENCE,
   CUSTOMER_SIGNUP_LEDE,
-  SIGNUP_FEE_CHECKOUT_NOTE,
+  SIGNUP_BEFORE_CHECKOUT,
+  SIGNUP_BEFORE_CHECKOUT_NOT_LIVE,
   SIGNUP_FEE_CHECKOUT_LIVE_NOTE,
+  SIGNUP_FEE_CHECKOUT_NOTE,
   SIGNUP_TERMS_ACCEPTANCE,
 } from "../data/pricing";
-import { preHireContactError } from "../lib/marketplace/antiCircumvention";
 import { fetchSignupFeeCheckoutFlags } from "../lib/signupFee/api";
 
 const copy: Record<PublicSignupType, { eyebrow: string; title: string; lede: string }> = {
@@ -46,6 +50,7 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
   const { signUp, configured, loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<SignupFieldErrors>({});
   const [busy, setBusy] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [checkoutLive, setCheckoutLive] = useState(false);
@@ -54,6 +59,7 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
     lastName: "",
     email: "",
     password: "",
+    confirmPassword: "",
     phone: "",
     businessName: "",
     primaryTrade: "",
@@ -89,21 +95,26 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
 
   function set(name: keyof typeof values, value: string) {
     setValues((current) => ({ ...current, [name]: value }));
+    if (name in fieldErrors) {
+      setFieldErrors((current) => {
+        const next = { ...current };
+        delete next[name as SignupField];
+        return next;
+      });
+    }
   }
 
-  async function onSubmit(event: FormEvent) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    if (values.password.length < 8) {
-      setError("Use at least 8 characters for your password.");
-      return;
-    }
-    const contactError =
-      preHireContactError(values.businessName) ||
-      preHireContactError(values.primaryTrade) ||
-      preHireContactError(values.serviceArea);
-    if (contactError) {
-      setError(contactError);
+    const nextErrors = validateSignupForm({
+      ...values,
+      accountType,
+    });
+    setFieldErrors(nextErrors);
+    const first = firstSignupField(nextErrors);
+    if (first) {
+      event.currentTarget.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
       return;
     }
     setBusy(true);
@@ -128,6 +139,7 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
   }
 
   const labels = copy[accountType];
+  const fieldMessages = Object.values(fieldErrors);
 
   return (
     <AuthCard
@@ -144,22 +156,28 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
         </>
       }
     >
-      <form className="space-y-4" onSubmit={onSubmit}>
+      <form className="space-y-4" noValidate onSubmit={onSubmit}>
+        <div id="signup-account-difference" className="rounded-3xl border border-forest-800/10 bg-cream-100 px-4 py-3 text-sm leading-relaxed text-ink-700">
+          <p>{accountType === "CONTRACTOR" ? CONTRACTOR_ACCOUNT_DIFFERENCE : CUSTOMER_ACCOUNT_DIFFERENCE}</p>
+          <p className="mt-2">{checkoutLive ? SIGNUP_BEFORE_CHECKOUT : SIGNUP_BEFORE_CHECKOUT_NOT_LIVE}</p>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <TextInput
             label="First name"
             name="firstName"
             autoComplete="given-name"
-            required
+            aria-required="true"
             value={values.firstName}
+            error={fieldErrors.firstName}
             onChange={(e) => set("firstName", e.target.value)}
           />
           <TextInput
             label="Last name"
             name="lastName"
             autoComplete="family-name"
-            required
+            aria-required="true"
             value={values.lastName}
+            error={fieldErrors.lastName}
             onChange={(e) => set("lastName", e.target.value)}
           />
         </div>
@@ -168,8 +186,9 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
           name="email"
           type="email"
           autoComplete="email"
-          required
+          aria-required="true"
           value={values.email}
+          error={fieldErrors.email}
           onChange={(e) => set("email", e.target.value)}
         />
         <TextInput
@@ -177,10 +196,22 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
           name="password"
           type="password"
           autoComplete="new-password"
-          required
+          aria-required="true"
           hint="At least 8 characters."
           value={values.password}
+          error={fieldErrors.password}
           onChange={(e) => set("password", e.target.value)}
+        />
+        <TextInput
+          label="Confirm password"
+          name="confirmPassword"
+          type="password"
+          autoComplete="new-password"
+          aria-required="true"
+          hint="Enter the same password again."
+          value={values.confirmPassword}
+          error={fieldErrors.confirmPassword}
+          onChange={(e) => set("confirmPassword", e.target.value)}
         />
         <TextInput
           label="Phone"
@@ -195,8 +226,9 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
             <TextInput
               label="Business name"
               name="businessName"
-              required
+              aria-required="true"
               value={values.businessName}
+              error={fieldErrors.businessName}
               onChange={(e) => set("businessName", e.target.value)}
             />
             <TextInput
@@ -204,6 +236,7 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
               name="primaryTrade"
               hint="Example: fencing, handyman, lawn care."
               value={values.primaryTrade}
+              error={fieldErrors.primaryTrade}
               onChange={(e) => set("primaryTrade", e.target.value)}
             />
             <TextInput
@@ -211,6 +244,7 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
               name="serviceArea"
               hint="City or county you cover."
               value={values.serviceArea}
+              error={fieldErrors.serviceArea}
               onChange={(e) => set("serviceArea", e.target.value)}
             />
           </>
@@ -227,8 +261,22 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
             {SIGNUP_TERMS_ACCEPTANCE}
           </span>
         </label>
+        {fieldMessages.length > 0 ? (
+          <div role="alert" className="rounded-2xl bg-danger-600/10 px-4 py-3 text-sm text-danger-600">
+            <p>Fix the highlighted fields.</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {Object.entries(fieldErrors).map(([field, message]) => (
+                <li key={field}>{message}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         <FormError message={error} />
-        <Button type="submit" disabled={busy || !configured} aria-describedby="signup-fee-note">
+        <Button
+          type="submit"
+          disabled={busy || !configured}
+          aria-describedby="signup-account-difference signup-fee-note"
+        >
           {busy ? "Creating account…" : "Create account"}
         </Button>
         <p id="signup-fee-note" className="text-sm text-ink-500">
