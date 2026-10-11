@@ -37,7 +37,7 @@ describe("Connection marketplace mobile UI", () => {
     expect(screen.getByText(/Connect with this customer for \$4\.99/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Connect — \$4\.99/i })).toBeInTheDocument();
     expect(screen.getByText(/contact stays locked until the server verifies/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/\$4\.99 Connection Fee is non-refundable/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\$4\.99 Connection Fee is generally non-refundable/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/are the \$9\.99 activation fee and \$4\.99 connection fee refundable/i)).toBeInTheDocument();
   });
 
@@ -77,7 +77,7 @@ describe("Connection marketplace mobile UI", () => {
       </MemoryRouter>,
     );
     expect(await screen.findByRole("heading", { name: /Contact still locked/i })).toBeInTheDocument();
-    expect(screen.getAllByText(/\$4\.99 Connection Fee is non-refundable/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\$4\.99 Connection Fee is generally non-refundable/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Edge Function returned a non-2xx status code/i)).not.toBeInTheDocument();
   });
 });

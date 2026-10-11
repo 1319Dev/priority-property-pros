@@ -11,7 +11,7 @@ import type { BookingStatus } from "./types";
 export const HOW_FEES_WORK_SUMMARY = "How fees work — $9.99 activation, $4.99 to connect";
 
 export const HOW_FEES_WORK_BODY =
-  "The $9.99 account activation is one-time and non-refundable. It is not a monthly fee. After that, browsing jobs is $0/month. Pay $4.99 only when you choose to connect. That connection fee is non-refundable and does not guarantee a hire. Priority Property Pros does not take a percentage of the job. The customer pays you directly.";
+  "The $9.99 account activation is one-time and generally non-refundable once delivered, except duplicate or erroneous charges, refunds required by law, or approved exceptions. It is not a monthly fee. After that, browsing jobs is $0/month. Pay $4.99 only when you choose to connect. That connection fee follows the same rule and does not guarantee a hire. Priority Property Pros does not take a percentage of the job. The customer pays you directly.";
 
 export const HISTORY_JOBS_COPY =
   "Passed, closed, and cancelled jobs stay here. The title and PPP number show when they are still available to you.";
