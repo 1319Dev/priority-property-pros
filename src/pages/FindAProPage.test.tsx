@@ -56,11 +56,11 @@ describe("Find a Pro page", () => {
 });
 
 describe("Public contact email", () => {
-  it("uses the Priority Property Pros Gmail address", () => {
+  it("uses the Priority Property Pros support address", () => {
     renderApp("/contact");
     expect(screen.getAllByRole("link", { name: SUPPORT_EMAIL }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: SUPPORT_EMAIL })[0]).toHaveAttribute("href", `mailto:${SUPPORT_EMAIL}`);
-    expect(SUPPORT_EMAIL).toBe("prioritypropertypros@gmail.com");
+    expect(SUPPORT_EMAIL).toBe("support@prioritypropertypros.com");
     expect(screen.queryByText(/hello@example.com/i)).not.toBeInTheDocument();
   });
 });

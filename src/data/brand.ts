@@ -11,4 +11,4 @@ export const CUSTOMER_CTA = "POST A PROJECT";
 export const CONTRACTOR_CTA = "BECOME A PRIORITY PRO";
 
 /** Public contact address. Shown on the contact page, footer, and mailto links. */
-export const SUPPORT_EMAIL = "prioritypropertypros@gmail.com";
+export const SUPPORT_EMAIL = "support@prioritypropertypros.com";

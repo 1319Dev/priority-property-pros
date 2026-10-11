@@ -327,7 +327,7 @@ export function buildNotificationEmail(input: {
     `Unsubscribe from these emails: ${input.unsubscribeUrl}`,
     "",
     "Priority Property Pros",
-    "prioritypropertypros@gmail.com",
+    "support@prioritypropertypros.com",
   ].join("\n");
 
   const safeLead = escapeHtml(lead);
@@ -367,7 +367,7 @@ export function buildNotificationEmail(input: {
           <tr>
             <td style="padding:0 28px 22px;font-family:Arial, Helvetica, sans-serif;font-size:12px;line-height:1.5;color:#6b645a;">
               Priority Property Pros<br>
-              <a href="mailto:prioritypropertypros@gmail.com" style="color:#6b645a;">prioritypropertypros@gmail.com</a>
+              <a href="mailto:support@prioritypropertypros.com" style="color:#6b645a;">support@prioritypropertypros.com</a>
             </td>
           </tr>
         </table>

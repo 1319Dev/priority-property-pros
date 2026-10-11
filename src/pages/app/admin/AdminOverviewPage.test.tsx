@@ -11,6 +11,11 @@ const fetchAdminDashboardSummary = vi.fn();
 const fetchAdminNeedsAttention = vi.fn();
 const fetchAdminRecentActivity = vi.fn();
 const fetchAdminDashboardTrends = vi.fn();
+const fetchUnhandledContactCount = vi.fn();
+
+vi.mock("../../../lib/admin/contactMessagesApi", () => ({
+  fetchUnhandledContactCount: (...args: unknown[]) => fetchUnhandledContactCount(...args),
+}));
 
 vi.mock("../../../lib/admin/dashboardApi", async () => {
   const actual = await vi.importActual<typeof import("../../../lib/admin/dashboardApi")>("../../../lib/admin/dashboardApi");
@@ -131,6 +136,8 @@ describe("Admin overview", () => {
     fetchAdminNeedsAttention.mockReset();
     fetchAdminRecentActivity.mockReset();
     fetchAdminDashboardTrends.mockReset();
+    fetchUnhandledContactCount.mockReset();
+    fetchUnhandledContactCount.mockResolvedValue(0);
     fetchAdminDashboardSummary.mockResolvedValue(summary);
     fetchAdminNeedsAttention.mockResolvedValue(attention);
     fetchAdminRecentActivity.mockResolvedValue(activity);
@@ -141,9 +148,9 @@ describe("Admin overview", () => {
     renderOverview();
     expect((await screen.findAllByText("$14.98")).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Not set up yet").length).toBeGreaterThanOrEqual(3);
-    expect(screen.getByRole("link", { name: /Email prioritypropertypros@gmail.com/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Email support@prioritypropertypros.com/i })).toHaveAttribute(
       "href",
-      "mailto:prioritypropertypros@gmail.com",
+      "mailto:support@prioritypropertypros.com",
     );
     expect(screen.getByRole("link", { name: /Awaiting approval/i })).toHaveAttribute("href", "/app/admin/approvals");
     expect(screen.getByRole("link", { name: /Platform reviews/i })).toHaveAttribute("href", "/app/admin/reviews");
@@ -155,6 +162,14 @@ describe("Admin overview", () => {
     expect(screen.getAllByRole("table").length).toBeGreaterThan(0);
     expect(screen.queryByText(/Payments are not live/i)).not.toBeInTheDocument();
     expect(screen.queryByText("$0.00")).not.toBeInTheDocument();
+  });
+
+  it("adds unhandled contact messages to needs attention without the dashboard RPC", async () => {
+    fetchUnhandledContactCount.mockResolvedValue(4);
+    renderOverview();
+    const link = await screen.findByRole("link", { name: /Contact messages waiting to be handled/i });
+    expect(link).toHaveAttribute("href", "/app/admin/contact");
+    expect(link).toHaveTextContent("4");
   });
 
   it("shows an empty activity feed without inventing rows", async () => {

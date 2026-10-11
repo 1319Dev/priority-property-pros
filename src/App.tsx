@@ -64,6 +64,9 @@ const AdminApprovalDetailPage = lazy(() =>
 const AdminReviewsPage = lazy(() =>
   import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminReviewsPage })),
 );
+const AdminContactMessagesPage = lazy(() =>
+  import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminContactMessagesPage })),
+);
 const AdminBookingsPage = lazy(() =>
   import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminBookingsPage })),
 );
@@ -204,6 +207,8 @@ export default function App() {
             <Route path="approvals" element={<AdminApprovalsPage />} />
             <Route path="approvals/:contractorProfileId" element={<AdminApprovalDetailPage />} />
             <Route path="reviews" element={<AdminReviewsPage />} />
+            <Route path="contact" element={<AdminContactMessagesPage />} />
+            <Route path="contact/:messageId" element={<AdminContactMessagesPage />} />
             <Route path="bookings" element={<AdminBookingsPage />} />
             <Route path="security" element={<AdminTwoFactorPage />} />
             <Route path="account" element={<AccountPage />} />

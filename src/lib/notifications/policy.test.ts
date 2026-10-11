@@ -153,7 +153,8 @@ describe("notification email copy", () => {
     expect(email.html).not.toContain("gate code");
     expect(email.html).not.toContain("Oak Street");
     expect(email.text).not.toContain("555-0100");
-    expect(email.html).toContain("prioritypropertypros@gmail.com");
+    expect(email.html).toContain("support@prioritypropertypros.com");
+    expect(email.text).toContain("support@prioritypropertypros.com");
   });
 
   it("rejects external paths and keeps role-specific links", () => {
