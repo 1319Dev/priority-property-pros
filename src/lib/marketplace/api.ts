@@ -651,6 +651,24 @@ export async function fetchBookingContactAccess(bookingId: string): Promise<Book
   return (data as BookingContactAccess | null) ?? null;
 }
 
+/** Paid Connect rows for this contractor on this job. They are keyed by connection, so booking_id can be null. */
+export async function fetchConnectionContactAccess(
+  projectId: string,
+  contractorProfileId: string,
+): Promise<BookingContactAccess[]> {
+  const { data, error } = await client()
+    .from("booking_contact_access")
+    .select(
+      "id, booking_id, connection_id, project_id, contractor_profile_id, status, granted_at, granted_by, grant_reason, grant_source, revoked_at, created_at, updated_at",
+    )
+    .eq("project_id", projectId)
+    .eq("contractor_profile_id", contractorProfileId)
+    .not("connection_id", "is", null)
+    .is("revoked_at", null);
+  if (error) throw new Error(asError(error, "Could not load contact access."));
+  return (data as BookingContactAccess[] | null) ?? [];
+}
+
 export async function adminGrantBookingContactAccess(bookingId: string, reason: string): Promise<RpcJson> {
   const { data, error } = await client().rpc("admin_grant_booking_contact_access", {
     p_booking_id: bookingId,
