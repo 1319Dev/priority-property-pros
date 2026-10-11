@@ -12,8 +12,11 @@ export const SIGNUP_FEE_SHORT = "$9.99 one-time account activation";
 export const FEE_REFUND_RULE =
   "generally non-refundable once delivered, except duplicate or erroneous charges, refunds required by law, or approved exceptions";
 
-export const SIGNUP_FEE_NOT_MONTHLY =
-  `This is a one-time $9.99 account activation, not $9.99/month. There is no monthly charge to keep an account. The $9.99 account activation fee is ${FEE_REFUND_RULE}.`;
+/** One-time / not-monthly wording without the refund rule, for spots where the page already states it once. */
+export const SIGNUP_FEE_ONE_TIME_PLAIN =
+  "This is a one-time $9.99 account activation, not $9.99/month. There is no monthly charge to keep an account.";
+
+export const SIGNUP_FEE_NOT_MONTHLY = `${SIGNUP_FEE_ONE_TIME_PLAIN} The $9.99 account activation fee is ${FEE_REFUND_RULE}.`;
 
 export const SIGNUP_FEE_ONE_TIME_LABEL = "$9.99 ONE TIME";
 
@@ -84,7 +87,7 @@ export const CONTRACTOR_SIGNUP_LEDE =
   `Get started for a one-time $9.99 account activation — not $9.99/month. Then $0/month. Pay $4.99 only when you choose to connect. The $9.99 activation fee and the $4.99 Connection Fee are ${FEE_REFUND_RULE}.`;
 
 export const SIGNUP_ROLE_LEDE =
-  `Get started for a one-time $9.99 account activation. Not $9.99 a month. No monthly subscription to keep your account. ${SIGNUP_FEE_NON_REFUNDABLE}`;
+  `Get started for a one-time $9.99 account activation, not $9.99 a month. Contractors pay $4.99 only when they choose to connect. ${PLATFORM_FEES_NON_REFUNDABLE}`;
 
 export const SIGN_IN_CREATE_ACCOUNT_NOTE =
   `$9.99 one-time account activation — not a monthly subscription. ${FEE_REFUND_RULE[0].toUpperCase()}${FEE_REFUND_RULE.slice(1)}.`;
@@ -95,8 +98,11 @@ export const CUSTOMER_DASHBOARD_PRICING_NOTE =
 export const PRO_DASHBOARD_PRICING_NOTE =
   `After the one-time $9.99 activation, it is $0/month. Browse first. Pay $4.99 only when you choose to connect. No percentage of the job. The $9.99 activation fee and the $4.99 Connection Fee are ${FEE_REFUND_RULE}.`;
 
-export const CONNECTION_FEE_NO_HIRE_GUARANTEE =
-  `The $4.99 Connection Fee purchases connection access. It does not guarantee a hire or the work. ${CONNECTION_FEE_NON_REFUNDABLE}`;
+/** No-hire wording without the refund rule, for spots where the page already states it once. */
+export const CONNECTION_FEE_NO_HIRE_PLAIN =
+  "The $4.99 Connection Fee purchases connection access. It does not guarantee a hire or the work.";
+
+export const CONNECTION_FEE_NO_HIRE_GUARANTEE = `${CONNECTION_FEE_NO_HIRE_PLAIN} ${CONNECTION_FEE_NON_REFUNDABLE}`;
 
 export const PRICING_FAQ = [
   {
@@ -121,7 +127,7 @@ export const PRICING_FAQ = [
   {
     question: "Does the Connection Fee guarantee a hire?",
     answer:
-      "No. $4.99 buys connection access, not a guaranteed job. The $4.99 Connection Fee is generally non-refundable once delivered, except duplicate or erroneous charges, refunds required by law, or approved exceptions. Project payment is between the customer and the contractor. PPP does not take a percentage of that payment.",
+      "No. $4.99 buys connection access, not a guaranteed job. Project payment is between the customer and the contractor. PPP does not take a percentage of that payment.",
   },
   {
     question: "Are the $9.99 activation fee and $4.99 Connection Fee refundable?",

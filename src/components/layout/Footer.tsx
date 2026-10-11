@@ -15,7 +15,6 @@ const footerLinks = [
   { to: "/faq", label: "FAQ" },
   { to: "/contact", label: "Contact" },
   { to: "/reviews", label: "Reviews" },
-  { to: "/reviews", label: "Leave a review" },
   { to: "/trust", label: "Trust & safety" },
 ];
 
