@@ -10,6 +10,12 @@ export const MFA_RATE_LIMIT = "Too many attempts. Wait a minute, then try the cu
 export const MFA_ENTER_CODE = "Enter the 6-digit code from your authenticator.";
 export const MFA_GENERIC = "Couldn't verify that code. Try again.";
 
+/** Fresh TOTP window for sensitive admin actions once admin_mfa_required is on. */
+export const ADMIN_STEP_UP_MAX_MINUTES = 15;
+export const ADMIN_STEP_UP_DB_ERROR = "admin step-up required";
+export const ADMIN_STEP_UP_MESSAGE =
+  "Enter a current authenticator code. This action needs a code from the last 15 minutes.";
+
 export type AssuranceLevel = "aal1" | "aal2";
 
 export type AdminMfaDecision = "allow" | "challenge" | "blocked";

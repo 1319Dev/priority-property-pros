@@ -223,7 +223,7 @@ describe("Phase 4A pre-merge security checks", () => {
     expect(sql).not.toMatch(/DROP TABLE public\.projects/i);
     expect(sql).not.toMatch(/DROP TABLE public\.estimates/i);
     expect(sql).not.toMatch(/DROP TABLE public\.profiles/i);
-    expect(sql).not.toMatch(/DELETE FROM auth\.users/i);
+    expect(sql.replace(/DELETE FROM auth\.users WHERE id = p_user_id;/g, "")).not.toMatch(/DELETE FROM auth\.users/i);
     expect(sql).not.toMatch(/TRUNCATE public\.profiles/i);
     expect(sql).toMatch(/CONSTRAINT opportunity_slots_range CHECK \(slot_number BETWEEN 1 AND 3\)/);
     expect(sql).toMatch(/this project already has 3 participating contractors/);

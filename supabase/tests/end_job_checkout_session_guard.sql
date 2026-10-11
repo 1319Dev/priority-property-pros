@@ -1,0 +1,21 @@
+-- Walkthrough for 20261019400001_end_job_checkout_session_guard.sql.
+-- Do not run this against production. Call contractor_end_job as the contractor.
+-- The contractor_end_job marker must not be able to UPDATE connection_checkout_sessions.
+--
+-- 1. PAID connection, no active booking.
+--    connection COMPLETED, opportunity CLOSED, slot remains.
+--    Checkout session rows are unchanged (not EXPIRED, amount still 499).
+-- 2. PAID connection and a CONFIRMED or IN_PROGRESS booking (hired).
+--    connection COMPLETED only. Booking status unchanged. Contact not granted.
+--    Checkout session rows are unchanged.
+-- 3. RESERVED or PAYMENT_DISABLED with an OPEN checkout session (unpaid).
+--    that OPEN session becomes EXPIRED and no other column changes.
+--    connection CANCELLED, slot freed, opportunity PASSED. Not marked PAID.
+-- 4. Active booking without a PAID connection.
+--    exception containing 'already in a booking'. Checkout session unchanged.
+-- 5. While ppp.rpc is contractor_end_job, UPDATE connection_checkout_sessions
+--    still raises 'connection checkout sessions cannot be written from the client'.
+-- 6. While ppp.rpc is expire_open_connection_checkout_sessions, an UPDATE that
+--    changes amount_cents, price_id, or payment_status raises the same error.
+--    An UPDATE of an OPEN row to EXPIRED that leaves every other column is allowed.
+-- 7. Direct client UPDATE of project_connections.status to PAID is still rejected.

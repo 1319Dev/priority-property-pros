@@ -295,3 +295,13 @@ export function matchingAfterDecision(
   };
   return contractorEligibleForProject(contractor, project).ok;
 }
+
+/**
+ * The account chip only adds information when it is not the default. A rejected or pending
+ * application with an ACTIVE login read as "active contractor", so that chip is dropped.
+ */
+export function approvalAccountChipVisible(approvalStatus: string, accountStatus: string | null | undefined): boolean {
+  if (!accountStatus) return false;
+  if (accountStatus === "ACTIVE") return approvalStatus === "APPROVED";
+  return true;
+}
