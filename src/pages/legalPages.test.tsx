@@ -95,7 +95,13 @@ describe("draft legal pages", () => {
     expect(combined).toMatch(/Resend/);
     expect(combined).toMatch(/local storage/i);
     expect(combined).toMatch(/Texas Data Privacy and Security Act/);
-    expect(combined).toMatch(/Priority Help chat is not in the product today/);
+    expect(combined).toMatch(/Priority Help chat is pending activation/);
+    expect(combined).toMatch(/If and when PPP turns Priority Help on/);
+    expect(combined).toMatch(/OpenAI/);
+    expect(combined).not.toMatch(/Priority Help chat is not in the product today/);
+    expect(combined).toMatch(/5900 Balcones Drive STE 100, Austin, TX 78731 US/);
+    expect(combined).toMatch(/including before a paid Connect/);
+    expect(combined).toMatch(/changed to neutral wording that does not name you/);
     expect(combined).toMatch(/non-refundable/i);
     expect(combined).toMatch(/that requirement ships off/i);
     expect(combined).toMatch(/stored separately from the acceptance recorded when the account was created/i);
@@ -149,6 +155,47 @@ describe("draft legal pages", () => {
     expect(combined).toMatch(/unless expressly stated otherwise/);
     expect(combined).not.toMatch(/sk_live_/);
     expect(combined).not.toMatch(/\d{1,5}\s+[A-Za-z]+\s+(Street|Avenue|Road)/);
+  });
+
+  it("publishes the business mailing address in every document's contact section", () => {
+    const address = "Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US";
+    const files = [
+      "terms-of-use.md",
+      "privacy-policy.md",
+      "refund-cancellation-policy.md",
+      "community-guidelines.md",
+      "contractor-participation-terms.md",
+      "review-content-guidelines.md",
+    ];
+    for (const name of files) {
+      const text = readFileSync(path.join(repoRoot, "docs/legal", name), "utf8");
+      const contact = text.slice(text.search(/^## \d+\. Contact/m));
+      expect(contact, name).toContain(address);
+      expect(text, name).not.toMatch(/do not publish a street address|does not publish a street address/);
+    }
+    const privacy = readFileSync(path.join(repoRoot, "docs/legal/privacy-policy.md"), "utf8");
+    const requests = privacy.slice(privacy.indexOf("**Privacy requests.**"), privacy.indexOf("## 10."));
+    expect(requests).toContain(address);
+    const refunds = readFileSync(path.join(repoRoot, "docs/legal/refund-cancellation-policy.md"), "utf8");
+    const howToAsk = refunds.slice(refunds.indexOf("**How to ask.**"), refunds.indexOf("## 3."));
+    expect(howToAsk).toContain(address);
+  });
+
+  it("describes account deletion as PR #90 finally behaves", () => {
+    const privacy = readFileSync(path.join(repoRoot, "docs/legal/privacy-policy.md"), "utf8");
+    const s8 = privacy.slice(privacy.indexOf("## 8."), privacy.indexOf("## 9."));
+    expect(s8).toMatch(/one step\. If any part fails, none of them is made/);
+    expect(s8).toMatch(/support@prioritypropertypros\.com/);
+    expect(s8).toMatch(/Account deletion request/);
+    expect(s8).toMatch(/portfolio photos with their titles and captions, credential entries, services, service areas, and the Stripe Connect account record PPP stores/);
+    expect(s8).toMatch(/Photos you added to your projects, both the records and the files/);
+    expect(s8).toMatch(/changed to neutral wording that does not name you/);
+    expect(s8).toMatch(/amount, the status, the Stripe references, and the dates\. They do not keep your name, email, phone, or address/);
+    expect(s8).toMatch(/project descriptions, estimates and estimate notes, project messages, job reviews, and change orders/);
+    expect(s8).toMatch(/browser information sent with that acceptance/);
+    expect(s8).toMatch(/older internal security logs may contain an email address/);
+    expect(s8).toMatch(/PPP does not close a contractor’s Stripe Connect account at Stripe/);
+    expect(s8).not.toMatch(/are not cleared/);
   });
 
   it("shows footer and signup links only when legal pages are published", () => {

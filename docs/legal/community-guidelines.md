@@ -78,4 +78,8 @@ Enforcement is not a finding that someone is licensed, insured, bonded, or backg
 
 ## 7. Contact
 
-Report a marketplace problem to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Job-site disputes are covered in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).
+Report a marketplace problem to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+
+Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.
+
+Job-site disputes are covered in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).

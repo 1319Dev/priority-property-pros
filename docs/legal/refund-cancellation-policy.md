@@ -44,7 +44,7 @@ A charge that does not deliver the service it was meant to buy — account activ
 
 This app has no refund button for these fees and does not send a refund to Stripe. A duplicate charge, an erroneous charge, a refund the law requires, or an approved exception is reviewed by the owner. If the owner approves it, the refund is issued in the Stripe Dashboard. That step is outside this app. This policy does not promise that every request will be approved.
 
-**How to ask.** Email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Include the account email, which fee ($9.99 activation or $4.99 Connection Fee), the amount, the date if you have it, and why you believe the charge is a duplicate, an erroneous charge, required by law, or another exception. The owner decides. PPP keeps a record of the request, the decision, and the Stripe refund reference when a refund is issued. Sending the email does not by itself create a refund.
+**How to ask.** Email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Include the account email, which fee ($9.99 activation or $4.99 Connection Fee), the amount, the date if you have it, and why you believe the charge is a duplicate, an erroneous charge, required by law, or another exception. You can also mail the same information to Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US. PPP may reply by email to the account email to confirm the request. The owner decides. PPP keeps a record of the request, the decision, and the Stripe refund reference when a refund is issued. Sending the email or letter does not by itself create a refund.
 
 Nothing in this policy takes away a right that a Texas or federal law does not let a business waive.
 
@@ -71,3 +71,5 @@ A booking status of Disputed, when it is set, is a label on the marketplace reco
 ## 6. Contact
 
 Questions about a platform fee: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Include the account email and, if you have it, the project. Emailing does not by itself create a refund.
+
+Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.

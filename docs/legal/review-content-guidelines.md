@@ -10,7 +10,7 @@ PPP does not require acceptance of this version until these pages are published 
 
 - A review of a hired job is about that job, not a review of PPP. The author can edit it for 30 days.
 - A review of the PPP marketplace is separate. It stays off the public page until an admin approves it. An admin can approve or reject it with a written reason that is not shown publicly.
-- Portfolio photos stay in review until an admin approves them. After approval, public pages show that approved photo through a short-lived link. Location information a camera stored in the file, such as GPS coordinates, is not removed today.
+- Portfolio photos stay in review until an admin approves them. After approval, public pages show that approved photo through a short-lived link. Location information a camera stored in a photo file, such as GPS coordinates, is not removed today, from portfolio photos or from project photos.
 - Do not put phone numbers, email addresses, or street addresses in reviews or public text.
 - A review is not a statement that PPP licensed, insured, bonded, or background-checked anyone.
 - Suspected fake reviews and other content reports follow the Community Guidelines. Moderating content is not a decision about the construction work.
@@ -27,7 +27,7 @@ Stars and text must describe your own experience. Do not review a job you were n
 
 ## 2. Photos and other content
 
-Project photos should show the work area and should not include house numbers, faces, license plates, or contact details. PPP does not run image text recognition, so a photo can still contain contact details that a text check would have blocked. A contractor viewing a project can report a photo. The report stores the reporter, the target, and the reason. An admin can read reports. The current screens do not include a separate admin inbox just for those reports.
+Project photos should show the work area and should not include house numbers, faces, license plates, or contact details. PPP stores the photo file as uploaded and does not remove location information a camera stored in it, such as GPS coordinates. Contractors offered or connected on the project, including before a paid Connect, can open the photo, so that location can point to the property. Turn off location tagging, or remove it from the photo, before uploading. PPP does not run image text recognition, so a photo can still contain contact details that a text check would have blocked. A contractor viewing a project can report a photo. The report stores the reporter, the target, and the reason. An admin can read reports. The current screens do not include a separate admin inbox just for those reports.
 
 A contractor uploads a portfolio photo. It starts in review. It is not public until an admin approves it. Public pages then show that approved photo through a short-lived link, with the approved caption. Unapproved photos are not shown. There is no stand-in illustration in place of the photo. The file stays in private storage, and the original file name is not published as a public address. An admin can hide a photo instead. PPP does not currently remove location information a camera stored in the file, such as GPS coordinates. Someone who can view the approved photo can receive that information with the file.
 
@@ -46,3 +46,5 @@ PPP may refuse, edit display of, or remove content that breaks these guidelines,
 ## 5. Contact
 
 Questions about a review or a photo: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+
+Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.

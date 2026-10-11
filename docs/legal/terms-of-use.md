@@ -21,7 +21,7 @@ These Terms of Service, the [Privacy Policy](/privacy), the [Refund & Cancellati
 
 Priority Property Pros LLC (“PPP,” “we,” “us”) operates the Priority Property Pros marketplace at prioritypropertypros.com. PPP is a Texas limited liability company. The product is a home-services marketplace focused on the Conroe and Montgomery County area, with room to grow across Texas and, later, nationwide. Matching uses the project ZIP and the trades and service area a contractor enters. It is not a hard fence around one county.
 
-The contact published on the site is [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). These terms do not publish a street address.
+Contact PPP by email at [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com), or by mail at Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US. Email is the fastest way to reach PPP.
 
 ## Independent Marketplace and Contractor Responsibility
 
@@ -109,7 +109,7 @@ Job reviews, marketplace reviews, portfolio photos, and project photos follow th
 
 A job review can be edited for 30 days after it is posted. The other person on that job can report the review. An admin can hide a job review or a contractor’s reply. Hiding keeps the review. It does not delete it. A low star rating by itself is not a reason to hide it. A review of the PPP marketplace stays off the public page until an admin approves it.
 
-A contractor uploads a portfolio photo. It stays in review until an admin approves it. Public pages show only that approved photo, through a short-lived link. An admin can hide a photo instead. PPP does not currently remove location information a camera stored in the file, such as GPS coordinates.
+A contractor uploads a portfolio photo. It stays in review until an admin approves it. Public pages show only that approved photo, through a short-lived link. An admin can hide a photo instead. PPP does not currently remove location information a camera stored in a photo file, such as GPS coordinates, from portfolio photos or project photos. The [Privacy Policy](/privacy) explains who can see each kind of photo.
 
 On an estimate or a booking, a customer can choose “Don't match me with this pro again.” That blocks the pro for that customer only. Matching skips that pro, the pro is left out of Hire Again, and the pro’s open, unaccepted offers on that customer’s other current projects close immediately. Paid connections and bookings are not changed. A job already underway stays as it is, and a paid connection stays paid. The customer can undo that later from Blocked pros, and an admin can remove the block. A customer review of 1, 2, or 3 stars creates the same kind of block. A review of 4 or 5 stars does not. Raising a 1-, 2-, or 3-star review to 4 or 5 stars does not remove the block. A contractor’s review of a customer never creates a block.
 
@@ -129,7 +129,7 @@ Disputes that are directly with PPP about these terms or the marketplace service
 
 ## 11. Closing your account
 
-You can delete your own account from the account screen. You must type DELETE to confirm. What is removed, and what can remain, is described in the [Privacy Policy](/privacy). Deleting your account does not by itself refund a platform fee. You cannot delete the last active admin account. The screen tells you deletion cannot be undone. Declining updated terms does not remove this deletion right.
+You can delete your own account from the account screen. You must type DELETE to confirm. If that control is temporarily unavailable, email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) from the email on the account with the subject “Account deletion request,” and PPP will handle it as the [Privacy Policy](/privacy) describes. What is removed, and what can remain, is described in the [Privacy Policy](/privacy). Deleting your account does not by itself refund a platform fee. You cannot delete the last active admin account. The screen tells you deletion cannot be undone. Declining updated terms does not remove this deletion right.
 
 ## 12. Admins
 
@@ -157,6 +157,8 @@ A new version becomes the one PPP can require when these pages are published and
 
 Questions about these terms: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
 
-Privacy requests (access, correction, a copy, deletion, or an opt-out) and refund-exception requests use that same address. The [Privacy Policy](/privacy) describes privacy requests. The [Refund & Cancellation Policy](/refunds) describes refund exceptions, including who reviews them and that an approved refund is sent from Stripe’s dashboard. Emailing does not by itself change an account or create a refund.
+Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.
+
+Privacy requests (access, correction, a copy, deletion, or an opt-out) and refund-exception requests use that same email address. They can also be mailed to the mailing address above. The [Privacy Policy](/privacy) describes privacy requests. The [Refund & Cancellation Policy](/refunds) describes refund exceptions, including who reviews them and that an approved refund is sent from Stripe’s dashboard. Emailing does not by itself change an account or create a refund.
 
 Email PPP for marketplace questions. Job responsibility is in Independent Marketplace and Contractor Responsibility.
