@@ -1,4 +1,5 @@
 import { json, optionsResponse } from "../_shared/cors.ts";
+import { RATE_LIMITS, clientIp, enforceRateLimits } from "../_shared/rateLimit.ts";
 import { allowedOrigin, restRpc, userIdFromRequest } from "../_shared/supabase.ts";
 import {
   assertConnectionPriceOrThrow,
@@ -21,6 +22,11 @@ Deno.serve(async (req) => {
 
   try {
     const userId = await userIdFromRequest(req);
+    const limited = await enforceRateLimits(restRpc, [
+      { rule: RATE_LIMITS.connectionCheckoutUser, subject: `user:${userId}` },
+      { rule: RATE_LIMITS.connectionCheckoutIp, subject: clientIp(req) ? `ip:${clientIp(req)}` : null },
+    ], { contact_unlocked: false, paid: false });
+    if (limited) return limited;
     const body = (await req.json().catch(() => ({}))) as {
       project_id?: string;
       opportunity_id?: string;

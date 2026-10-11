@@ -1,4 +1,5 @@
 import { json, optionsResponse } from "../_shared/cors.ts";
+import { RATE_LIMITS, enforceRateLimits } from "../_shared/rateLimit.ts";
 import { restRpc, userIdFromRequest } from "../_shared/supabase.ts";
 import {
   assertPaidConnectionSession,
@@ -16,6 +17,10 @@ Deno.serve(async (req) => {
 
   try {
     const userId = await userIdFromRequest(req);
+    const limited = await enforceRateLimits(restRpc, [
+      { rule: RATE_LIMITS.reconcileUser, subject: `user:${userId}` },
+    ], { paid: false });
+    if (limited) return limited;
     const flags = await restRpc("connection_fee_checkout_flags", {});
     if (flags.error) return json({ error: flags.error, paid: false, contact_unlocked: false }, 500);
     const snapshot = (flags.data ?? {}) as { stripe_test_mode?: boolean };

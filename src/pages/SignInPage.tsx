@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from "react";
+import { Honeypot } from "../components/security/Honeypot";
+import { evaluateBotGuard } from "../lib/security/botGuard";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { BrandLoader } from "../components/brand/BrandLoader";
 import { Button } from "../components/ui/Button";
@@ -15,6 +17,7 @@ export function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
 
   if (loading) return <BrandLoader layout="page" label="Loading…" />;
@@ -31,6 +34,11 @@ export function SignInPage() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    const guard = evaluateBotGuard({ form: "signIn", honeypotValue: honeypot, startedAtMs: 0, nowMs: Date.now() });
+    if (!guard.ok) {
+      setError("Email or password is incorrect.");
+      return;
+    }
     setBusy(true);
     const result = await signIn(email, password);
     if (result.error) {
@@ -56,7 +64,8 @@ export function SignInPage() {
         </>
       }
     >
-      <form className="space-y-4" onSubmit={onSubmit}>
+      <form className="relative space-y-4" onSubmit={onSubmit}>
+        <Honeypot value={honeypot} onChange={setHoneypot} />
         <TextInput
           label="Email"
           name="email"

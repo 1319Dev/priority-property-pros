@@ -1,4 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Honeypot } from "../components/security/Honeypot";
+import { evaluateBotGuard } from "../lib/security/botGuard";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { BrandLoader } from "../components/brand/BrandLoader";
 import { Button } from "../components/ui/Button";
@@ -46,6 +48,8 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
   const { signUp, configured, loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState("");
+  const [startedAt] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [checkoutLive, setCheckoutLive] = useState(false);
@@ -94,6 +98,15 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    const guard = evaluateBotGuard({ form: "signUp", honeypotValue: honeypot, startedAtMs: startedAt, nowMs: Date.now() });
+    if (!guard.ok) {
+      if (guard.silent) {
+        navigate(`/auth/verify?state=check-email&email=${encodeURIComponent(values.email)}`, { replace: true });
+      } else {
+        setError(guard.message);
+      }
+      return;
+    }
     if (values.password.length < 8) {
       setError("Use at least 8 characters for your password.");
       return;
@@ -144,7 +157,8 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
         </>
       }
     >
-      <form className="space-y-4" onSubmit={onSubmit}>
+      <form className="relative space-y-4" onSubmit={onSubmit}>
+        <Honeypot value={honeypot} onChange={setHoneypot} />
         <div className="grid gap-4 sm:grid-cols-2">
           <TextInput
             label="First name"
