@@ -2,7 +2,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { AdminSupportConversationPage, AdminSupportKnowledgePage, AdminSupportQueuePage } from "./SupportPages";
+import { saveSupportSettings } from "../../../lib/admin/supportApi";
+import { AdminSupportAnalyticsPage, AdminSupportConversationPage, AdminSupportKnowledgePage, AdminSupportQueuePage } from "./SupportPages";
 
 vi.mock("../../../lib/admin/supportApi", () => ({
   listSupportQueue: vi.fn(async () => ({
@@ -62,6 +63,25 @@ vi.mock("../../../lib/admin/supportApi", () => ({
   saveSupportArticle: vi.fn(async () => []),
   saveCannedResponse: vi.fn(async () => []),
   deleteCannedResponse: vi.fn(async () => undefined),
+  supportAnalytics: vi.fn(async () => ({ days: 30, timezone: "America/Chicago", opened: 0, withFirstResponse: 0, medianFirstResponseSeconds: null, byStatus: {}, byDay: [], availability: "offline" })),
+  setSupportRetention: vi.fn(async (days: number) => days),
+  purgeExpiredSupport: vi.fn(async () => 0),
+  formatUsdMicros: (micros: number) => `$${(micros / 1_000_000).toFixed(4)}`,
+  getSupportSettings: vi.fn(async () => ({
+    priorityHelpEnabled: false,
+    aiAnswersEnabled: false,
+    dailyAnswerCap: 200,
+    dailyBudgetUsdMicros: 1_000_000,
+    calls24h: 3,
+    spent24hUsdMicros: 2550,
+    spent30dUsdMicros: 9000,
+  })),
+  saveSupportSettings: vi.fn(async (input: { priorityHelpEnabled: boolean; aiAnswersEnabled: boolean; dailyAnswerCap: number; dailyBudgetUsdMicros: number }) => ({
+    ...input,
+    calls24h: 3,
+    spent24hUsdMicros: 2550,
+    spent30dUsdMicros: 9000,
+  })),
 }));
 
 describe("admin support pages", () => {
@@ -106,5 +126,29 @@ describe("admin support pages", () => {
     await user.clear(body);
     await user.type(body, "Priority Property Pros does not guarantee the work.");
     expect(screen.queryByText(/HTML is not allowed/i)).not.toBeInTheDocument();
+  });
+
+  it("shows Priority Help off by default and saves the flags, cap, and dollar budget", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <AdminSupportAnalyticsPage />
+      </MemoryRouter>,
+    );
+    const on = await screen.findByRole("checkbox", { name: /Priority Help is on/ });
+    expect(on).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /AI answers are on/ })).not.toBeChecked();
+    expect(await screen.findByText(/3 model calls, \$0\.0026/)).toBeInTheDocument();
+    await user.click(on);
+    const budget = screen.getByRole("textbox", { name: /Daily AI budget/ });
+    await user.clear(budget);
+    await user.type(budget, "2.50");
+    await user.click(screen.getByRole("button", { name: "Save Priority Help settings" }));
+    expect(saveSupportSettings).toHaveBeenCalledWith({ priorityHelpEnabled: true, aiAnswersEnabled: false, dailyAnswerCap: 200, dailyBudgetUsdMicros: 2_500_000 });
+    expect(await screen.findByText("Saved. Priority Help is on.")).toBeInTheDocument();
+    await user.clear(budget);
+    await user.type(budget, "500");
+    await user.click(screen.getByRole("button", { name: "Save Priority Help settings" }));
+    expect(await screen.findByText(/between \$0 and \$100/)).toBeInTheDocument();
   });
 });

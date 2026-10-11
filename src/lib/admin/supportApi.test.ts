@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getSupabaseClient } from "../supabase/client";
 import {
+  formatUsdMicros,
+  getSupportSettings,
   listSupportQueue,
   parseSupportConversation,
   replySupport,
@@ -75,5 +77,16 @@ describe("support admin API", () => {
   it("maps an admin authorization failure without the raw database text", async () => {
     state.rpc.mockResolvedValueOnce({ data: null, error: { code: "42501", message: "permission denied for function admin_support_list" } });
     await expect(listSupportQueue("open")).rejects.toThrow(/admin sign-in/);
+  });
+
+  it("reads Priority Help settings and treats missing flags as off", async () => {
+    state.rpc.mockResolvedValueOnce({ data: { daily_ai_answer_cap: 200, daily_ai_budget_usd_micros: 1000000 }, error: null });
+    const settings = await getSupportSettings();
+    expect(state.rpc).toHaveBeenCalledWith("admin_support_settings");
+    expect(settings.priorityHelpEnabled).toBe(false);
+    expect(settings.aiAnswersEnabled).toBe(false);
+    expect(settings.dailyBudgetUsdMicros).toBe(1000000);
+    expect(formatUsdMicros(1000000)).toBe("$1.00");
+    expect(formatUsdMicros(900)).toBe("$0.0009");
   });
 });

@@ -385,6 +385,60 @@ export async function setSupportRetention(days: number): Promise<number> {
   return typeof data === "number" ? data : days;
 }
 
+export type SupportSettings = {
+  priorityHelpEnabled: boolean;
+  aiAnswersEnabled: boolean;
+  dailyAnswerCap: number;
+  dailyBudgetUsdMicros: number;
+  calls24h: number;
+  spent24hUsdMicros: number;
+  spent30dUsdMicros: number;
+};
+
+function count(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : 0;
+}
+
+export function parseSupportSettings(data: unknown): SupportSettings {
+  const row = asRecord(data);
+  return {
+    priorityHelpEnabled: row.priority_help_enabled === true,
+    aiAnswersEnabled: row.ai_answers_enabled === true,
+    dailyAnswerCap: count(row.daily_ai_answer_cap),
+    dailyBudgetUsdMicros: count(row.daily_ai_budget_usd_micros),
+    calls24h: count(row.calls_24h),
+    spent24hUsdMicros: count(row.spent_24h_usd_micros),
+    spent30dUsdMicros: count(row.spent_30d_usd_micros),
+  };
+}
+
+/** Micro-dollars to "$0.0123". */
+export function formatUsdMicros(micros: number): string {
+  return `$${(micros / 1_000_000).toFixed(micros > 0 && micros < 10_000 ? 4 : 2)}`;
+}
+
+export async function getSupportSettings(): Promise<SupportSettings> {
+  const { data, error } = await client().rpc("admin_support_settings");
+  if (error) fail(error, "Could not load Priority Help settings.");
+  return parseSupportSettings(data);
+}
+
+export async function saveSupportSettings(input: {
+  priorityHelpEnabled: boolean;
+  aiAnswersEnabled: boolean;
+  dailyAnswerCap: number;
+  dailyBudgetUsdMicros: number;
+}): Promise<SupportSettings> {
+  const { data, error } = await client().rpc("admin_support_set_settings", {
+    p_priority_help_enabled: input.priorityHelpEnabled,
+    p_ai_answers_enabled: input.aiAnswersEnabled,
+    p_daily_ai_answer_cap: input.dailyAnswerCap,
+    p_daily_ai_budget_usd_micros: input.dailyBudgetUsdMicros,
+  });
+  if (error) fail(error, "Could not save Priority Help settings.");
+  return parseSupportSettings(data);
+}
+
 export async function purgeExpiredSupport(): Promise<number> {
   const { data, error } = await client().rpc("admin_support_purge_expired");
   if (error) fail(error, "Could not purge expired support conversations.");

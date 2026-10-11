@@ -1213,6 +1213,16 @@ export type Database = {
       admin_support_canned_delete: { Args: { p_id: string }; Returns: Json };
       admin_support_set_retention: { Args: { p_days: number }; Returns: number };
       admin_support_purge_expired: { Args: Record<string, never>; Returns: number };
+      admin_support_settings: { Args: Record<string, never>; Returns: Json };
+      admin_support_set_settings: {
+        Args: {
+          p_priority_help_enabled: boolean;
+          p_ai_answers_enabled: boolean;
+          p_daily_ai_answer_cap: number;
+          p_daily_ai_budget_usd_micros: number;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       account_type: AccountType;

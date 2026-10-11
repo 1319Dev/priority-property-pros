@@ -4,7 +4,9 @@ import { Button } from "../../../components/ui/Button";
 import { FormError } from "../../../lib/auth/AuthCard";
 import {
   deleteCannedResponse,
+  formatUsdMicros,
   getSupportConversation,
+  getSupportSettings,
   heartbeatSupport,
   listCannedResponses,
   listSupportArticles,
@@ -13,6 +15,7 @@ import {
   purgeExpiredSupport,
   replySupport,
   saveCannedResponse,
+  saveSupportSettings,
   saveSupportArticle,
   searchSupport,
   setSupportPresence,
@@ -28,6 +31,7 @@ import {
   type SupportAvailability,
   type SupportConversation,
   type SupportQueue,
+  type SupportSettings,
   type SupportQueuePage,
   type SupportSearchHit,
 } from "../../../lib/admin/supportApi";
@@ -585,6 +589,99 @@ function formatDuration(seconds: number | null): string {
   return `${Math.round(minutes / 60)} hr`;
 }
 
+function PriorityHelpSwitch() {
+  const [settings, setSettings] = useState<SupportSettings | null>(null);
+  const [enabled, setEnabled] = useState(false);
+  const [ai, setAi] = useState(false);
+  const [cap, setCap] = useState("200");
+  const [budget, setBudget] = useState("1.00");
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
+
+  function apply(next: SupportSettings) {
+    setSettings(next);
+    setEnabled(next.priorityHelpEnabled);
+    setAi(next.aiAnswersEnabled);
+    setCap(String(next.dailyAnswerCap));
+    setBudget((next.dailyBudgetUsdMicros / 1_000_000).toFixed(2));
+  }
+
+  useEffect(() => {
+    let stop = false;
+    void getSupportSettings()
+      .then((next) => {
+        if (!stop) apply(next);
+      })
+      .catch((err: unknown) => {
+        if (!stop) setError(err instanceof Error ? err.message : "Could not load Priority Help settings.");
+      });
+    return () => {
+      stop = true;
+    };
+  }, []);
+
+  function save(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    const capValue = Number(cap);
+    const dollars = Number(budget);
+    if (!Number.isInteger(capValue) || capValue < 0 || capValue > 100000) {
+      setError("The daily answer cap must be a whole number from 0 to 100000.");
+      return;
+    }
+    if (!Number.isFinite(dollars) || dollars < 0 || dollars > 100) {
+      setError("The daily AI budget must be between $0 and $100.");
+      return;
+    }
+    void saveSupportSettings({
+      priorityHelpEnabled: enabled,
+      aiAnswersEnabled: ai,
+      dailyAnswerCap: capValue,
+      dailyBudgetUsdMicros: Math.round(dollars * 1_000_000),
+    })
+      .then((next) => {
+        apply(next);
+        setNotice(next.priorityHelpEnabled ? "Saved. Priority Help is on." : "Saved. Priority Help is off and the widget is hidden.");
+      })
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Could not save Priority Help settings."));
+  }
+
+  return (
+    <form className="space-y-3 rounded-3xl border border-forest-800/15 p-4" onSubmit={save} aria-labelledby="priority-help-switch-title">
+      <h2 id="priority-help-switch-title" className="font-display text-xl text-forest-800">
+        Priority Help switch and AI budget
+      </h2>
+      <FormError message={error} />
+      {notice ? <p role="status">{notice}</p> : null}
+      <label className="flex min-h-12 items-center gap-3 text-sm font-semibold text-forest-800">
+        <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} className="h-5 w-5" />
+        Priority Help is on (shows the widget)
+      </label>
+      <label className="flex min-h-12 items-center gap-3 text-sm font-semibold text-forest-800">
+        <input type="checkbox" checked={ai} onChange={(event) => setAi(event.target.checked)} className="h-5 w-5" />
+        AI answers are on (needs the PRIORITY_HELP_AI_API_KEY function secret)
+      </label>
+      <label htmlFor="priority-help-cap" className="block text-sm font-semibold text-forest-800">
+        Daily AI answer cap (model calls in 24 hours)
+        <input id="priority-help-cap" value={cap} onChange={(event) => setCap(event.target.value)} inputMode="numeric" className="mt-1 min-h-12 w-32 rounded-2xl border border-forest-800/15 px-3" />
+      </label>
+      <label htmlFor="priority-help-budget" className="block text-sm font-semibold text-forest-800">
+        Daily AI budget in US dollars (24 hours)
+        <input id="priority-help-budget" value={budget} onChange={(event) => setBudget(event.target.value)} inputMode="decimal" className="mt-1 min-h-12 w-32 rounded-2xl border border-forest-800/15 px-3" />
+      </label>
+      {settings ? (
+        <p className="text-sm text-ink-700">
+          Last 24 hours: {settings.calls24h} model calls, {formatUsdMicros(settings.spent24hUsdMicros)}. Last 30 days: {formatUsdMicros(settings.spent30dUsdMicros)}.
+        </p>
+      ) : null}
+      <Button type="submit" size="sm">
+        Save Priority Help settings
+      </Button>
+      <p className="text-xs text-ink-500">Turning Priority Help off hides the widget and stops every model call right away. Open tickets stay in the queue.</p>
+    </form>
+  );
+}
+
 export function AdminSupportAnalyticsPage() {
   const [report, setReport] = useState<SupportAnalytics | null>(null);
   const [retention, setRetention] = useState("365");
@@ -610,6 +707,7 @@ export function AdminSupportAnalyticsPage() {
   return (
     <div className="space-y-6">
       <PageIntro title="Analytics" body="Volume and first-response time for ticketed conversations. Day buckets use America/Chicago." />
+      <PriorityHelpSwitch />
       <FormError message={error} />
       {notice ? <p role="status">{notice}</p> : null}
       <dl className="grid gap-3 sm:grid-cols-3">
