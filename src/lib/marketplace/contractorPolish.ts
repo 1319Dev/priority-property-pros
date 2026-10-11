@@ -158,7 +158,7 @@ export function changeOrderAmountLabel(
 ): string {
   const value = coerceChangeOrderCents(cents);
   if (value == null) return "Amount not on file";
-  if (value === 0) return "No price change";
+  if (value === 0) return "Scope change, price stays the same";
   return formatUsd(value);
 }
 

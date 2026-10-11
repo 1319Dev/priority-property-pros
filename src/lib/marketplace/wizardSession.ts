@@ -102,3 +102,58 @@ export function writeWizardSession(value: WizardSession, storage: Pick<Storage, 
 export function clearWizardSession(storage: Pick<Storage, "removeItem"> = sessionStorage): void {
   storage.removeItem(STORAGE_KEY);
 }
+
+/**
+ * After a reload the wizard keeps what was typed but starts again at step 1,
+ * so the homeowner rereads the form instead of landing on Review.
+ */
+export function resumeAtFirstStep(value: WizardSession | null): WizardSession | null {
+  return value ? { ...value, step: 1 } : null;
+}
+
+export type AddressOnFile = {
+  projectId: string;
+  street: string;
+  street2: string;
+  city: string;
+  state: string;
+  zipCode: string;
+};
+
+type ProjectPlace = {
+  id: string;
+  status?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip_code?: string | null;
+  posted_at?: string | null;
+  updated_at?: string | null;
+  created_at?: string | null;
+};
+
+/** The newest posted project with a ZIP code. Its place is the homeowner's address on file. */
+export function latestProjectPlace<T extends ProjectPlace>(projects: readonly T[]): T | null {
+  const stamp = (row: ProjectPlace) => Date.parse(row.posted_at ?? row.updated_at ?? row.created_at ?? "") || 0;
+  return (
+    [...projects]
+      .filter((row) => row.status !== "DRAFT" && typeof row.zip_code === "string" && row.zip_code.trim() !== "")
+      .sort((a, b) => stamp(b) - stamp(a))[0] ?? null
+  );
+}
+
+export function wizardLocationIsEmpty(value: WizardSession): boolean {
+  return !value.street.trim() && !value.street2.trim() && !value.city.trim() && !value.state.trim() && !value.zipCode.trim();
+}
+
+/** Fills the location step from the address on file. Never overwrites anything the homeowner typed. */
+export function withAddressOnFile(value: WizardSession, address: AddressOnFile | null): WizardSession {
+  if (!address || !wizardLocationIsEmpty(value)) return value;
+  return {
+    ...value,
+    street: address.street,
+    street2: address.street2,
+    city: address.city,
+    state: address.state,
+    zipCode: address.zipCode,
+  };
+}
