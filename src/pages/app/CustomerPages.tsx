@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ChangePasswordCard } from "../../components/account/ChangePasswordCard";
 import { DeleteAccountDialog } from "../../components/account/DeleteAccountDialog";
 import { BlockedProsList } from "../../components/marketplace/BlockedProsList";
 import { TextInput } from "../../components/ui/Input";
@@ -126,6 +127,7 @@ export function AccountPage() {
           Blocked pros
         </Link>
       ) : null}
+      <ChangePasswordCard email={user?.email ?? profile?.email} />
       <FormError message={error} />
       <button
         type="button"

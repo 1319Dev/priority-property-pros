@@ -105,7 +105,7 @@ describe("status words and notices", () => {
   it("says Declined and treats a $0 change as no price change", () => {
     expect(changeOrderStatusLabel("REJECTED")).toBe("Declined");
     expect(changeOrderStatusLabel("APPROVED")).toBe("Approved");
-    expect(changeOrderAmountLabel(0, () => "$0.00")).toBe("No price change");
+    expect(changeOrderAmountLabel(0, () => "$0.00")).toBe("Scope change, price stays the same");
     expect(changeOrderAmountLabel(18000, (cents) => `$${(cents / 100).toFixed(2)}`)).toBe("$180.00");
   });
 

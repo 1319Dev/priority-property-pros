@@ -133,7 +133,7 @@ export function changeOrderStatusLabel(status: string): string {
 }
 
 export function changeOrderAmountLabel(cents: number, formatUsd: (value: number) => string): string {
-  if (cents === 0) return "No price change";
+  if (cents === 0) return "Scope change, price stays the same";
   return formatUsd(cents);
 }
 
