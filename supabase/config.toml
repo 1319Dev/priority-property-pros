@@ -43,3 +43,15 @@ verify_jwt = false
 
 [functions.notification-unsubscribe]
 verify_jwt = false
+
+# Public contact form. verify_jwt is false so signed-out visitors can submit
+# with the anon key. The function checks Origin, validates the body, rate-limits,
+# and sends through Resend. Secrets (Dashboard → Edge Functions → Secrets):
+#   RESEND_API_KEY          existing notification secret; required to send
+#   CONTACT_TO_EMAIL        optional; defaults to support@prioritypropertypros.com
+#   CONTACT_IP_HASH_SALT    optional; hashes the caller IP. If unset, the service
+#                           role key is the salt so the raw IP is still not stored
+#   NOTIFICATION_FROM       existing optional from-address on the verified domain
+# Do not put those values in this file. Do not deploy until the owner approves it.
+[functions.contact-form]
+verify_jwt = false

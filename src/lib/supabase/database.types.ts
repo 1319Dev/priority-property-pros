@@ -901,6 +901,34 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      contact_messages: {
+        Row: {
+          id: string;
+          created_at: string;
+          name: string;
+          email: string;
+          phone: string | null;
+          topic: string;
+          message: string;
+          email_status: string;
+          ip_hash: string | null;
+          handled_at: string | null;
+          handled_by: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      contact_rate_buckets: {
+        Row: {
+          ip_hash: string;
+          window_start: string;
+          hits: number;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       platform_reviews: {
         Row: {
           id: string;
@@ -968,6 +996,8 @@ export type Database = {
         Returns: Json;
       };
       admin_mfa_required: { Args: Record<string, never>; Returns: boolean };
+      admin_unhandled_contact_message_count: { Args: Record<string, never>; Returns: number };
+      admin_mark_contact_message_handled: { Args: { p_id: string }; Returns: Json };
       admin_dashboard_summary: { Args: { p_include_test?: boolean }; Returns: Json };
       admin_needs_attention: { Args: { p_include_test?: boolean }; Returns: Json };
       admin_recent_activity: {

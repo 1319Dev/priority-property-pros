@@ -121,6 +121,12 @@ const swaps: Array<{ id: string; match: RegExp; real: string; names: string[] }>
     ],
   },
   {
+    id: "\0ppp-contact-messages-api",
+    match: /\/admin\/contactMessagesApi(?:\.ts)?$/,
+    real: path.resolve(rootDir, "src/lib/admin/contactMessagesApi.ts"),
+    names: ["listContactMessages", "getContactMessage", "markContactMessageHandled", "fetchUnhandledContactCount"],
+  },
+  {
     id: "\0ppp-approvals-api",
     match: /\/admin\/approvalsApi(?:\.ts)?$/,
     real: path.resolve(rootDir, "src/lib/admin/approvalsApi.ts"),

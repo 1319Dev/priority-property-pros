@@ -641,6 +641,36 @@ export async function fetchAdminRecentActivity() {
   ];
 }
 
+const contactMessages = [
+  {
+    id: "msg-1",
+    createdAt: "2026-10-10T15:04:00.000Z",
+    name: "Ada Lovelace",
+    email: "ada@example.com",
+    phone: "936-555-0100",
+    topic: "marketplace",
+    message: "How do connection fees work for a fence project that wraps the side yard and needs new posts?",
+    emailStatus: "sent",
+    handledAt: null,
+  },
+];
+
+export async function listContactMessages() {
+  return contactMessages;
+}
+
+export async function getContactMessage(id) {
+  return contactMessages.find((row) => row.id === id) ?? null;
+}
+
+export async function markContactMessageHandled() {
+  return "2026-10-10T16:00:00.000Z";
+}
+
+export async function fetchUnhandledContactCount() {
+  return 1;
+}
+
 export async function fetchAdminDashboardTrends() {
   return {
     granularity: "day",
