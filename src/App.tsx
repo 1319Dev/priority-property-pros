@@ -176,13 +176,7 @@ export default function App() {
           <Route
             path="/app/admin"
             element={
-              <Suspense
-                fallback={
-                  <div className="paper-grain flex min-h-dvh items-center justify-center">
-                    <BrandLoader layout="page" label="Loading admin…" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<BrandLoader layout="inline" label="Loading admin…" />}>
                 <AdminShell />
               </Suspense>
             }

@@ -25,8 +25,10 @@ export const adminExtensionRoutes: ReactElement[] = Object.keys(routeModules)
 
 export const adminChildRoutes: ReactElement[] = [
   <Route key="index" index element={<AdminHomePage />} />,
-  <Route key="approvals" path="approvals" element={<AdminApprovalsPage />} />,
-  <Route key="approval-detail" path="approvals/:contractorProfileId" element={<AdminApprovalDetailPage />} />,
+  <Route key="approvals" path="approvals" element={<AdminApprovalsPage />}>
+    <Route index element={null} />
+    <Route path=":contractorProfileId" element={<AdminApprovalDetailPage />} />
+  </Route>,
   <Route key="reviews" path="reviews" element={<AdminReviewsPage />} />,
   <Route key="bookings" path="bookings" element={<AdminBookingsPage />} />,
   <Route key="security" path="security" element={<AdminTwoFactorPage />} />,

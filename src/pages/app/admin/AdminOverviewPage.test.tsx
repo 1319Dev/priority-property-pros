@@ -157,6 +157,32 @@ describe("Admin overview", () => {
     expect(screen.queryByText("$0.00")).not.toBeInTheDocument();
   });
 
+  it("collapses consecutive identical activity and keeps numbers while a refresh is in flight", async () => {
+    let release: (value: DashboardSummary) => void = () => undefined;
+    fetchAdminRecentActivity.mockResolvedValue([
+      { ...activity[0], label: "Account flag updated", subjectLabel: "Tina", jobReference: null, cursor: "a" },
+      { ...activity[0], label: "Account flag updated", subjectLabel: "Tina", jobReference: null, cursor: "b" },
+      { ...activity[0], cursor: "c" },
+    ]);
+    fetchAdminDashboardSummary.mockResolvedValueOnce(summary).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    const user = userEvent.setup();
+    renderOverview();
+    expect(await screen.findByText("Account flag updated · 2")).toBeInTheDocument();
+    expect(screen.getAllByText("Account flag updated", { exact: false })).toHaveLength(1);
+    expect(screen.getByText("People with a customer account.")).toBeInTheDocument();
+    expect(screen.getByText("There is no ticket inbox yet. Write to support@prioritypropertypros.com.")).toBeInTheDocument();
+    expect(screen.queryByText(/gmail/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Refresh" }));
+    expect(screen.getAllByText("$14.98").length).toBeGreaterThan(0);
+    release(summary);
+    await waitFor(() => expect(fetchAdminDashboardSummary).toHaveBeenCalledTimes(2));
+  });
+
   it("shows an empty activity feed without inventing rows", async () => {
     fetchAdminRecentActivity.mockResolvedValue([]);
     fetchAdminNeedsAttention.mockResolvedValue({ ...attention, items: [] });
