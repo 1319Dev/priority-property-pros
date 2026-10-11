@@ -54,23 +54,8 @@ import { ProProfilePage } from "./pages/app/pro/ProProfilePages";
 import { ProEstimatesPage } from "./pages/app/pro/ProEstimatesPages";
 import { ProBookingDetailPage, ProBookingRedirect, ProBookingsPage, ProHiredJobByProjectPage } from "./pages/app/pro/ProBookingPages";
 import { VerifierHomePage, VerifierMessagesPage, VerifierVisitsPage } from "./pages/app/VerifierPages";
+import { adminChildRoutes } from "./pages/app/admin/adminRoutes";
 const AdminShell = lazy(() => import("./pages/app/AdminShell").then((mod) => ({ default: mod.AdminShell })));
-const AdminHomePage = lazy(() => import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminHomePage })));
-const AdminApprovalsPage = lazy(() =>
-  import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminApprovalsPage })),
-);
-const AdminApprovalDetailPage = lazy(() =>
-  import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminApprovalDetailPage })),
-);
-const AdminReviewsPage = lazy(() =>
-  import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminReviewsPage })),
-);
-const AdminBookingsPage = lazy(() =>
-  import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminBookingsPage })),
-);
-const AdminTwoFactorPage = lazy(() =>
-  import("./pages/app/admin/AdminTwoFactorPage").then((mod) => ({ default: mod.AdminTwoFactorPage })),
-);
 
 const DevNotificationPreview = import.meta.env.DEV
   ? lazy(() =>
@@ -202,14 +187,7 @@ export default function App() {
               </Suspense>
             }
           >
-            <Route index element={<AdminHomePage />} />
-            <Route path="approvals" element={<AdminApprovalsPage />} />
-            <Route path="approvals/:contractorProfileId" element={<AdminApprovalDetailPage />} />
-            <Route path="reviews" element={<AdminReviewsPage />} />
-            <Route path="bookings" element={<AdminBookingsPage />} />
-            <Route path="security" element={<AdminTwoFactorPage />} />
-            <Route path="account" element={<AccountPage />} />
-            <Route path="account/notifications" element={<NotificationSettingsPage />} />
+            {adminChildRoutes}
           </Route>
         </Route>
       </Route>

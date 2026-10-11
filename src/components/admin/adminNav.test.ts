@@ -2,12 +2,13 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { ADMIN_NAV, adminBreadcrumbs, adminSearchHits } from "./adminNav";
+import { ADMIN_NAV, ADMIN_NAV_GROUPS, adminBreadcrumbs, adminNavByGroup, adminSearchHits } from "./adminNav";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
 describe("admin nav config", () => {
   const app = readFileSync(path.join(repoRoot, "src/App.tsx"), "utf8");
+  const routes = readFileSync(path.join(repoRoot, "src/pages/app/admin/adminRoutes.tsx"), "utf8");
 
   it("only lists sections that have a route in the admin bundle", () => {
     expect(ADMIN_NAV.map((item) => item.to)).toEqual([
@@ -18,20 +19,25 @@ describe("admin nav config", () => {
       "/app/admin/security",
       "/app/admin/account",
     ]);
-    expect(app).toContain('path="approvals"');
-    expect(app).toContain('path="reviews"');
-    expect(app).toContain('path="bookings"');
-    expect(app).toContain('path="security"');
-    expect(app).toContain('path="account"');
-    expect(app).not.toMatch(/path="people"/);
-    expect(app).not.toMatch(/path="audit"/);
+    expect(routes).toContain('path="approvals"');
+    expect(routes).toContain('path="reviews"');
+    expect(routes).toContain('path="bookings"');
+    expect(routes).toContain('path="security"');
+    expect(routes).toContain('path="account"');
+    expect(routes).not.toMatch(/path="people"/);
+    expect(routes).not.toMatch(/path="audit"/);
+    expect(ADMIN_NAV_GROUPS).toEqual(["Overview", "People", "Marketplace", "Money", "Trust", "Account"]);
+    expect(adminNavByGroup("People")).toEqual([]);
+    expect(adminNavByGroup("Money")).toEqual([]);
   });
 
   it("keeps the admin route tree out of the public bundle entry", () => {
     expect(app).toMatch(/lazy\(\(\) => import\("\.\/pages\/app\/AdminShell"\)/);
-    expect(app).toMatch(/lazy\(\(\) => import\("\.\/pages\/app\/AdminPages"\)/);
+    expect(app).toContain("adminChildRoutes");
+    expect(routes).toMatch(/lazy\(\(\) => import\("\.\.\/AdminPages"\)/);
     expect(app).not.toMatch(/^import \{ AdminShell \}/m);
     expect(app).not.toMatch(/from "\.\/pages\/app\/AdminPages"/);
+    expect(routes).toContain('import.meta.glob("./sections/*/routes.tsx"');
   });
 
   it("builds breadcrumbs from the current admin path", () => {

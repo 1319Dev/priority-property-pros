@@ -18,9 +18,9 @@ import {
   type DashboardTrends,
 } from "../../../lib/admin/dashboardApi";
 import { friendlyAdminError } from "../../../lib/admin/friendlyAdminError";
+import { initialIncludeTest, AdminIncludeTestToggle } from "../../../components/admin/shell/AdminPageHeader";
 import { formatCents, formatCentralTimestamp, trendQuery, type TrendPreset } from "../../../lib/admin/money";
 
-const INCLUDE_TEST_KEY = "ppp-admin-include-test";
 const FOREST = "var(--color-forest-800)";
 const GOLD = "var(--color-gold-500)";
 
@@ -77,22 +77,6 @@ const GROUPS: Array<{ title: string; cards: CardSpec[] }> = [
   },
 ];
 
-function readIncludeTest(): boolean {
-  try {
-    return localStorage.getItem(INCLUDE_TEST_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function writeIncludeTest(value: boolean) {
-  try {
-    localStorage.setItem(INCLUDE_TEST_KEY, value ? "1" : "0");
-  } catch {
-    // The toggle still changes this view when storage is blocked.
-  }
-}
-
 function readError(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message.trim()) {
     return friendlyAdminError({ message: error.message }, fallback);
@@ -115,7 +99,7 @@ function bucketLabel(start: string, granularity: string): string {
 }
 
 export function AdminOverviewPage() {
-  const [includeTest, setIncludeTest] = useState(readIncludeTest);
+  const [includeTest, setIncludeTest] = useState(initialIncludeTest);
   const [preset, setPreset] = useState<TrendPreset>("30d");
   const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -232,19 +216,7 @@ export function AdminOverviewPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex min-h-11 items-center gap-2 text-sm font-semibold text-forest-800">
-            <input
-              type="checkbox"
-              className="size-4 accent-forest-800"
-              checked={includeTest}
-              onChange={(event) => {
-                const next = event.target.checked;
-                setIncludeTest(next);
-                writeIncludeTest(next);
-              }}
-            />
-            Include test accounts
-          </label>
+          <AdminIncludeTestToggle checked={includeTest} onChange={setIncludeTest} />
           <Button type="button" variant="outline" size="sm" onClick={() => setReloadKey((value) => value + 1)}>
             Refresh
           </Button>
