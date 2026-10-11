@@ -16,6 +16,7 @@ import {
   subscribeToProjectMessages,
 } from "../../../lib/marketplace/messagingApi";
 import { customerFirstNameFromLabel } from "../../../lib/marketplace/hiredJobs";
+import { formatProjectReference } from "../../../lib/marketplace/projectReference";
 import { isQueryableId } from "../../../lib/marketplace/recordId";
 import {
   CONTRACTOR_MESSAGES_EMPTY_BODY,
@@ -68,6 +69,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
   const [messages, setMessages] = useState<ProjectMessage[]>([]);
   const [pending, setPending] = useState<PendingMessage[]>([]);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [contactShared, setContactShared] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [locked, setLocked] = useState(false);
@@ -250,6 +252,9 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
   const place = selected ? threadPlaceLabel(selected) : null;
   const otherName = selected?.other_party_label || selected?.contractor_label || (role === "customer" ? "Connected pro" : "Customer");
   const contextHref = selected ? threadContextHref(role, selected) : null;
+  const projectTitle = selected?.project_title ?? "Project";
+  const projectReference = formatProjectReference(selected?.project_reference_number);
+  const threadHeading = projectReference ? `${projectReference} · ${projectTitle}` : projectTitle;
 
   return (
     <div className="space-y-4 lg:grid lg:min-h-[70vh] lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-stretch lg:gap-6 lg:space-y-0">
@@ -300,18 +305,14 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
                   </span>
                   <span className="mt-1 flex items-center justify-between gap-2">
                     <span className="line-clamp-1 text-sm text-ink-500">
-                      {inboxPreview(
-                        thread.last_preview,
-                        thread.last_sender_is_viewer,
-                        thread.other_party_label || thread.contractor_label,
-                      )}
+                      {inboxPreview(thread.last_preview, thread.last_sender_is_viewer)}
                     </span>
                     {unread ? (
                       <span
-                        className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-gold-500 px-1.5 text-xs font-bold text-forest-950"
+                        className="inline-flex min-h-6 shrink-0 items-center rounded-full bg-gold-500 px-2 text-xs font-bold text-forest-950"
                         aria-label={`${thread.unread_count} unread`}
                       >
-                        {thread.unread_count}
+                        Unread {thread.unread_count}
                       </span>
                     ) : null}
                   </span>
@@ -332,8 +333,11 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
               Back to messages
             </Link>
             <header>
-              <p className="font-display text-3xl font-semibold text-forest-800">{otherName}</p>
-              <h2 className="mt-1 text-lg font-semibold text-forest-800">{selected?.project_title ?? "Project"}</h2>
+              <h2 className="font-display text-3xl font-semibold text-forest-800">{threadHeading}</h2>
+              <p className="mt-1 text-lg font-semibold text-forest-800">{otherName}</p>
+              {selected && selected.unread_count > 0 ? (
+                <p className="mt-1 text-sm font-semibold text-forest-800">{selected.unread_count} unread</p>
+              ) : null}
               <JobReference value={selected?.project_reference_number} />
               {place ? <p className="text-sm text-ink-500">{place}</p> : null}
               {contextHref ? (
@@ -341,7 +345,6 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
                   {selected?.booking_id ? (role === "contractor" ? "Open job" : "View booking") : "View project"}
                 </Link>
               ) : null}
-              <p className="mt-2 text-sm text-ink-500">This thread does not show phone, email, or street.</p>
             </header>
             {opening ? <p className="text-sm text-ink-500">Opening conversation…</p> : null}
             {locked ? (
@@ -351,7 +354,13 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
               />
             ) : null}
             {!locked && threadId ? (
-              <ContactSharePanel role={role} projectId={projectId} contractorProfileId={contractorProfileId} />
+              <ContactSharePanel
+                role={role}
+                projectId={projectId}
+                contractorProfileId={contractorProfileId}
+                announceThreadPrivacy
+                onSharedChange={setContactShared}
+              />
             ) : null}
             {!locked && threadId && messages.length === 0 && pending.length === 0 ? (
               <EmptyState title="Start the conversation" body={THREAD_EMPTY_BODY} />
@@ -412,7 +421,7 @@ export function ProjectMessagesPage({ role }: { role: "customer" | "contractor" 
                   />
                 </label>
                 <FormError message={error} />
-                <p className="text-xs leading-relaxed text-ink-500">{messageComposerHint(role, false)}</p>
+                <p className="text-xs leading-relaxed text-ink-500">{messageComposerHint(role, contactShared)}</p>
                 <Button type="submit" className="min-h-14 w-full" disabled={sending}>
                   {sending ? "Sending…" : "Send"}
                 </Button>

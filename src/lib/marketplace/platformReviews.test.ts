@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  accountCanSubmitPlatformReview,
   canEditOthersPlatformReview,
   canInsertPlatformReview,
   canModeratePlatformReview,
@@ -26,9 +27,16 @@ describe("platform review policy mirror", () => {
     ).toBe(true);
   });
 
-  it("requires auth to insert and only admins can edit others", () => {
-    expect(canInsertPlatformReview({ viewerId: null })).toBe(false);
-    expect(canInsertPlatformReview({ viewerId: "user-1" })).toBe(true);
+  it("requires an activated account to insert and only admins can edit others", () => {
+    expect(accountCanSubmitPlatformReview("PAID")).toBe(true);
+    expect(accountCanSubmitPlatformReview("NOT_REQUIRED")).toBe(true);
+    expect(accountCanSubmitPlatformReview("UNPAID")).toBe(false);
+    expect(accountCanSubmitPlatformReview(null)).toBe(false);
+    expect(canInsertPlatformReview({ viewerId: null, signupFeeStatus: "PAID" })).toBe(false);
+    expect(canInsertPlatformReview({ viewerId: "user-1", signupFeeStatus: "UNPAID" })).toBe(false);
+    expect(canInsertPlatformReview({ viewerId: "user-1" })).toBe(false);
+    expect(canInsertPlatformReview({ viewerId: "user-1", signupFeeStatus: "PAID" })).toBe(true);
+    expect(canInsertPlatformReview({ viewerId: "user-1", signupFeeStatus: "NOT_REQUIRED" })).toBe(true);
     expect(canModeratePlatformReview({ viewerIsAdmin: false })).toBe(false);
     expect(canModeratePlatformReview({ viewerIsAdmin: true })).toBe(true);
     expect(canEditOthersPlatformReview({ viewerId: "a", rowUserId: "b", viewerIsAdmin: false })).toBe(false);
