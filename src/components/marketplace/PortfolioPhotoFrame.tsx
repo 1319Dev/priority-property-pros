@@ -1,15 +1,32 @@
 import { useState } from "react";
 
+const frameClass = "aspect-[4/3] h-auto w-full max-h-56 rounded-2xl sm:max-h-72";
+
 export function PortfolioPhotoFrame({
   src,
   alt,
-  className = "mt-3 h-40 w-full rounded-2xl",
+  loading = false,
+  className = frameClass,
 }: {
   src?: string | null;
   alt: string;
+  /** True while a signed URL is still being requested. */
+  loading?: boolean;
   className?: string;
 }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const pending = loading || (Boolean(src) && loadedSrc !== src && failedSrc !== src);
+
+  if (loading && !src) {
+    return (
+      <div
+        className={`${className} animate-pulse border border-forest-800/10 bg-cream-200`}
+        role="status"
+        aria-label="Loading portfolio photo"
+      />
+    );
+  }
 
   if (!src || failedSrc === src) {
     return (
@@ -27,11 +44,18 @@ export function PortfolioPhotoFrame({
   }
 
   return (
-    <img
-      src={src}
-      alt={alt}
-      className={`${className} object-cover`}
-      onError={() => setFailedSrc(src)}
-    />
+    <div className={`relative ${className}`}>
+      {pending ? (
+        <div className="absolute inset-0 animate-pulse rounded-2xl bg-cream-200" role="status" aria-label="Loading portfolio photo" />
+      ) : null}
+      <img
+        src={src}
+        alt={alt}
+        className="h-full w-full rounded-2xl object-cover"
+        sizes="(max-width: 640px) 100vw, 50vw"
+        onLoad={() => setLoadedSrc(src)}
+        onError={() => setFailedSrc(src)}
+      />
+    </div>
   );
 }

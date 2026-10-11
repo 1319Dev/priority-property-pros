@@ -90,6 +90,9 @@ export type PublicSafePortfolioItem = {
   id: string;
   caption: string;
   sortOrder: number;
+  /** Short-lived signed URL for a PUBLIC_SAFE photo. Never a public-bucket URL. */
+  imageUrl?: string | null;
+  imageStatus?: "loading" | "ready" | "unavailable";
   illustration?: "fence" | "interior" | "yard";
 };
 
@@ -420,6 +423,54 @@ export function publicSafePortfolioCaption(
     return text.length > 80 ? `${text.slice(0, 77).trim()}…` : text;
   }
   return "Screened project photo";
+}
+
+const GENERIC_PORTFOLIO_CAPTIONS = new Set(["portfolio photo", "screened project photo", "photo unavailable"]);
+
+export function portfolioCaptionIsPlaceholder(caption: string | null | undefined): boolean {
+  return GENERIC_PORTFOLIO_CAPTIONS.has((caption ?? "").trim().toLowerCase());
+}
+
+/** Accept a storage signed URL. Reject public-bucket URLs and anything that is not http(s). */
+export function publicPortfolioImageUrl(value: string | null | undefined): string | null {
+  const raw = value?.trim() ?? "";
+  if (!raw) return null;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  if (url.pathname.includes("/object/public/")) return null;
+  const signed = url.pathname.includes("/object/sign/") || url.searchParams.has("token");
+  if (!signed) return null;
+  return url.toString();
+}
+
+/**
+ * Public card shape for an already-screened photo.
+ * storagePath is used only to refuse leaking the raw path as a field. A signed
+ * URL may contain the object name; that is how private-bucket signing works.
+ */
+export function toPublicPortfolioPhoto(input: {
+  id: string;
+  caption: string;
+  sortOrder?: number | null;
+  imageUrl?: string | null;
+  imageStatus?: PublicSafePortfolioItem["imageStatus"];
+  storagePath?: string | null;
+}): PublicSafePortfolioItem {
+  const imageUrl = publicPortfolioImageUrl(input.imageUrl);
+  const item: PublicSafePortfolioItem = {
+    id: input.id,
+    caption: input.caption.trim() || "Screened project photo",
+    sortOrder: input.sortOrder ?? 0,
+    imageStatus: imageUrl ? "ready" : (input.imageStatus ?? "unavailable"),
+  };
+  if (imageUrl) item.imageUrl = imageUrl;
+  void input.storagePath;
+  return item;
 }
 
 export function toPublicSafePortfolioItem(input: {

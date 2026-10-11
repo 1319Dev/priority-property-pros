@@ -14,6 +14,7 @@ import {
   yearsInBusinessLabel,
   type FindAProProfile,
 } from "../../lib/marketplace/findAPro";
+import { PublicPortfolioGallery } from "./PublicPortfolioGallery";
 
 export function ContractorStorefront({ profile }: { profile: FindAProProfile }) {
   const years = yearsInBusinessLabel(profile.yearsExperience);
@@ -83,17 +84,7 @@ export function ContractorStorefront({ profile }: { profile: FindAProProfile }) 
 
       <section className="mt-6">
         <h2 className="font-display text-2xl text-forest-800">Portfolio</h2>
-        {profile.portfolio.length === 0 ? (
-          <p className="mt-2 text-sm leading-relaxed text-ink-700">{PORTFOLIO_EMPTY}</p>
-        ) : (
-          <ul className="mt-3 grid min-w-0 gap-3 sm:grid-cols-2">
-            {profile.portfolio.map((item) => (
-              <li key={item.id} className="min-w-0 break-words rounded-3xl bg-cream-100 px-4 py-4 text-sm text-ink-700">
-                {item.caption}
-              </li>
-            ))}
-          </ul>
-        )}
+        <PublicPortfolioGallery items={profile.portfolio} empty={PORTFOLIO_EMPTY} />
       </section>
 
       <section className="mt-6">
