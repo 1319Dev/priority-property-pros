@@ -19,3 +19,6 @@
 --    still gets a LOCKED booking row. Activation is not Connect.
 -- 9. A different contractor on the same project does not inherit the paid row.
 -- 10. CANCELLED booking is not entitled.
+-- 11. PAID connection still entitled, but the booking contact row has revoked_at set
+--     (admin_revoke_booking_contact_access). booking_has_contact_access is false.
+--     The booking-level revoke wins over the paid-connection carry-over.

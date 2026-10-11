@@ -65,6 +65,8 @@ describe("paid connection carries onto the hired booking", () => {
     expect(has).toMatch(/a\.revoked_at IS NULL/);
     expect(has).toMatch(/b\.status IS DISTINCT FROM 'CANCELLED'/);
     expect(has).toMatch(/b\.contractor_profile_id = public\.current_contractor_profile_id\(\)/);
+    expect(has).toMatch(/r\.booking_id = b\.id/);
+    expect(has).toMatch(/r\.revoked_at IS NOT NULL/);
     expect(has).not.toMatch(/b\.status IN \('CONFIRMED'/);
     expect(has).not.toMatch(/signup_fee/);
   });

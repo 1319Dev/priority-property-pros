@@ -147,6 +147,12 @@ AS $$
       AND a.revoked_at IS NULL
       AND a.status IN ('UNLOCKED', 'ADMIN_OVERRIDE')
       AND public.connection_fee_was_paid(c.id)
+      AND NOT EXISTS (
+        SELECT 1
+        FROM public.booking_contact_access r
+        WHERE r.booking_id = b.id
+          AND r.revoked_at IS NOT NULL
+      )
       AND (
         b.customer_id = auth.uid()
         OR b.contractor_profile_id = public.current_contractor_profile_id()
@@ -155,7 +161,7 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION public.booking_has_contact_access(uuid) IS
-  'True for the caller when the booking row is unlocked, or when that same contractor and project already have a non-revoked connection entitlement and the connection fee was paid. Reserved, expired, and unpaid connections do not count. Booking status alone does not unlock.';
+  'True for the caller when the booking row is unlocked, or when that same contractor and project already have a non-revoked connection entitlement and the connection fee was paid. An admin revoke on the booking row wins over that carry-over. Reserved, expired, and unpaid connections do not count. Booking status alone does not unlock.';
 
 CREATE OR REPLACE FUNCTION public.protect_booking_contact_access_row()
 RETURNS trigger
