@@ -5,11 +5,11 @@ import { describe, expect, it } from "vitest";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const migration = readFileSync(
-  path.join(root, "supabase/migrations/20261017000001_sync_profile_email_from_auth.sql"),
+  path.join(root, "supabase/migrations/20261017000002_sync_profile_email_from_auth.sql"),
   "utf8",
 );
 const rollback = readFileSync(
-  path.join(root, "supabase/rollbacks/20261017000001_sync_profile_email_from_auth_rollback.sql"),
+  path.join(root, "supabase/rollbacks/20261017000002_sync_profile_email_from_auth_rollback.sql"),
   "utf8",
 );
 

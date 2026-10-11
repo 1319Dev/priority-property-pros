@@ -1,4 +1,4 @@
--- Undo 20261017000001_sync_profile_email_from_auth.sql.
+-- Undo 20261017000002_sync_profile_email_from_auth.sql.
 -- Restores protect_profile_columns from 20261005000001_signup_activation_checkout.sql.
 
 DROP TRIGGER IF EXISTS on_auth_user_email_updated ON auth.users;
