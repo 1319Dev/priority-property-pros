@@ -73,6 +73,15 @@ const BUILTIN_NAV: readonly AdminNavItem[] = [
     searchAliases: ["two-factor", "two factor", "2fa", "security", "mfa", "authenticator"],
   },
   {
+    id: "audit",
+    to: "/app/admin/audit",
+    label: "Audit log",
+    icon: "audit",
+    group: "Trust",
+    order: 85,
+    searchAliases: ["audit", "audit log", "activity"],
+  },
+  {
     id: "account",
     to: "/app/admin/account",
     label: "Account",

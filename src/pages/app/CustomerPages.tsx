@@ -1,26 +1,35 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ChangePasswordCard } from "../../components/account/ChangePasswordCard";
 import { DeleteAccountDialog } from "../../components/account/DeleteAccountDialog";
 import { BlockedProsList } from "../../components/marketplace/BlockedProsList";
 import { TextInput } from "../../components/ui/Input";
 import { useAuth } from "../../lib/auth/useAuth";
-import { deleteOwnAccount } from "../../lib/auth/deleteAccount";
+import {
+  ACCOUNT_DELETION_PAUSED,
+  ACCOUNT_DELETION_REQUEST_MAILTO,
+  deleteOwnAccount,
+} from "../../lib/auth/deleteAccount";
+import { SUPPORT_EMAIL } from "../../data/brand";
 import { FormError } from "../../lib/auth/AuthCard";
 import { getSupabaseClient } from "../../lib/supabase/client";
 import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 import { CUSTOMER_ACTIVATION_NOTE, CUSTOMER_PAYS_DIRECTLY } from "../../lib/marketplace/customerCopy";
-import { accountRoleNote, activationStatusLine } from "../../lib/marketplace/contractorPolish";
+import { accountRoleNote } from "../../lib/marketplace/contractorPolish";
+import { accountActivationText, fetchMyPaidActivationAt } from "../../lib/billing/proBilling";
 import { SIGNUP_FEE_ACTIVATE_PATH } from "../../lib/signupFee/constants";
 import { accountStatusLabel, accountTypeLabel } from "../../lib/marketplace/statusLabels";
 import { accountSettingsPath } from "../../lib/auth/roles";
+import { EMAIL_CHANGE_SENT_MESSAGE, emailChangeFieldErrors } from "../../lib/auth/emailChange";
 
 export { CustomerHomePage, CustomerProjectsPage } from "./customer/CustomerMarketplacePages";
 export { CustomerMessagesPage } from "./messages/ProjectMessagesPage";
 
 export function AccountPage() {
-  const { profile, user, signOut, account_type, account_status, refreshProfile } = useAuth();
+  const { profile, user, signOut, account_type, account_status, refreshProfile, requestEmailChange } = useAuth();
   const navigate = useNavigate();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteDone, setDeleteDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,10 +37,35 @@ export function AccountPage() {
   const [firstName, setFirstName] = useState(profile?.first_name ?? "");
   const [lastName, setLastName] = useState(profile?.last_name ?? "");
   const [phone, setPhone] = useState(profile?.phone ?? "");
+  const [newEmail, setNewEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [emailFieldErrors, setEmailFieldErrors] = useState<{ email?: string; password?: string }>({});
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailNotice, setEmailNotice] = useState<string | null>(null);
+  const [emailBusy, setEmailBusy] = useState(false);
+  const canChangeEmail = account_type === "CUSTOMER" || account_type === "CONTRACTOR";
+  const pendingEmail = user?.new_email?.trim() || null;
   const hidePricing = useHidePlatformPricing();
-  const activation = activationStatusLine({
+  const [paidChargeAt, setPaidChargeAt] = useState<string | null>(null);
+  useEffect(() => {
+    if (!profile?.id) return;
+    let stop = false;
+    void fetchMyPaidActivationAt(profile.id)
+      .then((at) => {
+        if (!stop) setPaidChargeAt(at);
+      })
+      .catch(() => undefined);
+    return () => {
+      stop = true;
+    };
+  }, [profile?.id]);
+  // The profile flag alone said "Not required" for waived accounts; say what it means,
+  // and let a live $9.99 charge on file win over the flag.
+  const activation = accountActivationText({
+    accountType: account_type,
     status: profile?.signup_fee_status,
     paidAt: profile?.signup_fee_paid_at,
+    paidChargeAt,
   });
 
   return (
@@ -81,12 +115,13 @@ export function AccountPage() {
       </form>
       <dl className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm">
         <Row label="Email" value={user?.email ?? profile?.email ?? "—"} />
+        {pendingEmail ? <Row label="Pending email" value={pendingEmail} /> : null}
         <Row label="Role" value={accountTypeLabel(account_type)} />
         <Row label="Status" value={accountStatusLabel(account_status)} />
         <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
           <dt className="font-semibold uppercase tracking-[0.14em] text-gold-700">Activation</dt>
           <dd className="min-w-0 break-words text-ink-900">
-            {activation.text.replace(/^Activation: /, "")}
+            {activation.text}
             {activation.showActivate ? (
               <>
                 {" "}
@@ -98,6 +133,85 @@ export function AccountPage() {
           </dd>
         </div>
       </dl>
+      {canChangeEmail ? (
+        <form
+          className="min-w-0 space-y-3"
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault();
+            setEmailError(null);
+            setEmailNotice(null);
+            const nextErrors = emailChangeFieldErrors(newEmail, currentPassword, user?.email ?? profile?.email);
+            setEmailFieldErrors(nextErrors);
+            if (nextErrors.email || nextErrors.password) {
+              const first = nextErrors.email ? "newEmail" : "currentPassword";
+              event.currentTarget.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
+              return;
+            }
+            if (!requestEmailChange) {
+              setEmailError("Email change is unavailable.");
+              return;
+            }
+            setEmailBusy(true);
+            void requestEmailChange(newEmail, currentPassword)
+              .then(async (result) => {
+                if (result.error) {
+                  setEmailError(result.error);
+                  return;
+                }
+                setCurrentPassword("");
+                setEmailNotice(EMAIL_CHANGE_SENT_MESSAGE);
+                await refreshProfile();
+              })
+              .finally(() => setEmailBusy(false));
+          }}
+        >
+          <h2 className="font-display text-2xl font-semibold text-forest-800">Change email</h2>
+          <p className="text-sm leading-relaxed text-ink-700">
+            Enter your current password. We email both your current address and the new one. The address on
+            this account changes only after both are confirmed.
+          </p>
+          <TextInput
+            label="New email"
+            name="newEmail"
+            type="email"
+            autoComplete="email"
+            aria-required="true"
+            value={newEmail}
+            error={emailFieldErrors.email}
+            onChange={(event) => {
+              setNewEmail(event.target.value);
+              setEmailFieldErrors((current) => ({ ...current, email: undefined }));
+            }}
+          />
+          <TextInput
+            label="Current password"
+            name="currentPassword"
+            type="password"
+            autoComplete="current-password"
+            aria-required="true"
+            value={currentPassword}
+            error={emailFieldErrors.password}
+            onChange={(event) => {
+              setCurrentPassword(event.target.value);
+              setEmailFieldErrors((current) => ({ ...current, password: undefined }));
+            }}
+          />
+          <button
+            type="submit"
+            className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-forest-800 px-5 text-sm font-semibold text-cream-50 disabled:opacity-50 sm:w-auto"
+            disabled={emailBusy}
+          >
+            {emailBusy ? "Sending…" : "Send confirmation"}
+          </button>
+          {emailNotice ? (
+            <p className="text-sm text-forest-800" role="status">
+              {emailNotice}
+            </p>
+          ) : null}
+          <FormError message={emailError} />
+        </form>
+      ) : null}
       <p className="text-sm text-ink-500">
         {accountRoleNote(account_type)}
         {account_type === "CUSTOMER" && !hidePricing ? ` ${CUSTOMER_ACTIVATION_NOTE}` : ""}
@@ -121,6 +235,7 @@ export function AccountPage() {
           Blocked pros
         </Link>
       ) : null}
+      <ChangePasswordCard email={user?.email ?? profile?.email} />
       <FormError message={error} />
       <button
         type="button"
@@ -131,47 +246,71 @@ export function AccountPage() {
       >
         Sign out
       </button>
-      <section className="mt-10 border-t border-forest-800/10 pt-10">
-        <h2 className="text-sm font-semibold text-ink-500">Delete account</h2>
-        <p className="mt-2 text-sm leading-relaxed text-ink-500">
-          Permanently close this account and remove your profile. This cannot be undone.
-        </p>
-        <button
-          type="button"
-          className="mt-4 min-h-11 text-left text-sm text-danger-600/70 underline-offset-4 hover:text-danger-600 hover:underline"
-          onClick={() => {
-            setError(null);
-            setDeleteOpen(true);
-          }}
+      {ACCOUNT_DELETION_PAUSED ? (
+        <section
+          className="mt-10 border-t border-forest-800/10 pt-10"
+          aria-labelledby="account-deletion-heading"
+          data-testid="account-deletion-paused"
         >
-          Delete account
-        </button>
-      </section>
-      <DeleteAccountDialog
-        open={deleteOpen}
-        busy={busy}
-        error={error}
-        onClose={() => {
-          if (busy) return;
-          setDeleteOpen(false);
-          setError(null);
-        }}
-        onConfirm={() => {
-          setBusy(true);
-          setError(null);
-          void deleteOwnAccount()
-            .then(async (result) => {
-              if (result.error) {
-                setError(result.error);
-                return;
-              }
-              await signOut();
-              setDeleteOpen(false);
-              navigate("/", { replace: true });
-            })
-            .finally(() => setBusy(false));
-        }}
-      />
+          <h2 id="account-deletion-heading" className="text-sm font-semibold text-ink-500">
+            Delete account
+          </h2>
+          <p className="mt-2 break-words text-sm leading-relaxed text-ink-700">
+            Account deletion is temporarily handled by our support team. To request deletion, email{" "}
+            <a href={ACCOUNT_DELETION_REQUEST_MAILTO} className="break-all font-semibold text-forest-800 underline">
+              {SUPPORT_EMAIL}
+            </a>{" "}
+            from the email on your account, and we will process it.
+          </p>
+        </section>
+      ) : (
+        <>
+        <section className="mt-10 border-t border-forest-800/10 pt-10">
+          <h2 className="text-sm font-semibold text-ink-500">Delete account</h2>
+          <p className="mt-2 text-sm leading-relaxed text-ink-500">
+            Closes this account after you re-enter your password. Open jobs, an open dispute, or an
+            unfinished refund will block it. Payment records and other people's reviews and messages stay.
+          </p>
+          <button
+            type="button"
+            className="mt-4 min-h-11 text-left text-sm text-danger-600/70 underline-offset-4 hover:text-danger-600 hover:underline"
+            onClick={() => {
+              setError(null);
+              setDeleteOpen(true);
+            }}
+          >
+            Delete account
+          </button>
+        </section>
+        <DeleteAccountDialog
+          open={deleteOpen}
+          busy={busy}
+          deleted={deleteDone}
+          error={error}
+          onClose={() => {
+            if (busy || deleteDone) return;
+            setDeleteOpen(false);
+            setError(null);
+          }}
+          onConfirm={(password) => {
+            setBusy(true);
+            setError(null);
+            void deleteOwnAccount(password)
+              .then((result) => {
+                if (result.error || !result.deleted) {
+                  setError(result.error ?? "We couldn't delete this account. Nothing was changed and nothing was charged. If this keeps happening, contact support.");
+                  return;
+                }
+                setDeleteDone(true);
+              })
+              .finally(() => setBusy(false));
+          }}
+          onFinished={() => {
+            void signOut().then(() => navigate("/", { replace: true }));
+          }}
+        />
+        </>
+      )}
     </div>
   );
 }
