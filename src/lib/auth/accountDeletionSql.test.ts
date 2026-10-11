@@ -6,6 +6,11 @@ import { describe, expect, it } from "vitest";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const migrationPath = path.join(repoRoot, "supabase/migrations/20261017000001_account_deletion_anonymize.sql");
 const rollbackPath = path.join(repoRoot, "supabase/rollbacks/20261017000001_account_deletion_anonymize_rollback.sql");
+const gapPath = path.join(repoRoot, "supabase/migrations/20261017100001_account_deletion_clear_contractor_details.sql");
+const gapRollbackPath = path.join(
+  repoRoot,
+  "supabase/rollbacks/20261017100001_account_deletion_clear_contractor_details_rollback.sql",
+);
 
 function functionBody(sql: string, name: string): string {
   const marker = `CREATE OR REPLACE FUNCTION public.${name}`;
@@ -21,7 +26,11 @@ describe("account deletion SQL", () => {
     const names = readdirSync(path.join(repoRoot, "supabase/migrations"))
       .filter((name) => name.endsWith(".sql"))
       .sort();
-    expect(names.at(-1)).toBe("20261017000001_account_deletion_anonymize.sql");
+    expect(names.at(-1)).toBe("20261017100001_account_deletion_clear_contractor_details.sql");
+    expect(names.includes("20261017000001_account_deletion_anonymize.sql")).toBe(true);
+    expect(names.indexOf("20261017100001_account_deletion_clear_contractor_details.sql")).toBeGreaterThan(
+      names.indexOf("20261017000001_account_deletion_anonymize.sql"),
+    );
     expect(names.includes("20261016000001_customer_contractor_blocks.sql")).toBe(true);
     const roles = readFileSync(path.join(repoRoot, "supabase/tests/account_deletion_roles.sql"), "utf8");
     expect(roles).toMatch(/CUSTOMER/);
@@ -33,6 +42,9 @@ describe("account deletion SQL", () => {
     expect(roles).toMatch(/payment_schedule_items\.description becomes the item kind/);
     expect(roles).toMatch(/stripe_disputes\.reason: Stripe dispute classification/);
     expect(roles).toMatch(/ledger_entries\.note: the ledger is immutable/);
+    expect(roles).toMatch(/UNPAID customer and UNPAID contractor both succeed/);
+    expect(roles).toMatch(/contractor_stripe_accounts row are deleted/);
+    expect(roles).toMatch(/does not call Stripe/);
   });
 
   const migration = readFileSync(migrationPath, "utf8");
@@ -150,6 +162,50 @@ describe("account deletion SQL", () => {
     expect(reviewDelete).toMatch(/IF NOT public\.is_admin\(\) THEN/);
     expect(reviewDelete).toMatch(/only an admin can delete a platform review/);
     expect(reviewDelete).not.toMatch(/auth\.uid\(\) IS NOT NULL/);
+  });
+
+  it("clears contractor details and project photos without touching money rows", () => {
+    const gap = readFileSync(gapPath, "utf8");
+    const gapRollback = readFileSync(gapRollbackPath, "utf8");
+    const gapPurge = functionBody(gap, "purge_account_owned_rows");
+    const restored = functionBody(gapRollback, "purge_account_owned_rows");
+    const photos = gapPurge.indexOf("DELETE FROM public.project_photos");
+    const ownerClear = gapPurge.indexOf("SET customer_id = NULL");
+    const portfolio = gapPurge.indexOf("DELETE FROM public.contractor_portfolio");
+    const reports = gapPurge.indexOf("DELETE FROM public.content_reports");
+    expect(photos).toBeGreaterThan(-1);
+    expect(photos).toBeLessThan(ownerClear);
+    expect(gapPurge.slice(photos, ownerClear)).toMatch(/ppp_set_rpc\('purge_account_owned_rows'\)/);
+    expect(portfolio).toBeLessThan(reports);
+    expect(gapPurge).toMatch(/DELETE FROM public\.contractor_credentials/);
+    expect(gapPurge).toMatch(/DELETE FROM public\.contractor_services/);
+    expect(gapPurge).toMatch(/DELETE FROM public\.contractor_service_areas/);
+    expect(gapPurge).toMatch(/DELETE FROM public\.contractor_stripe_accounts/);
+    expect(gapPurge).toMatch(/rejection_reason = NULL/);
+    expect(gapPurge).toMatch(/info_request_message = NULL/);
+    expect(gapPurge).toMatch(/years_experience = NULL/);
+    expect(gapPurge).toMatch(/min_job_cents = NULL/);
+    expect(gapPurge).toMatch(/max_job_cents = NULL/);
+    expect(gapPurge).toMatch(/identity_review_fields = '\{\}'::text\[\]/);
+    expect(gapPurge).toMatch(/Finish or cancel your active jobs before deleting this account/);
+    expect(gapPurge).toMatch(/Resolve the open dispute before deleting this account/);
+    expect(gapPurge).toMatch(/Wait until the outstanding refund is finished before deleting this account/);
+    expect(gapPurge).toMatch(/cannot delete the last active admin/);
+    expect(gapPurge).not.toMatch(/UNPAID/);
+    expect(gapPurge).not.toMatch(/DELETE FROM public\.payments/);
+    expect(gapPurge).not.toMatch(/DELETE FROM public\.refunds/);
+    expect(gapPurge).not.toMatch(/DELETE FROM public\.ledger_entries/);
+    expect(gapPurge).not.toMatch(/DELETE FROM public\.stripe_disputes/);
+    expect(gapPurge).not.toMatch(/DELETE FROM public\.signup_fee_charges/);
+    expect(gapPurge).not.toMatch(/DELETE FROM public\.connection_checkout_sessions/);
+    expect(gapPurge).not.toMatch(/fee_cents\s*=/);
+    expect(gap).not.toMatch(/stripe\.com|net\.http_post|CREATE OR REPLACE FUNCTION public\.fulfill_/);
+    expect(restored).not.toMatch(/DELETE FROM public\.contractor_portfolio/);
+    expect(restored).not.toMatch(/DELETE FROM public\.project_photos/);
+    expect(restored).not.toMatch(/identity_review_fields/);
+    expect(restored).toMatch(/DELETE FROM auth\.users WHERE id = p_user_id/);
+    expect(restored).toMatch(/Finish or cancel your active jobs before deleting this account/);
+    expect(gapRollback).toMatch(/rows already deleted by the gap fix are not restored/);
   });
 });
 

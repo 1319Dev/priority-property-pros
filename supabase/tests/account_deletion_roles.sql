@@ -71,3 +71,18 @@
 -- admin note. The new account.deleted payload is only self_service and anonymized.
 -- agreement acceptances, estimate events, and signup-fee events.
 -- change_orders.description: the other party's job history.
+--
+-- 20261017100001, still inside the same purge transaction:
+-- project_photos on this customer's projects are deleted before customer_id
+-- is cleared, so the completeness trigger does not fail the signup-fee check.
+-- A contractor's portfolio rows (title, caption, storage_path), credentials,
+-- services, service areas, and contractor_stripe_accounts row are deleted.
+-- That delete does not call Stripe. The Deleted Pro card stays, with
+-- rejection_reason, info_request_message, years_experience, min_job_cents,
+-- max_job_cents, and identity_review_fields cleared.
+-- UNPAID customer and UNPAID contractor both succeed. Signup fee status is
+-- not a refusal.
+-- Payments, refunds, ledger_entries, stripe_disputes, signup charges, and
+-- checkout sessions are still not deleted.
+-- Active jobs, an open dispute, an unfinished refund, and the last active
+-- admin are still refused with the same messages, before any of these deletes.

@@ -156,6 +156,8 @@ Deno.serve(async (req) => {
     const purged = await restRpc("purge_account_owned_rows", { p_user_id: user.id });
     if (purged.error) return json({ error: friendlyDeleteError(purged.error), status: "blocked" }, 400);
 
+    // Project-photo, portfolio, and credential rows are removed in the purge.
+    // This only deletes storage objects under the user's prefix. It does not call Stripe.
     await removeStoragePrefix("project-photos", user.id).catch(() => undefined);
     await removeStoragePrefix("contractor-docs", user.id).catch(() => undefined);
 
