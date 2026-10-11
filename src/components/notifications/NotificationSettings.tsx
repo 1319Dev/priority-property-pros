@@ -4,6 +4,7 @@ import { notificationCategoryDescription } from "../../lib/marketplace/contracto
 import {
   NOTIFICATION_CATEGORIES,
   NOTIFICATION_CATEGORY_COPY,
+  categoriesForAccount,
   type NotificationCategory,
   type NotificationChannel,
   type PreferenceFlags,
@@ -129,7 +130,9 @@ export function NotificationSettings({
     setNotice(null);
     if (mode === "preview") {
       setEndpoint("preview");
-      setRows((existing) => existing.map((row) => ({ ...row, push: true })));
+      setRows((existing) =>
+        existing.map((row) => (categoriesForAccount(account_type).includes(row.category) ? { ...row, push: true } : row)),
+      );
       setNotice("Push is on. Turn off any alert you do not want.");
       setBusy(false);
       return;
@@ -141,7 +144,9 @@ export function NotificationSettings({
       return;
     }
     setEndpoint(result.endpoint);
-    setRows((existing) => existing.map((row) => ({ ...row, push: true })));
+    setRows((existing) =>
+      existing.map((row) => (categoriesForAccount(account_type).includes(row.category) ? { ...row, push: true } : row)),
+    );
     setNotice("Push is on. Turn off any alert you do not want.");
   }
 
@@ -214,7 +219,7 @@ export function NotificationSettings({
       {error ? <p className="text-sm text-danger-600">{error}</p> : null}
 
       <ul className="space-y-3">
-        {rows.map((row) => {
+        {rows.filter((row) => categoriesForAccount(account_type).includes(row.category)).map((row) => {
           const copy = NOTIFICATION_CATEGORY_COPY[row.category];
           return (
             <li key={row.category} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">

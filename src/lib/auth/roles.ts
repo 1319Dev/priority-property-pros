@@ -3,6 +3,7 @@ import type { SignupFeeStatus } from "../signupFee/constants";
 import { PUBLIC_SIGNUP_TYPES } from "./types";
 import { needsSignupFeePayment } from "../signupFee/policy";
 import { SIGNUP_FEE_ACTIVATE_PATH } from "../signupFee/constants";
+import { safeReturnPath as safeLocalReturnPath } from "./sessionReturn";
 
 export const ROLE_HOME: Record<AccountType, string> = {
   CUSTOMER: "/app/customer",
@@ -81,15 +82,16 @@ export function pathForRole(path: string, accountType: AccountType): string {
 }
 
 /**
- * Where to go after sign-in. A saved "from" path is honored only when it is a local
- * path; another role's /app path is mapped with pathForRole.
+ * Where to go after sign-in. A saved "from" path is honored only when it passes
+ * sessionReturn.safeReturnPath (#96: local, not protocol-relative, not /sign-in);
+ * another role's /app path is mapped with pathForRole. Activation and blocked-status
+ * pages still win.
  */
-export function safeReturnPath(from: string | null | undefined, accountType: AccountType, fallback: string): string {
-  if (typeof from !== "string" || !from.startsWith("/") || from.startsWith("//") || from.startsWith("/sign-in")) {
-    return fallback;
-  }
+export function roleReturnPath(from: string | null | undefined, accountType: AccountType, fallback: string): string {
+  const local = safeLocalReturnPath(from);
+  if (!local) return fallback;
   if (fallback === "/account/activate" || fallback === "/account/status") return fallback;
-  return pathForRole(from, accountType);
+  return pathForRole(local, accountType);
 }
 
 export function accountSettingsPath(

@@ -87,6 +87,29 @@ describe("Find a Pro cards", () => {
     expect(screen.getByText("Not accepting work")).toBeInTheDocument();
   });
 
+  it("shows the directory rating at 320px without a business name", () => {
+    const rated = card({
+      displayLabel: "Handyman pro in Houston",
+      ratingAverage: 5,
+      ratingCount: 2,
+      reviews: publicDirectoryReviews([
+        { id: "r1", rating: 5, body: "Finished the indoor repair." },
+        { id: "r2", rating: 4, body: "Clear about the schedule." },
+        { id: "hidden", rating: 1, body: "This row was hidden by an admin.", hidden: true },
+      ]),
+    });
+    renderCard(
+      <div className="w-[320px] max-w-[320px]">
+        <FindAProCardView card={rated} />
+      </div>,
+    );
+    expect(screen.getByRole("heading", { name: "Handyman pro in Houston" })).toBeInTheDocument();
+    expect(screen.getByText("5.0 ★ · 2 reviews")).toBeInTheDocument();
+    expect(screen.queryByText("4.5 ★ · 2 reviews")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Northside/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/hidden by an admin/i)).not.toBeInTheDocument();
+  });
+
   it("keeps the directory from using a horizontal overflow layout at 390px", () => {
     const { container } = renderCard(
       <div className="w-[390px] max-w-[390px]">
@@ -133,6 +156,40 @@ describe("Contractor storefront", () => {
     expect(screen.getByRole("heading", { name: "Portfolio" }).closest("section")?.querySelector("img")).toBeNull();
     expect(screen.getAllByText(VERIFIED_PROJECT_LABEL)).toHaveLength(1);
     expect(screen.getByText(/no qualifying relationship/i)).toBeInTheDocument();
+  });
+
+  it("shows a public pro response and leaves a phone number off the profile", () => {
+    const reviews = publicDirectoryReviews([
+      {
+        id: "r-phone",
+        rating: 2,
+        body: "The gate was left unfinished.",
+        contractor_response: "Call me at 512-555-0199 and I will explain.",
+      },
+      {
+        id: "r-ok",
+        rating: 5,
+        body: "Finished the indoor repair.",
+        contractor_response: "We replaced the latch the next morning.",
+      },
+    ]);
+    renderCard(
+      <div className="w-[390px] max-w-[390px]">
+        <ContractorStorefront
+          profile={{
+            ...card(),
+            about: "Independent local fence contractor.",
+            reviews,
+            ratingLabel: "3.5 ★ · 2 reviews",
+            newOnPlatform: false,
+          }}
+        />
+      </div>,
+    );
+    expect(screen.getByText(/We replaced the latch the next morning/)).toBeInTheDocument();
+    expect(screen.getByText("Pro response.")).toBeInTheDocument();
+    expect(screen.queryByText(/512-555-0199/)).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/Northside Fence|business name/i);
   });
 
   it("filters the directory down to new contractors", async () => {

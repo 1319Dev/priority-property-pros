@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { AuthContext, type AuthContextValue } from "./AuthContext";
 import { RequireRole } from "./guards";
-import { pathForRole, safeReturnPath } from "./roles";
+import { pathForRole, roleReturnPath } from "./roles";
 import type { AccountType, Profile } from "./types";
 
 vi.mock("./adminMfaApi", () => ({
@@ -33,21 +33,21 @@ describe("pathForRole", () => {
   });
 });
 
-describe("safeReturnPath", () => {
+describe("roleReturnPath", () => {
   it("does not send a contractor to /app/customer/account after sign-in", () => {
-    expect(safeReturnPath("/app/customer/account", "CONTRACTOR", "/app/pro")).toBe("/app/pro/account");
+    expect(roleReturnPath("/app/customer/account", "CONTRACTOR", "/app/pro")).toBe("/app/pro/account");
   });
 
   it("falls back for missing, external, and sign-in paths", () => {
-    expect(safeReturnPath(undefined, "CONTRACTOR", "/app/pro")).toBe("/app/pro");
-    expect(safeReturnPath("https://evil.example", "CONTRACTOR", "/app/pro")).toBe("/app/pro");
-    expect(safeReturnPath("//evil.example", "CONTRACTOR", "/app/pro")).toBe("/app/pro");
-    expect(safeReturnPath("/sign-in", "CONTRACTOR", "/app/pro")).toBe("/app/pro");
+    expect(roleReturnPath(undefined, "CONTRACTOR", "/app/pro")).toBe("/app/pro");
+    expect(roleReturnPath("https://evil.example", "CONTRACTOR", "/app/pro")).toBe("/app/pro");
+    expect(roleReturnPath("//evil.example", "CONTRACTOR", "/app/pro")).toBe("/app/pro");
+    expect(roleReturnPath("/sign-in", "CONTRACTOR", "/app/pro")).toBe("/app/pro");
   });
 
   it("lets activation and blocked-status pages win over a saved path", () => {
-    expect(safeReturnPath("/app/pro/jobs", "CONTRACTOR", "/account/activate")).toBe("/account/activate");
-    expect(safeReturnPath("/app/pro/jobs", "CONTRACTOR", "/account/status")).toBe("/account/status");
+    expect(roleReturnPath("/app/pro/jobs", "CONTRACTOR", "/account/activate")).toBe("/account/activate");
+    expect(roleReturnPath("/app/pro/jobs", "CONTRACTOR", "/account/status")).toBe("/account/status");
   });
 });
 

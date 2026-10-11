@@ -72,6 +72,9 @@ const AdminBookingsPage = lazy(() =>
 const AdminTwoFactorPage = lazy(() =>
   import("./pages/app/admin/AdminTwoFactorPage").then((mod) => ({ default: mod.AdminTwoFactorPage })),
 );
+const AdminAuditPage = lazy(() =>
+  import("./pages/app/admin/AdminAuditPage").then((mod) => ({ default: mod.AdminAuditPage })),
+);
 
 const DevNotificationPreview = import.meta.env.DEV
   ? lazy(() =>
@@ -212,6 +215,7 @@ export default function App() {
             <Route path="reviews" element={<AdminReviewsPage />} />
             <Route path="bookings" element={<AdminBookingsPage />} />
             <Route path="security" element={<AdminTwoFactorPage />} />
+            <Route path="audit" element={<AdminAuditPage />} />
             <Route path="account" element={<AccountPage />} />
             <Route path="account/notifications" element={<NotificationSettingsPage />} />
           </Route>
