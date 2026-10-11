@@ -4,10 +4,10 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const migrationName = "20261013000004_customer_contractor_blocks.sql";
-const rollbackName = "20261013000004_customer_contractor_blocks_rollback.sql";
+const migrationName = "20261016000001_customer_contractor_blocks.sql";
+const rollbackName = "20261016000001_customer_contractor_blocks_rollback.sql";
 const previousEligibility = "20261012000003_unpaid_contractor_gates.sql";
-const previousHireAgain = "20261011000001_customer_project_lifecycle.sql";
+const previousHireAgain = "20261013000004_public_pro_labels.sql";
 
 function readMigration(name: string): string {
   return readFileSync(path.join(repoRoot, "supabase/migrations", name), "utf8");
@@ -54,10 +54,12 @@ describe("customer contractor block SQL", () => {
     .filter((name) => name.endsWith(".sql"))
     .sort();
 
-  it("is a new migration after the review-edit migration", () => {
+  it("uses a version after 20261015000004 and does not reuse public_pro_labels", () => {
     expect(names.at(-1)).toBe(migrationName);
-    expect(names.indexOf(migrationName)).toBeGreaterThan(names.indexOf("20261013000003_booking_review_edits.sql"));
-    expect(names.filter((name) => name.startsWith("20261013000004"))).toEqual([migrationName]);
+    expect(migrationName > "20261015000004").toBe(true);
+    expect(names.includes("20261013000004_public_pro_labels.sql")).toBe(true);
+    expect(names.filter((name) => name.startsWith("20261016000001"))).toEqual([migrationName]);
+    expect(names.filter((name) => name.includes("customer_contractor_blocks"))).toEqual([migrationName]);
   });
 
   it("adds only the block check to eligibility and hire again", () => {

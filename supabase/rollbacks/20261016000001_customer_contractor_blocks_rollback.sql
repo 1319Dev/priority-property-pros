@@ -1,6 +1,6 @@
--- Restores matching and Hire Again to the definitions that were current
--- before customer_contractor_blocks, and drops the block table.
--- Does not change booking_reviews rows, offers, connections, or payments.
+-- Restores contractor_eligible_for_project from 20261012000003_unpaid_contractor_gates.sql
+-- and hire_again_contractors from 20261013000004_public_pro_labels.sql.
+-- Drops the block table. Does not change booking_reviews rows, offers, connections, or payments.
 
 DROP TRIGGER IF EXISTS booking_reviews_low_rating_block ON public.booking_reviews;
 
@@ -135,8 +135,30 @@ BEGIN
     SELECT
       r.id AS relationship_id,
       r.contractor_profile_id,
-      cp.business_name,
-      cp.primary_trade,
+      CASE
+        WHEN EXISTS (
+          SELECT 1
+          FROM public.bookings b
+          WHERE b.id = r.last_completed_booking_id
+            AND public.message_pair_has_connection_entitlement(b.project_id, r.contractor_profile_id)
+        )
+        AND nullif(btrim(cp.business_name), '') IS NOT NULL
+        AND NOT public.text_contains_contact_info(cp.business_name)
+        AND NOT public.text_contains_pre_hire_contact(cp.business_name)
+          THEN btrim(cp.business_name)
+        ELSE coalesce(public.public_directory_label(cp.id), 'Local pro')
+      END AS business_name,
+      coalesce(
+        public.public_directory_primary_trade(cp.id),
+        public.public_primary_trade(
+          CASE
+            WHEN lower(btrim(coalesce(cp.primary_trade, ''))) = lower(btrim(coalesce(cp.business_name, '')))
+              THEN NULL
+            ELSE cp.primary_trade
+          END,
+          NULL
+        )
+      ) AS primary_trade,
       r.introduced_at,
       r.last_completed_at,
       r.last_completed_booking_id,
@@ -155,6 +177,9 @@ BEGIN
   RETURN result;
 END;
 $$;
+COMMENT ON FUNCTION public.hire_again_contractors() IS
+  'Caller''s completed relationships. business_name is the real name only when message_pair_has_connection_entitlement is true for the completed booking''s project. Otherwise the neutral public label. Does not change protection months or payment flags.';
+
 
 REVOKE ALL ON FUNCTION public.contractor_eligible_for_project(uuid, uuid) FROM PUBLIC, anon, authenticated;
 

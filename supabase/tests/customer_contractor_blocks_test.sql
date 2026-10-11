@@ -227,6 +227,54 @@ AS $$
   SELECT 12;
 $$;
 
+CREATE OR REPLACE FUNCTION public.message_pair_has_connection_entitlement(p_project_id uuid, p_contractor_profile_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT false;
+$$;
+
+CREATE OR REPLACE FUNCTION public.text_contains_contact_info(p_text text)
+RETURNS boolean
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT false;
+$$;
+
+CREATE OR REPLACE FUNCTION public.text_contains_pre_hire_contact(p_text text)
+RETURNS boolean
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT false;
+$$;
+
+CREATE OR REPLACE FUNCTION public.public_directory_label(p_contractor_profile_id uuid)
+RETURNS text
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT 'Local pro';
+$$;
+
+CREATE OR REPLACE FUNCTION public.public_directory_primary_trade(p_contractor_profile_id uuid)
+RETURNS text
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT NULL::text;
+$$;
+
+CREATE OR REPLACE FUNCTION public.public_primary_trade(p_primary_trade text, p_categories text[])
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT nullif(btrim(coalesce(p_primary_trade, '')), '');
+$$;
+
 GRANT EXECUTE ON FUNCTION public.anonymized_pro_label(text, text[]) TO anon, authenticated;
 
 INSERT INTO public.profiles (id, account_type, account_status, signup_fee_status) VALUES
@@ -388,7 +436,7 @@ REVOKE ALL ON FUNCTION public.test_block_count(text, uuid) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.test_json(text, uuid, text) FROM PUBLIC, anon;
 
 -- Install the pre-block function bodies, then snapshot them.
-\ir ../rollbacks/20261013000004_customer_contractor_blocks_rollback.sql
+\ir ../rollbacks/20261016000001_customer_contractor_blocks_rollback.sql
 
 CREATE TEMP TABLE fn_before AS
 SELECT p.proname,
@@ -399,7 +447,7 @@ JOIN pg_namespace n ON n.oid = p.pronamespace
 WHERE n.nspname = 'public'
   AND p.proname IN ('contractor_eligible_for_project', 'hire_again_contractors');
 
-\ir ../migrations/20261013000004_customer_contractor_blocks.sql
+\ir ../migrations/20261016000001_customer_contractor_blocks.sql
 
 DO $$
 DECLARE
@@ -796,7 +844,7 @@ BEGIN
 END
 $$;
 
-\ir ../rollbacks/20261013000004_customer_contractor_blocks_rollback.sql
+\ir ../rollbacks/20261016000001_customer_contractor_blocks_rollback.sql
 
 DO $$
 BEGIN
@@ -853,7 +901,7 @@ BEGIN
 END
 $$;
 
-\ir ../migrations/20261013000004_customer_contractor_blocks.sql
+\ir ../migrations/20261016000001_customer_contractor_blocks.sql
 
 DO $$
 BEGIN

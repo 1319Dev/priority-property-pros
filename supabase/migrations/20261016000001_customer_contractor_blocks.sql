@@ -26,6 +26,10 @@
 -- without a second matcher.
 --
 -- Not applied to production by this change.
+--
+-- hire_again_contractors is replaced from 20261013000004_public_pro_labels.sql.
+-- Its label CASE stays exactly as that migration left it. The only added
+-- predicate is NOT EXISTS on customer_contractor_blocks.
 
 CREATE TYPE public.customer_contractor_block_reason AS ENUM (
   'LOW_RATING',
@@ -440,6 +444,10 @@ REVOKE ALL ON FUNCTION public.contractor_eligible_for_project(uuid, uuid) FROM P
 COMMENT ON FUNCTION public.contractor_eligible_for_project(uuid, uuid) IS
   'Internal. Hard filters: ACTIVE+APPROVED contractor, signup_fee_is_satisfied, accepting_work, category via contractor_services, service area via contractor_service_areas+location_matches, job size, verified credential when required, and no customer_contractor_blocks row for the project customer. No public grant.';
 
+-- hire_again_contractors is the body from 20261013000004_public_pro_labels.sql.
+-- The business-name CASE and primary_trade expression are unchanged.
+-- The only addition is NOT EXISTS on customer_contractor_blocks.
+
 CREATE OR REPLACE FUNCTION public.hire_again_contractors()
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -461,8 +469,30 @@ BEGIN
     SELECT
       r.id AS relationship_id,
       r.contractor_profile_id,
-      cp.business_name,
-      cp.primary_trade,
+      CASE
+        WHEN EXISTS (
+          SELECT 1
+          FROM public.bookings b
+          WHERE b.id = r.last_completed_booking_id
+            AND public.message_pair_has_connection_entitlement(b.project_id, r.contractor_profile_id)
+        )
+        AND nullif(btrim(cp.business_name), '') IS NOT NULL
+        AND NOT public.text_contains_contact_info(cp.business_name)
+        AND NOT public.text_contains_pre_hire_contact(cp.business_name)
+          THEN btrim(cp.business_name)
+        ELSE coalesce(public.public_directory_label(cp.id), 'Local pro')
+      END AS business_name,
+      coalesce(
+        public.public_directory_primary_trade(cp.id),
+        public.public_primary_trade(
+          CASE
+            WHEN lower(btrim(coalesce(cp.primary_trade, ''))) = lower(btrim(coalesce(cp.business_name, '')))
+              THEN NULL
+            ELSE cp.primary_trade
+          END,
+          NULL
+        )
+      ) AS primary_trade,
       r.introduced_at,
       r.last_completed_at,
       r.last_completed_booking_id,
