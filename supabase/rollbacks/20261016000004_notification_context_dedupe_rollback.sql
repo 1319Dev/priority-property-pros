@@ -1,4 +1,4 @@
--- Rollback for 20261016000002_notification_context_dedupe.sql.
+-- Rollback for 20261016000004_notification_context_dedupe.sql.
 -- Restores list/enqueue/preference functions from the previous migrations.
 -- Does not delete notification rows, preferences, or payment data.
 -- Duplicate alerts that were skipped after this migration are not recreated.

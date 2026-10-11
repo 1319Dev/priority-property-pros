@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 import { ONCE_PER_ENTITY_KINDS, ONE_UNREAD_KINDS } from "./presentation";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const migrationName = "20261016000002_notification_context_dedupe.sql";
-const rollbackName = "20261016000002_notification_context_dedupe_rollback.sql";
+const migrationName = "20261016000004_notification_context_dedupe.sql";
+const rollbackName = "20261016000004_notification_context_dedupe_rollback.sql";
 
 function read(kind: "migrations" | "rollbacks", name: string): string {
   return readFileSync(path.join(repoRoot, "supabase", kind, name), "utf8");
