@@ -8,6 +8,7 @@ import { buildSignupMetadata } from "./signupMetadata";
 import type { Profile, SignUpInput } from "./types";
 import type { SignupFeeStatus } from "../signupFee/constants";
 import { fetchSignupFeeCheckoutFlags } from "../signupFee/api";
+import { emailChangeErrorMessage, emailChangeFieldErrors } from "./emailChange";
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
   const supabase = getSupabaseClient();
@@ -150,6 +151,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   }, []);
 
+  const requestEmailChange = useCallback(async (nextEmail: string, currentPassword: string) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { error: "Supabase is not configured yet." };
+    const currentEmail = user?.email ?? null;
+    if (!currentEmail) return { error: "Sign in again before changing your email." };
+    const fields = emailChangeFieldErrors(nextEmail, currentPassword, currentEmail);
+    if (fields.email || fields.password) return { error: fields.email ?? fields.password ?? null };
+    try {
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email: currentEmail.trim(),
+        password: currentPassword,
+      });
+      if (reauthError) return { error: emailChangeErrorMessage(reauthError, "reauth") };
+      const { error } = await supabase.auth.updateUser(
+        { email: nextEmail.trim() },
+        { emailRedirectTo: authRedirectUrl(AUTH_CALLBACK_PATH) },
+      );
+      if (error) return { error: emailChangeErrorMessage(error, "update") };
+      return { error: null };
+    } catch (err) {
+      const fallback = err instanceof Error ? err : { message: "Failed to fetch" };
+      return { error: emailChangeErrorMessage(fallback, "update") };
+    }
+  }, [user]);
+
   const resendVerification = useCallback(async (email: string) => {
     const supabase = getSupabaseClient();
     if (!supabase) return { error: "Supabase is not configured yet." };
@@ -179,6 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       requestPasswordReset,
       updatePassword,
       resendVerification,
+      requestEmailChange,
     }),
     [
       configured,
@@ -194,6 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       requestPasswordReset,
       updatePassword,
       resendVerification,
+      requestEmailChange,
     ],
   );
 

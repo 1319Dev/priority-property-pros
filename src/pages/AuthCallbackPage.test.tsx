@@ -70,4 +70,19 @@ describe("AuthCallbackPage", () => {
     });
     expect(api.verifyOtp).not.toHaveBeenCalled();
   });
+
+  it("verifies an email-change link", async () => {
+    window.history.replaceState(null, "", "/auth/callback?token_hash=hashed-token&type=email_change");
+    api.verifyOtp.mockResolvedValue({ data: {}, error: null });
+
+    render(
+      <MemoryRouter>
+        <AuthCallbackPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(api.verifyOtp).toHaveBeenCalledWith({ token_hash: "hashed-token", type: "email_change" });
+    });
+  });
 });
