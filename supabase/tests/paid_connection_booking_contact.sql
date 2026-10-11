@@ -1,0 +1,21 @@
+-- Walkthrough for 20261015000001_paid_connection_booking_contact.sql.
+-- Do not run the backfill from the PR description as part of this test.
+-- Expect no new project_connections row and no fee_cents change.
+--
+-- 1. PAID connection + UNLOCKED connection entitlement, then insert a booking.
+--    Expect booking_contact_access for that booking_id: status UNLOCKED,
+--    grant_source CONNECTION_FEE_PAYMENT, connection_id NULL.
+--    booking_has_contact_access(booking) is true for that contractor.
+--    No second connection row. fee_cents still 499.
+-- 2. Same booking read with the booking row forced back to LOCKED.
+--    booking_has_contact_access stays true because the PAID connection row remains.
+-- 3. RESERVED connection, even with a leftover UNLOCKED row, does not unlock.
+-- 4. EXPIRED connection does not unlock.
+-- 5. PAYMENT_DISABLED connection does not unlock.
+-- 6. INITIATED connection does not unlock.
+-- 7. PAID connection whose connection entitlement is revoked does not unlock
+--    a LOCKED booking row.
+-- 8. Contractor with signup_fee_status NOT_REQUIRED and no paid connection
+--    still gets a LOCKED booking row. Activation is not Connect.
+-- 9. A different contractor on the same project does not inherit the paid row.
+-- 10. CANCELLED booking is not entitled.
