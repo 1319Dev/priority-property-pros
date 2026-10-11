@@ -17,8 +17,11 @@
 -- session_replication_role is permission denied. The profile row is removed
 -- by the auth.users cascade, so email is left as-is. Owner-clearing project
 -- updates skip enforce_signup_fee_on_projects. Signup-charge profile_id can
--- be cleared only by this purge. audit_logs.actor_id loses its foreign key
--- so the immutable audit trigger does not block the auth.users delete.
+-- be cleared only by this purge. audit_logs.actor_id, estimate_events.actor_id,
+-- and signup_fee_events.profile_id lose their foreign keys so the immutable
+-- history triggers do not block the auth.users delete. The ids stay as opaque
+-- uuids. protect_platform_review lets a server-side delete (no signed-in user)
+-- remove a deleted account's site review. Signed-in non-admins stay blocked.
 --
 -- Matching: setting account_status DELETED, approval_status SUSPENDED, and
 -- accepting_work false fires the existing rematch triggers. This migration
@@ -31,6 +34,7 @@
 -- Replaces existing function guard_project_connection_money; must be diffed against prod before apply.
 -- Replaces existing function enforce_signup_fee_on_projects; must be diffed against prod before apply.
 -- Replaces existing function protect_signup_fee_charge_row; must be diffed against prod before apply.
+-- Replaces existing function protect_platform_review; must be diffed against prod before apply.
 
 ALTER TABLE public.signup_fee_charges DROP CONSTRAINT IF EXISTS signup_fee_charges_profile_id_fkey;
 ALTER TABLE public.signup_fee_charges ALTER COLUMN profile_id DROP NOT NULL;
@@ -425,3 +429,66 @@ $function$;
 -- auth.users delete fail once this purge writes an audit row. Keep the actor
 -- uuid. Drop only the foreign key.
 ALTER TABLE public.audit_logs DROP CONSTRAINT IF EXISTS audit_logs_actor_id_fkey;
+
+-- F5: estimate_events and signup_fee_events keep the actor/profile id as an
+-- opaque uuid (same approach as F4). Do not replace forbid_estimate_event_mutation
+-- or protect_signup_fee_event_row; dropping the keys avoids those triggers on
+-- the auth.users delete.
+ALTER TABLE public.estimate_events DROP CONSTRAINT IF EXISTS estimate_events_actor_id_fkey;
+ALTER TABLE public.signup_fee_events DROP CONSTRAINT IF EXISTS signup_fee_events_profile_id_fkey;
+
+-- F6: server-side / cascade delete of a deleted account's platform reviews.
+-- Live body, with the DELETE branch allowing auth.uid() IS NULL.
+CREATE OR REPLACE FUNCTION public.protect_platform_review()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF auth.uid() IS NULL THEN
+      RAISE EXCEPTION 'sign in to leave a review';
+    END IF;
+
+    NEW.user_id := auth.uid();
+    NEW.display_name := btrim(NEW.display_name);
+    NEW.body := btrim(NEW.body);
+    NEW.city := NULLIF(btrim(COALESCE(NEW.city, '')), '');
+
+    IF public.text_contains_contact_info(NEW.display_name)
+       OR public.text_contains_contact_info(NEW.body)
+       OR public.text_contains_contact_info(COALESCE(NEW.city, '')) THEN
+      RAISE EXCEPTION '%', public.contact_info_blocked_message();
+    END IF;
+
+    -- Auto-approve valid signed-in reviews. Admins can still reject later.
+    IF NOT public.is_admin() OR NEW.status IS DISTINCT FROM 'PENDING' THEN
+      NEW.status := 'APPROVED';
+    END IF;
+
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    IF NOT public.is_admin() THEN
+      RAISE EXCEPTION 'only an admin can change a platform review';
+    END IF;
+    NEW.id := OLD.id;
+    NEW.user_id := OLD.user_id;
+    NEW.created_at := OLD.created_at;
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN
+    -- Server-side deletes (service role, auth user deletion cascading through
+    -- profiles) have no signed-in user. Signed-in non-admins stay blocked.
+    IF auth.uid() IS NOT NULL AND NOT public.is_admin() THEN
+      RAISE EXCEPTION 'only an admin can delete a platform review';
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  RETURN NULL;
+END;
+$function$;

@@ -6,8 +6,8 @@
 --    Expect: exception 'Finish or cancel your active jobs before deleting this account.'
 --    Bookings, connections, and signup_fee_charges are unchanged.
 -- 2. Customer with only a COMPLETED booking and a PAID project_connection.
---    Expect: profiles.account_status = DELETED, email like 'deleted+%@users.invalid',
---    phone null. projects.customer_id null, selection columns unchanged.
+--    Expect: profiles.account_status = DELETED, email unchanged, phone null.
+--    projects.customer_id null, selection columns unchanged.
 --    project_connections.status, fee_cents, paid_at, payments_live, charges_live unchanged.
 --    customer_id on that connection is null. signup_fee_charges row still exists,
 --    profile_id null, amount_cents still 999. No DELETE of those tables.
@@ -24,3 +24,16 @@
 -- 6. A DRAFT project with no booking, connection, estimate, opportunity, or thread
 --    is removed. A posted project is kept with customer_id null and street cleared.
 -- 7. account.deleted audit row exists. audit_logs are not deleted.
+-- 8. Customer who accepted an estimate (estimate_events.actor_id set), paid the
+--    signup fee (signup_fee_charges plus signup_fee_events.profile_id set), and
+--    left a platform_reviews row. No PENDING, AWAITING_PAYMENT, CONFIRMED,
+--    IN_PROGRESS, or DISPUTED booking.
+--    purge_account_owned_rows(user), then delete the auth user.
+--    Expect: both succeed. payments, project_connections, bookings, change_orders,
+--    estimate_events, and signup_fee_events row counts are unchanged.
+--    signup_fee_charges.profile_id is null and amount_cents is still 999.
+--    estimate_events.actor_id and signup_fee_events.profile_id stay the old uuid.
+--    The user's platform_reviews row is removed by the profiles cascade.
+--    A signed-in non-admin DELETE FROM platform_reviews still raises
+--    'only an admin can delete a platform review'.
+--    An admin delete still succeeds. A service-role delete (auth.uid() null) succeeds.

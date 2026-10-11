@@ -9,6 +9,10 @@
 -- to the live bodies (no owner-clear skip, no purge allowance).
 -- Re-adds audit_logs_actor_id_fkey ON DELETE SET NULL. That ADD fails if an
 -- actor uuid no longer matches a profile. That is intentional.
+-- Re-adds estimate_events_actor_id_fkey and signup_fee_events_profile_id_fkey
+-- ON DELETE SET NULL NOT VALID, because deleted accounts leave dangling ids.
+-- Restores protect_platform_review to the live body: DELETE requires an admin
+-- even when auth.uid() is null.
 -- Does not replace match_project, respond_change_order, or recompute_booking_money.
 
 ALTER TABLE public.audit_logs
@@ -314,5 +318,67 @@ BEGIN
     RETURN NEW;
   END IF;
   RAISE EXCEPTION 'signup fee charges cannot be written from the client';
+END;
+$function$;
+
+-- F5 rollback. NOT VALID because deleted accounts leave dangling actor/profile ids.
+ALTER TABLE public.estimate_events
+  ADD CONSTRAINT estimate_events_actor_id_fkey
+  FOREIGN KEY (actor_id) REFERENCES public.profiles(id) ON DELETE SET NULL NOT VALID;
+ALTER TABLE public.signup_fee_events
+  ADD CONSTRAINT signup_fee_events_profile_id_fkey
+  FOREIGN KEY (profile_id) REFERENCES public.profiles(id) ON DELETE SET NULL NOT VALID;
+
+-- Live protect_platform_review. DELETE blocks every non-admin, including
+-- unsigned server-side callers.
+CREATE OR REPLACE FUNCTION public.protect_platform_review()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF auth.uid() IS NULL THEN
+      RAISE EXCEPTION 'sign in to leave a review';
+    END IF;
+
+    NEW.user_id := auth.uid();
+    NEW.display_name := btrim(NEW.display_name);
+    NEW.body := btrim(NEW.body);
+    NEW.city := NULLIF(btrim(COALESCE(NEW.city, '')), '');
+
+    IF public.text_contains_contact_info(NEW.display_name)
+       OR public.text_contains_contact_info(NEW.body)
+       OR public.text_contains_contact_info(COALESCE(NEW.city, '')) THEN
+      RAISE EXCEPTION '%', public.contact_info_blocked_message();
+    END IF;
+
+    -- Auto-approve valid signed-in reviews. Admins can still reject later.
+    IF NOT public.is_admin() OR NEW.status IS DISTINCT FROM 'PENDING' THEN
+      NEW.status := 'APPROVED';
+    END IF;
+
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    IF NOT public.is_admin() THEN
+      RAISE EXCEPTION 'only an admin can change a platform review';
+    END IF;
+    NEW.id := OLD.id;
+    NEW.user_id := OLD.user_id;
+    NEW.created_at := OLD.created_at;
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN
+    IF NOT public.is_admin() THEN
+      RAISE EXCEPTION 'only an admin can delete a platform review';
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  RETURN NULL;
 END;
 $function$;

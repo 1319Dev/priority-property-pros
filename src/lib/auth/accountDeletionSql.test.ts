@@ -36,6 +36,9 @@ describe("account deletion SQL", () => {
     expect(purge).not.toMatch(/DELETE FROM public\.signup_fee_charges/);
     expect(purge).not.toMatch(/DELETE FROM public\.connection_checkout_sessions/);
     expect(purge).not.toMatch(/DELETE FROM public\.audit_logs/);
+    expect(purge).not.toMatch(/DELETE FROM public\.change_orders/);
+    expect(purge).not.toMatch(/DELETE FROM public\.estimate_events/);
+    expect(purge).not.toMatch(/DELETE FROM public\.signup_fee_events/);
     expect(purge).not.toMatch(/selected_contractor_profile_id = NULL/);
     expect(purge).not.toMatch(/fee_cents\s*=/);
     expect(migration).not.toMatch(/CREATE OR REPLACE FUNCTION public\.match_project/);
@@ -62,6 +65,11 @@ describe("account deletion SQL", () => {
     expect(signupCharges).toMatch(/NEW\.profile_id IS NULL/);
     expect(signupCharges).toMatch(/register_signup_fee_checkout/);
     expect(migration).toMatch(/DROP CONSTRAINT IF EXISTS audit_logs_actor_id_fkey/);
+    expect(migration).toMatch(/DROP CONSTRAINT IF EXISTS estimate_events_actor_id_fkey/);
+    expect(migration).toMatch(/DROP CONSTRAINT IF EXISTS signup_fee_events_profile_id_fkey/);
+    const reviewDelete = deleteBranch(functionBody(migration, "protect_platform_review"));
+    expect(reviewDelete).toMatch(/auth\.uid\(\) IS NOT NULL AND NOT public\.is_admin\(\)/);
+    expect(reviewDelete).toMatch(/only an admin can delete a platform review/);
   });
 
   it("rolls back to the deleting purge and drops the purge allow-list", () => {
@@ -81,5 +89,21 @@ describe("account deletion SQL", () => {
     expect(signupCharges).toMatch(/signup fee charges cannot be written from the client/);
     expect(rollback).toMatch(/ADD CONSTRAINT audit_logs_actor_id_fkey/);
     expect(rollback).toMatch(/ON DELETE SET NULL/);
+    expect(rollback).toMatch(
+      /ADD CONSTRAINT estimate_events_actor_id_fkey[\s\S]*ON DELETE SET NULL NOT VALID/,
+    );
+    expect(rollback).toMatch(
+      /ADD CONSTRAINT signup_fee_events_profile_id_fkey[\s\S]*ON DELETE SET NULL NOT VALID/,
+    );
+    const reviewDelete = deleteBranch(functionBody(rollback, "protect_platform_review"));
+    expect(reviewDelete).toMatch(/IF NOT public\.is_admin\(\) THEN/);
+    expect(reviewDelete).toMatch(/only an admin can delete a platform review/);
+    expect(reviewDelete).not.toMatch(/auth\.uid\(\) IS NOT NULL/);
   });
 });
+
+function deleteBranch(body: string): string {
+  const start = body.indexOf("IF TG_OP = 'DELETE'");
+  expect(start).toBeGreaterThan(-1);
+  return body.slice(start);
+}
