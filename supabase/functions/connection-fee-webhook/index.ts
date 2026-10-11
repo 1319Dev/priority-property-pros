@@ -18,6 +18,13 @@ import {
   stripeTestModeFromFlags,
 } from "../_shared/stripeEnv.ts";
 import { verifyStripeSignature } from "../_shared/webhook.ts";
+import {
+  isConnectionRefundObject,
+  manualReviewOnly,
+  recordRefundVerification,
+  refundConnectionFeeIfNeeded,
+  stripeRefundApi,
+} from "../_shared/connectionRefund.ts";
 
 function stripeObject(event: { data?: { object?: Record<string, unknown> } }): Record<string, unknown> {
   return event.data?.object ?? {};
@@ -55,6 +62,13 @@ Deno.serve(async (req) => {
   const obj = stripeObject(event);
   const metadata = (obj.metadata ?? {}) as Record<string, string>;
   const checkoutId = String(obj.id ?? "");
+
+  // Stripe refund events for our own automatic refunds: record what Stripe says (independent verification).
+  if (isConnectionRefundObject(obj)) {
+    const verified = await recordRefundVerification(restRpc, obj, `webhook:${type}`);
+    if (verified.error) return json({ error: verified.error }, 500);
+    return json({ ok: true, refund_verified: true, result: verified.data, contact_unlocked: false });
+  }
 
   if (metadata.ppp_kind && metadata.ppp_kind !== "connection_fee") {
     return json({
@@ -123,6 +137,16 @@ Deno.serve(async (req) => {
       p_stripe_checkout_session_id: checkoutId,
       p_reason: "mismatched_metadata",
     });
+    // Integrity failure: record for admin review, never auto-refund.
+    await refundConnectionFeeIfNeeded(restRpc, manualReviewOnly, {
+      checkoutSessionId: checkoutId,
+      paymentIntentId: stripePaymentIntentId(obj.payment_intent),
+      amountCents: Number(obj.amount_total ?? 0),
+      currency: String(obj.currency ?? ""),
+      livemode: Boolean(obj.livemode ?? event.livemode),
+      reason: "mismatched_metadata",
+      auto: false,
+    });
     return json({ error: "mismatched metadata", needs_refund: true, result: flagged.data, contact_unlocked: false }, 400);
   }
 
@@ -142,9 +166,53 @@ Deno.serve(async (req) => {
       p_stripe_checkout_session_id: checkoutId,
       p_reason: reason,
     });
+    // Integrity failure (wrong price, amount, currency, or session): admin review only, no auto-refund.
+    await refundConnectionFeeIfNeeded(restRpc, manualReviewOnly, {
+      checkoutSessionId: checkoutId,
+      paymentIntentId: stripePaymentIntentId(retrieved.payment_intent) ?? stripePaymentIntentId(obj.payment_intent),
+      amountCents: Number(retrieved.amount_total ?? 0),
+      currency: String(retrieved.currency ?? ""),
+      livemode: Boolean(retrieved.livemode ?? obj.livemode ?? event.livemode),
+      reason,
+      auto: false,
+    });
     return json({ error: message, needs_refund: true, result: flagged.data, contact_unlocked: false }, 400);
   }
   const paymentIntentId = stripePaymentIntentId(retrieved.payment_intent) ?? stripePaymentIntentId(obj.payment_intent);
+  const paidLivemode = Boolean(retrieved.livemode ?? obj.livemode ?? event.livemode);
+  const refunds = stripeRefundApi(stripeSecret);
+  const refundInput = {
+    checkoutSessionId: checkoutId,
+    paymentIntentId,
+    amountCents: validated.amountCents,
+    currency: validated.currency,
+    livemode: paidLivemode,
+  };
+
+  // Re-validate the connection before granting anything. A cancelled, closed, blocked, or otherwise
+  // unavailable connection is refunded instead of fulfilled. PAID connections always pass here.
+  const validity = await restRpc("connection_checkout_session_validity", {
+    p_stripe_checkout_session_id: checkoutId,
+  });
+  if (validity.error) return json({ error: validity.error, contact_unlocked: false }, 500);
+  const valid = (validity.data ?? {}) as { ok?: boolean; reason?: string | null };
+  if (valid.ok !== true) {
+    const refunded = await refundConnectionFeeIfNeeded(restRpc, refunds, {
+      ...refundInput,
+      reason: `connection_unavailable:${valid.reason ?? "unknown"}`,
+    });
+    return json({
+      ok: refunded.error == null,
+      paid: false,
+      contact_unlocked: false,
+      needs_refund: true,
+      refund: refunded,
+      duplicate,
+      payments_live: false,
+      charges_live: false,
+    }, refunded.error == null ? 200 : 500);
+  }
+
   const fulfilled = await restRpc("fulfill_connection_fee_checkout", {
     p_stripe_checkout_session_id: checkoutId,
     p_processor_event_id: event.id ?? `webhook:${checkoutId}`,
@@ -159,9 +227,18 @@ Deno.serve(async (req) => {
     p_stripe_payment_intent_id: paymentIntentId,
   });
   if (fulfilled.error) return json({ error: fulfilled.error, contact_unlocked: false, duplicate }, 400);
+
+  // Paid but not delivered (reservation expired, activation unpaid, entitlement failed), or a second paid
+  // session on an already PAID connection. The database decides; a delivered session is never refunded.
+  const refunded = await refundConnectionFeeIfNeeded(restRpc, refunds, refundInput);
+  if (refunded.refund && refunded.error) {
+    // 500 makes Stripe retry this event; the next attempt reuses the same refund row.
+    return json({ error: "refund pending retry", refund: refunded, contact_unlocked: false, duplicate }, 500);
+  }
   return json({
     ok: true,
     result: fulfilled.data,
+    refund: refunded.refund ? refunded : null,
     duplicate,
     payments_live: false,
     charges_live: false,
