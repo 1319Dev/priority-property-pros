@@ -1,4 +1,4 @@
--- Rolls back 20261019600001_priority_help.sql.
+-- Rolls back 20261019700001_priority_help.sql.
 -- Drops only objects that migration created. Does not restore dropped data.
 -- Does not change is_admin(), purge_account_owned_rows(), fees, or Stripe.
 
@@ -34,6 +34,16 @@ BEGIN
   END IF;
 END $$;
 
+-- Unschedule the retention job. pg_cron itself stays installed.
+DO $$
+BEGIN
+  IF to_regclass('cron.job') IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'priority-help-retention') THEN
+      PERFORM cron.unschedule('priority-help-retention');
+    END IF;
+  END IF;
+END $$;
+
 DROP TRIGGER IF EXISTS support_purge_on_profile_delete ON public.profiles;
 DROP TRIGGER IF EXISTS support_conversations_set_updated_at ON public.support_conversations;
 DROP TRIGGER IF EXISTS support_kb_articles_set_updated_at ON public.support_kb_articles;
@@ -46,6 +56,8 @@ DROP TRIGGER IF EXISTS support_guest_secrets_one_active ON public.support_guest_
 DROP FUNCTION IF EXISTS public.admin_support_set_settings(boolean, boolean, integer, bigint);
 DROP FUNCTION IF EXISTS public.admin_support_settings();
 DROP FUNCTION IF EXISTS public.admin_support_purge_expired();
+DROP FUNCTION IF EXISTS public.support_purge_expired_auto();
+DROP FUNCTION IF EXISTS public.support_purge_expired_core(uuid);
 DROP FUNCTION IF EXISTS public.admin_support_set_retention(integer);
 DROP FUNCTION IF EXISTS public.admin_support_canned_delete(uuid);
 DROP FUNCTION IF EXISTS public.admin_support_canned_save(uuid, text, text);

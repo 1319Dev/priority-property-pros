@@ -235,7 +235,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public._ph_ok(boolean, text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION public._ph_raises(text, text) TO PUBLIC;
 
-\ir ../migrations/20261019600001_priority_help.sql
+\ir ../migrations/20261019700001_priority_help.sql
 
 SELECT public._ph_ok(
   NOT has_table_privilege('anon', 'public.support_conversations', 'SELECT'),
@@ -787,8 +787,11 @@ SELECT public._ph_raises('SELECT public.admin_support_set_settings(true, true, 2
 SELECT public._ph_raises('SELECT public.admin_support_settings()', '42501');
 RESET ROLE;
 UPDATE public.support_settings SET priority_help_enabled = true, ai_answers_enabled = true WHERE id = true;
+-- Guest chats are kept 90 days after their last activity.
 UPDATE public.support_conversations
-SET resolved_at = now() - interval '40 days'
+SET resolved_at = now() - interval '100 days',
+    created_at = now() - interval '120 days',
+    last_message_at = now() - interval '100 days'
 WHERE id = (:'guest_b'::jsonb ->> 'id')::uuid;
 SELECT set_config(
   'request.jwt.claims',
@@ -809,6 +812,33 @@ SELECT public._ph_ok(
 SELECT public._ph_ok(
   EXISTS (SELECT 1 FROM public.audit_logs WHERE action = 'support.purged'),
   'purge writes an audit row'
+);
+
+-- Automatic daily retention (what pg_cron runs).
+INSERT INTO public.support_conversations (id, user_id, status, created_at, last_message_at)
+VALUES
+  ('d0000000-0000-4000-8000-000000000001', NULL, 'ASSISTANT', now() - interval '95 days', now() - interval '91 days'),
+  ('d0000000-0000-4000-8000-000000000002', NULL, 'ASSISTANT', now() - interval '95 days', now() - interval '89 days'),
+  ('d0000000-0000-4000-8000-000000000003', NULL, 'OPEN', now() - interval '200 days', now() - interval '200 days');
+UPDATE public.support_conversations SET reference_number = 20001 WHERE id = 'd0000000-0000-4000-8000-000000000003';
+SELECT public._ph_ok(
+  (public.support_purge_expired_auto() ->> 'guest_conversations')::int = 1,
+  'automatic purge removes exactly the guest chat idle more than 90 days'
+);
+SELECT public._ph_ok(
+  NOT EXISTS (SELECT 1 FROM public.support_conversations WHERE id = 'd0000000-0000-4000-8000-000000000001')
+  AND EXISTS (SELECT 1 FROM public.support_conversations WHERE id = 'd0000000-0000-4000-8000-000000000002')
+  AND EXISTS (SELECT 1 FROM public.support_conversations WHERE id = 'd0000000-0000-4000-8000-000000000003'),
+  'a guest chat inside 90 days and an open guest ticket are kept'
+);
+SELECT public._ph_ok(
+  EXISTS (SELECT 1 FROM public.audit_logs WHERE action = 'support.purged' AND actor_id IS NULL AND (metadata ->> 'automatic') = 'true'),
+  'automatic purge writes an audit row with no actor'
+);
+SELECT public._ph_ok(
+  NOT has_function_privilege('authenticated', 'public.support_purge_expired_auto()', 'EXECUTE')
+  AND NOT has_function_privilege('anon', 'public.support_purge_expired_core(uuid)', 'EXECUTE'),
+  'clients cannot run the automatic purge'
 );
 SELECT public._ph_ok(
   EXISTS (SELECT 1 FROM public.audit_logs WHERE action = 'support.escalated'),

@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const migrationName = "20261019600001_priority_help.sql";
+const migrationName = "20261019700001_priority_help.sql";
 
 function read(relative: string): string {
   return readFileSync(path.join(root, relative), "utf8");
@@ -20,14 +20,17 @@ function executable(sql: string): string {
 describe("Priority Help migration contract", () => {
   const sql = read(`supabase/migrations/${migrationName}`);
   const body = executable(sql);
-  const rollback = read("supabase/rollbacks/20261019600001_priority_help_rollback.sql");
+  const rollback = read("supabase/rollbacks/20261019700001_priority_help_rollback.sql");
   const roleTest = read("supabase/tests/priority_help.sql");
 
   it("is additive and does not replace existing functions", () => {
     expect(migrationName > "20261016000001").toBe(true);
     expect(migrationName > "20261019400001").toBe(true);
-    // 20261019500001 belongs to the Stripe live price-id PR.
+    // 20261019500001 belongs to the Stripe live price-id PR (#123) and
+    // 20261019600001 to admin profile edits (#125).
     expect(migrationName.startsWith("20261019500001")).toBe(false);
+    expect(migrationName.startsWith("20261019600001")).toBe(false);
+    expect(migrationName.startsWith("20261019700001")).toBe(true);
     expect(body).not.toMatch(/CREATE OR REPLACE FUNCTION/);
     expect(body).not.toMatch(/ALTER FUNCTION public\.is_admin/);
     expect(body).not.toMatch(/purge_account_owned_rows/);
@@ -35,8 +38,10 @@ describe("Priority Help migration contract", () => {
     expect(body).not.toMatch(/charges_live\s*=/);
     expect(body).not.toMatch(/signup_fee_cents\s*=/);
     expect(body).not.toMatch(/contractor_fee_bps/);
-    expect(body).not.toMatch(/CREATE EXTENSION(?! IF NOT EXISTS pgcrypto)/);
-    expect(body).not.toMatch(/cron\.schedule/);
+    expect(body).not.toMatch(/CREATE EXTENSION(?! IF NOT EXISTS (pgcrypto|pg_cron);)/);
+    // The only scheduled job is Priority Help retention.
+    expect(body.match(/cron\.schedule\(/g)).toHaveLength(1);
+    expect(body).toMatch(/cron\.schedule\('priority-help-retention', '17 8 \* \* \*', 'SELECT public\.support_purge_expired_auto\(\)'\)/);
   });
 
   it("keeps guest secrets and internal notes off anon and customer reads", () => {
@@ -156,5 +161,15 @@ describe("Priority Help migration contract", () => {
     expect(roleTest).toMatch(/contractor sees only their conversation/);
     expect(roleTest).toMatch(/other customer sees no support rows/);
     expect(roleTest).toMatch(/aal2 admin lists the open queue/);
+  });
+
+  it("purges guest chats after 90 days and signed-in chats after 365 days, daily", () => {
+    expect(body).toMatch(/guest_retention_days integer NOT NULL DEFAULT 90/);
+    expect(body).toMatch(/retention_days integer NOT NULL DEFAULT 365/);
+    expect(body).toMatch(/CREATE FUNCTION public\.support_purge_expired_core\(p_actor uuid\)/);
+    expect(body).toMatch(/REVOKE ALL ON FUNCTION public\.support_purge_expired_auto\(\) FROM PUBLIC, anon, authenticated/);
+    expect(body).toMatch(/CREATE EXTENSION IF NOT EXISTS pg_cron;/);
+    expect(rollback).toMatch(/cron\.unschedule\('priority-help-retention'\)/);
+    expect(rollback).toMatch(/DROP FUNCTION IF EXISTS public\.support_purge_expired_core\(uuid\)/);
   });
 });

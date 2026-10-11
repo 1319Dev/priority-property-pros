@@ -1,8 +1,17 @@
 -- Priority Help (customer support). Additive only.
 --
--- Version 20261019600001. 20261019500001 is taken by the Stripe live price-id
--- PR (#123); this file was renumbered on 2026-10-11. No other open PR uses
--- 20261019600001.
+-- Version 20261019700001. 20261019500001 is taken by the Stripe live price-id
+-- PR (#123) and 20261019600001 by admin profile edits (#125); this file was
+-- renumbered on 2026-10-11. Checked against main and all 41 open PR branches:
+-- no other file uses 20261019700001.
+--
+-- Automatic retention: guest conversations are deleted 90 days after their
+-- last activity (once no ticket is still open), signed-in conversations 365
+-- days after they are resolved or closed. support_purge_expired_auto() runs
+-- daily at 08:17 UTC through pg_cron when that extension is available; the
+-- migration enables pg_cron (CREATE EXTENSION IF NOT EXISTS) and schedules
+-- job 'priority-help-retention'. Without pg_cron it raises a WARNING and the
+-- admin "Purge expired" button remains the only purge.
 --
 -- Ships OFF. support_settings.priority_help_enabled and ai_answers_enabled
 -- both default false. While priority_help_enabled is false every
@@ -206,6 +215,7 @@ CREATE TABLE public.support_rate_limits (
 CREATE TABLE public.support_settings (
   id boolean PRIMARY KEY DEFAULT true,
   retention_days integer NOT NULL DEFAULT 365,
+  guest_retention_days integer NOT NULL DEFAULT 90,
   daily_ai_answer_cap integer NOT NULL DEFAULT 200,
   priority_help_enabled boolean NOT NULL DEFAULT false,
   ai_answers_enabled boolean NOT NULL DEFAULT false,
@@ -214,6 +224,7 @@ CREATE TABLE public.support_settings (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT support_settings_singleton_chk CHECK (id),
   CONSTRAINT support_settings_retention_chk CHECK (retention_days BETWEEN 30 AND 3650),
+  CONSTRAINT support_settings_guest_retention_chk CHECK (guest_retention_days BETWEEN 7 AND 365),
   CONSTRAINT support_settings_ai_cap_chk CHECK (daily_ai_answer_cap BETWEEN 0 AND 100000),
   CONSTRAINT support_settings_ai_budget_chk CHECK (daily_ai_budget_usd_micros BETWEEN 0 AND 100000000)
 );
@@ -1767,6 +1778,7 @@ BEGIN
     'daily_ai_answer_cap', v_settings.daily_ai_answer_cap,
     'daily_ai_budget_usd_micros', v_settings.daily_ai_budget_usd_micros,
     'retention_days', v_settings.retention_days,
+    'guest_retention_days', v_settings.guest_retention_days,
     'calls_24h', (SELECT count(*) FROM public.support_ai_usage WHERE created_at >= now() - interval '24 hours'),
     'spent_24h_usd_micros', (SELECT coalesce(sum(cost_usd_micros), 0) FROM public.support_ai_usage WHERE created_at >= now() - interval '24 hours'),
     'spent_30d_usd_micros', (SELECT coalesce(sum(cost_usd_micros), 0) FROM public.support_ai_usage WHERE created_at >= now() - interval '30 days')
@@ -1819,7 +1831,81 @@ BEGIN
 END;
 $$;
 
--- Manual only. Not scheduled. Does not delete open tickets.
+-- Retention. Shared by the daily job and the admin button.
+--   Guests (user_id IS NULL): deleted guest_retention_days (default 90) after
+--   the last message, unless a ticket is still OPEN, IN_PROGRESS, or
+--   WAITING_ON_CUSTOMER.
+--   Signed-in users: RESOLVED or CLOSED conversations are deleted
+--   retention_days (default 365) after they were resolved or closed; an
+--   AI-only (ASSISTANT) conversation is deleted retention_days after its
+--   last message.
+-- Messages, assignments, and guest secrets cascade. support_ai_usage keeps
+-- token counts and cost with no conversation link. Old rate-limit rows go too.
+CREATE FUNCTION public.support_purge_expired_core(p_actor uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_days integer;
+  v_guest_days integer;
+  v_guests integer;
+  v_users integer;
+BEGIN
+  SELECT retention_days, guest_retention_days INTO v_days, v_guest_days
+  FROM public.support_settings WHERE id = true;
+  v_days := coalesce(v_days, 365);
+  v_guest_days := coalesce(v_guest_days, 90);
+
+  DELETE FROM public.support_conversations
+  WHERE user_id IS NULL
+    AND status IN ('ASSISTANT', 'RESOLVED', 'CLOSED')
+    AND greatest(coalesce(last_message_at, created_at), coalesce(closed_at, resolved_at, created_at), created_at)
+        < now() - make_interval(days => v_guest_days);
+  GET DIAGNOSTICS v_guests = ROW_COUNT;
+
+  DELETE FROM public.support_conversations
+  WHERE user_id IS NOT NULL
+    AND (
+      (status IN ('RESOLVED', 'CLOSED')
+        AND coalesce(closed_at, resolved_at, updated_at) < now() - make_interval(days => v_days))
+      OR (status = 'ASSISTANT'
+        AND coalesce(last_message_at, created_at) < now() - make_interval(days => v_days))
+    );
+  GET DIAGNOSTICS v_users = ROW_COUNT;
+
+  DELETE FROM public.support_rate_limits
+  WHERE window_started_at < now() - interval '2 days';
+
+  PERFORM public.write_audit_log(
+    p_actor,
+    'support.purged',
+    'support_conversation',
+    NULL,
+    jsonb_build_object(
+      'guest_conversations', v_guests,
+      'user_conversations', v_users,
+      'guest_retention_days', v_guest_days,
+      'retention_days', v_days,
+      'automatic', p_actor IS NULL
+    )
+  );
+  RETURN jsonb_build_object('guest_conversations', v_guests, 'user_conversations', v_users);
+END;
+$$;
+
+-- Called by pg_cron only. No client grants.
+CREATE FUNCTION public.support_purge_expired_auto()
+RETURNS jsonb
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT public.support_purge_expired_core(NULL);
+$$;
+
+-- The admin button runs the same rules now instead of waiting for the job.
 CREATE FUNCTION public.admin_support_purge_expired()
 RETURNS integer
 LANGUAGE plpgsql
@@ -1827,25 +1913,12 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_days integer;
-  v_count integer;
+  v_result jsonb;
 BEGIN
   PERFORM public.support_require_admin();
-  SELECT retention_days INTO v_days FROM public.support_settings WHERE id = true;
-  DELETE FROM public.support_conversations
-  WHERE status IN ('RESOLVED', 'CLOSED')
-    AND coalesce(closed_at, resolved_at, updated_at) < now() - make_interval(days => v_days);
-  GET DIAGNOSTICS v_count = ROW_COUNT;
-  DELETE FROM public.support_rate_limits
-  WHERE window_started_at < now() - interval '2 days';
-  PERFORM public.write_audit_log(
-    auth.uid(),
-    'support.purged',
-    'support_conversation',
-    NULL,
-    jsonb_build_object('conversations', v_count, 'retention_days', v_days)
-  );
-  RETURN v_count;
+  v_result := public.support_purge_expired_core(auth.uid());
+  RETURN coalesce((v_result ->> 'guest_conversations')::integer, 0)
+    + coalesce((v_result ->> 'user_conversations')::integer, 0);
 END;
 $$;
 
@@ -1964,6 +2037,8 @@ REVOKE ALL ON FUNCTION public.support_desk_availability() FROM PUBLIC, anon, aut
 REVOKE ALL ON FUNCTION public.support_public_pricing() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.support_search_kb(text, integer) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.purge_support_on_profile_delete() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.support_purge_expired_core(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.support_purge_expired_auto() FROM PUBLIC, anon, authenticated;
 
 REVOKE ALL ON FUNCTION public.support_service_open(uuid, text, text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.support_service_history(uuid, text, uuid) FROM PUBLIC, anon, authenticated;
@@ -2094,6 +2169,26 @@ BEGIN
     $policy$;
   EXCEPTION WHEN duplicate_object THEN
     NULL;
+  END;
+END $$;
+
+-- ---------------------------------------------------------------------------
+-- Daily retention job (pg_cron). 08:17 UTC is 3:17 AM Central (CDT).
+-- ---------------------------------------------------------------------------
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'pg_cron') THEN
+    RAISE WARNING 'pg_cron is not available: Priority Help retention runs only from the admin Purge expired button';
+    RETURN;
+  END IF;
+  BEGIN
+    CREATE EXTENSION IF NOT EXISTS pg_cron;
+    IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'priority-help-retention') THEN
+      PERFORM cron.unschedule('priority-help-retention');
+    END IF;
+    PERFORM cron.schedule('priority-help-retention', '17 8 * * *', 'SELECT public.support_purge_expired_auto()');
+  EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING 'could not schedule Priority Help retention with pg_cron (%): schedule it manually', SQLERRM;
   END;
 END $$;
 
@@ -2321,7 +2416,7 @@ COMMENT ON TABLE public.support_agent_status IS
 COMMENT ON TABLE public.support_rate_limits IS
   'Server-side counters keyed by a hash, never a raw IP.';
 COMMENT ON TABLE public.support_settings IS
-  'Feature flags (both default off), retention days, the daily AI answer cap, and the daily AI dollar budget in micro-dollars. admin_support_purge_expired is manual and is not scheduled. Cap 0 or budget 0 stops model answers.';
+  'Feature flags (both default off), retention days (365 signed-in, 90 guests, purged daily by pg_cron job priority-help-retention), the daily AI answer cap, and the daily AI dollar budget in micro-dollars. admin_support_purge_expired is manual and is not scheduled. Cap 0 or budget 0 stops model answers.';
 COMMENT ON TABLE public.support_ai_usage IS
   'One row per model call with tokens and cost in micro-dollars. No client grants. Feeds the daily dollar budget and cost monitoring.';
 
