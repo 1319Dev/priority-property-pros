@@ -4,6 +4,7 @@ import { notificationCategoryDescription } from "../../lib/marketplace/contracto
 import {
   NOTIFICATION_CATEGORIES,
   NOTIFICATION_CATEGORY_COPY,
+  categoriesForAccount,
   type NotificationCategory,
   type NotificationChannel,
   type PreferenceFlags,
@@ -169,7 +170,9 @@ export function NotificationSettings({
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Settings</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Notification settings</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-500">
-          Choose in-site, push, and email separately for each alert. In-site alerts show in the bell. Push stays off until you enable it.
+          {account_type === "ADMIN"
+            ? "Choose how you hear about new applications, reports, disputes, and payments flagged for refund. In-site alerts show in the bell. Push stays off until you enable it."
+            : "Choose in-site, push, and email separately for each alert. In-site alerts show in the bell. Push stays off until you enable it."}
         </p>
       </header>
 
@@ -214,7 +217,7 @@ export function NotificationSettings({
       {error ? <p className="text-sm text-danger-600">{error}</p> : null}
 
       <ul className="space-y-3">
-        {rows.map((row) => {
+        {rows.filter((row) => categoriesForAccount(account_type).includes(row.category)).map((row) => {
           const copy = NOTIFICATION_CATEGORY_COPY[row.category];
           return (
             <li key={row.category} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4">
