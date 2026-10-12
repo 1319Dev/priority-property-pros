@@ -7,6 +7,9 @@ describe("friendlyAdminError", () => {
     expect(friendlyAdminError({ code: "42501", message: "not authorized" }, "Could not load.")).toBe(
       "You need an admin sign-in to do that.",
     );
+    expect(friendlyAdminError({ message: "admin step-up required" }, "Could not approve.")).toBe(
+      "Enter a current authenticator code. This action needs a code from the last 15 minutes.",
+    );
     expect(friendlyAdminError({ message: "duplicate key value violates unique constraint \"profiles_pkey\"" }, "Could not save.")).toBe(
       "That record already exists.",
     );

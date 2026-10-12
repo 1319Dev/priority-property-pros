@@ -3,6 +3,7 @@ import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/Input";
 import { FormError } from "../../../lib/auth/AuthCard";
 import {
+  ADMIN_STEP_UP_MAX_MINUTES,
   canUnenrollVerifiedFactor,
   digitsOnly,
 } from "../../../lib/auth/adminMfa";
@@ -131,13 +132,23 @@ export function AdminTwoFactorPage() {
   return (
     <div className="max-w-lg space-y-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Admin</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Admin</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Two-factor sign-in</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-700">
           Sign-in codes come from an authenticator app on a device you keep. Supabase does not issue recovery
           codes for these. A second device is the backup.
         </p>
       </header>
+
+      <aside className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4 text-sm leading-relaxed text-ink-700">
+        <p className="font-semibold text-forest-800">Requirement is off.</p>
+        <p className="mt-2">
+          Password sign-in still opens admin. After an owner turns the requirement on, approvals, rejections, contact
+          grant and revoke, photo and review decisions, and account flags also need a code from the last{" "}
+          {ADMIN_STEP_UP_MAX_MINUTES} minutes. Suspensions and refunds are not in the product yet. When they are added
+          they use that same check. This page does not turn the requirement on.
+        </p>
+      </aside>
 
       {verified.length < 2 ? (
         <aside className="rounded-3xl border border-gold-500/50 bg-cream-100 px-5 py-4 text-sm leading-relaxed text-ink-700">

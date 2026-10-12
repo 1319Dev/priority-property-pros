@@ -7,7 +7,12 @@ export type AdminIconName =
   | "bookings"
   | "security"
   | "support"
+  | "audit"
   | "account"
+  | "homeowners"
+  | "contractors"
+  | "projects"
+  | "payments"
   | "search"
   | "menu"
   | "close";
@@ -76,11 +81,46 @@ function paths(name: AdminIconName) {
           <path d="M8.5 10V8a3.5 3.5 0 0 1 7 0v2" {...stroke} />
         </>
       );
+    case "audit":
+      return (
+        <>
+          <path d="M7 4.5h10A1.5 1.5 0 0 1 18.5 6v12.5a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 18.5V6A1.5 1.5 0 0 1 7 4.5Z" {...stroke} />
+          <path d="M8.5 9h7M8.5 12.5h7M8.5 16h4" {...stroke} />
+        </>
+      );
     case "account":
       return (
         <>
           <circle cx="12" cy="8" r="3.2" {...stroke} />
           <path d="M5.5 19.2a6.5 6.5 0 0 1 13 0" {...stroke} />
+        </>
+      );
+    case "homeowners":
+      return (
+        <>
+          <path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-4.2v-5.2H9.7V20.5H5.5A1.5 1.5 0 0 1 4 19v-8.5Z" {...stroke} />
+        </>
+      );
+    case "contractors":
+      return (
+        <>
+          <circle cx="8" cy="8" r="2.4" {...stroke} />
+          <circle cx="16" cy="8.5" r="2.1" {...stroke} />
+          <path d="M3.8 18.5a4.4 4.4 0 0 1 8.4 0M12.2 18.5a3.8 3.8 0 0 1 7.2 0" {...stroke} />
+        </>
+      );
+    case "projects":
+      return (
+        <>
+          <path d="M4 8.5h6l1.6-2h8.4v11.5H4V8.5Z" {...stroke} />
+          <path d="M4 11h16" {...stroke} />
+        </>
+      );
+    case "payments":
+      return (
+        <>
+          <rect x="3.5" y="6" width="17" height="12" rx="2" {...stroke} />
+          <path d="M3.5 10h17" {...stroke} />
         </>
       );
     case "search":

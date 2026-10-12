@@ -94,6 +94,10 @@ export type SignUpInput = {
   phone?: string;
   accountType: PublicSignupType;
   acceptedTerms: boolean;
+  /** Sent only when legal acceptance is required. The server ignores it while that setting is off. */
+  affirmedAge18?: boolean;
+  /** Client-only. Age is not required unless the acceptance gate is on. */
+  ageAffirmationRequired?: boolean;
   businessName?: string;
   primaryTrade?: string;
   serviceArea?: string;

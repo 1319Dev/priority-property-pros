@@ -20,6 +20,11 @@ import {
   loadNotificationRuntimeSecrets,
   type NotificationRuntimeSecrets,
 } from "../_shared/notificationSecrets.ts";
+import { SmtpError, parseMailbox, sendSmtpMail, type SmtpConnect } from "../_shared/smtp.ts";
+
+// Implicit TLS socket for port 465. Deno.connectTls verifies the server
+// certificate against the host name.
+const connectTls: SmtpConnect = async (host, port) => await Deno.connectTls({ hostname: host, port });
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -151,13 +156,13 @@ async function sendEmail(input: {
   secrets: NotificationRuntimeSecrets;
   profile: ProfileRow;
 }): Promise<"sent" | "skipped"> {
-  const apiKey = input.secrets.resendApiKey;
-  if (!apiKey) {
-    console.warn("email skipped: RESEND_API_KEY is not set");
+  const smtp = input.secrets.smtp;
+  if (!smtp.ok) {
+    console.warn(`email skipped: ${smtp.reason}`);
     return "skipped";
   }
   const address = (input.profile.email ?? "").trim();
-  if (!address.includes("@") || /\s/.test(address)) {
+  if (!address.includes("@") || /\s/.test(address) || !parseMailbox(address)) {
     console.warn("email skipped: recipient has no usable address");
     return "skipped";
   }
@@ -244,27 +249,27 @@ async function sendEmail(input: {
     unsubscribeUrl,
   });
   const from = input.secrets.notificationFrom;
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [address],
-      subject: message.subject,
-      html: message.html,
-      text: message.text,
-      headers: {
-        "List-Unsubscribe": `<${unsubscribeUrl}>`,
-        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  try {
+    await sendSmtpMail({
+      config: smtp.config,
+      connect: connectTls,
+      mail: {
+        from,
+        to: address,
+        subject: message.subject,
+        html: message.html,
+        text: message.text,
+        headers: {
+          "List-Unsubscribe": `<${unsubscribeUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
       },
-    }),
-  });
-  if (!res.ok) {
+    });
+  } catch (error) {
+    // Release the dedupe claim so a later retry can send it.
     await deleteEmailLog(input.notification.id);
-    console.warn(`email skipped: resend status ${res.status}`);
+    const detail = error instanceof SmtpError ? `${error.stage} ${error.code}` : "error";
+    console.warn(`email skipped: smtp ${detail}`);
     return "skipped";
   }
   console.warn("email sent");

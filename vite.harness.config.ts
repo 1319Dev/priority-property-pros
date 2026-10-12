@@ -81,6 +81,8 @@ const swaps: Array<{ id: string; match: RegExp; real: string; names: string[] }>
       "respondChangeOrder",
       "submitBookingReview",
       "updateBookingReview",
+      "reportBookingReview",
+      "submitBookingReviewResponse",
       "endContractorJob",
       "acceptOpportunity",
       "requestProjectConnection",
@@ -168,6 +170,17 @@ const swaps: Array<{ id: string; match: RegExp; real: string; names: string[] }>
       "supportAnalytics",
       "setSupportRetention",
       "purgeExpiredSupport",
+    ],
+  },
+  {
+    id: "\0ppp-booking-review-moderation-api",
+    match: /\/admin\/bookingReviewModerationApi(?:\.ts)?$/,
+    real: path.resolve(rootDir, "src/lib/admin/bookingReviewModerationApi.ts"),
+    names: [
+      "adminListBookingReviews",
+      "adminHideBookingReview",
+      "adminRestoreBookingReview",
+      "adminHideBookingReviewResponse",
     ],
   },
 ];
