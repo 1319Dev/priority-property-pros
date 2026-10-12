@@ -22,8 +22,9 @@ describe("custom domain at site root", () => {
     const html = readFileSync(path.join(repoRoot, "index.html"), "utf8");
     expect(html).toMatch(/rel="canonical" href="https:\/\/prioritypropertypros\.com\/"/);
     expect(html).toMatch(/property="og:url" content="https:\/\/prioritypropertypros\.com\/"/);
-    expect(html).toMatch(/property="og:image" content="%BASE_URL%og-image.svg"/);
-    expect(html).toMatch(/twitter:image" content="%BASE_URL%og-image.svg"/);
+    // Social previews need an absolute URL to a raster image (most platforms ignore SVG).
+    expect(html).toMatch(/property="og:image" content="https:\/\/prioritypropertypros\.com\/og-image\.png"/);
+    expect(html).toMatch(/twitter:image" content="https:\/\/prioritypropertypros\.com\/og-image\.png"/);
     expect(html).not.toMatch(/github\.io/);
     expect(html).not.toMatch(/\/priority-property-pros\//);
   });

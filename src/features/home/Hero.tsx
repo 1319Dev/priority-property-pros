@@ -35,7 +35,7 @@ export function Hero() {
         </div>
         <Container className="py-8 sm:py-10 lg:order-1 lg:max-w-none lg:px-0 lg:py-0">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">{HERO_TAGLINE}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">{HERO_TAGLINE}</p>
             <h1
               id="home-hero-heading"
               className="mt-3 max-w-full text-balance font-display text-[2.1rem] leading-[1.08] font-semibold tracking-tight break-words text-forest-800 sm:mt-4 sm:text-4xl sm:leading-[1.12] lg:text-[2.55rem] lg:leading-[1.05] xl:text-[2.8rem]"
