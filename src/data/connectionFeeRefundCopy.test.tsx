@@ -74,7 +74,7 @@ describe("$4.99 Connection Fee refund copy (owner decision 2026-10-11, PR #136)"
   it("keeps the $9.99 activation refund policy unchanged", () => {
     expect(SIGNUP_FEE_NON_REFUNDABLE).toBe("The $9.99 account activation fee is non-refundable.");
     expect(PLATFORM_FEES_NON_REFUNDABLE.startsWith(SIGNUP_FEE_NON_REFUNDABLE)).toBe(true);
-    expect(SIGNUP_TERMS_ACCEPTANCE).toMatch(/\$9\.99 account activation fee is non-refundable\./);
+    expect(SIGNUP_TERMS_ACCEPTANCE).toMatch(/\$9\.99 account activation fee is generally non-refundable once account activation is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception\./);
     for (const file of sourceFiles(srcRoot)) {
       expect(readFileSync(file, "utf8")).not.toMatch(/\$9\.99[^".`]{0,60}refunded automatically/i);
     }

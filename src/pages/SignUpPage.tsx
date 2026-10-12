@@ -11,6 +11,8 @@ import { isPublicSignupType, requestsVerifierSignup } from "../lib/auth/roles";
 import { firstSignupField, validateSignupForm, type SignupField, type SignupFieldErrors } from "../lib/auth/signupForm";
 import type { PublicSignupType } from "../lib/auth/types";
 import { useAuth } from "../lib/auth/useAuth";
+import { SignupAgreementLabel } from "../components/legal/SignupAgreementLabel";
+import { fetchLegalAcceptanceRequired } from "../lib/legal/acceptanceApi";
 import {
   CONTRACTOR_ACCOUNT_DIFFERENCE,
   CONTRACTOR_SIGNUP_LEDE,
@@ -20,7 +22,6 @@ import {
   SIGNUP_BEFORE_CHECKOUT_NOT_LIVE,
   SIGNUP_FEE_CHECKOUT_LIVE_NOTE,
   SIGNUP_FEE_CHECKOUT_NOTE,
-  SIGNUP_TERMS_ACCEPTANCE,
 } from "../data/pricing";
 import { fetchSignupFeeCheckoutFlags } from "../lib/signupFee/api";
 
@@ -57,6 +58,8 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
   const [fieldErrors, setFieldErrors] = useState<SignupFieldErrors>({});
   const [busy, setBusy] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [ageGate, setAgeGate] = useState(false);
+  const [affirmedAge, setAffirmedAge] = useState(false);
   const [checkoutLive, setCheckoutLive] = useState(false);
   const [values, setValues] = useState({
     firstName: "",
@@ -80,6 +83,16 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
       cancelled = true;
     };
   }, [configured]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchLegalAcceptanceRequired().then((on) => {
+      if (!cancelled) setAgeGate(on);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (loading) return <BrandLoader layout="page" label="Loading…" />;
   const customerBecomingPro = account_type === "CUSTOMER" && accountType === "CONTRACTOR";
@@ -140,6 +153,8 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
       phone: values.phone,
       accountType,
       acceptedTerms: accepted,
+      affirmedAge18: ageGate ? affirmedAge : false,
+      ageAffirmationRequired: ageGate,
       businessName: values.businessName,
       primaryTrade: values.primaryTrade,
       serviceArea: values.serviceArea,
@@ -264,6 +279,18 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
             />
           </>
         ) : null}
+        {ageGate ? (
+          <label className="flex items-start gap-3 text-sm text-ink-700">
+            <input
+              type="checkbox"
+              className="mt-1 size-4 accent-forest-800"
+              checked={affirmedAge}
+              onChange={(e) => setAffirmedAge(e.target.checked)}
+              required
+            />
+            <span>I affirm that I am 18 or older.</span>
+          </label>
+        ) : null}
         <label className="flex items-start gap-3 text-sm text-ink-700">
           <input
             type="checkbox"
@@ -272,9 +299,7 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
             onChange={(e) => setAccepted(e.target.checked)}
             required
           />
-          <span>
-            {SIGNUP_TERMS_ACCEPTANCE}
-          </span>
+          <SignupAgreementLabel accountType={accountType} />
         </label>
         {fieldMessages.length > 0 ? (
           <div role="alert" className="rounded-2xl bg-danger-600/10 px-4 py-3 text-sm text-danger-600">

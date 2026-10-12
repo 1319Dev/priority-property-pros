@@ -79,7 +79,7 @@ describe("signup screens", () => {
   it("keeps the existing agreement checkbox and explains the customer fee before checkout", () => {
     renderSignup("/sign-up/customer");
     expect(screen.getByRole("checkbox")).toBeRequired();
-    expect(screen.getByText(SIGNUP_TERMS_ACCEPTANCE)).toBeInTheDocument();
+    expect(screen.getByRole("checkbox").closest("label")).toHaveTextContent(SIGNUP_TERMS_ACCEPTANCE);
     expect(screen.getAllByText(/creating an account does not charge you/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/checkout is not live yet/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/no PPP Connection Fee/i).length).toBeGreaterThan(0);
@@ -90,7 +90,7 @@ describe("signup screens", () => {
     const signUp = vi.fn().mockResolvedValue({ error: null, needsEmailConfirm: true });
     renderSignup("/sign-up/contractor", authValue({ signUp }));
     expect(screen.getByText(/independent pros who want to get hired/i)).toBeInTheDocument();
-    expect(screen.getByText(/\$4\.99 Connection Fee is non-refundable/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/\$4\.99 Connection Fee is non-refundable/i).length).toBeGreaterThan(0);
     await user.type(screen.getByLabelText(/first name/i), "Pat");
     await user.type(screen.getByLabelText(/last name/i), "Lee");
     await user.type(screen.getByLabelText(/^email$/i), "pat@example.com");
