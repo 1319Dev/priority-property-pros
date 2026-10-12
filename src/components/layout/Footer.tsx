@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
-import { COMPANY_NAME, PRODUCT_NAME, SUPPORT_EMAIL } from "../../data/brand";
+import { COMPANY_NAME, PRODUCT_NAME } from "../../data/brand";
 import { FIND_A_PRO_NAV_LABEL, FIND_A_PRO_PATH } from "../../lib/marketplace/findAPro";
 import { SIGNUP_FEE_PUBLIC_NOTE } from "../../data/pricing";
 import { authAwarePostPath, dashboardPath, showContractorSignup } from "../../lib/auth/publicEntry";
 import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 import { useAuth } from "../../lib/auth/useAuth";
 import { Logo } from "../brand/Logo";
+import { LegalFooterLinks } from "../legal/LegalFooterLinks";
 import { Container } from "../ui/Container";
 
 const footerLinks = [
@@ -15,7 +16,6 @@ const footerLinks = [
   { to: "/faq", label: "FAQ" },
   { to: "/contact", label: "Contact" },
   { to: "/reviews", label: "Reviews" },
-  { to: "/reviews", label: "Leave a review" },
   { to: "/trust", label: "Trust & safety" },
 ];
 
@@ -42,11 +42,6 @@ export function Footer() {
             {` `}
             {COMPANY_NAME} is not the contractor, not a franchise, and not affiliated with Angi or Thumbtack.
             {hidePricing ? "" : ` ${SIGNUP_FEE_PUBLIC_NOTE}`}
-          </p>
-          <p className="mt-4">
-            <a className="text-sm font-semibold text-gold-300 underline" href={`mailto:${SUPPORT_EMAIL}`}>
-              {SUPPORT_EMAIL}
-            </a>
           </p>
         </div>
         <nav aria-label="Footer">
@@ -119,9 +114,12 @@ export function Footer() {
         </nav>
       </Container>
       <div className="border-t border-cream-50/10">
-        <Container className="flex flex-col gap-2 py-5 text-xs text-cream-200 sm:flex-row sm:justify-between">
+        <Container className="flex flex-col gap-2 py-5 text-xs text-cream-200 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} {COMPANY_NAME}. All rights reserved.</p>
-          <p>A marketplace, not a crew.</p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <LegalFooterLinks linkClassName="inline-flex min-h-11 items-center text-cream-200 underline hover:text-gold-300" />
+            <p>A marketplace, not a crew.</p>
+          </div>
         </Container>
       </div>
     </footer>

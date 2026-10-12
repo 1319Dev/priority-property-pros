@@ -1,3 +1,9 @@
+import { ADMIN_STEP_UP_DB_ERROR, ADMIN_STEP_UP_MESSAGE } from "../auth/adminMfa";
+
+/** Validation sentences raised by the admin profile editor RPCs. Safe to show as written. */
+const PROFILE_EDITOR_MESSAGE =
+  /^(Enter (a|an|40) |That (email|project|notification|account|approval|photo|timeline|credential|service area)\b|payment records and fee status are not editable here|Please keep communication on Priority Property Pros|Nothing to change\.|Choose a service category\.|Account type is not editable here\.|directory visibility is set by Priority Property Pros|Directory visibility must be|(Profile changes|Location|Notifications|Projects|Services|Service areas|Credentials|Portfolio photos|ZIP codes) must be |Notification choices must be|Each project needs|customer not found|contractor not found|[a-z0-9 ]{2,40} must be \d+ characters or fewer)/;
+
 type AdminErrorLike = { message?: string; code?: string } | null | undefined;
 
 /** Maps a database or API failure to a sentence an admin can act on. The raw text stays in the console. */
@@ -6,6 +12,9 @@ export function friendlyAdminError(error: AdminErrorLike, fallback: string): str
   const code = error?.code ?? "";
   if (raw || code) console.error("Admin request failed", { code, message: raw });
 
+  if (raw.toLowerCase().includes(ADMIN_STEP_UP_DB_ERROR) || raw === ADMIN_STEP_UP_MESSAGE) {
+    return ADMIN_STEP_UP_MESSAGE;
+  }
   if (code === "42501" || /not authorized|only an admin|permission denied/i.test(raw)) {
     return "You need an admin sign-in to do that.";
   }
@@ -25,11 +34,12 @@ export function friendlyAdminError(error: AdminErrorLike, fallback: string): str
     return "That page of activity couldn't be loaded. Refresh and try again.";
   }
   if (
-    /^(You need an admin sign-in to do that\.|Your session expired\.|The server didn't respond|That record already exists\.|That value isn't allowed\.|That page of activity|Supabase is not configured yet\.)/.test(
+    /^(You need an admin sign-in to do that\.|Your session expired\.|The server didn't respond|That record already exists\.|That value isn't allowed\.|That page of activity|Supabase is not configured yet\.|Enter a current authenticator code\.)/.test(
       raw,
     )
   ) {
     return raw;
   }
+  if (PROFILE_EDITOR_MESSAGE.test(raw)) return raw;
   return fallback;
 }

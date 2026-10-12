@@ -27,6 +27,9 @@ vi.mock("../../../lib/marketplace/api", async (importOriginal) => {
     fetchContractorProfileByUser: vi.fn(),
     fetchMyOpportunities: vi.fn(),
     fetchMyBookings: vi.fn(),
+    fetchMyEstimates: vi.fn(async () => []),
+    fetchMyOpportunityLabels: vi.fn(async () => []),
+    fetchProjectSummaries: vi.fn(async () => []),
     endContractorJob: vi.fn(),
   };
 });
@@ -48,6 +51,8 @@ describe("contractor job detail UX", () => {
     expect(page).toMatch(/CONNECT_SINGLE_STEP_COPY/);
     expect(page).toMatch(/!hiredHere &&/);
     expect(page).toMatch(/friendlyEndJobError/);
+    expect(page).toMatch(/connectionActionsOpen/);
+    expect(page).not.toMatch(/3 connection spots available/);
     expect(page).not.toMatch(/>\s*Participate\s*</);
     expect(page).not.toMatch(/Job ended\. History was kept/);
     expect(opportunityNextActions({ opportunityId: "o1", status: "AVAILABLE", projectStatus: "POSTED" })[0]?.label).toBe(
@@ -76,7 +81,7 @@ describe("contractor job detail UX", () => {
     expect(screen.getByRole("button", { name: PASS_SKIP_CONFIRM })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /keep this job/i })).toBeInTheDocument();
     expect(screen.getByText(/passing removes this job from your list/i)).toBeInTheDocument();
-    expect(screen.getByText(/next best-suited contractor can be invited/i)).toBeInTheDocument();
+    expect(screen.getByText(/next matched contractor can be invited/i)).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: /end this job/i })).not.toBeInTheDocument();
   });
 });
@@ -190,6 +195,9 @@ describe("Jobs page after passing a job", () => {
     vi.mocked(marketplaceApi.fetchMyBookings).mockReset();
     vi.mocked(marketplaceApi.endContractorJob).mockReset();
     vi.mocked(marketplaceApi.fetchMyBookings).mockResolvedValue([]);
+    vi.mocked(marketplaceApi.fetchMyEstimates).mockResolvedValue([]);
+    vi.mocked(marketplaceApi.fetchMyOpportunityLabels).mockResolvedValue([]);
+    vi.mocked(marketplaceApi.fetchProjectSummaries).mockResolvedValue([]);
     vi.mocked(marketplaceApi.fetchContractorProfileByUser).mockResolvedValue({
       id: "pro-1",
       profile_id: "user-1",
@@ -208,6 +216,34 @@ describe("Jobs page after passing a job", () => {
     expect(screen.getByText(/you passed on this job/i)).toBeInTheDocument();
     expect(screen.queryByText("Project not found.")).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByText(/connection spots available/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("12 Oak Street")).not.toBeInTheDocument();
+  });
+
+  it("shows an empty-state box on History when there is no job history", async () => {
+    vi.mocked(marketplaceApi.fetchMyOpportunities).mockResolvedValue([]);
+    renderJobsPage();
+    await userEvent.click(await screen.findByRole("button", { name: "History" }));
+    expect(await screen.findByText("No job history yet")).toBeInTheDocument();
+  });
+
+  it("shows the PPP number on a passed job without the street", async () => {
+    vi.mocked(marketplaceApi.fetchMyOpportunities).mockResolvedValue([passedRow]);
+    vi.mocked(marketplaceApi.fetchMyOpportunityLabels).mockResolvedValue([
+      {
+        opportunity_id: "opp-passed",
+        project_id: "proj-hidden",
+        project_title: "Fence repair",
+        project_reference_number: 1004,
+      },
+    ]);
+    renderJobsPage();
+    await userEvent.click(await screen.findByRole("button", { name: "History" }));
+    expect(await screen.findByText("Fence repair")).toBeInTheDocument();
+    expect(screen.getByText("PPP-1004")).toBeInTheDocument();
+    expect(screen.queryByText("Passed job")).not.toBeInTheDocument();
+    expect(screen.queryByText(/connection spots available/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /connect/i })).not.toBeInTheDocument();
   });
 
   it("reloads without a sticky error after Pass succeeds", async () => {

@@ -1,11 +1,14 @@
 import type { ReactNode } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { Logo } from "../brand/Logo";
+import { PriorityHelp } from "../support/PriorityHelp";
 import { AccountMenu } from "../account/AccountMenu";
 import { NotificationBell } from "../notifications/NotificationBell";
 import { useAuth } from "../../lib/auth/useAuth";
 import { displayName } from "../../lib/auth/roles";
-import { SUPPORT_EMAIL } from "../../data/brand";
+import { CONTACT_LINK_LABEL, CONTACT_PATH } from "../../data/brand";
+import { AgreementAcceptancePrompt } from "../legal/AgreementAcceptancePrompt";
+import { LegalFooterLinks } from "../legal/LegalFooterLinks";
 
 export type DashNavItem = {
   to: string;
@@ -58,9 +61,10 @@ export function DashboardShell({
             </nav>
           </div>
           <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
-            <p className="hidden min-w-0 max-w-[7rem] truncate text-xs text-ink-700 min-[420px]:block sm:max-w-none sm:text-sm">
+            {/* Phones show the role only; the name joins from sm up so it is never cut to "Garre…". */}
+            <p className="hidden shrink-0 whitespace-nowrap text-xs text-ink-700 min-[420px]:block sm:max-w-xs sm:truncate sm:text-sm">
               {eyebrow}
-              {name ? ` · ${name}` : ""}
+              {name ? <span className="hidden sm:inline">{` · ${name}`}</span> : null}
             </p>
             <NotificationBell />
             <AccountMenu />
@@ -73,14 +77,16 @@ export function DashboardShell({
         </div>
       ) : null}
       {notice ? <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6">{notice}</div> : null}
+      <AgreementAcceptancePrompt />
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:pb-10">
         {children ?? <Outlet />}
       </main>
-      <p className="mx-auto w-full max-w-6xl break-words px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] text-sm text-ink-500 sm:px-6 lg:pb-6">
-        <a className="font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
-          {SUPPORT_EMAIL}
-        </a>
-      </p>
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-1 break-words px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] text-sm text-ink-500 sm:px-6 lg:pb-6">
+        <Link className="inline-flex min-h-11 items-center font-semibold text-forest-800 underline" to={CONTACT_PATH}>
+          {CONTACT_LINK_LABEL}
+        </Link>
+        <LegalFooterLinks linkClassName="inline-flex min-h-11 items-center font-semibold text-forest-800 underline" />
+      </div>
       <nav
         aria-label="Dashboard"
         className="fixed inset-x-0 bottom-0 z-40 border-t border-forest-800/10 bg-cream-50/95 pb-safe backdrop-blur-md lg:hidden"
@@ -104,6 +110,7 @@ export function DashboardShell({
           ))}
         </ul>
       </nav>
+      <PriorityHelp />
     </div>
   );
 }
@@ -139,7 +146,9 @@ function DashIcon({ label }: { label: string }) {
             ? "M7 4h8l3 3v13H7z M9 12h6 M9 16h4"
             : key === "profile" || key === "account" || key === "people"
               ? "M12 8a3 3 0 1 0 0.01 0 M6 19c1.4-2.6 3.4-4 6-4s4.6 1.4 6 4"
-              : "M5 7h14 M5 12h14 M5 17h10";
+              : key === "billing"
+                ? "M4 7h16v10H4z M4 10h16 M7 14h4"
+                : "M5 7h14 M5 12h14 M5 17h10";
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
       <path d={path} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round" />

@@ -115,10 +115,11 @@ export async function fetchChangeOrders(bookingId) {
 }
 export async function fetchBookingReviews() {
   const params = new URLSearchParams(window.location.search);
-  if (params.get("review") !== "saved") return [];
-  const role = params.get("as") === "contractor" ? "CONTRACTOR" : "CUSTOMER";
-  return [
-    {
+  const asContractor = params.get("as") === "contractor";
+  const rows = [];
+  if (params.get("review") === "saved") {
+    const role = asContractor ? "CONTRACTOR" : "CUSTOMER";
+    rows.push({
       id: "rev-1",
       booking_id: "book-1",
       customer_id: "user-layout",
@@ -133,8 +134,32 @@ export async function fetchBookingReviews() {
       created_at: "2026-10-01T15:00:00.000Z",
       updated_at: "2026-10-03T15:00:00.000Z",
       edited_at: "2026-10-03T15:00:00.000Z",
-    },
-  ];
+    });
+  }
+  if (params.get("partyReview") === "1") {
+    rows.push({
+      id: "rev-other",
+      booking_id: "book-1",
+      customer_id: "user-layout",
+      contractor_profile_id: "pro-1",
+      reviewer_role: asContractor ? "CUSTOMER" : "CONTRACTOR",
+      rating: asContractor ? 2 : 4,
+      body: asContractor
+        ? "The gate was left unfinished and the old posts stayed in the yard."
+        : "The homeowner cleared the side yard before we arrived.",
+      is_verified: true,
+      created_at: "2026-10-02T15:00:00.000Z",
+      hidden_at: params.get("hidden") === "1" ? "2026-10-04T12:00:00.000Z" : null,
+      contractor_response: null,
+    });
+  }
+  return rows;
+}
+export async function reportBookingReview() {
+  return { report_id: "report-1" };
+}
+export async function submitBookingReviewResponse() {
+  return { review_id: "rev-other" };
 }
 export async function fetchHireAgainContractors() {
   return [{ contractor_profile_id: "pro-1", display_label: "Northside Fence Co.", project_title: project.title }];
@@ -552,6 +577,49 @@ export async function adminListPlatformReviews() {
 export async function adminSetPlatformReviewStatus() {
   return undefined;
 }
+export async function adminListBookingReviews() {
+  return [
+    {
+      id: "job-low",
+      booking_id: "book-low",
+      reviewer_role: "CUSTOMER",
+      rating: 2,
+      body: "The gate was left unfinished and the old posts stayed in the yard.",
+      created_at: "2026-10-02T15:00:00.000Z",
+      hidden_at: null,
+      hidden_reason: null,
+      contractor_response: null,
+      contractor_response_at: null,
+      contractor_response_hidden_at: null,
+      contractor_response_hidden_reason: null,
+      reports: [{ reason: "The description does not match the job photos.", created_at: "2026-10-03T15:00:00.000Z" }],
+    },
+    {
+      id: "job-high",
+      booking_id: "book-high",
+      reviewer_role: "CUSTOMER",
+      rating: 5,
+      body: "The fence line is straight and the yard was cleaned up the same day.",
+      created_at: "2026-10-01T15:00:00.000Z",
+      hidden_at: null,
+      hidden_reason: null,
+      contractor_response: "We hauled the scraps the same afternoon.",
+      contractor_response_at: "2026-10-01T18:00:00.000Z",
+      contractor_response_hidden_at: null,
+      contractor_response_hidden_reason: null,
+      reports: [],
+    },
+  ];
+}
+export async function adminHideBookingReview() {
+  return { hidden: true };
+}
+export async function adminRestoreBookingReview() {
+  return { hidden: false };
+}
+export async function adminHideBookingReviewResponse() {
+  return { response_hidden: true };
+}
 export async function fetchPortfolioEditorRows() {
   return [
     {
@@ -699,4 +767,123 @@ export async function fetchAdminDashboardTrends() {
       },
     ],
   };
+}
+
+
+const supportConversation = {
+  id: "conv-1",
+  reference: "PH-10001",
+  status: "OPEN",
+  priority: "HIGH",
+  humanJoined: false,
+  availability: "offline",
+  messages: [
+    { id: "pub", role: "customer", visibility: "public", body: "Please look at my registration.", createdAt: "2026-10-10T15:00:00Z" },
+    { id: "note", role: "admin", visibility: "internal", body: "Asked billing to check the receipt. Customers never see this note.", createdAt: "2026-10-10T15:05:00Z" },
+  ],
+  account: {
+    profileId: "ada",
+    role: "CUSTOMER",
+    accountStatus: "ACTIVE",
+    firstName: "Ada",
+    lastName: "Lovelace",
+    email: "ada@example.com",
+    contractorProfileId: null,
+    businessName: null,
+    profileHref: null,
+  },
+};
+
+export async function listSupportQueue() {
+  return {
+    queue: "open",
+    availability: "offline",
+    rows: [
+      {
+        id: "conv-1",
+        reference: "PH-10001",
+        status: "OPEN",
+        priority: "HIGH",
+        assignedAdminId: null,
+        createdAt: "2026-10-10T15:00:00Z",
+        lastMessageAt: "2026-10-10T15:05:00Z",
+        role: "CUSTOMER",
+        displayName: "Ada Lovelace",
+        guest: false,
+      },
+    ],
+  };
+}
+export async function searchSupport() {
+  return [];
+}
+export async function setSupportPresence(status) {
+  return status;
+}
+export async function heartbeatSupport() {
+  return undefined;
+}
+export async function getSupportConversation() {
+  return supportConversation;
+}
+export async function listCannedResponses() {
+  return [{ id: "c1", title: "Greeting", body: "Hello from Priority Help.", updatedAt: "2026-10-10T12:00:00Z" }];
+}
+export async function replySupport() {
+  return supportConversation;
+}
+export async function noteSupport() {
+  return supportConversation;
+}
+export async function setSupportStatus() {
+  return supportConversation;
+}
+export async function setSupportPriority() {
+  return supportConversation;
+}
+export async function takeoverSupport() {
+  return { ...supportConversation, humanJoined: true };
+}
+export async function listSupportArticles() {
+  return [
+    {
+      id: "a1",
+      slug: "payments-and-fees",
+      title: "Payments and fees",
+      body: "Homeowners and contractors pay a one-time $9.99 activation fee. Connect is $4.99. There is no commission.",
+      status: "PUBLISHED",
+      updatedAt: "2026-10-10T12:00:00Z",
+    },
+  ];
+}
+export async function saveSupportArticle() {
+  return listSupportArticles();
+}
+export async function saveCannedResponse() {
+  return listCannedResponses();
+}
+export async function deleteCannedResponse() {
+  return undefined;
+}
+export async function supportAnalytics() {
+  return {
+    days: 30,
+    timezone: "America/Chicago",
+    opened: 12,
+    withFirstResponse: 9,
+    medianFirstResponseSeconds: 720,
+    byStatus: { OPEN: 3, IN_PROGRESS: 2, RESOLVED: 7 },
+    byDay: [
+      { day: "2026-10-08", opened: 2 },
+      { day: "2026-10-09", opened: 4 },
+      { day: "2026-10-10", opened: 6 },
+    ],
+    availability: "offline",
+  };
+}
+export async function setSupportRetention(days) {
+  return days;
+}
+export async function purgeExpiredSupport() {
+  return 0;
 }

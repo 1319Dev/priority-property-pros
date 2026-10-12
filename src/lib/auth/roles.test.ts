@@ -20,6 +20,12 @@ describe("signup metadata", () => {
     });
     expect(meta.account_type).toBe("CUSTOMER");
     expect(meta.account_type).not.toBe("ADMIN");
+    const versions = JSON.parse(meta.accepted_agreement_versions);
+    expect(versions["terms-of-use"]).toBe(4);
+    expect(versions["privacy-policy"]).toBe(3);
+    expect(meta.affirmed_age_18).toBeUndefined();
+    expect(versions["refund-cancellation"]).toBe(1);
+    expect(versions["contractor-participation"]).toBeUndefined();
   });
 
   it("allows only customer and contractor signup types", () => {
@@ -44,6 +50,34 @@ describe("signup metadata", () => {
     });
     expect(meta.account_type).toBe("CUSTOMER");
     expect(meta.account_type).not.toBe("VERIFIER");
+  });
+
+  it("sends contractor agreement versions only for a contractor signup", () => {
+    const meta = buildSignupMetadata({
+      email: "x@example.com",
+      password: "password12",
+      firstName: "Pat",
+      lastName: "Lee",
+      accountType: "CONTRACTOR",
+      acceptedTerms: true,
+    });
+    const versions = JSON.parse(meta.accepted_agreement_versions);
+    expect(versions["contractor-participation"]).toBe(1);
+    expect(versions["terms-of-use"]).toBe(4);
+  });
+
+  it("sends the age affirmation only when the signup form collected it", () => {
+    const meta = buildSignupMetadata({
+      email: "x@example.com",
+      password: "password12",
+      firstName: "Pat",
+      lastName: "Lee",
+      accountType: "CUSTOMER",
+      acceptedTerms: true,
+      affirmedAge18: true,
+      ageAffirmationRequired: true,
+    });
+    expect(meta.affirmed_age_18).toBe("true");
   });
 });
 

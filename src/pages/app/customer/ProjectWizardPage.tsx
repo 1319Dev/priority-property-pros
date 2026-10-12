@@ -9,6 +9,8 @@ import { PHOTO_UPLOAD_GUIDANCE } from "../../../lib/marketplace/photoSafety";
 import { useAuth } from "../../../lib/auth/useAuth";
 import {
   customerHasBlockedContractor,
+  fetchCustomerProjects,
+  fetchPrivateLocation,
   fetchProject,
   fetchServiceCategories,
   fetchServiceQuestions,
@@ -32,7 +34,11 @@ import {
 import {
   clearWizardSession,
   emptyWizardSession,
+  latestProjectPlace,
   readWizardSession,
+  resumeAtFirstStep,
+  withAddressOnFile,
+  wizardLocationIsEmpty,
   wizardSessionIsEmpty,
   writeWizardSession,
   type WizardSession,
@@ -46,9 +52,11 @@ export function ProjectWizardPage() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const composing = !projectId || projectId === "new";
+  const draftOwnerId = user?.id ?? null;
   const [form, setForm] = useState<WizardSession>(() =>
-    composing ? (readWizardSession() ?? emptyWizardSession()) : emptyWizardSession(),
+    composing ? (resumeAtFirstStep(readWizardSession(draftOwnerId)) ?? emptyWizardSession()) : emptyWizardSession(),
   );
+  const [addressPrefilled, setAddressPrefilled] = useState(false);
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const targetedPro = params.get("pro");
   const [targetedBlocked, setTargetedBlocked] = useState(false);
@@ -59,7 +67,10 @@ export function ProjectWizardPage() {
   const [loading, setLoading] = useState(true);
   const photosRef = useRef(photos);
   photosRef.current = photos;
+  const formRef = useRef(form);
+  formRef.current = form;
   const persistReady = useRef(false);
+  const persistOwner = useRef<string | null>(draftOwnerId);
 
   const step = form.step;
 
@@ -83,22 +94,29 @@ export function ProjectWizardPage() {
   }, [targetedPro]);
 
   useEffect(() => {
-    if (!composing) {
+    if (!composing || !draftOwnerId) {
       persistReady.current = false;
       return;
     }
+    if (persistOwner.current !== draftOwnerId) {
+      // A different account signed in on this tab: drop whatever was on screen.
+      persistOwner.current = draftOwnerId;
+      persistReady.current = false;
+      setForm(resumeAtFirstStep(readWizardSession(draftOwnerId)) ?? emptyWizardSession());
+      return;
+    }
     if (!persistReady.current) {
-      const saved = readWizardSession();
+      const saved = resumeAtFirstStep(readWizardSession(draftOwnerId));
       if (saved && !wizardSessionIsEmpty(saved)) setForm(saved);
       persistReady.current = true;
       return;
     }
     if (wizardSessionIsEmpty(form)) {
-      const saved = readWizardSession();
+      const saved = readWizardSession(draftOwnerId);
       if (saved && !wizardSessionIsEmpty(saved)) return;
     }
-    writeWizardSession(form);
-  }, [composing, form]);
+    writeWizardSession(form, draftOwnerId);
+  }, [composing, form, draftOwnerId]);
 
   useEffect(() => {
     return () => {
@@ -152,6 +170,34 @@ export function ProjectWizardPage() {
       cancelled = true;
     };
   }, [composing, projectId, user, profile, navigate, params]);
+
+  const locationEmpty = wizardLocationIsEmpty(form);
+  useEffect(() => {
+    if (!composing || !user || !profile || !locationEmpty) return undefined;
+    let stop = false;
+    void (async () => {
+      const place = latestProjectPlace(await fetchCustomerProjects(profile.id));
+      if (!place || stop) return;
+      const street = await fetchPrivateLocation(place.id).catch(() => null);
+      if (stop) return;
+      if (!wizardLocationIsEmpty(formRef.current)) return;
+      const address = {
+        projectId: place.id,
+        street: street?.street_line1 ?? "",
+        street2: street?.street_line2 ?? "",
+        city: place.city ?? "",
+        state: place.state ?? "",
+        zipCode: place.zip_code ?? "",
+      };
+      setForm((current) => withAddressOnFile(current, address));
+      setAddressPrefilled(true);
+    })().catch(() => undefined);
+    return () => {
+      stop = true;
+    };
+    // Only look up the address on file once per signed-in visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [composing, user, profile]);
 
   useEffect(() => {
     if (!form.categoryId) {
@@ -254,7 +300,7 @@ export function ProjectWizardPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6" data-pwa-form="project-wizard">
       <header className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Post a project</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Post a project</p>
         <h1 className="font-display text-4xl font-semibold text-forest-800">
           {WIZARD_STEPS[step - 1]?.label ?? "Project"}
         </h1>
@@ -352,12 +398,19 @@ export function ProjectWizardPage() {
           {questions.length === 0 ? <p className="text-ink-500">Pick a category first.</p> : null}
           {questions.map((question) => (
             <div key={question.id}>
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
+              <label
+                htmlFor={`wizard-question-${question.id}`}
+                id={`wizard-question-${question.id}-label`}
+                className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700"
+              >
                 {question.prompt}
                 {question.is_required ? " *" : ""}
-              </p>
+              </label>
               {question.kind === "SINGLE_CHOICE" ? (
                 <select
+                  id={`wizard-question-${question.id}`}
+                  aria-required={question.is_required ? true : undefined}
+                  aria-describedby={question.help_text ? `wizard-question-${question.id}-help` : undefined}
                   className="min-h-14 w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4"
                   value={form.answers[question.id] ?? ""}
                   onChange={(e) =>
@@ -376,6 +429,9 @@ export function ProjectWizardPage() {
                 </select>
               ) : question.kind === "BOOLEAN" ? (
                 <select
+                  id={`wizard-question-${question.id}`}
+                  aria-required={question.is_required ? true : undefined}
+                  aria-describedby={question.help_text ? `wizard-question-${question.id}-help` : undefined}
                   className="min-h-14 w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4"
                   value={form.answers[question.id] ?? ""}
                   onChange={(e) =>
@@ -391,6 +447,9 @@ export function ProjectWizardPage() {
                 </select>
               ) : (
                 <textarea
+                  id={`wizard-question-${question.id}`}
+                  aria-required={question.is_required ? true : undefined}
+                  aria-describedby={question.help_text ? `wizard-question-${question.id}-help` : undefined}
                   rows={3}
                   className="w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4 py-3"
                   value={form.answers[question.id] ?? ""}
@@ -402,7 +461,9 @@ export function ProjectWizardPage() {
                   }
                 />
               )}
-              {question.help_text ? <p className="mt-1 text-sm text-ink-500">{question.help_text}</p> : null}
+              {question.help_text ? <p id={`wizard-question-${question.id}-help`} className="mt-1 text-sm text-ink-500">
+                  {question.help_text}
+                </p> : null}
             </div>
           ))}
         </div>
@@ -413,6 +474,11 @@ export function ProjectWizardPage() {
           <p className="text-sm text-ink-700">
             {STREET_STAYS_PRIVATE} Matched pros see city and state.
           </p>
+          {addressPrefilled ? (
+            <p className="text-sm font-semibold text-forest-800" role="status">
+              We filled in the address from your last project. Change it if this job is somewhere else.
+            </p>
+          ) : null}
           <TextInput label="Street address" value={form.street} onChange={(e) => patch({ street: e.target.value })} autoComplete="street-address" />
           <TextInput label="Apt / unit (optional)" value={form.street2} onChange={(e) => patch({ street2: e.target.value })} />
           <TextInput label="City" value={form.city} onChange={(e) => patch({ city: e.target.value })} />

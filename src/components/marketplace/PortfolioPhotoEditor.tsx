@@ -46,7 +46,7 @@ export function PortfolioPhotoEditor({
             <li key={row.id} className="rounded-2xl bg-cream-100 px-3 py-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
                     {portfolioPrivacyLabel(row.privacy_state)}
                   </p>
                   <p className="mt-1 break-words text-sm font-semibold text-forest-800">{row.title || "Photo"}</p>

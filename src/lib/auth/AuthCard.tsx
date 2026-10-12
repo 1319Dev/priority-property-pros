@@ -18,11 +18,11 @@ export function AuthCard({
   return (
     <section className="py-12 sm:py-16">
       <Container className="max-w-lg">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">{eyebrow}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">{eyebrow}</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">{title}</h1>
         {lede ? <p className="mt-3 text-base leading-relaxed text-ink-700">{lede}</p> : null}
         {!isSupabaseConfigured() ? <NotConfiguredBanner /> : null}
-        <div className="mt-8 space-y-4 [&_a]:inline-flex [&_a]:min-h-11 [&_a]:items-center">{children}</div>
+        <div className="auth-card-body mt-8 space-y-4">{children}</div>
         {footer ? <div className="mt-8 text-sm text-ink-700 [&_a]:inline-flex [&_a]:min-h-11 [&_a]:items-center">{footer}</div> : null}
       </Container>
     </section>

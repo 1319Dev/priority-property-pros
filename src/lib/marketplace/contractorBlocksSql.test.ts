@@ -56,10 +56,21 @@ describe("customer contractor block SQL", () => {
 
   it("uses a version after 20261015000004 and does not reuse public_pro_labels", () => {
     expect(names).toContain(migrationName);
+    expect(names).toContain("20261018000001_legal_agreement_acceptance.sql");
     expect(migrationName > "20261015000004").toBe(true);
+    expect(names.includes(migrationName)).toBe(true);
     expect(names.includes("20261013000004_public_pro_labels.sql")).toBe(true);
     expect(names.filter((name) => name.startsWith("20261016000001"))).toEqual([migrationName]);
     expect(names.filter((name) => name.includes("customer_contractor_blocks"))).toEqual([migrationName]);
+    for (const name of names.filter((file) => file > migrationName)) {
+      const later = readMigration(name);
+      // A later migration may rebuild eligibility from the live definition (for example the
+      // TEST-account exclusion in 20261021000001), but it must keep the block check.
+      if (/FUNCTION public\.contractor_eligible_for_project/.test(later)) {
+        expect(extractFunction(later, "contractor_eligible_for_project"), name).toContain(blockStanza);
+      }
+      expect(later, name).not.toMatch(/FUNCTION public\.hire_again_contractors/);
+    }
   });
 
   it("adds only the block check to eligibility and hire again", () => {

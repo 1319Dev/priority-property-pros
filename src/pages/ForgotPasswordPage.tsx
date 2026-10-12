@@ -4,6 +4,8 @@ import { Button } from "../components/ui/Button";
 import { TextInput } from "../components/ui/Input";
 import { AuthCard, FormError } from "../lib/auth/AuthCard";
 import { useAuth } from "../lib/auth/useAuth";
+import { Honeypot } from "../components/security/Honeypot";
+import { evaluateBotGuard } from "../lib/security/botGuard";
 
 export function ForgotPasswordPage() {
   const { requestPasswordReset, configured } = useAuth();
@@ -11,10 +13,18 @@ export function ForgotPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
+  const [startedAt] = useState(() => Date.now());
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    const guard = evaluateBotGuard({ form: "passwordReset", honeypotValue: honeypot, startedAtMs: startedAt, nowMs: Date.now() });
+    if (!guard.ok) {
+      if (guard.silent) setSent(true);
+      else setError(guard.message);
+      return;
+    }
     setBusy(true);
     const result = await requestPasswordReset(email);
     setBusy(false);
@@ -40,7 +50,8 @@ export function ForgotPasswordPage() {
           If that email has an account, a reset link is on the way. Check spam too.
         </p>
       ) : (
-        <form className="space-y-4" onSubmit={onSubmit}>
+        <form className="relative space-y-4" onSubmit={onSubmit}>
+          <Honeypot value={honeypot} onChange={setHoneypot} />
           <TextInput
             label="Email"
             name="email"

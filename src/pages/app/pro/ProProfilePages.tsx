@@ -19,6 +19,7 @@ import {
   fetchContractorProfileByUser,
   fetchContractorServices,
   fetchCredentials,
+  fetchPublicContractor,
   fetchServiceCategories,
   setContractorServices,
   signedContractorDocUrl,
@@ -37,6 +38,7 @@ import { contractorAreaSummary } from "../../../lib/marketplace/serviceRadius";
 import type { ServiceCategory } from "../../../lib/marketplace/types";
 import { useToast } from "../../../hooks/useToast";
 import { ProOnboardingPage } from "./ProMarketplacePages";
+import { liveContractorPath } from "../../../lib/marketplace/publicDirectory";
 
 export function ProProfilePage() {
   const { user } = useAuth();
@@ -89,6 +91,18 @@ export function ManageProfileView() {
   const [badges, setBadges] = useState<{ id: string; label: string; status: string }[]>([]);
   const [credentials, setCredentials] = useState<Awaited<ReturnType<typeof fetchCredentials>>>([]);
   const [ready, setReady] = useState(false);
+  /** Set only when the public directory returns this pro (approved and listed). */
+  const [publicPath, setPublicPath] = useState<string | null>(null);
+
+  function checkListed(id: string, approvedNow: boolean) {
+    if (!approvedNow) {
+      setPublicPath(null);
+      return;
+    }
+    void fetchPublicContractor(id)
+      .then((row) => setPublicPath(row ? liveContractorPath(id) : null))
+      .catch(() => setPublicPath(null));
+  }
 
   async function load() {
     if (!user) return;
@@ -99,6 +113,7 @@ export function ManageProfileView() {
     if (!profileRow) throw new Error("Contractor profile missing.");
     setContractorId(profileRow.id);
     setApproved(profileRow.approval_status === "APPROVED");
+    checkListed(profileRow.id, profileRow.approval_status === "APPROVED");
     setIdentityReview(Boolean(profileRow.identity_review_required));
     setBusinessName(profileRow.business_name);
     setHeadline(profileRow.headline ?? "");
@@ -260,6 +275,7 @@ export function ManageProfileView() {
     try {
       await updateContractorProfile(contractorId, { accepting_work: next });
       toast.push(next ? "You are accepting work." : "You paused new work.");
+      checkListed(contractorId, approved);
     } catch (err) {
       setAccepting(!next);
       setError(err instanceof Error ? err.message : "Could not update accepting work.");
@@ -273,15 +289,27 @@ export function ManageProfileView() {
   return (
     <div className="mx-auto max-w-xl space-y-5">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Priority Pro</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Priority Pro</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Your Pro Profile</h1>
         <p className="mt-2 text-sm text-ink-700">Update the public card customers see. Onboarding answers stay on file.</p>
         {!photoUrl || !headline.trim() || !bio.trim() ? (
           <p className="mt-3 rounded-2xl bg-gold-500/15 px-4 py-3 text-sm text-forest-950">{PROFILE_NUDGE}</p>
         ) : null}
-        <Link to="/app/pro/account" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-forest-800 underline">
-          Account settings
-        </Link>
+        <div className="mt-3 flex flex-wrap gap-x-5">
+          <Link to="/app/pro/account" className="inline-flex min-h-11 items-center text-sm font-semibold text-forest-800 underline">
+            Account settings
+          </Link>
+          {publicPath ? (
+            <Link
+              to={publicPath}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex min-h-11 items-center text-sm font-semibold text-forest-800 underline"
+            >
+              View public profile
+            </Link>
+          ) : null}
+        </div>
       </header>
       <FormError message={error} />
       {approved ? (

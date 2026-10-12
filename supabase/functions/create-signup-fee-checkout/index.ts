@@ -1,4 +1,5 @@
 import { json, optionsResponse } from "../_shared/cors.ts";
+import { RATE_LIMITS, enforceRateLimits } from "../_shared/rateLimit.ts";
 import { allowedOrigin, restRpc, userIdFromRequest } from "../_shared/supabase.ts";
 import {
   activationFeeCents,
@@ -17,6 +18,10 @@ Deno.serve(async (req) => {
 
   try {
     const userId = await userIdFromRequest(req);
+    const limited = await enforceRateLimits(restRpc, [
+      { rule: RATE_LIMITS.signupFeeCheckoutUser, subject: `user:${userId}` },
+    ], { paid: false });
+    if (limited) return limited;
     const body = (await req.json().catch(() => ({}))) as {
       origin?: string;
       price_id?: string;

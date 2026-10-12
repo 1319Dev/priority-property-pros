@@ -2,36 +2,55 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { ADMIN_NAV, adminBreadcrumbs, adminSearchHits } from "./adminNav";
+import { ADMIN_NAV, ADMIN_NAV_GROUPS, adminBreadcrumbs, adminNavByGroup, adminSearchHits } from "./adminNav";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
 describe("admin nav config", () => {
   const app = readFileSync(path.join(repoRoot, "src/App.tsx"), "utf8");
+  const routes = readFileSync(path.join(repoRoot, "src/pages/app/admin/adminRoutes.tsx"), "utf8");
 
   it("only lists sections that have a route in the admin bundle", () => {
     expect(ADMIN_NAV.map((item) => item.to)).toEqual([
       "/app/admin",
+      "/app/admin/homeowners",
+      "/app/admin/contractors",
+      "/app/admin/projects",
+      "/app/admin/payments",
       "/app/admin/approvals",
       "/app/admin/reviews",
       "/app/admin/bookings",
+      "/app/admin/support",
       "/app/admin/security",
+      "/app/admin/audit",
       "/app/admin/account",
     ]);
-    expect(app).toContain('path="approvals"');
-    expect(app).toContain('path="reviews"');
-    expect(app).toContain('path="bookings"');
-    expect(app).toContain('path="security"');
-    expect(app).toContain('path="account"');
-    expect(app).not.toMatch(/path="people"/);
-    expect(app).not.toMatch(/path="audit"/);
+    expect(routes).toContain('path="approvals"');
+    expect(routes).toContain('path="reviews"');
+    expect(routes).toContain('path="bookings"');
+    expect(routes).toContain('path="security"');
+    expect(routes).toContain('path="audit"');
+    expect(routes).toContain('path="account"');
+    expect(routes).not.toMatch(/path="people"/);
+    expect(ADMIN_NAV_GROUPS).toEqual(["Overview", "People", "Marketplace", "Money", "Trust", "Account"]);
+    expect(adminNavByGroup("People").map((item) => item.id)).toEqual(["homeowners", "contractors"]);
+    expect(adminNavByGroup("Money").map((item) => item.id)).toEqual(["payments"]);
+    expect(adminNavByGroup("Trust").map((item) => item.id)).toEqual(["support", "security", "audit"]);
+    const supportRoutes = readFileSync(path.join(repoRoot, "src/pages/app/admin/sections/support/routes.tsx"), "utf8");
+    expect(supportRoutes).toContain('path="support"');
+    expect(supportRoutes).toContain('path="support/:conversationId"');
+    expect(adminSearchHits("support").map((hit) => hit.label)).toContain("Support");
   });
 
   it("keeps the admin route tree out of the public bundle entry", () => {
     expect(app).toMatch(/lazy\(\(\) => import\("\.\/pages\/app\/AdminShell"\)/);
-    expect(app).toMatch(/lazy\(\(\) => import\("\.\/pages\/app\/AdminPages"\)/);
+    expect(app).toContain("adminChildRoutes");
+    expect(routes).toMatch(/lazy\(\(\) => import\("\.\.\/AdminPages"\)/);
     expect(app).not.toMatch(/^import \{ AdminShell \}/m);
     expect(app).not.toMatch(/from "\.\/pages\/app\/AdminPages"/);
+    expect(app).toContain('layout="inline" label="Loading admin…"');
+    expect(app).not.toContain('layout="page" label="Loading admin…"');
+    expect(routes).toContain('import.meta.glob("./sections/*/routes.tsx"');
   });
 
   it("builds breadcrumbs from the current admin path", () => {
@@ -65,7 +84,7 @@ describe("admin nav config", () => {
       },
     ]);
     expect(adminSearchHits("people").map((hit) => hit.label)).not.toContain("People");
-    expect(adminSearchHits("audit")).toEqual([]);
+    expect(adminSearchHits("audit").map((hit) => hit.label)).toEqual(["Audit log"]);
     expect(adminSearchHits("")).toEqual([]);
   });
 });

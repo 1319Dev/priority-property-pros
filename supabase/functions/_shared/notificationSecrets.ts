@@ -1,4 +1,5 @@
 import { resolveSecret, resolveUnsubscribeSecret } from "./notificationPolicy.ts";
+import { resolveSmtpConfig, type SmtpConfigResult } from "./smtp.ts";
 
 export type NotificationRuntimeSecrets = {
   notifyWebhookSecret: string;
@@ -8,11 +9,21 @@ export type NotificationRuntimeSecrets = {
   notificationFrom: string;
   notificationSiteUrl: string;
   unsubscribeTokenSecret: string;
-  resendApiKey: string;
+  smtp: SmtpConfigResult;
 };
 
 const DEFAULT_SUBJECT = "mailto:support@prioritypropertypros.com";
-const DEFAULT_FROM = "Priority Property Pros <notifications@prioritypropertypros.com>";
+const DEFAULT_SENDER_NAME = "Priority Property Pros";
+
+/**
+ * NOTIFICATION_FROM wins when set (Vault or env). Otherwise send as the
+ * authenticated SMTP mailbox, because Gmail rewrites a From address that is
+ * not the signed-in user or one of its verified "Send mail as" aliases.
+ */
+export function defaultNotificationFrom(smtpUser: string): string {
+  const user = smtpUser.trim();
+  return `${DEFAULT_SENDER_NAME} <${user || "support@prioritypropertypros.com"}>`;
+}
 const DEFAULT_SITE = "https://prioritypropertypros.com";
 
 function asSecretMap(value: unknown): Record<string, string> {
@@ -76,7 +87,7 @@ export async function loadNotificationRuntimeSecrets(
     notificationFrom: resolveSecret({
       vaultValue: vault.notification_from,
       envValue: Deno.env.get("NOTIFICATION_FROM"),
-    }) || DEFAULT_FROM,
+    }) || defaultNotificationFrom(Deno.env.get("SMTP_USER") ?? ""),
     notificationSiteUrl: (site || DEFAULT_SITE).replace(/\/$/, ""),
     unsubscribeTokenSecret: resolveUnsubscribeSecret({
       vaultUnsubscribe: vault.unsubscribe_token_secret,
@@ -84,10 +95,13 @@ export async function loadNotificationRuntimeSecrets(
       vaultWebhook: vault.notify_webhook_secret,
       envWebhook: Deno.env.get("NOTIFY_WEBHOOK_SECRET"),
     }),
-    resendApiKey: resolveSecret({
-      vaultValue: vault.resend_api_key,
-      envValue: Deno.env.get("RESEND_API_KEY"),
-      preferEnv: true,
+    // SMTP credentials are Edge Function secrets only (Dashboard → Edge
+    // Functions → Secrets). They are never read from Vault or the database.
+    smtp: resolveSmtpConfig({
+      host: Deno.env.get("SMTP_HOST"),
+      port: Deno.env.get("SMTP_PORT"),
+      username: Deno.env.get("SMTP_USER"),
+      password: Deno.env.get("SMTP_PASS"),
     }),
   };
 }

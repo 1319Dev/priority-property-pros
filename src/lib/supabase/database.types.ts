@@ -34,6 +34,7 @@ export type Database = {
           signup_fee_status?: import("../signupFee/constants").SignupFeeStatus;
           signup_fee_paid_at?: string | null;
           signup_fee_charge_id?: string | null;
+          age_18_affirmed_at?: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -152,6 +153,9 @@ export type Database = {
           version: number;
           body: string;
           is_current: boolean;
+          audience: "ALL" | "CONTRACTOR";
+          published: boolean;
+          published_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -160,11 +164,17 @@ export type Database = {
           version?: number;
           body: string;
           is_current?: boolean;
+          audience?: "ALL" | "CONTRACTOR";
+          published?: boolean;
+          published_at?: string | null;
         };
         Update: {
           title?: string;
           body?: string;
           is_current?: boolean;
+          audience?: "ALL" | "CONTRACTOR";
+          published?: boolean;
+          published_at?: string | null;
         };
         Relationships: [];
       };
@@ -173,12 +183,17 @@ export type Database = {
           id: string;
           agreement_id: string;
           profile_id: string;
+          agreement_version: number;
           accepted_at: string;
+          acceptance_source: "signup" | "sign_in";
           user_agent: string | null;
         };
         Insert: {
           agreement_id: string;
           profile_id: string;
+          agreement_version?: number;
+          accepted_at?: string;
+          acceptance_source?: "signup" | "sign_in";
           user_agent?: string | null;
         };
         Update: never;
@@ -962,10 +977,37 @@ export type Database = {
       };
     };
     Functions: {
+      legal_acceptance_required: { Args: Record<string, never>; Returns: boolean };
+      set_legal_acceptance_required: { Args: { p_enabled: boolean }; Returns: undefined };
+      missing_current_agreements: {
+        Args: Record<string, never>;
+        Returns: { slug: string; title: string; version: number }[];
+      };
+      accept_current_agreements: {
+        Args: { p_user_agent?: string | null; p_affirmed_age_18?: boolean };
+        Returns: Json;
+      };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       admin_set_platform_review_status: {
         Args: { p_review_id: string; p_status: string; p_reason: string };
         Returns: Json;
+      };
+      admin_list_audit_log: {
+        Args: {
+          p_actor?: string | null;
+          p_action?: string | null;
+          p_from?: string | null;
+          p_to?: string | null;
+          p_reference?: string | null;
+          p_limit?: number;
+        };
+        Returns: {
+          occurred_at: string;
+          actor_role: string;
+          action: string;
+          job_reference: string | null;
+          summary: string | null;
+        }[];
       };
       admin_mfa_required: { Args: Record<string, never>; Returns: boolean };
       admin_dashboard_summary: { Args: { p_include_test?: boolean }; Returns: Json };
@@ -1017,6 +1059,27 @@ export type Database = {
         Args: { p_booking_id: string; p_rating: number; p_body?: string | null };
         Returns: Json;
       };
+      report_booking_review: {
+        Args: { p_review_id: string; p_reason: string };
+        Returns: Json;
+      };
+      submit_booking_review_response: {
+        Args: { p_review_id: string; p_body: string };
+        Returns: Json;
+      };
+      admin_hide_booking_review: {
+        Args: { p_review_id: string; p_reason: string };
+        Returns: Json;
+      };
+      admin_restore_booking_review: {
+        Args: { p_review_id: string; p_reason: string };
+        Returns: Json;
+      };
+      admin_hide_booking_review_response: {
+        Args: { p_review_id: string; p_reason: string };
+        Returns: Json;
+      };
+      admin_list_booking_reviews: { Args: Record<string, never>; Returns: Json };
       confirm_booking_hired: { Args: { p_booking_id: string }; Returns: Json };
       booking_is_mutually_hired: { Args: { p_booking_id: string }; Returns: boolean };
       booking_job_contact: { Args: { p_booking_id: string }; Returns: Json };
@@ -1050,6 +1113,7 @@ export type Database = {
       mark_estimate_viewed: { Args: { p_estimate_id: string; p_project_id?: string | null }; Returns: Json };
       decline_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       list_my_estimates: { Args: Record<string, never>; Returns: Json };
+      list_my_opportunity_labels: { Args: Record<string, never>; Returns: Json };
       list_my_notifications: { Args: Record<string, never>; Returns: Json };
       list_my_message_threads: { Args: Record<string, never>; Returns: Json };
       mark_message_thread_read: { Args: { p_thread_id: string }; Returns: Json };
@@ -1074,6 +1138,7 @@ export type Database = {
         Returns: boolean;
       };
       mark_notification_read: { Args: { p_notification_id: string }; Returns: Json };
+      mark_all_my_notifications_read: { Args: Record<string, never>; Returns: number };
       ensure_my_notification_preferences: { Args: Record<string, never>; Returns: number };
       save_my_push_subscription: {
         Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent?: string | null };
@@ -1156,7 +1221,7 @@ export type Database = {
       };
       list_public_directory_reviews: {
         Args: { p_id: string };
-        Returns: { id: string; rating: number; body: string }[];
+        Returns: { id: string; rating: number; body: string; contractor_response: string | null }[];
       };
       text_contains_pre_hire_contact: { Args: { p_text?: string | null }; Returns: boolean };
       assert_no_pre_hire_contact: { Args: { p_text?: string | null }; Returns: undefined };
@@ -1190,6 +1255,37 @@ export type Database = {
       };
       admin_revoke_connection_contact_access: {
         Args: { p_connection_id: string; p_reason?: string | null };
+        Returns: Json;
+      };
+      admin_support_list: { Args: { p_queue?: string; p_limit?: number }; Returns: Json };
+      admin_support_get: { Args: { p_id: string }; Returns: Json };
+      admin_support_search: { Args: { p_query: string }; Returns: Json };
+      admin_support_set_status: { Args: { p_id: string; p_status: string }; Returns: Json };
+      admin_support_set_priority: { Args: { p_id: string; p_priority: string }; Returns: Json };
+      admin_support_takeover: { Args: { p_id: string }; Returns: Json };
+      admin_support_reply: { Args: { p_id: string; p_body: string }; Returns: Json };
+      admin_support_note: { Args: { p_id: string; p_body: string }; Returns: Json };
+      admin_support_set_presence: { Args: { p_status: string }; Returns: string };
+      admin_support_heartbeat: { Args: Record<string, never>; Returns: string };
+      admin_support_analytics: { Args: { p_days?: number }; Returns: Json };
+      admin_support_kb_list: { Args: Record<string, never>; Returns: Json };
+      admin_support_kb_save: {
+        Args: { p_id: string | null; p_title: string; p_body: string; p_status: string; p_slug: string };
+        Returns: Json;
+      };
+      admin_support_canned_list: { Args: Record<string, never>; Returns: Json };
+      admin_support_canned_save: { Args: { p_id: string | null; p_title: string; p_body: string }; Returns: Json };
+      admin_support_canned_delete: { Args: { p_id: string }; Returns: Json };
+      admin_support_set_retention: { Args: { p_days: number }; Returns: number };
+      admin_support_purge_expired: { Args: Record<string, never>; Returns: number };
+      admin_support_settings: { Args: Record<string, never>; Returns: Json };
+      admin_support_set_settings: {
+        Args: {
+          p_priority_help_enabled: boolean;
+          p_ai_answers_enabled: boolean;
+          p_daily_ai_answer_cap: number;
+          p_daily_ai_budget_usd_micros: number;
+        };
         Returns: Json;
       };
     };
