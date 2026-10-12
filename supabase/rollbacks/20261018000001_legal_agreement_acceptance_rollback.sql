@@ -14,6 +14,7 @@ DROP TRIGGER IF EXISTS projects_enforce_current_terms ON public.projects;
 DROP TRIGGER IF EXISTS estimates_enforce_current_terms ON public.estimates;
 DROP TRIGGER IF EXISTS project_messages_enforce_current_terms ON public.project_messages;
 DROP TRIGGER IF EXISTS project_connections_enforce_current_terms ON public.project_connections;
+DROP TRIGGER IF EXISTS project_connections_enforce_current_terms_reserve ON public.project_connections;
 
 DROP FUNCTION IF EXISTS public.protect_agreement_acceptance();
 DROP FUNCTION IF EXISTS public.enforce_current_terms_for_new_marketplace_action();

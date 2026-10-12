@@ -69,6 +69,7 @@ describe("legal agreement acceptance migration", () => {
     expect(sql).toMatch(/IF TG_TABLE_NAME = 'project_connections' THEN\s+SELECT contractor\.profile_id/);
     expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.profile_missing_current_agreements\(uuid\) FROM PUBLIC, anon, authenticated/);
     expect(sql).toMatch(/DROP POLICY IF EXISTS agreement_acceptances_insert_own ON public\.agreement_acceptances;/);
+    expect(sql).toMatch(/BEFORE UPDATE OF status ON public\.project_connections\s+FOR EACH ROW\s+WHEN \(NEW\.status = 'RESERVED' AND OLD\.status IS DISTINCT FROM NEW\.status\)/);
     expect(sql).toMatch(/REVOKE INSERT ON public\.agreement_acceptances FROM authenticated;/);
     expect(sql).not.toMatch(/BEFORE INSERT ON public\.signup_fee/);
     expect(sql).not.toMatch(/BEFORE INSERT ON public\.connection_fee/);

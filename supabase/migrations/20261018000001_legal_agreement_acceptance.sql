@@ -1314,10 +1314,10 @@ BEGIN
   END IF;
 
   IF actor IS NULL THEN
-    -- Service role. The $4.99 Connect reservation is inserted by the checkout
-    -- function with the service role before any Stripe session exists, so check
-    -- the contractor on that row. Webhook fulfillment and refunds only UPDATE
-    -- existing rows and are not affected. Every other service-role insert passes.
+    -- Service role. The $4.99 Connect reservation is written (insert, or update to
+    -- RESERVED) by the checkout function with the service role before any Stripe
+    -- session exists, so check the contractor on that row. Webhook fulfillment,
+    -- refunds, and expiry are not checked. Every other service-role write passes.
     IF TG_TABLE_NAME = 'project_connections' THEN
       SELECT contractor.profile_id
       INTO actor
@@ -1342,7 +1342,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.enforce_current_terms_for_new_marketplace_action() IS
-  'BEFORE INSERT only. Raises terms_acceptance_required when legal_acceptance_required is on and the acting user is missing a current agreement. Admins pass. Service-role inserts pass, except a project_connections reservation, which is checked against that row''s contractor before any Stripe session exists. Does not block SELECT, updates, account deletion, or payment tables. Does not change Stripe functions or fee flags.';
+  'BEFORE INSERT, plus the UPDATE that moves a project connection to RESERVED. Raises terms_acceptance_required when legal_acceptance_required is on and the acting user is missing a current agreement. Admins pass. Service-role writes pass, except a project_connections reservation, which is checked against that row''s contractor before any Stripe session exists. Does not block SELECT, updates, account deletion, or payment tables. Does not change Stripe functions or fee flags.';
 
 REVOKE ALL ON FUNCTION public.enforce_current_terms_for_new_marketplace_action() FROM PUBLIC, anon, authenticated;
 
@@ -1368,4 +1368,14 @@ DROP TRIGGER IF EXISTS project_connections_enforce_current_terms ON public.proje
 CREATE TRIGGER project_connections_enforce_current_terms
   BEFORE INSERT ON public.project_connections
   FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_current_terms_for_new_marketplace_action();
+
+-- A $4.99 reservation can also reuse an existing connection row (UPDATE to RESERVED).
+-- That happens before any Stripe session, so it is checked the same way. Moves from
+-- RESERVED to PAID (webhook), refunds, expiry, and cancellations are not checked.
+DROP TRIGGER IF EXISTS project_connections_enforce_current_terms_reserve ON public.project_connections;
+CREATE TRIGGER project_connections_enforce_current_terms_reserve
+  BEFORE UPDATE OF status ON public.project_connections
+  FOR EACH ROW
+  WHEN (NEW.status = 'RESERVED' AND OLD.status IS DISTINCT FROM NEW.status)
   EXECUTE FUNCTION public.enforce_current_terms_for_new_marketplace_action();
