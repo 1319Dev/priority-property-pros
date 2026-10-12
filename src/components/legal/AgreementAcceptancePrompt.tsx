@@ -15,6 +15,13 @@ type Accept = () => Promise<{ error: string | null }>;
 type AcceptanceRequired = () => Promise<boolean>;
 
 /**
+ * checking: the account's agreements are still being looked up.
+ * pending: the account must accept the listed agreements.
+ * clear: nothing to accept, the requirement is off, or the check could not run (never a lock).
+ */
+export type AgreementStatus = "checking" | "pending" | "clear";
+
+/**
  * Asks an existing account to accept the current agreement versions.
  * Shown only when the legal pages are published and legal_acceptance_required is on.
  * Rendered beside the account's own pages. It does not replace them, redirect,
@@ -26,15 +33,22 @@ export function AgreementAcceptancePrompt({
   acceptanceRequired = fetchLegalAcceptanceRequired,
   load = fetchMissingAgreements,
   accept = acceptCurrentAgreements,
+  onStatusChange,
+  variant = "banner",
 }: {
   published?: boolean;
   acceptanceRequired?: AcceptanceRequired;
   load?: LoadGaps;
   accept?: Accept;
+  /** Lets a page (the $9.99 activation page) wait for acceptance before a checkout. */
+  onStatusChange?: (status: AgreementStatus) => void;
+  /** banner: full-width strip under the header. inline: a card inside the page content. */
+  variant?: "banner" | "inline";
 }) {
   const { user } = useAuth();
   const [required, setRequired] = useState(false);
   const [gaps, setGaps] = useState<LegalDocument[] | null>(null);
+  const [checking, setChecking] = useState(Boolean(published && user));
   const [checked, setChecked] = useState(false);
   const [ageAffirmed, setAgeAffirmed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -44,9 +58,11 @@ export function AgreementAcceptancePrompt({
     if (!published || !user) {
       setRequired(false);
       setGaps(null);
+      setChecking(false);
       return;
     }
     let cancel = false;
+    setChecking(true);
     void acceptanceRequired()
       .then((on) => {
         if (cancel) return;
@@ -64,20 +80,39 @@ export function AgreementAcceptancePrompt({
           setRequired(false);
           setGaps(null);
         }
+      })
+      .finally(() => {
+        if (!cancel) setChecking(false);
       });
     return () => {
       cancel = true;
     };
   }, [published, user, acceptanceRequired, load]);
 
-  if (!published || !user || !required || !gaps || gaps.length === 0) return null;
+  const status: AgreementStatus = checking
+    ? "checking"
+    : published && user && required && gaps && gaps.length > 0
+      ? "pending"
+      : "clear";
+
+  useEffect(() => {
+    onStatusChange?.(status);
+  }, [status, onStatusChange]);
+
+  if (status !== "pending" || !gaps) return null;
+
+  const inline = variant === "inline";
 
   return (
     <section
       aria-label="Accept updated agreements"
-      className="border-b border-gold-500/40 bg-gold-500/15 px-4 py-4 text-sm text-forest-950 sm:px-6"
+      className={
+        inline
+          ? "rounded-2xl border border-gold-500/40 bg-gold-500/15 px-4 py-4 text-sm text-forest-950"
+          : "border-b border-gold-500/40 bg-gold-500/15 px-4 py-4 text-sm text-forest-950 sm:px-6"
+      }
     >
-      <div className="mx-auto w-full max-w-6xl space-y-3">
+      <div className={inline ? "space-y-3" : "mx-auto w-full max-w-6xl space-y-3"}>
         <h2 className="font-display text-xl font-semibold text-forest-800">Please accept the current agreements</h2>
         <p>
           A newer version is on file. You can keep viewing your projects, messages, bookings, and other account
