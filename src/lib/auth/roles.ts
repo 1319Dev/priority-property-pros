@@ -54,6 +54,25 @@ export function postLoginPath(
 
 const ROLE_APP_PREFIXES = Object.entries(ROLE_HOME) as Array<[AccountType, string]>;
 
+/**
+ * Account pages a signed-in customer or contractor can open before paying the $9.99
+ * activation (and before accepting the current agreements): account settings (change
+ * email, change password, delete account), notification history, and notification
+ * settings. Marketplace pages (projects, jobs, messages, bookings, estimates, billing)
+ * stay behind /account/activate. Server-side gates are unchanged; this only decides
+ * which client routes skip the activation redirect.
+ */
+export const ACCOUNT_PAGES_WHILE_UNPAID: readonly string[] = ["/account", "/account/notifications", "/notifications"];
+
+const UNPAID_ACCOUNT_PREFIXES: readonly string[] = [ROLE_HOME.CUSTOMER, ROLE_HOME.CONTRACTOR];
+
+export function allowedWhileActivationPending(pathname: string): boolean {
+  const clean = pathname.split(/[?#]/)[0].replace(/\/+$/, "");
+  return UNPAID_ACCOUNT_PREFIXES.some(
+    (prefix) => clean.startsWith(`${prefix}/`) && ACCOUNT_PAGES_WHILE_UNPAID.includes(clean.slice(prefix.length)),
+  );
+}
+
 /** Pages that exist under each role's own /app/<role> prefix (see App.tsx). */
 const ROLE_SHARED_PAGES: Record<AccountType, readonly string[]> = {
   CUSTOMER: ["/account", "/account/notifications", "/notifications", "/messages"],

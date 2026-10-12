@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { BrandLoader } from "../components/brand/BrandLoader";
+import { AgreementAcceptancePrompt, type AgreementStatus } from "../components/legal/AgreementAcceptancePrompt";
 import { CheckoutRefundNotice } from "../components/payments/CheckoutRefundNotice";
 import { Button } from "../components/ui/Button";
 import { AuthCard, FormError } from "../lib/auth/AuthCard";
-import { postLoginPath } from "../lib/auth/roles";
+import { accountSettingsPath, postLoginPath } from "../lib/auth/roles";
 import { useAuth } from "../lib/auth/useAuth";
 import { reconcileSignupFeeCheckout, startSignupFeeCheckout } from "../lib/signupFee/api";
 import { CONTRACTOR_SIGNUP_LEDE, CUSTOMER_SIGNUP_LEDE, SIGNUP_FEE_NON_REFUNDABLE } from "../data/pricing";
@@ -28,6 +29,9 @@ export function ActivateAccountPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(state === "return");
+  // The current agreements must be accepted (when required) before the $9.99 checkout starts.
+  const [agreements, setAgreements] = useState<AgreementStatus>("checking");
+  const onAgreementStatus = useCallback((next: AgreementStatus) => setAgreements(next), []);
 
   const unpaid = needsSignupFeePayment({
     enabled: signup_fee_enabled,
@@ -110,10 +114,28 @@ export function ActivateAccountPage() {
         <p className="rounded-2xl bg-cream-100 px-4 py-3 text-sm text-ink-700">Confirming payment with Stripe…</p>
       ) : null}
       <FormError message={error} />
+      <AgreementAcceptancePrompt variant="inline" onStatusChange={onAgreementStatus} />
+      {agreements === "pending" ? (
+        <p className="text-sm text-ink-700">Accept the current agreements above to continue to the $9.99 checkout.</p>
+      ) : null}
       <CheckoutRefundNotice fee="activation" />
-      <Button type="button" disabled={busy || confirming || !user} onClick={() => void pay()}>
-        {busy ? "Starting checkout…" : "Pay $9.99"}
+      <Button
+        type="button"
+        disabled={busy || confirming || !user || agreements !== "clear"}
+        onClick={() => void pay()}
+      >
+        {busy ? "Starting checkout…" : agreements === "checking" ? "Checking agreements…" : "Pay $9.99"}
       </Button>
+      <p className="text-sm text-ink-700">
+        You can still change your email or password, view notifications, or delete your account in{" "}
+        <Link
+          to={accountSettingsPath(account_type ?? profile?.account_type ?? null, account_status)}
+          className="font-semibold text-forest-800 underline"
+        >
+          Account settings
+        </Link>
+        .
+      </p>
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button type="button" variant="outline" onClick={() => void signOut()}>
           Sign out

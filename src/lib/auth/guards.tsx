@@ -3,7 +3,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { BrandLoader } from "../../components/brand/BrandLoader";
 import { AdminMfaBlocked, AdminMfaChallenge } from "./AdminMfaChallenge";
 import { loadAdminMfaGate, verifyAdminSignInCode, type AdminMfaGateState } from "./adminMfaApi";
-import { BLOCKED_STATUSES, ROLE_HOME, pathForRole, postLoginPath } from "./roles";
+import { BLOCKED_STATUSES, ROLE_HOME, allowedWhileActivationPending, pathForRole, postLoginPath } from "./roles";
 import { returnPathFromLocation } from "./sessionReturn";
 import { useAuth } from "./useAuth";
 import type { AccountType } from "./types";
@@ -44,7 +44,12 @@ export function RequireAuth() {
     enabled: signup_fee_enabled,
     status: signup_fee_status,
   });
-  if (activate === "/account/activate" && location.pathname !== "/account/activate") {
+  // Unpaid accounts can still manage their account (email, password, delete) and notifications.
+  if (
+    activate === "/account/activate" &&
+    location.pathname !== "/account/activate" &&
+    !allowedWhileActivationPending(location.pathname)
+  ) {
     return <Navigate to="/account/activate" replace />;
   }
   return <Outlet />;
