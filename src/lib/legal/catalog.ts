@@ -1,6 +1,7 @@
 /**
- * Current legal documents. Version numbers must match the agreements rows in
- * supabase/migrations/20261018000001_legal_agreement_acceptance.sql.
+ * Current legal documents. Version numbers must match the current agreements rows in
+ * supabase/migrations/20261018000001_legal_agreement_acceptance.sql and
+ * 20261021500001_legal_priority_help_live.sql (Terms v4, Privacy v3).
  * This file does not include the document text. The pages load that text only
  * when VITE_PUBLISH_LEGAL_PAGES is "true".
  */
@@ -16,8 +17,8 @@ export type LegalDocument = {
 };
 
 export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
-  { slug: "terms-of-use", title: "Terms of Service", version: 3, path: "/terms", audience: "ALL" },
-  { slug: "privacy-policy", title: "Privacy Policy", version: 2, path: "/privacy", audience: "ALL" },
+  { slug: "terms-of-use", title: "Terms of Service", version: 4, path: "/terms", audience: "ALL" },
+  { slug: "privacy-policy", title: "Privacy Policy", version: 3, path: "/privacy", audience: "ALL" },
   {
     slug: "refund-cancellation",
     title: "Refund & Cancellation Policy",
