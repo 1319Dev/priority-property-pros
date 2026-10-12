@@ -27,7 +27,7 @@ export function ConnectConfirmDialog({
       cancelLabel="Not now"
       tone="primary"
       busy={busy}
-      notice={<CheckoutRefundNotice />}
+      notice={<CheckoutRefundNotice fee="connection" />}
       onConfirm={onConfirm}
       onClose={onClose}
     />

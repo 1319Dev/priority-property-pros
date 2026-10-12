@@ -110,7 +110,7 @@ export function ActivateAccountPage() {
         <p className="rounded-2xl bg-cream-100 px-4 py-3 text-sm text-ink-700">Confirming payment with Stripe…</p>
       ) : null}
       <FormError message={error} />
-      <CheckoutRefundNotice />
+      <CheckoutRefundNotice fee="activation" />
       <Button type="button" disabled={busy || confirming || !user} onClick={() => void pay()}>
         {busy ? "Starting checkout…" : "Pay $9.99"}
       </Button>

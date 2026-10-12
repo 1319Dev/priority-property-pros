@@ -8,7 +8,13 @@ import { AuthContext } from "../../lib/auth/AuthContext";
 import { signedInAuth } from "../../lib/auth/authFixture";
 import { ConnectConfirmDialog } from "../marketplace/ConnectConfirm";
 import { ActivateAccountPage } from "../../pages/ActivateAccountPage";
-import { CHECKOUT_REFUND_NOTICE_TEXT, CheckoutRefundNotice, REFUND_POLICY_PATH } from "./CheckoutRefundNotice";
+import {
+  ACTIVATION_REFUND_NOTICE_TEXT,
+  CHECKOUT_REFUND_NOTICE_TEXT,
+  CONNECTION_REFUND_NOTICE_TEXT,
+  CheckoutRefundNotice,
+  REFUND_POLICY_PATH,
+} from "./CheckoutRefundNotice";
 
 vi.mock("../../lib/signupFee/api", () => ({
   startSignupFeeCheckout: vi.fn(),
@@ -16,7 +22,8 @@ vi.mock("../../lib/signupFee/api", () => ({
 }));
 
 const FULL_NOTICE =
-  "Fees are generally non-refundable once delivered, except duplicate or erroneous charges, refunds required by law, or approved exceptions. See Refund Policy.";
+  "This activation fee is generally non-refundable once delivered, except duplicate or erroneous charges, refunds required by law, or approved exceptions. See the Refund & Cancellation Policy.";
+const LINK = "Refund & Cancellation Policy";
 
 const srcRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -28,13 +35,15 @@ function noticeBefore(button: HTMLElement) {
 }
 
 describe("checkout refund notice", () => {
-  it("shows the exact sentence with a Refund Policy link to /refunds", () => {
+  it("shows the exact activation sentence with a policy link to /refunds", () => {
     render(<CheckoutRefundNotice />);
     const notice = screen.getByRole("note");
     expect(notice.textContent?.replace(/\s+/g, " ").trim()).toBe(FULL_NOTICE);
-    expect(within(notice).getByRole("link", { name: "Refund Policy" })).toHaveAttribute("href", "/refunds");
+    expect(within(notice).getByRole("link", { name: LINK })).toHaveAttribute("href", "/refunds");
     expect(REFUND_POLICY_PATH).toBe("/refunds");
-    expect(CHECKOUT_REFUND_NOTICE_TEXT).toMatch(/duplicate or erroneous charges/);
+    expect(CHECKOUT_REFUND_NOTICE_TEXT).toBe(ACTIVATION_REFUND_NOTICE_TEXT);
+    expect(ACTIVATION_REFUND_NOTICE_TEXT).toMatch(/duplicate or erroneous charges/);
+    expect(ACTIVATION_REFUND_NOTICE_TEXT).not.toMatch(/refunded automatically/);
   });
 
   it("sits directly above the $4.99 Connect button at phone width", () => {
@@ -45,8 +54,10 @@ describe("checkout refund notice", () => {
     );
     const button = screen.getByRole("button", { name: /Connect — \$4\.99/i });
     const notice = noticeBefore(button);
-    expect(notice.textContent).toContain("Fees are generally non-refundable once delivered");
-    expect(within(notice).getByRole("link", { name: "Refund Policy" })).toHaveAttribute("href", "/refunds");
+    expect(notice.textContent).toContain(CONNECTION_REFUND_NOTICE_TEXT);
+    expect(CONNECTION_REFUND_NOTICE_TEXT).toMatch(/non-refundable once the connection is delivered/);
+    expect(CONNECTION_REFUND_NOTICE_TEXT).toMatch(/refunded automatically/);
+    expect(within(notice).getByRole("link", { name: LINK })).toHaveAttribute("href", "/refunds");
     // Nothing else sits between the notice and the buttons.
     expect(notice.parentElement?.nextElementSibling).toContainElement(button);
     // Wraps on a narrow screen instead of overflowing.
@@ -68,7 +79,8 @@ describe("checkout refund notice", () => {
     const button = screen.getByRole("button", { name: "Pay $9.99" });
     const notice = noticeBefore(button);
     expect(notice.nextElementSibling).toBe(button);
-    expect(within(notice).getByRole("link", { name: "Refund Policy" })).toHaveAttribute("href", "/refunds");
+    expect(notice.textContent).toContain(ACTIVATION_REFUND_NOTICE_TEXT);
+    expect(within(notice).getByRole("link", { name: LINK })).toHaveAttribute("href", "/refunds");
   });
 
   it("is copy only: no fee amount, checkout, or refund call is added", () => {
