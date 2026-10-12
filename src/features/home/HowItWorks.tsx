@@ -1,11 +1,11 @@
 import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { Container, SectionHeading } from "../../components/ui/Container";
 import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
-import { JOB_PAYMENT_PLAIN } from "../../data/pricing";
+import { CONNECTION_FEE_NON_REFUNDABLE, JOB_PAYMENT_PLAIN } from "../../data/pricing";
 import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 
 const CONNECT_STEP_WITH_FEE =
-  "Independent contractors browse anonymized opportunities. Up to three can connect for $4.99 each. Connecting does not guarantee a hire. The $4.99 Connection Fee is non-refundable.";
+  `Independent contractors browse anonymized opportunities. Up to three can connect for $4.99 each. Connecting does not guarantee a hire. ${CONNECTION_FEE_NON_REFUNDABLE}`;
 
 const CONNECT_STEP_WITHOUT_FEE =
   "Independent contractors browse anonymized opportunities. Up to three can connect. You choose who to hire.";
@@ -62,7 +62,7 @@ export function HowItWorks() {
               key={step.n}
               className="rounded-3xl border border-forest-800/10 bg-cream-50 p-5 sm:p-6"
             >
-              <p className="font-display text-3xl italic text-gold-600">{step.n}</p>
+              <p className="font-display text-3xl italic text-gold-700">{step.n}</p>
               <h3 className="mt-2 font-display text-2xl text-forest-800">{step.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink-700">{step.body}</p>
             </li>

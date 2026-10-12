@@ -20,7 +20,7 @@ export function ContactPage() {
   return (
     <section className="py-10 sm:py-16">
       <Container className="max-w-2xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Contact</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Contact</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">
           Talk to Priority Property Pros
         </h1>

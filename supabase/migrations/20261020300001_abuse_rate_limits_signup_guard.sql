@@ -32,9 +32,11 @@ CREATE OR REPLACE FUNCTION public.rate_limit_subject_hash(p_subject text)
 RETURNS text
 LANGUAGE sql
 IMMUTABLE
+SET search_path = public
 AS $$
   SELECT encode(sha256(convert_to('ppp-rl:' || lower(btrim(coalesce(p_subject, ''))), 'UTF8')), 'hex');
 $$;
+REVOKE ALL ON FUNCTION public.rate_limit_subject_hash(text) FROM PUBLIC, anon, authenticated;
 
 -- Counts allowed hits in the window. Records a hit only when allowed, so a flood cannot grow the table
 -- beyond p_max rows per subject per window. Serialized per bucket+subject with an advisory lock.

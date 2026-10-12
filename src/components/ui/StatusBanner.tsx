@@ -23,6 +23,6 @@ export function StatusBanner({
 
 export function HumanStatus({ label }: { label: string }) {
   return (
-    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">{label}</p>
+    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">{label}</p>
   );
 }

@@ -1,6 +1,7 @@
 import { json, optionsResponse } from "../_shared/cors.ts";
 import { RATE_LIMITS, clientIp, enforceRateLimits } from "../_shared/rateLimit.ts";
 import { allowedOrigin, restRpc, userIdFromRequest } from "../_shared/supabase.ts";
+import { connectionCheckoutBlockedMessage } from "../_shared/connectionCheckoutBlock.ts";
 import {
   assertConnectionPriceOrThrow,
   checkoutSessionIdMatchesMode,
@@ -80,6 +81,23 @@ Deno.serve(async (req) => {
     const secret = requireSecretForMode(Deno.env.get("STRIPE_SECRET_KEY") ?? "", testMode);
     const price = await stripeGet(secret, `prices/${envPrice}`);
     assertConnectionPriceOrThrow(price, { expectedPriceId: envPrice, testMode });
+
+    // Refuse $4.99 checkout for cancelled, closed, expired, blocked, or otherwise unavailable connections
+    // before anything is reserved or any Stripe session exists.
+    const allowed = await restRpc("assert_connection_checkout_allowed", {
+      p_project_id: projectId,
+      p_auth_user_id: userId,
+    });
+    if (allowed.error) return json({ error: allowed.error, contact_unlocked: false, paid: false }, 500);
+    const allowedRow = (allowed.data ?? {}) as { ok?: boolean; reason?: string | null };
+    if (allowedRow.ok !== true) {
+      return json({
+        error: connectionCheckoutBlockedMessage(allowedRow.reason ?? null),
+        blocked_reason: allowedRow.reason ?? "unavailable",
+        contact_unlocked: false,
+        paid: false,
+      }, 409);
+    }
 
     const reserved = await restRpc("reserve_connection_checkout", {
       p_project_id: projectId,

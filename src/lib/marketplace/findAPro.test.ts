@@ -147,6 +147,41 @@ describe("Find a Pro ratings", () => {
     expect(card.ratingLabel).toBe("4.5 ★ · 2 reviews");
     expect(card.newOnPlatform).toBe(false);
   });
+
+  it("uses the directory aggregate when the server sends a count", () => {
+    const card = listedCard({
+      ratingAverage: 5,
+      ratingCount: 2,
+      reviews: publicDirectoryReviews([
+        { id: "r1", rating: 5, body: "Finished the gate on time." },
+        { id: "r2", rating: 4, body: "Clear about the schedule." },
+      ]),
+    });
+    expect(card.ratingCount).toBe(2);
+    expect(card.ratingAverage).toBe(5);
+    expect(card.ratingLabel).toBe("5.0 ★ · 2 reviews");
+  });
+
+  it("shows no reviews yet when the server count is zero", () => {
+    const card = listedCard({
+      ratingAverage: 5,
+      ratingCount: 0,
+      reviews: publicDirectoryReviews([{ id: "r1", rating: 5, body: "Finished the gate on time." }]),
+    });
+    expect(card.ratingLabel).toBeNull();
+    expect(card.ratingCount).toBe(0);
+    expect(card.ratingAverage).toBeNull();
+    expect(card.newOnPlatform).toBe(true);
+  });
+
+  it("drops hidden and unverified reviews from the public list", () => {
+    const reviews = publicDirectoryReviews([
+      { id: "visible", rating: 5, body: "Finished the gate on time.", verified: true },
+      { id: "hidden", rating: 1, body: "This row was hidden by an admin.", hidden: true, verified: true },
+      { id: "unverified", rating: 2, body: "This row is not a verified job.", verified: false },
+    ]);
+    expect(reviews.map((review) => review.id)).toEqual(["visible"]);
+  });
 });
 
 describe("Find a Pro privacy", () => {
