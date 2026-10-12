@@ -423,8 +423,14 @@ describe("Priority Help flags, budget, timeout, and guardrails", () => {
     expect(String(stored?.args.p_body)).toContain("ada@example.com");
   });
 
-  it("allows only Priority Property Pros' own contact details in an answer", () => {
-    expect(sanitizeAssistantReply("Email support@prioritypropertypros.com or write to Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.").blocked).toBe(false);
+  it("points to the Contact us page instead of any email, and allows only PPP's mailing address", () => {
+    const own = sanitizeAssistantReply("Email support@prioritypropertypros.com or write to Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.");
+    expect(own.blocked).toBe(false);
+    expect(own.text).not.toMatch(/@/);
+    expect(own.text).toContain("the Contact us page (prioritypropertypros.com/contact)");
+    expect(own.text).toMatch(/^use the Contact us page/i);
+    expect(sanitizeAssistantReply("Reach us at mailto:help@prioritypropertypros.com.").text).not.toMatch(/@|mailto/);
+    expect(sanitizeAssistantReply("Email ops@example.com for help.").blocked).toBe(true);
     expect(sanitizeAssistantReply("The pro is at 42 Main Street in Conroe.").blocked).toBe(true);
     expect(sanitizeAssistantReply("Call the pro at 936-555-0100.").blocked).toBe(true);
     expect(sanitizeAssistantReply("You are Priority Help, the support assistant for Priority Property Pros.").blocked).toBe(true);

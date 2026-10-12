@@ -16,13 +16,19 @@ export const AI_UNAVAILABLE =
 export const INJECTION_REFUSAL =
   "I can only answer questions about how Priority Property Pros works, from the published policy. Choose Talk to Support if you want a person.";
 
-/** Priority Property Pros' own public contact details. These may appear in an answer. */
-export const PPP_SUPPORT_EMAIL = "support@prioritypropertypros.com";
+/**
+ * Priority Property Pros' own public contact route. Owner rule: the support
+ * email appears only on the Contact us page, so answers point there and never
+ * give an email address. The mailing address is public in the legal pages.
+ */
+export const PPP_CONTACT_PAGE = "the Contact us page (prioritypropertypros.com/contact)";
 export const PPP_MAILING_ADDRESS = "Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731";
 const ALLOWED_CONTACT: RegExp[] = [
-  /support@prioritypropertypros\.com/gi,
   /(Priority Property Pros LLC,?\s*)?5900 Balcones Drive,? STE 100,? Austin,? TX 78731( US)?/gi,
 ];
+// Any mention of a Priority Property Pros mailbox is rewritten to the Contact us page.
+const PPP_EMAIL = /(?:mailto:)?[A-Z0-9._%+-]+@prioritypropertypros\.com/gi;
+const EMAIL_VERB_BEFORE_CONTACT = /\b(email|e-mail|write to|message|contact)\s+(?:us\s+at\s+|at\s+)?(?=the Contact us page)/gi;
 
 export const COMPLAINT_HANDOFF =
   "Reports go to a person. Choose Talk to Support and describe what happened. Reviewing a report does not mean Priority Property Pros guarantees the work or decides a construction dispute. A person is not in this chat until they join.";
@@ -128,9 +134,12 @@ export function classifyCustomerMessage(text: string): GuardDecision {
 }
 
 export function sanitizeAssistantReply(text: string): { text: string; blocked: boolean } {
-  const value = text.trim();
-  // PPP's own support email and mailing address are allowed; everything else that
-  // looks like contact details is blocked.
+  // PPP's own mailbox becomes the Contact us page; the mailing address is allowed;
+  // everything else that looks like contact details is blocked.
+  const value = text
+    .trim()
+    .replace(PPP_EMAIL, PPP_CONTACT_PAGE)
+    .replace(EMAIL_VERB_BEFORE_CONTACT, (match) => (match[0] === match[0].toUpperCase() ? "Use " : "use "));
   const checked = ALLOWED_CONTACT.reduce((acc, pattern) => acc.replace(pattern, " "), value);
   if (!value || LEAK.some((pattern) => pattern.test(checked)) || affirmativeDutyClaim(value)) {
     return { text: HUMAN_HANDOFF, blocked: true };
