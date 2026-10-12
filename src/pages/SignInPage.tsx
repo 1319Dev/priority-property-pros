@@ -1,36 +1,61 @@
 import { useState, type FormEvent } from "react";
+import { Honeypot } from "../components/security/Honeypot";
+import { evaluateBotGuard } from "../lib/security/botGuard";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { BrandLoader } from "../components/brand/BrandLoader";
 import { Button } from "../components/ui/Button";
 import { TextInput } from "../components/ui/Input";
 import { dashboardPath } from "../lib/auth/publicEntry";
+import { roleReturnPath } from "../lib/auth/roles";
 import { AuthCard, FormError } from "../lib/auth/AuthCard";
+import { safeReturnPath } from "../lib/auth/sessionReturn";
+import { signInFieldErrors } from "../lib/auth/signInError";
 import { useAuth } from "../lib/auth/useAuth";
 import { SIGN_IN_CREATE_ACCOUNT_NOTE } from "../data/pricing";
 
+const SESSION_EXPIRED_MESSAGE = "Your session expired. Sign in to continue. You'll come back to the page you were on.";
+
 export function SignInPage() {
-  const { signIn, configured, refreshProfile, account_type, account_status, signup_fee_enabled, signup_fee_status, user, loading } = useAuth();
+  const { signIn, configured, refreshProfile, account_type, account_status, signup_fee_enabled, signup_fee_status, user, loading, sessionNotice } =
+    useAuth();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from;
+  const state = location.state as { from?: unknown; notice?: string } | null;
+  const from = safeReturnPath(state?.from);
+  const expired = state?.notice === "expired" || sessionNotice === "expired";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [busy, setBusy] = useState(false);
 
   if (loading) return <BrandLoader layout="page" label="Loading…" />;
   if (user && account_type) {
-    const next = from || dashboardPath({
+    const home = dashboardPath({
       accountType: account_type,
       accountStatus: account_status,
       signupFeeEnabled: signup_fee_enabled,
       signupFeeStatus: signup_fee_status,
     });
+    const next = roleReturnPath(from, account_type, home);
     return <Navigate to={next} replace />;
   }
 
-  async function onSubmit(event: FormEvent) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    const guard = evaluateBotGuard({ form: "signIn", honeypotValue: honeypot, startedAtMs: 0, nowMs: Date.now() });
+    if (!guard.ok) {
+      setError("Email or password is incorrect.");
+      return;
+    }
+    const nextErrors = signInFieldErrors(email, password);
+    setFieldErrors(nextErrors);
+    if (nextErrors.email || nextErrors.password) {
+      const first = nextErrors.email ? "email" : "password";
+      event.currentTarget.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
+      return;
+    }
     setBusy(true);
     const result = await signIn(email, password);
     if (result.error) {
@@ -56,24 +81,38 @@ export function SignInPage() {
         </>
       }
     >
-      <form className="space-y-4" onSubmit={onSubmit}>
+      <form className="relative space-y-4" noValidate onSubmit={onSubmit}>
+        <Honeypot value={honeypot} onChange={setHoneypot} />
+        {expired ? (
+          <p className="rounded-2xl bg-cream-100 px-4 py-3 text-sm text-ink-700" role="status">
+            {SESSION_EXPIRED_MESSAGE}
+          </p>
+        ) : null}
         <TextInput
           label="Email"
           name="email"
           type="email"
           autoComplete="email"
-          required
+          aria-required="true"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          error={fieldErrors.email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setFieldErrors((current) => ({ ...current, email: undefined }));
+          }}
         />
         <TextInput
           label="Password"
           name="password"
           type="password"
           autoComplete="current-password"
-          required
+          aria-required="true"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          error={fieldErrors.password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setFieldErrors((current) => ({ ...current, password: undefined }));
+          }}
         />
         <p className="text-sm">
           <Link to="/forgot-password" className="font-semibold text-forest-800 underline">

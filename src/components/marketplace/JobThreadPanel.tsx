@@ -16,6 +16,7 @@ import {
   customerFacingMessageError,
   layoutThreadMessages,
   messageComposerHint,
+  threadContactNotice,
 } from "../../lib/marketplace/messaging";
 import { Button } from "../ui/Button";
 
@@ -107,7 +108,9 @@ export function JobThreadPanel({
   return (
     <section className="space-y-3 rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-4" aria-label="Messages">
       <h2 className="font-display text-2xl text-forest-800">Messages</h2>
-      <p className="text-sm text-ink-500">This thread does not show phone, email, or street.</p>
+      {threadContactNotice(contactShared, contactShared) ? (
+        <p className="text-sm text-ink-500">{threadContactNotice(contactShared, contactShared)}</p>
+      ) : null}
       {loadingThread ? <p className="text-sm text-ink-500">Loading messages…</p> : null}
       {!loadingThread && locked ? (
         <p className="text-sm text-ink-700">

@@ -2,7 +2,7 @@ import { Navigate, useSearchParams } from "react-router-dom";
 import { BrandLoader } from "../components/brand/BrandLoader";
 import { ButtonLink } from "../components/ui/Button";
 import { Container } from "../components/ui/Container";
-import { CUSTOMER_SIGNUP_LEDE, SIGNUP_FEE_PUBLIC_NOTE } from "../data/pricing";
+import { CUSTOMER_SIGNUP_LEDE } from "../data/pricing";
 import { dashboardPath, showCustomerSignup } from "../lib/auth/publicEntry";
 import { useAuth } from "../lib/auth/useAuth";
 
@@ -26,7 +26,7 @@ export function PostProjectPage() {
   return (
     <section className="py-12 sm:py-16">
       <Container className="max-w-xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Post a project</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Post a project</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">Sign in as a customer to post.</h1>
         <p className="mt-4 text-lg text-ink-700">
           Live posting is on for customer accounts. Contractors use opportunities instead. PPP is not the contractor.
@@ -40,7 +40,6 @@ export function PostProjectPage() {
             </ButtonLink>
           ) : null}
         </div>
-        <p className="mt-4 text-sm text-ink-500">{SIGNUP_FEE_PUBLIC_NOTE}</p>
       </Container>
     </section>
   );

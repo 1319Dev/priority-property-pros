@@ -413,6 +413,13 @@ export type BookingReview = {
   created_at: string;
   updated_at?: string | null;
   edited_at?: string | null;
+  hidden_at?: string | null;
+  hidden_by?: string | null;
+  hidden_reason?: string | null;
+  contractor_response?: string | null;
+  contractor_response_at?: string | null;
+  contractor_response_hidden_at?: string | null;
+  contractor_response_hidden_reason?: string | null;
 };
 
 export const OPEN_PROJECT_STATUSES: ProjectStatus[] = [

@@ -6,7 +6,7 @@ export const CONNECT_SINGLE_STEP_COPY =
 export const PASS_SKIP_LABEL = "Pass on this job";
 export const PASS_SKIP_TITLE = "Pass on this job?";
 export const PASS_SKIP_BODY =
-  "Passing removes this job from your list. Unpaid connection spots and this offer slot are freed for other pros — the next best-suited contractor can be invited. History is kept. Contact stays locked. This cannot be undone from here.";
+  "Passing removes this job from your list. Unpaid connection spots and this offer slot are freed for other pros — the next matched contractor can be invited. History is kept. Contact stays locked. This cannot be undone from here.";
 export const PASS_SKIP_CONFIRM = "Pass on this job";
 export const PASS_SKIP_CANCEL = "Keep this job";
 export const PASS_SKIP_TOAST = "You passed on this job";
@@ -43,6 +43,15 @@ export function connectRequiresSeparateParticipate(): boolean {
 
 export function opportunityAllowsConnectCta(status: OpportunityStatus | null | undefined): boolean {
   return status === "AVAILABLE" || status === "ACCEPTED";
+}
+
+/** Passed, closed, expired, and cancelled jobs have no Connect, Pass, or spot count. */
+export function connectionActionsOpen(input: {
+  opportunityStatus?: string | null;
+  projectStatus?: string | null;
+}): boolean {
+  if (input.projectStatus === "CANCELLED") return false;
+  return input.opportunityStatus === "AVAILABLE" || input.opportunityStatus === "ACCEPTED";
 }
 
 export function shouldAcceptOpportunityOnConnect(status: OpportunityStatus | null | undefined): boolean {

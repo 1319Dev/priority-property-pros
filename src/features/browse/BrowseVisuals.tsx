@@ -62,7 +62,7 @@ export function BrowseIllustration({ kind, className = "" }: { kind: Illustratio
 }
 
 const REVIEWED_PROS_INTRO_WITHOUT_PLATFORM_FEE =
-  "This preview shows contractors only after a customer reviews them on Priority Property Pros. It is not a directory. Customers do not browse contractors or message them from here. PPP does not take a cut of the job.";
+  "These are approved contractors who already have customer reviews on Priority Property Pros. See every approved pro, including new ones, in Find a Pro. Contact details stay private until you and a pro connect on a project. PPP does not take a cut of the job.";
 
 export function HomeBrowsePreview() {
   const { cards, failed, loading, retry } = useReviewedContractors();
@@ -72,7 +72,7 @@ export function HomeBrowsePreview() {
     <section className="border-y border-forest-800/10 bg-cream-100/70 py-12" aria-labelledby="browse-preview-heading">
       <Container className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Reviewed pros</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Reviewed pros</p>
           <h2 id="browse-preview-heading" className="mt-3 font-display text-3xl font-semibold text-forest-800">
             Contractors with reviews on the platform.
           </h2>
