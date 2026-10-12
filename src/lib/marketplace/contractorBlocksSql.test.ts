@@ -56,6 +56,7 @@ describe("customer contractor block SQL", () => {
 
   it("uses a version after 20261015000004 and does not reuse public_pro_labels", () => {
     expect(names).toContain(migrationName);
+    expect(names).toContain("20261018000001_legal_agreement_acceptance.sql");
     expect(migrationName > "20261015000004").toBe(true);
     expect(names.includes(migrationName)).toBe(true);
     expect(names.includes("20261013000004_public_pro_labels.sql")).toBe(true);

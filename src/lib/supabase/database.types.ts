@@ -34,6 +34,7 @@ export type Database = {
           signup_fee_status?: import("../signupFee/constants").SignupFeeStatus;
           signup_fee_paid_at?: string | null;
           signup_fee_charge_id?: string | null;
+          age_18_affirmed_at?: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -152,6 +153,9 @@ export type Database = {
           version: number;
           body: string;
           is_current: boolean;
+          audience: "ALL" | "CONTRACTOR";
+          published: boolean;
+          published_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -160,11 +164,17 @@ export type Database = {
           version?: number;
           body: string;
           is_current?: boolean;
+          audience?: "ALL" | "CONTRACTOR";
+          published?: boolean;
+          published_at?: string | null;
         };
         Update: {
           title?: string;
           body?: string;
           is_current?: boolean;
+          audience?: "ALL" | "CONTRACTOR";
+          published?: boolean;
+          published_at?: string | null;
         };
         Relationships: [];
       };
@@ -173,12 +183,17 @@ export type Database = {
           id: string;
           agreement_id: string;
           profile_id: string;
+          agreement_version: number;
           accepted_at: string;
+          acceptance_source: "signup" | "sign_in";
           user_agent: string | null;
         };
         Insert: {
           agreement_id: string;
           profile_id: string;
+          agreement_version?: number;
+          accepted_at?: string;
+          acceptance_source?: "signup" | "sign_in";
           user_agent?: string | null;
         };
         Update: never;
@@ -962,6 +977,16 @@ export type Database = {
       };
     };
     Functions: {
+      legal_acceptance_required: { Args: Record<string, never>; Returns: boolean };
+      set_legal_acceptance_required: { Args: { p_enabled: boolean }; Returns: undefined };
+      missing_current_agreements: {
+        Args: Record<string, never>;
+        Returns: { slug: string; title: string; version: number }[];
+      };
+      accept_current_agreements: {
+        Args: { p_user_agent?: string | null; p_affirmed_age_18?: boolean };
+        Returns: Json;
+      };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       admin_set_platform_review_status: {
         Args: { p_review_id: string; p_status: string; p_reason: string };

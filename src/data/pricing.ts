@@ -1,3 +1,5 @@
+import { agreementSentence } from "../lib/legal/catalog";
+
 /** Public pricing copy. Marketing-only — do not import payment internals or flip live flags. */
 
 export const PRICING_PATH = "/pricing";
@@ -64,7 +66,10 @@ export const CONTRACTOR_ACCOUNT_DIFFERENCE =
   "A contractor account is for independent pros who want to get hired. Priority Property Pros is not your employer. Browse first, then pay $4.99 only when you choose to connect. Connecting does not guarantee a hire.";
 
 export const SIGNUP_TERMS_ACCEPTANCE =
-  "I agree to the Terms of Use and Privacy Policy. The $9.99 account activation fee is non-refundable. PPP is a marketplace, not the contractor.";
+  `${agreementSentence("CUSTOMER")} The $9.99 account activation fee is generally non-refundable once account activation is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception. PPP is a marketplace, not the contractor.`;
+
+export const CONTRACTOR_SIGNUP_TERMS_ACCEPTANCE =
+  `${agreementSentence("CONTRACTOR")} The $9.99 account activation fee is generally non-refundable once account activation is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception. The $4.99 Connection Fee is non-refundable once the connection is delivered. If you are charged but the connection can't be provided, the $4.99 is refunded automatically. PPP is a marketplace, not the contractor.`;
 
 export const PRICING_PAGE_TITLE = "Simple pricing. No percentage of your job.";
 

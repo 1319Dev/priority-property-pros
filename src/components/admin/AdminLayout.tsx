@@ -3,6 +3,8 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { BrandLoader } from "../brand/BrandLoader";
 import { CONTACT_LINK_LABEL, CONTACT_PATH } from "../../data/brand";
 import { AdminStepUpHost } from "../../lib/auth/AdminStepUpDialog";
+import { AgreementAcceptancePrompt } from "../legal/AgreementAcceptancePrompt";
+import { LegalFooterLinks } from "../legal/LegalFooterLinks";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopBar } from "./AdminTopBar";
 
@@ -84,14 +86,16 @@ export function AdminLayout({
 
       <div className="flex min-h-dvh min-w-0 flex-col md:pl-16 lg:pl-64">
         <AdminTopBar pathname={location.pathname} onOpenMenu={() => setDrawerOpen(true)} menuButtonRef={menuButtonRef} />
+        <AgreementAcceptancePrompt />
         <main id="main" className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:py-8">
           <Suspense fallback={<BrandLoader layout="section" label="Loading…" />}>{children ?? <Outlet />}</Suspense>
         </main>
-        <p className="mx-auto w-full max-w-6xl px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-sm text-ink-500 sm:px-6">
-          <Link className="font-semibold text-forest-800 underline" to={CONTACT_PATH}>
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-sm text-ink-500 sm:px-6">
+          <Link className="inline-flex min-h-11 items-center font-semibold text-forest-800 underline" to={CONTACT_PATH}>
             {CONTACT_LINK_LABEL}
           </Link>
-        </p>
+          <LegalFooterLinks linkClassName="inline-flex min-h-11 items-center font-semibold text-forest-800 underline" />
+        </div>
       </div>
 
       <AdminStepUpHost />
