@@ -89,7 +89,7 @@ export const IDENTITY_REVEAL_IMPLEMENTED = {
  * Mitigated items are omitted.
  */
 export const FLAGGED_LEAK_PATHS = [
-  "Photo EXIF / GPS metadata is not stripped server-side; only manually screened PUBLIC_SAFE captions appear, using generic illustrations rather than original files.",
+  "Photo EXIF / GPS metadata is not stripped on upload. After approved portfolio photos are shown through short-lived signed URLs, GPS in that file can leave with the image. Stripping location metadata on upload is the preferred follow-up.",
   "Original upload file names stay in private contractor-docs storage. Public portfolio rows never include storage_path or the original basename.",
   "Estimate line-item labels and change-order descriptions are not scanned (false positives on measurements such as 2x4). Notes, bios, headlines, project titles/descriptions, and estimate Q&A are scanned.",
   "Obfuscated contact (five five five…, name at gmail dot com) is not detected by design.",

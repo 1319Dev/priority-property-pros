@@ -1,5 +1,7 @@
 /**
- * Signup/activation ($9.99) and Connection Fee ($4.99) refunds are product-blocked.
+ * Signup/activation ($9.99) and delivered Connection Fee ($4.99) refunds are product-blocked.
+ * Exception (owner decision 2026-10-11, PR #136): the server automatically refunds a $4.99 Connection Fee
+ * that was charged but could not be provided (the shared server refund module under supabase/functions/_shared). The browser never refunds.
  * Stripe Dashboard refunds can still be issued by an operator outside this app.
  * Do not add Stripe refunds.create calls for these fees. Do not flip payment flags here.
  */

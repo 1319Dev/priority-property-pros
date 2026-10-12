@@ -181,6 +181,15 @@ describe("Phase 2 auth surfaces", () => {
     renderApp("/sign-up/contractor");
     expect(screen.getByLabelText(/business name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/primary trade/i)).toBeInTheDocument();
+    expect(screen.getByText(/Contractor Participation Terms/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /contractor participation terms/i })).not.toBeInTheDocument();
+  });
+
+  it("names the customer agreements on signup without linking unpublished drafts", () => {
+    renderApp("/sign-up/customer");
+    expect(screen.getByText(/Refund & Cancellation Policy/)).toBeInTheDocument();
+    expect(screen.getByText(/Review & Content Guidelines/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /refund & cancellation policy/i })).not.toBeInTheDocument();
   });
 
   it("shows email verification check-email state", () => {
@@ -302,9 +311,45 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
     pricing.unmount();
     const trust = renderApp("/trust");
     expect(trust.container.textContent).not.toMatch(/attorney review/i);
-    expect(trust.container.textContent).toMatch(/\$9\.99 account activation fee and the \$4\.99 Connection Fee are non-refundable/i);
+    expect(trust.container.textContent).toMatch(/\$9\.99 account activation fee is non-refundable\./i);
+    expect(trust.container.textContent).toMatch(
+      /\$4\.99 Connection Fee is non-refundable once the connection is delivered\. If you are charged but the connection can't be provided, the \$4\.99 is refunded automatically/i,
+    );
+    expect(trust.container.textContent).not.toMatch(/Connection Fee (is|are) non-refundable\./i);
     expect(trust.container.textContent).toMatch(/pre-connection circumvention of contact sharing is prohibited/i);
     expect(trust.container.textContent).toMatch(/does not currently verify licenses, insurance, or workmanship/i);
+  });
+
+  it("shows the support email only on the Contact Us page", () => {
+    const email = /support@prioritypropertypros\.com/i;
+    const contact = renderApp("/contact");
+    expect(contact.container.innerHTML).toMatch(email);
+    contact.unmount();
+    const otherRoutes = [
+      "/",
+      "/find-a-pro",
+      "/how-it-works",
+      "/pricing",
+      "/become-a-pro",
+      "/faq",
+      "/reviews",
+      "/sign-in",
+      "/sign-up",
+      "/sign-up/customer",
+      "/sign-up/contractor",
+      "/forgot-password",
+      "/account/status",
+      "/post-project",
+      "/trust",
+      "/notifications",
+      "/no-such-page",
+    ];
+    for (const path of otherRoutes) {
+      const view = renderApp(path);
+      expect(view.container.innerHTML, path).not.toMatch(email);
+      expect(view.container.innerHTML, path).not.toMatch(/mailto:/i);
+      view.unmount();
+    }
   });
 
   it("renders a public route when the address has a trailing slash", () => {
@@ -333,6 +378,14 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
     expect(screen.getAllByRole("link", { name: /^faq$/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /^contact$/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /leave a review/i }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("link", { name: /^terms$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^privacy$/i })).not.toBeInTheDocument();
+  });
+
+  it("keeps draft terms and privacy off the site until the build flag is on", () => {
+    renderApp("/terms");
+    expect(screen.getByRole("heading", { name: /that page is not on this site/i })).toBeInTheDocument();
+    expect(screen.queryByText(/this is not legal advice/i)).not.toBeInTheDocument();
   });
 
   it("redirects old WordPress /services and /about paths", () => {

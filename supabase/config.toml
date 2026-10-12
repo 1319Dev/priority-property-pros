@@ -36,7 +36,9 @@ verify_jwt = false
 # Notification delivery. verify_jwt is false because pg_net and email links
 # do not send a user JWT. send-notification requires the x-notify-secret header.
 # notification-unsubscribe requires a signed token. Secrets live in Vault
-# (see the notification migration). RESEND_API_KEY is the dashboard env secret.
+# (see the notification migration). Email uses Google Workspace SMTP on port 465;
+# SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and NOTIFICATION_FROM are dashboard
+# Edge Function secrets (docs/NOTIFICATION_EMAIL.md).
 # Do not put secrets in this file.
 [functions.send-notification]
 verify_jwt = false

@@ -38,7 +38,7 @@ Never allow a live key while the DB says test mode. Never allow a test key while
 
 State machine: **AVAILABLE → RESERVED (pending payment) → PAID**. `#14` `booking_contact_access` is granted UNLOCKED (`CONNECTION_FEE_PAYMENT`) only after trusted Stripe verification, then `fulfill_connection_fee_checkout` marks the purchase PAID. Abandoned/expired Checkout **releases** the slot. Customer **Stop New Connections** rejects new reservations; in-flight RESERVED payments may still finalize; existing UNLOCKED `#14` rows stay.
 
-Paid-but-not-reservable (expired / 4th slot) → `needs_refund` flag (no silent loss, no extra unlock). That flag is **not** an in-app refund. The $4.99 Connection Fee and $9.99 account activation fee are non-refundable in the product. This app does not call Stripe refunds. Stripe Dashboard refunds remain possible outside the app.
+Paid-but-not-reservable (expired / 4th slot) → `needs_refund` flag (no silent loss, no extra unlock). Since PR #136 (owner decision 2026-10-11) a paid-but-undeliverable $4.99 Connection Fee is refunded automatically by the server (see `docs/CONNECTION_FEE_REFUNDS.md`). A delivered connection is never refunded. The $9.99 account activation fee stays non-refundable in the product; the app never refunds it.
 
 ## #14 (single entitlement store)
 

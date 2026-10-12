@@ -6,6 +6,7 @@ import {
   CONNECT_PAYMENTS_OFF_COPY,
   CONNECTED_BODY,
   CONNECTED_LABEL,
+  CONNECT_WHAT_YOU_GET_COPY,
   showConnectButton,
   type ContractorConnectionUiState,
 } from "../../lib/marketplace/connectionLifecycle";
@@ -29,9 +30,14 @@ export function ContractorConnectionCta({
         <StatusBanner tone="info" title="Connection requested" body={CONNECT_PAYMENTS_OFF_COPY} />
       ) : null}
       {showConnectButton(state) ? (
-        <Button type="button" className="min-h-14 w-full" disabled={busy} onClick={onConnect}>
-          {CONNECT_BUTTON_LABEL}
-        </Button>
+        <>
+          <p className="text-sm leading-relaxed text-ink-700" data-testid="connect-what-you-get">
+            {CONNECT_WHAT_YOU_GET_COPY}
+          </p>
+          <Button type="button" className="min-h-14 w-full" disabled={busy} onClick={onConnect}>
+            {CONNECT_BUTTON_LABEL}
+          </Button>
+        </>
       ) : null}
     </div>
   );

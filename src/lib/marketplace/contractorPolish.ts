@@ -11,13 +11,13 @@ import type { BookingStatus } from "./types";
 export const HOW_FEES_WORK_SUMMARY = "How fees work — $9.99 activation, $4.99 to connect";
 
 export const HOW_FEES_WORK_BODY =
-  "The $9.99 account activation is one-time and non-refundable. It is not a monthly fee. After that, browsing jobs is $0/month. Pay $4.99 only when you choose to connect. That connection fee is non-refundable and does not guarantee a hire. Priority Property Pros does not take a percentage of the job. The customer pays you directly.";
+  "The $9.99 account activation is one-time and non-refundable. It is not a monthly fee. After that, browsing jobs is $0/month. Pay $4.99 only when you choose to connect. The $4.99 opens messaging with that customer on that project. The customer decides if and when to share their phone, email, and exact address. That connection fee does not guarantee a hire. It is non-refundable once the connection is delivered, and it is refunded automatically if you are charged but the connection can't be provided. Priority Property Pros does not take a percentage of the job. The customer pays you directly.";
 
 export const HISTORY_JOBS_COPY =
   "Passed, closed, and cancelled jobs stay here. The title and PPP number show when they are still available to you.";
 
 export const CONTRACTOR_CONTACT_LOCKED_COPY =
-  "Project contact is locked. Street, phone, and email stay hidden until you have a paid $4.99 connection on this job, or an admin unlocks this record.";
+  "Project contact is locked. A paid $4.99 connection opens messaging on this job. Street, phone, and email appear only if the customer chooses to share them, or an admin unlocks this record.";
 
 export const CONTRACTOR_CONTACT_WAITING_COPY =
   "The customer has not shared contact yet. Phone, email, and street stay hidden until they choose to share.";
@@ -59,6 +59,19 @@ export function activationStatusLine(input: {
   }
   if (input.status === "UNPAID") return { text: "Activation: Not activated", showActivate: true };
   return { text: "Activation: Not required", showActivate: false };
+}
+
+/** The $9.99 note is for pros who still owe activation. Paid and exempt accounts already say so on Account. */
+export function showActivationFeeNote(status?: SignupFeeStatus | null): boolean {
+  return status !== "PAID" && status !== "NOT_REQUIRED";
+}
+
+/**
+ * City/state is only a stand-in until the customer shares contact. After the share the
+ * street is in Project Contact, so the approximate card is not shown (null).
+ */
+export function jobLocationHeading(contactShared: boolean): string | null {
+  return contactShared ? null : "Approximate location";
 }
 
 export function notificationCategoryDescription(
@@ -132,9 +145,21 @@ export function changeOrderStatusLabel(status: string): string {
     .join(" ");
 }
 
-export function changeOrderAmountLabel(cents: number, formatUsd: (value: number) => string): string {
-  if (cents === 0) return "No price change";
-  return formatUsd(cents);
+function coerceChangeOrderCents(cents: number | string | null | undefined): number | null {
+  if (typeof cents === "number" && Number.isFinite(cents)) return Math.trunc(cents);
+  if (typeof cents === "string" && /^-?\d+$/.test(cents.trim())) return Number(cents.trim());
+  return null;
+}
+
+/** Uses the stored cent amount. A description is not parsed into a price. */
+export function changeOrderAmountLabel(
+  cents: number | string | null | undefined,
+  formatUsd: (value: number) => string,
+): string {
+  const value = coerceChangeOrderCents(cents);
+  if (value == null) return "Amount not on file";
+  if (value === 0) return "Scope change, price stays the same";
+  return formatUsd(value);
 }
 
 export function friendlyTimestamp(iso: string | null | undefined, now = new Date()): string | null {

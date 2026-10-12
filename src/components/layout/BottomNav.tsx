@@ -33,19 +33,29 @@ export function BottomNav() {
     prominent?: boolean;
     placeholder?: boolean;
     ariaLabel?: string;
-  }> = [
-    { key: "home", to: "/", label: "Home", icon: HomeIcon, end: true },
-    { key: "find", to: FIND_A_PRO_PATH, label: "Find", icon: FindIcon, end: false },
-    { key: "post", to: postTo, label: "Post", icon: PostIcon, end: false, prominent: true },
-    showProSignup
-      ? { key: "pros", to: "/become-a-pro", label: "Pros", icon: ProIcon, end: false }
-      : loading
-        ? { key: "pros", to: "/become-a-pro", label: "Pros", icon: ProIcon, end: false, placeholder: true }
-        : { key: "pros", to: home, label: "Dashboard", icon: ProIcon, end: false, ariaLabel: "My dashboard" },
-    loading
-      ? { key: "account", to: "/", label: "Loading…", icon: SignIcon, end: false, placeholder: true }
-      : { key: "account", to: accountTo, label: accountLabel, icon: SignIcon, end: false },
-  ];
+  }> =
+    !loading && account_type === "CONTRACTOR"
+      ? [
+          // Contractors do not post projects or sign up as pros; use the pro dashboard set.
+          { key: "home", to: "/", label: "Home", icon: HomeIcon, end: true },
+          { key: "jobs", to: "/app/pro/opportunities", label: "Jobs", icon: JobsIcon, end: false },
+          { key: "messages", to: "/app/pro/messages", label: "Messages", icon: MessagesIcon, end: false },
+          { key: "billing", to: "/app/pro/billing", label: "Billing", icon: BillingIcon, end: false },
+          { key: "account", to: accountTo, label: accountLabel, icon: SignIcon, end: false },
+        ]
+      : [
+          { key: "home", to: "/", label: "Home", icon: HomeIcon, end: true },
+          { key: "find", to: FIND_A_PRO_PATH, label: "Find", icon: FindIcon, end: false },
+          { key: "post", to: postTo, label: "Post", icon: PostIcon, end: false, prominent: true },
+          showProSignup
+            ? { key: "pros", to: "/become-a-pro", label: "Pros", icon: ProIcon, end: false }
+            : loading
+              ? { key: "pros", to: "/become-a-pro", label: "Pros", icon: ProIcon, end: false, placeholder: true }
+              : { key: "pros", to: home, label: "Dashboard", icon: ProIcon, end: false, ariaLabel: "My dashboard" },
+          loading
+            ? { key: "account", to: "/", label: "Loading…", icon: SignIcon, end: false, placeholder: true }
+            : { key: "account", to: accountTo, label: accountLabel, icon: SignIcon, end: false },
+        ];
 
   return (
     <nav
@@ -151,6 +161,47 @@ function SignIcon({ active }: { active: boolean }) {
         d="M5.5 19 c1.6-3.2 3.8-4.7 6.5-4.7 s4.9 1.5 6.5 4.7"
         stroke={stroke}
         strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function JobsIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M6 4 H18 V20 H6 Z M9 8 H15 M9 12 H15 M9 16 H13"
+        stroke={active ? "#1A3C2E" : "#6B645A"}
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MessagesIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M4 6 H20 V16 H10 L6 19.5 V16 H4 Z"
+        stroke={active ? "#1A3C2E" : "#6B645A"}
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function BillingIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3.5 7 H20.5 V17 H3.5 Z M3.5 10.5 H20.5 M7 14 H10"
+        stroke={active ? "#1A3C2E" : "#6B645A"}
+        strokeWidth="1.7"
+        strokeLinejoin="round"
         strokeLinecap="round"
       />
     </svg>
