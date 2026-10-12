@@ -121,7 +121,7 @@ describe("secret resolution", () => {
     expect(resolveSecret({ vaultValue: null, envValue: "" })).toBe("");
   });
 
-  it("keeps the Resend key in the environment unless only Vault has it", () => {
+  it("prefers the environment when asked (preferEnv) unless only Vault has it", () => {
     expect(resolveSecret({ vaultValue: "vault-key", envValue: "env-key", preferEnv: true })).toBe("env-key");
     expect(resolveSecret({ vaultValue: "vault-key", envValue: " ", preferEnv: true })).toBe("vault-key");
   });
