@@ -2202,6 +2202,14 @@ END $$;
 -- contractors' work, and it does not resolve construction disputes. Fees are
 -- generally non-refundable once delivered. Exception requests and complaints
 -- go to a person. This seed does not change Stripe or payment functions.
+--
+-- Updated 2026-10-11 to match the live site at activation: legal documents
+-- published (Terms v3, Privacy v2, Refund v1, Community v1, Review & Content
+-- v1, Contractor Participation v1); undeliverable $4.99 Connect refunded
+-- automatically; the homeowner controls contact sharing after Connect;
+-- account deletion works (also for unpaid accounts); the support email is
+-- shown only on the Contact us page, so articles point there and never give
+-- an email address.
 -- ---------------------------------------------------------------------------
 
 INSERT INTO public.support_kb_articles (slug, title, body_md, status)
@@ -2232,7 +2240,11 @@ A one-time account activation applies to homeowners and to contractors. The amou
 
 The activation service is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds. That purchase is the right to use the paid marketplace: a homeowner can post a project into matching, and a contractor can use the paid parts of the account. The assistant must quote the live amount it was given, not a remembered number.
 
-Once that service is delivered, the activation fee is generally non-refundable. This chat cannot see whether a specific person has paid, and it cannot mark an account paid.
+Once that service is delivered, the activation fee is generally non-refundable. A $9.99 charge that does not result in the account being marked paid is an erroneous charge; the owner reviews it and, if confirmed, refunds it through Stripe. This chat cannot see whether a specific person has paid, and it cannot mark an account paid.
+
+At signup every new account must agree to the current Terms of Service and policies and affirm that they are 18 or older. Someone who already had an account is asked to accept the current versions at their next sign-in. Until they accept, they can still view their information and delete the account, but new marketplace actions such as posting a project or paying Connect are paused.
+
+An account that has not paid the activation yet can still open its account settings: change the email or password, see notifications, and delete the account. The paid marketplace pages wait until activation is paid.
   $md$,
   'PUBLISHED'
 ),
@@ -2281,13 +2293,15 @@ There is no platform commission on the estimate. Any percentage shown in an old 
 Two public fees exist. There is no subscription and no commission on the job.
 
 1. One-time account activation for homeowners and contractors. The live amount is currently $9.99. The activation service is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds.
-2. Contractor Connect, also called the contact unlock. The live amount is currently $4.99. The contractor pays it to unlock contact on one project. The Connect service is delivered when the server verifies that payment and unlocks that connection.
+2. Contractor Connect. The live amount is currently $4.99. The contractor pays it to connect on one project. It opens messaging between that homeowner and that contractor on that project. The homeowner decides whether and when to share their own contact details; Connect does not hand the contractor the homeowner's phone, email, or address. It does not promise the homeowner will hire that contractor. The Connect service is delivered when the server verifies that payment and unlocks that connection. A contractor cannot pay Connect on a job that is cancelled, closed, expired, or where the homeowner blocked them.
 
 Job payments through the platform are not live. Priority Property Pros does not take a cut of the contractor's price. Workmanship payments are between the homeowner and the contractor.
 
 Activation and Connect are collected by Stripe Checkout. Fees are generally non-refundable once the applicable service is delivered.
 
-The exceptions are a duplicate charge, an erroneous charge, a legally required refund, or an approved exception. This chat cannot start any of those. Ask the person to use Talk to Support. A person reviews the exception. Until a refund workflow is approved, an approved exception is handled manually in the Stripe dashboard by the owner. Do not promise a refund.
+Automatic Connect refunds: if a contractor is charged the $4.99 but the connection can't be provided (the project was cancelled or closed, the opportunity expired or is no longer open, the homeowner blocked the contractor or stopped new connections, the reservation expired before payment finished, or the same connection was charged twice), Priority Property Pros refunds the $4.99 automatically, once, to the original payment method. The contractor does not need to ask. A delivered connection is not refunded automatically.
+
+Other exceptions are a duplicate charge, an erroneous charge, a legally required refund, or an approved exception. This chat cannot start any of those. Ask the person to use Talk to Support or the Contact us page. A person reviews the exception, and an approved refund is issued through Stripe by the owner. Do not promise a refund.
 
 Never mention a hidden legacy contractor percentage. It is not charged.
   $md$,
@@ -2311,7 +2325,7 @@ The assistant cannot delete a review, change a star rating, or confirm what a sp
   $md$
 Find a Pro is the public directory. Visitors can browse approved pros by service and area.
 
-Until a contractor pays the Connect fee on a project, the public card does not show the business name. It also never shows phone, email, or a street address. Contact stays inside the project after Connect.
+Until a contractor pays the Connect fee on a project, the public card does not show the business name. It also never shows phone, email, or a street address. After Connect, the homeowner and the contractor message inside the project, and the homeowner chooses whether and when to share their contact details.
 
 A directory card is not verification of the contractor's work, license, or insurance. Priority Property Pros does not insure the contractor and does not employ the contractor.
 
@@ -2323,7 +2337,7 @@ The assistant must not invent a contractor name, license, insurance, or rating. 
   'complaints-and-reports',
   'Complaints and reports',
   $md$
-A homeowner can report fraud or impersonation, harassment or threats, a misleading profile, a suspected fake review, serious contractor misconduct, or a marketplace rule violation. That report goes to a person through Talk to Support or by email to support@prioritypropertypros.com. This chat cannot file, investigate, or close the report.
+A homeowner can report fraud or impersonation, harassment or threats, a misleading profile, a suspected fake review, serious contractor misconduct, or a marketplace rule violation. That report goes to a person through Talk to Support or the Contact us page (prioritypropertypros.com/contact). This chat cannot file, investigate, or close the report.
 
 Priority Property Pros may review a report, ask for evidence, moderate content, suspend an account, or remove a contractor. Reviewing a complaint is not guaranteeing workmanship, taking responsibility for the work, or deciding a construction dispute. Priority Property Pros does not resolve construction disputes. It does not promise to investigate or resolve every complaint.
 
@@ -2337,7 +2351,7 @@ A disagreement that is directly with Priority Property Pros is separate. Where t
   'what-support-can-and-cannot-do',
   'What Priority Help can and cannot do',
   $md$
-Priority Help answers general questions from the published policy: registration, contractor approval, posting a project, estimates, the activation fee, the Connect fee, reviews, Find a Pro, and what the marketplace does not do.
+Priority Help is an automated assistant, not a person. It answers general questions from the published policy: registration, contractor approval, posting a project, estimates, the activation fee, the Connect fee and its automatic refunds, reviews, Find a Pro, account settings and deletion, the legal documents, and what the marketplace does not do. Its answers are general information. They can be wrong, they are not legal, tax, or construction advice, and they do not change the Terms of Service or any policy. The published policies control.
 
 If the published policy does not cover the question, it says so and offers Talk to Support. It does not guess.
 
@@ -2358,13 +2372,37 @@ Those requests are handed to a person through Talk to Support. A ticket referenc
   'contact-refund-and-privacy-requests',
   'Contacting Priority Property Pros, refund exceptions, and privacy requests',
   $md$
-Priority Property Pros LLC is a Texas limited liability company. Email support@prioritypropertypros.com. Mail: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US. Email is the fastest way to reach Priority Property Pros. Those are the only contact details the assistant may give.
+Priority Property Pros LLC is a Texas limited liability company. To reach Priority Property Pros, use the Contact us page (prioritypropertypros.com/contact), or choose Talk to Support in this chat. Mail: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US. The assistant never gives an email address; it points people to the Contact us page.
 
-Refund exceptions: email support@prioritypropertypros.com with the account email, which fee ($9.99 activation or $4.99 Connect), the amount, the date if known, and why it is a duplicate charge, an erroneous charge, a refund the law requires, or another exception. The same information can be mailed to the address above. The owner reviews the request. If it is approved, the refund is issued in Stripe outside this app. Sending a request does not by itself create a refund, and not every request is approved. Closing an account does not by itself refund a fee.
+Refund exceptions: use the Contact us page with the account email, which fee ($9.99 activation or $4.99 Connect), the amount, the date if known, and why it is a duplicate charge, an erroneous charge, a refund the law requires, or another exception. The same information can be mailed to the address above. The owner reviews the request. If it is approved, the refund is issued through Stripe. Sending a request does not by itself create a refund, and not every request is approved. Closing an account does not by itself refund a fee. A $4.99 Connect that could not be delivered is refunded automatically, so no request is needed for that.
 
-Privacy requests: email support@prioritypropertypros.com or mail the address above. Say whether you want access, a correction, a copy, deletion, or an opt-out, and include the email on the account. Priority Property Pros may ask you to confirm that you control that email. Priority Property Pros answers within 45 days, and may take up to 45 more days after telling you. Priority Property Pros does not sell personal information and does not use it for targeted advertising.
+Privacy requests: use the Contact us page or mail the address above. Say whether you want access, a correction, a copy, deletion, or an opt-out, and include the email on the account. Priority Property Pros may ask you to confirm that you control that email. Priority Property Pros answers within 45 days, and may take up to 45 more days after telling you. Priority Property Pros does not sell personal information and does not use it for targeted advertising.
 
-Deleting an account: use Delete account on the account settings page. If that control is temporarily unavailable, email support@prioritypropertypros.com from the account email with the subject "Account deletion request". Active jobs, an open dispute, an unfinished refund, or being the last admin stop a deletion.
+Deleting an account: use Delete account on the account settings page and type DELETE to confirm. It works for accounts that have not paid the activation too. The product asks for the current password or a recent sign-in. Deletion is refused while a job is still active, while a booking or card dispute is open, while a refund is unfinished, or for the last active admin. Deleting an account also deletes its Priority Help chats. If the delete control is ever temporarily unavailable, use the Contact us page from the account email with the subject "Account deletion request".
+  $md$,
+  'PUBLISHED'
+),
+(
+  'legal-documents',
+  'Terms of Service and policies',
+  $md$
+The legal documents are published on the site, dated October 11, 2026: Terms of Service (prioritypropertypros.com/terms), Privacy Policy (/privacy), Refund & Cancellation Policy (/refunds), Community Guidelines (/community-guidelines), Review & Content Guidelines (/content-guidelines), and Contractor Participation Terms (/contractor-terms, for contractors). They are linked in the site footer and on the sign-up form.
+
+Signing up requires agreeing to them and affirming you are 18 or older. Priority Property Pros records which version was accepted and when. Existing accounts are asked to accept the current versions at the next sign-in.
+
+The assistant summarizes; the published documents control. For the exact wording, point the person to the document page. Questions about the terms go through the Contact us page.
+  $md$,
+  'PUBLISHED'
+),
+(
+  'priority-help-privacy',
+  'How Priority Help handles chats',
+  $md$
+Priority Help stores the messages typed in the chat, the replies, and their times. A signed-in chat is linked to the account. A chat without signing in is linked to a random code kept in that browser, and Priority Property Pros stores a one-way hash of the IP address to limit abuse.
+
+To write an automatic reply, the question and a few recent messages of the same chat are sent to the AI provider, OpenAI, after Priority Property Pros removes the email addresses, phone numbers, and street addresses its filter detects. If the person chooses Talk to Support, a Priority Property Pros teammate can read the whole conversation. Do not type card numbers or passwords in the chat.
+
+A chat started without signing in is deleted automatically 90 days after its last message, unless it became a support ticket that is still open. A signed-in chat is deleted automatically 365 days after it is resolved or closed. Deleting the account deletes its Priority Help chats. The Privacy Policy (prioritypropertypros.com/privacy) has the details.
   $md$,
   'PUBLISHED'
 )
@@ -2384,11 +2422,11 @@ FROM (
     ),
     (
       'No refund from chat',
-      'Activation is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds. Connect is delivered when the server verifies that payment and unlocks that connection. Activation and Connect fees are generally non-refundable once the service is delivered. I cannot start a refund from this chat. A duplicate charge, an erroneous charge, a legally required refund, or an approved exception has to be reviewed by a person. I will not promise a refund.'
+      'Activation is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds. Connect is delivered when the server verifies that payment and unlocks that connection. Activation and Connect fees are generally non-refundable once the service is delivered. A $4.99 Connect that could not be delivered is refunded automatically. I cannot start a refund from this chat. A duplicate charge, an erroneous charge, a legally required refund, or an approved exception has to be reviewed by a person. I will not promise a refund.'
     ),
     (
       'Pricing',
-      'Account activation is a one-time fee for homeowners and contractors. It is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds. Connect is a one-time fee a contractor pays to unlock contact on a project. It is delivered when the server verifies that payment and unlocks that connection. There is no subscription and no commission. Both fees are generally non-refundable once delivered. I will confirm the live amounts in settings before I quote them.'
+      'Account activation is a one-time fee for homeowners and contractors. It is delivered when the server verifies the Stripe payment and marks the fee paid, not when the checkout page succeeds. Connect is a one-time fee a contractor pays to open messaging with the homeowner on a project; the homeowner decides whether to share contact details. It is delivered when the server verifies that payment and unlocks that connection. There is no subscription and no commission. Both fees are generally non-refundable once delivered, and a Connect that could not be delivered is refunded automatically. I will confirm the live amounts in settings before I quote them.'
     ),
     (
       'Complaint report',
@@ -2416,7 +2454,7 @@ COMMENT ON TABLE public.support_agent_status IS
 COMMENT ON TABLE public.support_rate_limits IS
   'Server-side counters keyed by a hash, never a raw IP.';
 COMMENT ON TABLE public.support_settings IS
-  'Feature flags (both default off), retention days (365 signed-in, 90 guests, purged daily by pg_cron job priority-help-retention), the daily AI answer cap, and the daily AI dollar budget in micro-dollars. admin_support_purge_expired is manual and is not scheduled. Cap 0 or budget 0 stops model answers.';
+  'Feature flags (both default off), retention days (365 signed-in, 90 guests, purged daily by pg_cron job priority-help-retention), the daily AI answer cap, and the daily AI dollar budget in micro-dollars. admin_support_purge_expired runs the same purge on demand. Cap 0 or budget 0 stops model answers.';
 COMMENT ON TABLE public.support_ai_usage IS
   'One row per model call with tokens and cost in micro-dollars. No client grants. Feeds the daily dollar budget and cost monitoring.';
 

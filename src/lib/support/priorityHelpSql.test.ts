@@ -137,7 +137,14 @@ describe("Priority Help migration contract", () => {
 
   it("matches the legal documents on contact, refund exceptions, and privacy requests", () => {
     expect(body).toMatch(/contact-refund-and-privacy-requests/);
-    expect(body).toMatch(/support@prioritypropertypros\.com/);
+    // Owner rule: the support email appears only on /contact. The knowledge base points there.
+    expect(body).not.toMatch(/@prioritypropertypros\.com/);
+    expect(body).toMatch(/Contact us page \(prioritypropertypros\.com\/contact\)/);
+    expect(body).toMatch(/refunds the \$4\.99 automatically/);
+    expect(body).toMatch(/homeowner decides whether and when to share their own contact details/);
+    expect(body).toMatch(/'legal-documents'/);
+    expect(body).toMatch(/'priority-help-privacy'/);
+    expect(body).toMatch(/It works for accounts that have not paid the activation too/);
     expect(body).toMatch(/5900 Balcones Drive STE 100, Austin, TX 78731/);
     expect(body).toMatch(/answers within 45 days/);
     expect(body).toMatch(/currently \$9\.99/);
