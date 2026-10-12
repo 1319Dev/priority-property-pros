@@ -20,6 +20,8 @@ import {
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
+const AUTO_REFUND_MODULE = "supabase/functions/_shared/connectionRefund.ts";
+
 const STRIPE_REFUND_API = [
   /stripe\.refunds/i,
   /refunds\.create/,
@@ -58,7 +60,8 @@ describe("non-refundable platform fee policy", () => {
     expect(PLATFORM_FEES_NON_REFUNDABLE).toMatch(/\$9\.99/);
     expect(PLATFORM_FEES_NON_REFUNDABLE).toMatch(/\$4\.99/);
     expect(REFUND_CONCEPT_COPY).toMatch(/non-refundable/i);
-    expect(REFUND_CONCEPT_COPY).toMatch(/this app does not issue refunds/i);
+    expect(REFUND_CONCEPT_COPY).toMatch(/cannot be provided[^.]*refunded automatically/i);
+    expect(REFUND_CONCEPT_COPY).toMatch(/never refunded for a connection that was delivered/i);
     expect(REFUND_CONCEPT_COPY).not.toMatch(/attorney review/i);
   });
 
@@ -84,6 +87,9 @@ describe("non-refundable platform fee policy", () => {
         const rel = path.relative(repoRoot, file);
         if (/\.test\.(ts|tsx)$/.test(file)) continue;
         if (rel.endsWith("feeRefundPolicy.ts")) continue;
+        // Owner decision 2026-10-11: the only Stripe refund path is the automatic refund of a paid
+        // Connection Fee that could not be provided. It is checked separately below.
+        if (rel === AUTO_REFUND_MODULE) continue;
         const text = readFileSync(file, "utf8");
         for (const pattern of STRIPE_REFUND_API) {
           if (pattern.test(text)) hits.push(`${rel} matches ${pattern}`);
@@ -91,6 +97,26 @@ describe("non-refundable platform fee policy", () => {
       }
     }
     expect(hits).toEqual([]);
+  });
+
+  it("allows only the automatic undeliverable-connection refund module to call Stripe refunds", () => {
+    const module = readFileSync(path.join(repoRoot, AUTO_REFUND_MODULE), "utf8");
+    expect(module).toMatch(/\/v1\/refunds/);
+    expect(module).toMatch(/"Idempotency-Key": idempotencyKey/);
+    expect(module).toMatch(/amount: String\(connectionFeeCents\(\)\)/);
+    expect(module).toMatch(/rpc\("prepare_connection_fee_refund"/);
+    const importers: string[] = [];
+    for (const file of collectFiles(path.join(repoRoot, "supabase/functions"))) {
+      if (readFileSync(file, "utf8").includes("_shared/connectionRefund.ts")) importers.push(path.relative(repoRoot, file));
+    }
+    expect(importers.sort()).toEqual([
+      "supabase/functions/connection-fee-webhook/index.ts",
+      "supabase/functions/reconcile-connection-checkout/index.ts",
+    ]);
+    for (const file of collectFiles(path.join(repoRoot, "src"))) {
+      if (/\.test\.(ts|tsx)$/.test(file)) continue;
+      expect(readFileSync(file, "utf8")).not.toMatch(/connectionRefund/);
+    }
   });
 
   it("hard-blocks the SQL refund dead path and updates Terms of Use", () => {

@@ -109,7 +109,8 @@ describe("public pricing copy", () => {
 
   it("states that signup and connection fees are non-refundable", () => {
     expect(SIGNUP_FEE_NON_REFUNDABLE).toMatch(/\$9\.99 account activation fee is non-refundable/i);
-    expect(CONNECTION_FEE_NON_REFUNDABLE).toMatch(/\$4\.99 Connection Fee is non-refundable/i);
+    expect(CONNECTION_FEE_NON_REFUNDABLE).toMatch(/\$4\.99 Connection Fee is non-refundable once the connection is delivered/i);
+    expect(CONNECTION_FEE_NON_REFUNDABLE).toMatch(/connection can't be provided, the \$4\.99 is refunded automatically/i);
     expect(PLATFORM_FEES_NON_REFUNDABLE).toMatch(/non-refundable/i);
     expect(CONNECTION_FEE_NO_HIRE_GUARANTEE).toMatch(/non-refundable/i);
     expect(SIGNUP_FEE_PUBLIC_NOTE).toMatch(/non-refundable/i);
@@ -125,7 +126,11 @@ describe("public pricing copy", () => {
     expect(SIGNUP_TERMS_ACCEPTANCE).toMatch(/non-refundable/i);
     const refundFaq = PRICING_FAQ.find((item) => /refundable/i.test(item.question));
     expect(refundFaq).toBeDefined();
-    expect(refundFaq?.answer).toMatch(/both fees are non-refundable/i);
+    expect(refundFaq?.answer).toMatch(/\$9\.99 account activation fee is non-refundable/i);
+    expect(refundFaq?.answer).toMatch(/\$4\.99 Connection Fee is non-refundable once the connection is delivered/i);
+    expect(refundFaq?.answer).toMatch(/project was cancelled or closed, the opportunity expired, the customer blocked you, or you were charged twice/i);
+    expect(refundFaq?.answer).toMatch(/refunded automatically/i);
+    expect(refundFaq?.answer).not.toMatch(/both fees are non-refundable/i);
     expect(refundFaq?.answer).toMatch(/does not guarantee a hire/i);
   });
 

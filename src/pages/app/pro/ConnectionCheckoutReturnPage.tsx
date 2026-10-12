@@ -4,16 +4,23 @@ import { ButtonLink } from "../../../components/ui/Button";
 import { ErrorState, LoadingState } from "../../../components/ui/PageState";
 import { reconcileConnectionCheckout } from "../../../lib/marketplace/api";
 import { successUrlUnlocksContact } from "../../../lib/marketplace/connectionCheckout";
-import { CONNECTION_FEE_NON_REFUNDABLE } from "../../../data/pricing";
+import {
+  CONNECTION_FEE_DELIVERED_NON_REFUNDABLE,
+  CONNECTION_FEE_NON_REFUNDABLE,
+} from "../../../data/pricing";
+
+export const CONNECTION_REFUNDING_COPY =
+  "This connection could not be provided, so messaging was not opened. Your $4.99 is being refunded automatically to your card.";
 import { CONNECT_DOES_NOT_UNLOCK_COPY } from "../../../lib/marketplace/connectionLifecycle";
 
 export function ConnectionCheckoutReturnPage() {
   const [params] = useSearchParams();
   const sessionId = params.get("session_id");
   const [message, setMessage] = useState(
-    `Confirming your $4.99 payment. This page cannot open messaging or reveal contact. ${CONNECTION_FEE_NON_REFUNDABLE}`,
+    "Confirming your $4.99 payment. This page cannot open messaging or reveal contact.",
   );
   const [unlocked, setUnlocked] = useState(false);
+  const [refunding, setRefunding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(true);
 
@@ -29,11 +36,15 @@ export function ConnectionCheckoutReturnPage() {
     void reconcileConnectionCheckout(sessionId)
       .then((result) => {
         const granted = result.contact_unlocked === true;
+        const refund = !granted && result.needs_refund === true;
         setUnlocked(granted);
+        setRefunding(refund);
         setMessage(
           granted
-            ? `Payment verified. You can now message this customer about this project. The customer decides if and when to share their phone, email, and exact address. ${CONNECTION_FEE_NON_REFUNDABLE}`
-            : `Payment is still being verified, or it was not completed. Messaging opens only after the server confirms a $4.99 Connection Fee. ${CONNECTION_FEE_NON_REFUNDABLE}`,
+            ? "Payment verified. You can now message this customer about this project. The customer decides if and when to share their phone, email, and exact address."
+            : refund
+              ? CONNECTION_REFUNDING_COPY
+              : "Payment is still being verified, or it was not completed. Messaging opens only after the server confirms a $4.99 Connection Fee.",
         );
       })
       .catch((err: Error) => setError(err.message))
@@ -50,7 +61,11 @@ export function ConnectionCheckoutReturnPage() {
         {unlocked ? "Connected" : "Not connected yet"}
       </h1>
       <p className="text-sm leading-relaxed text-ink-700">{message}</p>
-      <p className="text-sm leading-relaxed text-ink-500">{CONNECTION_FEE_NON_REFUNDABLE}</p>
+      {refunding ? null : (
+        <p className="text-sm leading-relaxed text-ink-500">
+          {unlocked ? CONNECTION_FEE_DELIVERED_NON_REFUNDABLE : CONNECTION_FEE_NON_REFUNDABLE}
+        </p>
+      )}
       <p className="text-sm leading-relaxed text-ink-500">{CONNECT_DOES_NOT_UNLOCK_COPY}</p>
       <ButtonLink to="/app/pro/opportunities" className="min-h-14 w-full">
         Back to opportunities

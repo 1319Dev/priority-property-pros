@@ -1,4 +1,10 @@
-import { CONNECTION_FEE_NO_HIRE_GUARANTEE, CONNECTION_FEE_NON_REFUNDABLE } from "../../data/pricing";
+import {
+  CONNECTION_FEE_AUTO_REFUND_CASES,
+  CONNECTION_FEE_DELIVERED_NON_REFUNDABLE,
+  CONNECTION_FEE_NO_HIRE_GUARANTEE,
+  CONNECTION_FEE_NO_HIRE_PLAIN,
+  CONNECTION_FEE_NON_REFUNDABLE,
+} from "../../data/pricing";
 import { claimSlotExclusive, nextOpportunitySlot } from "./slots";
 import {
   CONNECTION_FEE_CENTS,
@@ -30,7 +36,7 @@ export const CONNECT_WHAT_YOU_GET_COPY =
 export const CONNECTED_LABEL = "Connected";
 
 export const CONNECTED_BODY =
-  `Your $4.99 connection is active for this project only. ${CONNECTION_FEE_NON_REFUNDABLE} Phone, email, and street stay hidden until the customer shares them.`;
+  `Your $4.99 connection is active for this project only. ${CONNECTION_FEE_DELIVERED_NON_REFUNDABLE} Phone, email, and street stay hidden until the customer shares them.`;
 
 export const CHECKOUT_PENDING_COPY =
   `Checkout is in progress. Messaging opens after the server verifies the $4.99 payment. The customer then decides if and when to share phone, email, and exact address. ${CONNECTION_FEE_NON_REFUNDABLE}`;
@@ -61,7 +67,7 @@ export const CONNECT_DOES_NOT_UNLOCK_COPY =
 export const CONNECTION_FEE_NO_GUARANTEE = CONNECTION_FEE_NO_HIRE_GUARANTEE;
 
 export const REFUND_CONCEPT_COPY =
-  `${CONNECTION_FEE_NO_HIRE_GUARANTEE} There is no refund if you are not hired, the customer chooses someone else, the customer cancels, or you change your mind. If a charge is taken but connection access is not granted, that is a technical failure for operator review — this app does not issue refunds.`;
+  `${CONNECTION_FEE_NO_HIRE_PLAIN} The $4.99 Connection Fee is non-refundable once the connection is delivered: there is no refund if you are not hired, the customer chooses someone else, the customer cancels after you connected, or you change your mind. If a $4.99 charge is taken but the connection cannot be provided (for example ${CONNECTION_FEE_AUTO_REFUND_CASES}), it is refunded automatically. You are never refunded for a connection that was delivered.`;
 
 export function occupiesConnectionSlot(status: ProjectConnectionStatus): boolean {
   return CONNECTION_OCCUPYING_STATUSES.includes(status);

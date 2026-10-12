@@ -4,11 +4,11 @@ import { PostProjectLink } from "../components/layout/PostProjectLink";
 import { Container } from "../components/ui/Container";
 import { CUSTOMER_CTA, CONTRACTOR_CTA } from "../data/brand";
 import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
-import { JOB_PAYMENT_PLAIN } from "../data/pricing";
+import { CONNECTION_FEE_NON_REFUNDABLE, JOB_PAYMENT_PLAIN } from "../data/pricing";
 import { useHidePlatformPricing } from "../lib/auth/platformPricing";
 
 const CONNECT_WITH_FEE =
-  "Up to three local independents can connect for $4.99 each. We invite matched pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited. Connecting does not guarantee a hire. The $4.99 Connection Fee is non-refundable.";
+  `Up to three local independents can connect for $4.99 each. We invite matched pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited. Connecting does not guarantee a hire. ${CONNECTION_FEE_NON_REFUNDABLE}`;
 
 const CONNECT_WITHOUT_FEE =
   "Up to three local independents can connect. We invite matched pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited.";
