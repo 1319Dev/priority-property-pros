@@ -1,7 +1,8 @@
 import { Suspense, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { BrandLoader } from "../brand/BrandLoader";
-import { SUPPORT_EMAIL } from "../../data/brand";
+import { CONTACT_LINK_LABEL, CONTACT_PATH } from "../../data/brand";
+import { AdminStepUpHost } from "../../lib/auth/AdminStepUpDialog";
 import { AgreementAcceptancePrompt } from "../legal/AgreementAcceptancePrompt";
 import { LegalFooterLinks } from "../legal/LegalFooterLinks";
 import { AdminSidebar } from "./AdminSidebar";
@@ -90,13 +91,14 @@ export function AdminLayout({
           <Suspense fallback={<BrandLoader layout="section" label="Loading…" />}>{children ?? <Outlet />}</Suspense>
         </main>
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-sm text-ink-500 sm:px-6">
-          <a className="inline-flex min-h-11 items-center font-semibold text-forest-800 underline" href={`mailto:${SUPPORT_EMAIL}`}>
-            {SUPPORT_EMAIL}
-          </a>
+          <Link className="inline-flex min-h-11 items-center font-semibold text-forest-800 underline" to={CONTACT_PATH}>
+            {CONTACT_LINK_LABEL}
+          </Link>
           <LegalFooterLinks linkClassName="inline-flex min-h-11 items-center font-semibold text-forest-800 underline" />
         </div>
       </div>
 
+      <AdminStepUpHost />
       {drawerOpen ? (
         <div className="fixed inset-0 z-50 md:hidden">
           <button

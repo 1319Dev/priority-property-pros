@@ -20,7 +20,7 @@ export const SHARE_CONTACT_WAITING_COPY =
   "The customer has not shared contact yet. Phone, email, and street stay hidden until they choose to share.";
 
 export const SHARE_CONTACT_LOCKED_BODY =
-  "Sharing stays locked until the $4.99 connection is unlocked for this contractor on this project.";
+  "Sharing becomes available after this contractor's $4.99 connection is verified on this project. You decide if and when to share.";
 
 export const CONTACT_SHARED_NOTIFICATION_BODY = "The customer shared project contact with you.";
 

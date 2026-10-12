@@ -17,6 +17,7 @@ DROP TRIGGER IF EXISTS project_connections_enforce_current_terms ON public.proje
 
 DROP FUNCTION IF EXISTS public.protect_agreement_acceptance();
 DROP FUNCTION IF EXISTS public.enforce_current_terms_for_new_marketplace_action();
+DROP FUNCTION IF EXISTS public.profile_missing_current_agreements(uuid);
 DROP FUNCTION IF EXISTS public.legal_acceptance_required();
 DROP FUNCTION IF EXISTS public.set_legal_acceptance_required(boolean);
 DROP FUNCTION IF EXISTS public.assert_signup_agreement_versions(jsonb, public.account_type);

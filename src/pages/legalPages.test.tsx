@@ -78,6 +78,19 @@ describe("draft legal pages", () => {
     expect(combined).toMatch(/including a later project/i);
     expect(combined).toMatch(/up to three occupying connection slots/i);
     expect(combined).toMatch(/Independent Marketplace and Contractor Responsibility/);
+    // Owner rule: the support email appears only on /contact. Legal pages point to the Contact us page.
+    expect(combined).not.toMatch(/@prioritypropertypros\.com/i);
+    expect(combined).not.toMatch(/mailto:/i);
+    expect(combined).toMatch(/Contact us page \(prioritypropertypros\.com\/contact\)/);
+    expect(combined).toMatch(/5900 Balcones Drive STE 100, Austin, TX 78731 US/);
+    // Refund wording matches the live automatic $4.99 refund (#136).
+    expect(combined).not.toMatch(/does not send refunds to Stripe/i);
+    expect(combined).not.toMatch(/Marking it for review is not a refund/i);
+    expect(combined).toMatch(/non-refundable once the connection is delivered/i);
+    expect(combined).toMatch(/refunds the \$4\.99 automatically/i);
+    expect(combined).not.toMatch(/Resend/);
+    expect(combined).toMatch(/Google Workspace/);
+    expect(combined).toMatch(/Priority Help \(not yet available\)/);
     expect(combined).toMatch(/operates solely as an online marketplace connecting homeowners with independent third-party contractors/);
     expect(combined).toMatch(/unless expressly stated otherwise/);
     expect(combined).toMatch(/cannot legally be excluded/);
@@ -85,19 +98,19 @@ describe("draft legal pages", () => {
     expect(combined).toMatch(/background-checked/);
     expect(combined).toMatch(/30 days after it is posted/i);
     expect(combined).toMatch(/Don't match me with this pro again/);
-    expect(combined).toMatch(/support@prioritypropertypros.com/);
+    expect(combined).toMatch(/Contact us page/);
     expect(combined).not.toMatch(/prioritypropertypros@gmail.com/);
     expect(combined).toMatch(/does not store card numbers/i);
     expect(combined).toMatch(/does not sell personal information/i);
     expect(combined).toMatch(/Supabase/);
     expect(combined).toMatch(/Stripe/);
     expect(combined).toMatch(/GitHub Pages/);
-    expect(combined).toMatch(/Resend/);
+    expect(combined).toMatch(/Google Workspace/);
     expect(combined).toMatch(/local storage/i);
     expect(combined).toMatch(/Texas Data Privacy and Security Act/);
-    expect(combined).toMatch(/Priority Help chat \(applies once Priority Help is enabled\)/);
-    expect(combined).toMatch(/OpenAI \(applies once Priority Help is enabled\)/);
-    expect(combined).toMatch(/Priority Help \(applies once Priority Help is enabled\)/);
+    expect(combined).toMatch(/Priority Help chat \(not yet available\)/);
+    expect(combined).toMatch(/OpenAI \(only if Priority Help is turned on\)/);
+    expect(combined).not.toMatch(/applies once Priority Help is enabled/);
     expect(combined).not.toMatch(/pending activation|If and when PPP turns Priority Help on/);
     expect(combined).toMatch(/PPP stores the messages you type, the replies, and the times/);
     expect(combined).toMatch(/deleted automatically 90 days after its last message/);
@@ -107,13 +120,13 @@ describe("draft legal pages", () => {
     expect(combined).toMatch(/not used to train its models unless the customer opts in/);
     expect(combined).toMatch(/platform\.openai\.com\/docs\/guides\/your-data/);
     expect(combined).toMatch(/openai\.com\/enterprise-privacy/);
-    expect(combined).toMatch(/cannot approve a refund exception or start a refund/);
+    expect(combined).toMatch(/cannot issue a refund, approve a refund exception/);
     expect(combined).not.toMatch(/Priority Help chat is not in the product today/);
     expect(combined).toMatch(/5900 Balcones Drive STE 100, Austin, TX 78731 US/);
     expect(combined).toMatch(/including before a paid Connect/);
     expect(combined).toMatch(/changed to neutral wording that does not name you/);
     expect(combined).toMatch(/non-refundable/i);
-    expect(combined).toMatch(/that requirement ships off/i);
+    expect(combined).not.toMatch(/ships off|requirement is turned on|requirement is off/i);
     expect(combined).toMatch(/stored separately from the acceptance recorded when the account was created/i);
     expect(combined).toMatch(/not a verification of your age/i);
     expect(combined).toMatch(/open, unaccepted offers/i);
@@ -201,7 +214,8 @@ describe("draft legal pages", () => {
     const privacy = readFileSync(path.join(repoRoot, "docs/legal/privacy-policy.md"), "utf8");
     const s8 = privacy.slice(privacy.indexOf("## 8."), privacy.indexOf("## 9."));
     expect(s8).toMatch(/one step\. If any part fails, none of them is made/);
-    expect(s8).toMatch(/support@prioritypropertypros\.com/);
+    expect(s8).toMatch(/Contact us page \(prioritypropertypros\.com\/contact\)\]\(\/contact\)/);
+    expect(s8).not.toMatch(/@prioritypropertypros\.com/);
     expect(s8).toMatch(/Account deletion request/);
     expect(s8).toMatch(/portfolio photos with their titles and captions, credential entries, services, service areas, and the Stripe Connect account record PPP stores/);
     expect(s8).toMatch(/Photos you added to your projects, both the records and the files/);
@@ -241,6 +255,6 @@ describe("draft legal pages", () => {
     renderPage(<SignupAgreementLabel accountType="CONTRACTOR" published />);
     expect(screen.getByRole("link", { name: /contractor participation terms/i })).toHaveAttribute("href", "/contractor-terms");
     expect(screen.getByRole("link", { name: /refund & cancellation policy/i })).toHaveAttribute("href", "/refunds");
-    expect(screen.getByText(/\$4\.99 Connection Fee are generally non-refundable/i)).toBeInTheDocument();
+    expect(screen.getByText(/\$4\.99 Connection Fee is non-refundable once the connection is delivered\. If you are charged but the connection can't be provided, the \$4\.99 is refunded automatically/i)).toBeInTheDocument();
   });
 });

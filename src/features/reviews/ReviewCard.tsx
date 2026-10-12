@@ -5,7 +5,7 @@ import { starsLabel } from "../../lib/marketplace/platformReviews";
 export function StarRating({ rating, className = "" }: { rating: number; className?: string }) {
   const value = Math.min(5, Math.max(1, Math.round(rating)));
   return (
-    <p className={`font-semibold text-gold-600 ${className}`} aria-label={starsLabel(value)}>
+    <p role="img" className={`font-semibold text-gold-700 ${className}`} aria-label={starsLabel(value)}>
       <span aria-hidden="true">{"★".repeat(value)}{"☆".repeat(5 - value)}</span>
     </p>
   );

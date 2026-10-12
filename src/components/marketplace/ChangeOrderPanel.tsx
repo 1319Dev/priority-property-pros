@@ -89,7 +89,7 @@ export function ChangeOrderPanel({
         {orders.map((order) => (
           <li key={order.id} className="rounded-2xl border border-forest-800/10 bg-cream-100 px-4 py-3">
             <p className="font-semibold">
-              {changeOrderAmountLabel(order.amount_delta_cents, formatUsdFromCents)} · {changeOrderPartyLabel(role, order)}
+              {changeOrderAmountLabel(order.amount_delta_cents, formatUsdFromCents)} · Status: {changeOrderPartyLabel(role, order)}
             </p>
             <p>{order.description}</p>
             {role === "contractor" && order.status === "CUSTOMER_APPROVED" && !order.contractor_acked_at ? (

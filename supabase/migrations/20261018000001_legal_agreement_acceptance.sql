@@ -128,19 +128,19 @@ VALUES (
 
 This is not legal advice.
 
-Effective date: the date this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published, shown at the top of this page.
 
 ## Plain-language summary
 
 - Who performs the work, and who is responsible for the job, is in Independent Marketplace and Contractor Responsibility below.
 - Homeowners and businesses post projects. Matched contractors are offered those jobs. A project can have up to three connection slots occupied at the same time.
 - Customers and contractors pay a one-time $9.99 account activation when Stripe Checkout for that fee is turned on. It is not a monthly fee. The fee is generally non-refundable once account activation is delivered, with the exceptions in the Refund & Cancellation Policy.
-- A contractor pays $4.99 to Connect on a project, including a later project with someone they have worked with before. That unlocks messaging for that pair and the customer’s choice to share contact details. It does not promise that the customer will hire that contractor. The fee is generally non-refundable once that connection is delivered, with the same exceptions.
+- A contractor pays $4.99 to Connect on a project, including a later project with someone they have worked with before. That unlocks messaging for that pair and the customer’s choice to share contact details. It does not promise that the customer will hire that contractor. The fee is non-refundable once that connection is delivered. If the contractor is charged but the connection can't be provided, the $4.99 is refunded automatically.
 - The customer pays the contractor directly for the work. PPP does not collect that payment and does not take a percentage of it.
 - PPP does not state that a contractor is licensed, insured, bonded, or background-checked. Admin approval is not that kind of check.
-- Priority Help, a support chat, is not turned on. Once Priority Help is enabled, its automatic replies are written by an AI assistant and can be wrong. Section 14 has the rules, and the Privacy Policy explains how chats are stored and sent to OpenAI.
+- Priority Help, a support chat, is not yet available. Section 14 describes how it would work if PPP turns it on.
 - You must be 18 or older to create an account. That is an affirmation you make, not a verification of your age.
-- The signup form asks for acceptance of these documents. PPP does not reject a new account for these versions until these pages are published and that requirement is turned on. That requirement ships off. After it is turned on, a new account is refused unless the current versions were accepted and you affirmed that you are 18 or older. An existing account is asked at the next sign-in to accept the current versions and to make that same affirmation. Existing accounts can still view their information and delete the account. While the requirement is on, declining the current versions limits new marketplace actions. Nothing is deleted because someone has not yet accepted. The acceptance recorded at that later sign-in is stored separately from the acceptance recorded when the account was created. Each one keeps the document version and the time.
+- To create an account, you must accept these documents and affirm that you are 18 or older. PPP records the version of each document and the time. If you already have an account, you are asked at your next sign-in to accept the current versions and to make that same affirmation. Until you accept, you can still view your information and delete your account, but new marketplace actions are paused. Nothing is deleted because someone has not yet accepted. The acceptance recorded at that later sign-in is stored separately from the acceptance recorded when the account was created. Each one keeps the document version and the time.
 
 These Terms of Service, the [Privacy Policy](/privacy), the [Refund & Cancellation Policy](/refunds), the [Community Guidelines](/community-guidelines), and the [Review & Content Guidelines](/content-guidelines) are one agreement. Contractor accounts also accept the [Contractor Participation Terms](/contractor-terms).
 
@@ -148,7 +148,7 @@ These Terms of Service, the [Privacy Policy](/privacy), the [Refund & Cancellati
 
 Priority Property Pros LLC (“PPP,” “we,” “us”) operates the Priority Property Pros marketplace at prioritypropertypros.com. PPP is a Texas limited liability company. The product is a home-services marketplace focused on the Conroe and Montgomery County area, with room to grow across Texas and, later, nationwide. Matching uses the project ZIP and the trades and service area a contractor enters. It is not a hard fence around one county.
 
-Contact PPP by email at [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com), or by mail at Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US. Email is the fastest way to reach PPP.
+Contact PPP through the [Contact us page (prioritypropertypros.com/contact)](/contact), or by mail at Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.
 
 ## Independent Marketplace and Contractor Responsibility
 
@@ -174,15 +174,15 @@ The customer pays the contractor directly for any job cost. PPP does not collect
 
 You may sign up as a customer or as a contractor. A customer account is how homeowners and businesses post projects. Admin accounts and a verifier role are not offered on the public signup form. These terms do not say a verifier inspected or certified any work.
 
-The signup form has a required checkbox. Checking it is your agreement to the documents that apply to that account. Links to these Terms of Service and the Privacy Policy are on that form when the legal pages are published. Until these pages are published and the requirement to accept these versions is turned on, the server still creates the account and records acceptance of the shorter terms already in the product. It does not reject the account for these versions, and it does not ask for an age affirmation. After that requirement is turned on, the server refuses to create the account if that acceptance is missing, if the versions you accepted are not the current versions, or if you did not affirm that you are 18 or older. PPP stores, for each document, the agreement version and the time. PPP copies the version from the current agreement. It does not use a version number chosen only in the browser.
+The signup form has a required checkbox. Checking it is your agreement to the documents that apply to that account. Links to these Terms of Service, the Privacy Policy, and the other documents are on that form. The server refuses to create the account if that acceptance is missing, if the versions you accepted are not the current versions, or if you did not affirm that you are 18 or older. PPP stores, for each document, the agreement version and the time. PPP copies the version from the current agreement. It does not use a version number chosen only in the browser.
 
-If you already have an account when the requirement is turned on, the next sign-in shows a prompt asking you to accept the current versions and to affirm that you are 18 or older. Accounts created before the requirement is on are not asked for that affirmation until this prompt. The prompt does not hide your projects, messages, bookings, or other account information, and it does not delete anything. Accepting writes a separate acceptance with the version and the time, and it records the time of the age affirmation if one was not already on the account. It does not replace or delete an older acceptance.
+If you already had an account when these versions were published, the next sign-in shows a prompt asking you to accept the current versions and to affirm that you are 18 or older. The prompt does not hide your projects, messages, bookings, or other account information, and it does not delete anything. Accepting writes a separate acceptance with the version and the time, and it records the time of the age affirmation if one was not already on the account. It does not replace or delete an older acceptance.
 
-If you decline the updated versions, you can still view your account information and delete your account. The product does not include an in-app export of your data. While the requirement is on, new marketplace actions are refused until you accept: posting a project, sending an estimate, sending a project message, or creating a project connection. Viewing what is already there, marking a message read, and deleting the account stay available. While the requirement is off, those new actions are not refused for these versions.
+If you decline the updated versions, you can still view your account information and delete your account. The product does not include an in-app export of your data. New marketplace actions are refused until you accept: posting a project, sending an estimate, sending a project message, or creating a project connection. Viewing what is already there, marking a message read, and deleting the account stay available.
 
 You agree to give accurate information and to keep your login to yourself. Passwords must be at least 8 characters. PPP’s sign-up, password-reset, and password-change screens do not accept a shorter one. Email confirmation is part of signup when the login service asks for it. You can ask to change the email on the account. The address stays the same until both the current address and the new address confirm the change. A contractor is not matched to jobs until the account is active and an admin has approved the contractor profile. Paying the $9.99 activation fee does not approve a contractor, does not reveal anyone’s contact details, and does not start a job.
 
-You must be 18 or older to create an account. That is an affirmation you make. It is not a verification of your age, a date of birth, or an identity document. The form does not ask for a date of birth. Until the requirement to accept these versions is turned on, the form does not require the affirmation and does not reject a signup for it. After that requirement is on, a new signup asks for the affirmation and PPP records the time. An existing account is asked for the same affirmation on the sign-in prompt described above.
+You must be 18 or older to create an account. That is an affirmation you make. It is not a verification of your age, a date of birth, or an identity document. The form does not ask for a date of birth. A new signup asks for the affirmation and PPP records the time. An existing account is asked for the same affirmation on the sign-in prompt described above.
 
 PPP may refuse, suspend, or disable an account. Account statuses used in the product include active, pending, suspended, disabled, and deleted. A pending account can look around. Matching waits on an active, approved contractor.
 
@@ -191,13 +191,13 @@ PPP may refuse, suspend, or disable an account. Account statuses used in the pro
 Two platform fees exist. Both are in US dollars. The customer’s browser does not set the price. Refunds and cancellations are in the [Refund & Cancellation Policy](/refunds). That policy is part of these terms.
 
 - **Account activation: $9.99, one time.** Customers and contractors pay it. It is not $9.99 a month. There is no monthly charge to keep an account. Admin and verifier accounts are not charged this fee. It purchases account activation only. It does not approve a contractor, unlock contact, or start a job. Checkout is Stripe Checkout, and only when PPP has turned that checkout on. The service is delivered when the server verifies the Stripe Checkout session and marks the fee paid. A success page does not mark the fee paid by itself. Once that service is delivered, the fee is generally non-refundable, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
-- **Connection Fee: $4.99 per project connection.** The contractor pays it, and only when that contractor chooses to Connect. A later project with the same customer, including Hire Again, is a new project connection and is another $4.99. There is no bid fee and no rehire waiver in the connection checkout. Customers do not pay a PPP Connection Fee. It purchases messaging for that customer and that contractor on that project, and the customer’s option to share contact details. It does not promise a hire. Clicking Connect is not delivery. The service is delivered when the server verifies the payment and unlocks that connection. An abandoned unpaid Connect checkout can release its reserved slot after 30 minutes. Releasing an unpaid reservation is not a charge and is not delivery. Once the connection is delivered, the fee is generally non-refundable, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
+- **Connection Fee: $4.99 per project connection.** The contractor pays it, and only when that contractor chooses to Connect. A later project with the same customer, including Hire Again, is a new project connection and is another $4.99. There is no bid fee and no rehire waiver in the connection checkout. Customers do not pay a PPP Connection Fee. It purchases messaging for that customer and that contractor on that project, and the customer’s option to share contact details. It does not promise a hire. Clicking Connect is not delivery. The service is delivered when the server verifies the payment and unlocks that connection. An abandoned unpaid Connect checkout can release its reserved slot after 30 minutes. Releasing an unpaid reservation is not a charge and is not delivery. Once the connection is delivered, the fee is non-refundable. If the contractor is charged but the connection can't be provided (for example, the project was cancelled or closed, the opportunity expired, the customer blocked the contractor, or the same connection was charged twice), PPP refunds the $4.99 automatically to the original payment method. A refund the law requires, or an approved exception, is handled under the Refund & Cancellation Policy.
 
-While either checkout is turned off, PPP does not charge that fee. A connection that is not verified as paid does not unlock messaging or contact. A charge that does not unlock the service it was meant to buy is an erroneous charge for review. Marking it for review is not a refund.
+While either checkout is turned off, PPP does not charge that fee. A connection that is not verified as paid does not unlock messaging or contact. If a $4.99 Connection Fee is charged but the connection can't be provided, PPP refunds it automatically. If a $9.99 activation fee is charged but account activation is not marked paid, that charge is an erroneous charge and PPP reviews it.
 
 Card numbers are entered on Stripe’s page. PPP does not store card numbers. PPP stores the payment references Stripe assigns, the amount, and whether the fee was paid.
 
-To ask for one of the refund exceptions, email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). The request, who decides it, and how an approved refund is sent are in the [Refund & Cancellation Policy](/refunds).
+To ask for one of the refund exceptions, use the [Contact us page (prioritypropertypros.com/contact)](/contact). You do not need to ask for an automatic Connection Fee refund. The request, who decides it, and how an approved refund is sent are in the [Refund & Cancellation Policy](/refunds).
 
 ## 5. Projects and the three connection slots
 
@@ -244,7 +244,7 @@ Reports of fraud or impersonation, harassment or threats, misleading profiles, s
 
 ## 9. Notifications
 
-PPP can notify you in the app, by web push, and by email. Email is sent through Resend. Web push uses your browser’s push service. You can turn categories on or off. Those categories cover new jobs, messages, connections, estimates, bookings, change orders, reviews, and account notices. In-app notices start on. Email starts on for most of those categories. Push starts off until you turn it on. On an iPhone, push needs the site added to the Home Screen (iOS 16.4 or later). Message emails are limited to one per conversation every 15 minutes, and only while the message is still unread. Email can include an unsubscribe link.
+PPP can notify you in the app, by web push, and by email. Email is sent through Google Workspace from PPP’s support mailbox. Web push uses your browser’s push service. You can turn categories on or off. Those categories cover new jobs, messages, connections, estimates, bookings, change orders, reviews, and account notices. In-app notices start on. Email starts on for most of those categories. Push starts off until you turn it on. On an iPhone, push needs the site added to the Home Screen (iOS 16.4 or later). Message emails are limited to one per conversation every 15 minutes, and only while the message is still unread. Email can include an unsubscribe link.
 
 ## 10. Disputes
 
@@ -256,7 +256,7 @@ Disputes that are directly with PPP about these terms or the marketplace service
 
 ## 11. Closing your account
 
-You can delete your own account from the account screen. You must type DELETE to confirm. If that control is temporarily unavailable, email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) from the email on the account with the subject “Account deletion request,” and PPP will handle it as the [Privacy Policy](/privacy) describes. What is removed, and what can remain, is described in the [Privacy Policy](/privacy). Deleting your account does not by itself refund a platform fee. You cannot delete the last active admin account. The screen tells you deletion cannot be undone. Declining updated terms does not remove this deletion right.
+You can delete your own account from the account screen. You must type DELETE to confirm. If that control is temporarily unavailable, use the [Contact us page (prioritypropertypros.com/contact)](/contact) and send the request from the email on the account with the subject “Account deletion request,” and PPP will handle it as the [Privacy Policy](/privacy) describes. What is removed, and what can remain, is described in the [Privacy Policy](/privacy). Deleting your account does not by itself refund a platform fee. You cannot delete the last active admin account. The screen tells you deletion cannot be undone. Declining updated terms does not remove this deletion right.
 
 ## 12. Admins
 
@@ -274,23 +274,23 @@ The marketplace software is provided as it runs today. Features such as Stripe C
 
 Responsibility for the work, and liability these terms do not exclude, is in Independent Marketplace and Contractor Responsibility.
 
-**Priority Help (applies once Priority Help is enabled).** Priority Help is a support chat that is built but not turned on. Once PPP enables it, automatic replies are written by an AI assistant from PPP’s published help articles and current fees. An automatic reply can be incomplete or wrong. It is not legal, tax, or construction advice, and it does not change these terms, the [Refund & Cancellation Policy](/refunds), or a fee. The assistant cannot issue a refund, approve a refund exception, change an account, or share another person’s contact details. Choose Talk to Support, or email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com), to reach a person. PPP stores Priority Help chats and deletes them on the schedule in the [Privacy Policy](/privacy): a chat started without signing in is deleted 90 days after its last message, unless a ticket is still open. To write a reply, PPP sends the chat text to OpenAI after removing the email addresses, phone numbers, and street addresses it detects. Do not type card numbers, passwords, or another person’s contact details into the chat. PPP may limit, pause, or turn off Priority Help at any time, and may refuse messages that try to misuse it.
+**Priority Help (not yet available).** Priority Help is a support chat that PPP has built but has not turned on. It is not available today. If PPP turns it on, automatic replies are written by an AI assistant from PPP’s published help articles and current fees. An automatic reply can be incomplete or wrong. It is not legal, tax, or construction advice, and it does not change these terms, the [Refund & Cancellation Policy](/refunds), or a fee. The assistant cannot issue a refund, approve a refund exception, change an account, or share another person’s contact details. Choose Talk to Support, or use the [Contact us page (prioritypropertypros.com/contact)](/contact), to reach a person. PPP stores Priority Help chats and deletes them on the schedule in the [Privacy Policy](/privacy): a chat started without signing in is deleted 90 days after its last message, unless a ticket is still open. To write a reply, PPP sends the chat text to OpenAI after removing the email addresses, phone numbers, and street addresses it detects. Do not type card numbers, passwords, or another person’s contact details into the chat. PPP may limit, pause, or turn off Priority Help at any time, and may refuse messages that try to misuse it.
 
 ## 15. Changes
 
 PPP will post updated terms on this page. The effective date of a version is its publication date. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates.
 
-A new version becomes the one PPP can require when these pages are published and the requirement to accept them is turned on. Until that requirement is on, these versions are not the required acceptance. After it is on, new accounts must accept the current version and affirm that they are 18 or older, or the account is not created. Existing users are prompted on the next sign-in, as section 3 describes, including that age affirmation. They are not locked out of viewing their information or deleting the account. While the requirement is on, new marketplace actions wait on acceptance of the current versions. The version and the time are the record of what was accepted. The acceptance from a later sign-in is stored separately from the acceptance recorded when the account was created.
+A new version is required from its publication date. New accounts must accept the current version and affirm that they are 18 or older, or the account is not created. Existing users are prompted on the next sign-in, as section 3 describes, including that age affirmation. They are not locked out of viewing their information or deleting the account. New marketplace actions wait on acceptance of the current versions. The version and the time are the record of what was accepted. The acceptance from a later sign-in is stored separately from the acceptance recorded when the account was created.
 
 ## 16. Contact and requests
 
-Questions about these terms: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+Questions about these terms: use the [Contact us page (prioritypropertypros.com/contact)](/contact).
 
 Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.
 
-Privacy requests (access, correction, a copy, deletion, or an opt-out) and refund-exception requests use that same email address. They can also be mailed to the mailing address above. The [Privacy Policy](/privacy) describes privacy requests. The [Refund & Cancellation Policy](/refunds) describes refund exceptions, including who reviews them and that an approved refund is sent from Stripe’s dashboard. Emailing does not by itself change an account or create a refund.
+Privacy requests (access, correction, a copy, deletion, or an opt-out) and refund-exception requests also go through the Contact us page. They can also be mailed to the mailing address above. The [Privacy Policy](/privacy) describes privacy requests. The [Refund & Cancellation Policy](/refunds) describes refund exceptions, including who reviews them and that an approved refund is sent from Stripe’s dashboard. Sending a request does not by itself change an account or create a refund.
 
-Email PPP for marketplace questions. Job responsibility is in Independent Marketplace and Contractor Responsibility.
+Use the Contact us page for marketplace questions. Job responsibility is in Independent Marketplace and Contractor Responsibility.
 $ppp_legal_terms_of_use$,
   false,
   'ALL',
@@ -308,19 +308,19 @@ VALUES (
 
 This is not legal advice.
 
-Effective date: the date this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published, shown at the top of this page.
 
 ## Plain-language summary
 
 - PPP collects the account, project, message, photo, review, and notification data described below so the marketplace can run.
 - A project has a city, state, and ZIP for matching. The street address is private. Public contractor cards do not show a business name, phone, email, or street.
 - Card numbers are entered at Stripe. PPP does not store card numbers. PPP stores payment metadata for the $9.99 activation and the $4.99 Connect.
-- The site is hosted as a static site on GitHub Pages. Accounts, database, files, and login are on Supabase. Email goes through Resend. Web push goes through the browser’s push service. There is no advertising tracker in the current site.
+- The site is hosted as a static site on GitHub Pages. Accounts, database, files, and login are on Supabase. Email is sent through Google Workspace. Web push goes through the browser’s push service. There is no advertising tracker in the current site.
 - PPP does not sell personal information.
-- You can delete your account from the account screen, or by email if that control is temporarily unavailable. Your login, email, name, phone, profile photo, and street address are removed. Payment records stay with amounts and dates but without your name or contact. Text you wrote for other people, such as messages, estimates, reviews, and project descriptions, can remain, as described below. Portfolio photos, credentials, services, service areas, and project photos are removed. A small number of older internal security logs may still contain an email address. Stripe keeps its own payment records and the contractor’s Stripe account. PPP does not close that Stripe account and does not send Stripe a deletion notice. The product does not include an in-app export.
+- You can delete your account from the account screen, or through the Contact us page if that control is temporarily unavailable. Your login, email, name, phone, profile photo, and street address are removed. Payment records stay with amounts and dates but without your name or contact. Text you wrote for other people, such as messages, estimates, reviews, and project descriptions, can remain, as described below. Portfolio photos, credentials, services, service areas, and project photos are removed. A small number of older internal security logs may still contain an email address. Stripe keeps its own payment records and the contractor’s Stripe account. PPP does not close that Stripe account and does not send Stripe a deletion notice. The product does not include an in-app export.
 - The marketplace is for people 18 or older. That is an affirmation you make, not a verification of your age. The signup form does not ask for a date of birth.
-- Priority Help, a support chat, is not turned on. The Priority Help parts of this policy apply once Priority Help is enabled. Once it is, PPP stores the chat, and the text you type is sent to OpenAI to write a reply after PPP removes the email addresses, phone numbers, and street addresses it detects. A chat started without signing in is deleted automatically 90 days after its last message. Details are in sections 2, 5, 6, and 8.
-- The app removes GPS location information and other camera details from project and portfolio photos in your browser before upload. If it cannot remove them, the photo is not uploaded. Photos uploaded before this change can still contain location information until PPP finishes removing it. A project photo can be opened by contractors offered your project before a paid Connect.
+- Priority Help, a support chat, is not yet available. The Priority Help parts of this policy describe how it would work and apply only if PPP turns it on. If it is turned on, PPP stores the chat, and the text you type is sent to OpenAI to write a reply after PPP removes the email addresses, phone numbers, and street addresses it detects. A chat started without signing in is deleted automatically 90 days after its last message. Details are in sections 2, 5, 6, and 8.
+- Location information, such as GPS coordinates, and other camera details are removed from project and portfolio photos uploaded through the site. The app does this in your browser before upload. If it cannot remove them, the photo is not uploaded. A few photos uploaded before this change can still contain location information until PPP finishes removing it. A project photo can be opened by contractors offered your project before a paid Connect.
 - Texas privacy rights and general US practices are described below.
 
 The [Terms of Service](/terms) are part of the same agreement, along with the [Refund & Cancellation Policy](/refunds), the [Community Guidelines](/community-guidelines), and the [Review & Content Guidelines](/content-guidelines). Contractor accounts also accept the [Contractor Participation Terms](/contractor-terms).
@@ -329,15 +329,15 @@ The [Terms of Service](/terms) are part of the same agreement, along with the [R
 
 Priority Property Pros LLC (“PPP,” “we”) operates prioritypropertypros.com. This policy describes personal information the marketplace handles for customers (homeowners and businesses), contractors, and the admins who run the site. A verifier role is not a public signup. This policy does not describe a verifier inspecting your home.
 
-Contact PPP by email at [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com), or by mail at Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US. Privacy requests can be sent to either, as section 9 describes.
+Contact PPP through the [Contact us page (prioritypropertypros.com/contact)](/contact), or by mail at Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US. Privacy requests can be sent to either, as section 9 describes.
 
 ## 2. Information the product collects
 
 **Account.** Name, email, password (stored by Supabase Auth, not in the PPP application tables), phone if you add one, and whether you are a customer or a contractor. A contractor also adds a business name, trade, and service area at signup, and can later add a headline, bio, years of experience, website, job-size range, service radius or ZIP list, a profile photo, contractor-provided license or insurance fields, and credentials. Those credential fields are what the contractor typed. PPP does not treat them as a license check, an insurance check, a bond, or a background check.
 
-**Age affirmation.** The form does not ask for a date of birth. Being 18 or older is an affirmation you make. It is not a verification of your age, a date of birth, or an identity document. Until these pages are published and the requirement to accept these versions is turned on, signup does not ask for the affirmation and does not store it. After that requirement is on, a new signup asks you to affirm that you are 18 or older, and PPP records the time of that affirmation. An account that already exists is asked for the same affirmation when it accepts the current versions at the next sign-in. Accounts created before the requirement is on are not asked until that prompt. Anyone who can call the signup service directly can send the affirmation flag. PPP records the statement. It does not check an identity document.
+**Age affirmation.** The form does not ask for a date of birth. Being 18 or older is an affirmation you make. It is not a verification of your age, a date of birth, or an identity document. A new signup asks you to affirm that you are 18 or older, and PPP records the time of that affirmation. An account that already existed when these versions were published is asked for the same affirmation when it accepts the current versions at the next sign-in. Anyone who can call the signup service directly can send the affirmation flag. PPP records the statement. It does not check an identity document.
 
-**Agreement records.** The signup checkbox is on the form. Until the requirement to accept these versions is turned on, PPP does not reject a new account for these versions and does not prompt existing accounts. After that requirement is turned on, a new account stores one record per current document with the version and the time. An existing account is prompted at the next sign-in. Accepting then stores a separate record with the version and the time. The version number is copied from the current agreement. The prompt does not hide projects, messages, or other account information. If you do not accept, you can still view that information and delete the account. The product does not include an in-app export. While the requirement is on, new marketplace actions are refused until you accept. Accepting does not delete older records or the account.
+**Agreement records.** The signup checkbox is on the form. A new account stores one record per current document with the version and the time. An existing account is prompted at the next sign-in. Accepting then stores a separate record with the version and the time. The version number is copied from the current agreement. The prompt does not hide projects, messages, or other account information. If you do not accept, you can still view that information and delete the account. The product does not include an in-app export. New marketplace actions are refused until you accept. Accepting does not delete older records or the account.
 
 **Projects.** Title, description, project type, city, state, ZIP, timing, optional budget, and photos of the work. The street and precise coordinates are stored privately, not on the public project. An unposted draft stays in that browser tab until you post. Photos in an unposted draft are not kept if you reload the tab.
 
@@ -353,11 +353,11 @@ Contact PPP by email at [support@prioritypropertypros.com](mailto:support@priori
 
 **Notifications.** Your on/off choices for in-app, push, and email. If you turn on web push, PPP stores the address the browser gives for that subscription, the keys that subscription uses, a short description of the browser, and when it was last used.
 
-**Reports and admin records.** A contractor can report a project photo. PPP stores the reporter, the target, and the reason. Admins record reasons when they approve or reject a marketplace review, and when they grant or revoke contact access. Those reasons are kept in PPP’s admin records. The review reason is not shown on the public review. Reports sent by email to support@prioritypropertypros.com are handled in that mailbox. The site does not have a separate in-app complaint center.
+**Reports and admin records.** A contractor can report a project photo. PPP stores the reporter, the target, and the reason. Admins record reasons when they approve or reject a marketplace review, and when they grant or revoke contact access. Those reasons are kept in PPP’s admin records. The review reason is not shown on the public review. Reports sent through the Contact us page arrive in PPP’s support mailbox and are handled there. The site does not have a separate in-app complaint center.
 
-**Support.** The contact page opens an email in your own mail app to support@prioritypropertypros.com. PPP does not store that form on its servers.
+**Support.** The Contact us page opens a message in your own email app, addressed to PPP’s support mailbox. PPP does not store that form on its servers.
 
-**Priority Help chat (applies once Priority Help is enabled).** Priority Help is a support chat that is built but not turned on. While it is off, none of this is collected and nothing is sent to OpenAI. Once PPP enables it, PPP stores the messages you type, the replies, and the times. If you are signed in, the chat is linked to your account. If you are not signed in, the chat is linked to a random code saved in your browser, not to your name. To limit abuse, PPP stores a one-way coded form of your network address rather than the address itself. Automatic replies are written by an AI assistant, not a person. A PPP admin can read any Priority Help chat, and a person replies only after you choose Talk to Support. For each automatic reply, PPP also records the AI model, the amount of text processed, and the cost, without the chat text. Do not type phone numbers, email addresses, street addresses, card numbers, passwords, or another person’s details into the chat.
+**Priority Help chat (not yet available).** Priority Help is a support chat that PPP has built but has not turned on. It is not available today. While it is off, none of this is collected and nothing is sent to OpenAI. If PPP turns it on, PPP stores the messages you type, the replies, and the times. If you are signed in, the chat is linked to your account. If you are not signed in, the chat is linked to a random code saved in your browser, not to your name. To limit abuse, PPP stores a one-way coded form of your network address rather than the address itself. Automatic replies are written by an AI assistant, not a person. A PPP admin can read any Priority Help chat, and a person replies only after you choose Talk to Support. For each automatic reply, PPP also records the AI model, the amount of text processed, and the cost, without the chat text. Do not type phone numbers, email addresses, street addresses, card numbers, passwords, or another person’s details into the chat.
 
 PPP does not ask for a Social Security number, a government ID image, or a background-check report. PPP does not collect a bond.
 
@@ -374,8 +374,8 @@ PPP uses this information to:
 - deliver in-app notices, web push, and email you have not turned off
 - moderate marketplace reviews and portfolio photos
 - detect obvious pre-connection contact details so people do not skip the Connection Fee
-- answer support questions in the Priority Help chat, once Priority Help is enabled
-- record acceptance of the current agreements, and the 18-or-older affirmation, when that requirement is on
+- answer support questions in the Priority Help chat, if PPP turns it on
+- record acceptance of the current agreements, and the 18-or-older affirmation
 - delete an account when you ask, and keep an audit record of that deletion
 - fix errors and keep the service secure
 
@@ -383,9 +383,9 @@ PPP does not use this information to sell ads, and the current website does not 
 
 ## 4. Public and private
 
-**Public, or shown to visitors who are not logged in.** Approved contractor cards: a neutral trade-and-city label, categories, a general service area, years of experience if provided, a short description with contact details removed, ratings from visible verified job reviews when those reviews exist, generic credential badges, approved portfolio captions, and the approved portfolio photo through a short-lived link. A hidden job review is left out of that public rating. Marketplace reviews of PPP appear only after an admin approves them. The public card does not include the business name, personal name, phone, email, website, street, or license number. The original file name is not published as a public address. Location information a camera stored in an approved photo can still be in that file.
+**Public, or shown to visitors who are not logged in.** Approved contractor cards: a neutral trade-and-city label, categories, a general service area, years of experience if provided, a short description with contact details removed, ratings from visible verified job reviews when those reviews exist, generic credential badges, approved portfolio captions, and the approved portfolio photo through a short-lived link. A hidden job review is left out of that public rating. Marketplace reviews of PPP appear only after an admin approves them. The public card does not include the business name, personal name, phone, email, website, street, or license number. The original file name is not published as a public address. Camera location information is removed from photos uploaded through the site. A photo uploaded before that change can still contain it until PPP finishes removing it.
 
-**Shown to a matched contractor before Connect.** Project description, project photos, and an approximate location. The jobs list can include city, state, and ZIP. The street, the customer’s phone, and the customer’s email stay hidden. Location information stored inside a project photo is not removed, as section 2 describes.
+**Shown to a matched contractor before Connect.** Project description, project photos, and an approximate location. The jobs list can include city, state, and ZIP. The street, the customer’s phone, and the customer’s email stay hidden. Camera location information is removed from project photos uploaded through the site, as section 2 describes, but the picture itself can still show where it was taken.
 
 **Shown after a paid Connect, to that pair.** Messaging, and the contractor’s business name to that customer on that project. The customer’s phone, email, and street are shown to that contractor only after the customer shares them.
 
@@ -398,9 +398,9 @@ PPP uses these services to run the product:
 - **Supabase** hosts the database, login, file storage, and server functions. A signed-in person can read only the records the product is built to show them.
 - **Stripe** processes the $9.99 and $4.99 Checkout payments when those checkouts are enabled. Stripe’s own privacy policy covers the card data Stripe collects.
 - **GitHub Pages** hosts the static website at prioritypropertypros.com.
-- **Resend** sends notification email.
+- **Google Workspace** (Google) sends account and notification email from PPP’s support mailbox.
 - **Your browser’s push service** (for example the service behind Chrome, Firefox, or Safari) delivers web push if you turn it on. PPP holds the keys used to send those pushes. The private key is not in the website code.
-- **OpenAI (applies once Priority Help is enabled).** Priority Help is not turned on today, and until it is, OpenAI receives no information from PPP. Once it is enabled, PPP sends OpenAI the message you type in that chat and up to eight earlier messages of the same chat, after removing the email addresses, phone numbers, and street addresses that PPP’s filter detects. A filter can miss details written in an unusual way, so do not type them. PPP’s published help articles and the current fee amounts are sent with it. PPP does not send your name, your account details, your projects, your messages with contractors or customers, your photos, or your payment details to OpenAI for this. PPP uses OpenAI’s API and does not opt in to sharing that data with OpenAI for training. OpenAI states that data sent to its API is not used to train its models unless the customer opts in. OpenAI also states that it may keep API inputs and outputs in abuse-monitoring logs for up to 30 days, longer only when the law requires it or when it is reasonably necessary to protect OpenAI’s services or others from harm, and that access to that data is limited to authorized OpenAI staff and contractors bound by confidentiality who review for abuse and misuse. Sources: OpenAI, “Data controls in the OpenAI platform” (https://platform.openai.com/docs/guides/your-data) and “Enterprise privacy at OpenAI” (https://openai.com/enterprise-privacy/), both checked October 11, 2026.
+- **OpenAI (only if Priority Help is turned on).** Priority Help is not turned on today, and until it is, OpenAI receives no information from PPP. Once it is enabled, PPP sends OpenAI the message you type in that chat and up to eight earlier messages of the same chat, after removing the email addresses, phone numbers, and street addresses that PPP’s filter detects. A filter can miss details written in an unusual way, so do not type them. PPP’s published help articles and the current fee amounts are sent with it. PPP does not send your name, your account details, your projects, your messages with contractors or customers, your photos, or your payment details to OpenAI for this. PPP uses OpenAI’s API and does not opt in to sharing that data with OpenAI for training. OpenAI states that data sent to its API is not used to train its models unless the customer opts in. OpenAI also states that it may keep API inputs and outputs in abuse-monitoring logs for up to 30 days, longer only when the law requires it or when it is reasonably necessary to protect OpenAI’s services or others from harm, and that access to that data is limited to authorized OpenAI staff and contractors bound by confidentiality who review for abuse and misuse. Sources: OpenAI, “Data controls in the OpenAI platform” (https://platform.openai.com/docs/guides/your-data) and “Enterprise privacy at OpenAI” (https://openai.com/enterprise-privacy/), both checked October 11, 2026.
 
 PPP does not sell personal information to these companies. They process it to provide the service.
 
@@ -410,7 +410,7 @@ PPP does not run an ad-cookie banner because the current site does not use adver
 
 - **Login session.** The login service keeps the session in the browser’s local storage so you stay signed in. A password-reset request uses separate browser storage and does not replace that session.
 - **Unposted project draft and a few site-update flags.** Session storage holds the project wizard until you post, and it holds a short flag so a site update does not reload in the middle of a form.
-- **Priority Help guest code (applies once Priority Help is enabled).** If you use Priority Help without signing in, the browser keeps a random code in local storage so the chat can continue on your next visit. Clearing site data removes the code, and the chat then starts over.
+- **Priority Help guest code (only if Priority Help is turned on).** If you use Priority Help without signing in, the browser keeps a random code in local storage so the chat can continue on your next visit. Clearing site data removes the code, and the chat then starts over.
 - **PWA cache.** The site can install a service worker that caches the app shell so pages load again and so web push can be delivered. That cache is the site’s files, not a profile sold to advertisers.
 
 You can clear this storage in your browser. Clearing it signs you out and drops an unposted draft.
@@ -425,7 +425,7 @@ PPP keeps account and project information while the account is open and the mark
 
 **Deleting your account.** You delete your account from the account screen. You type DELETE. The product asks for your current password, or it accepts a sign-in from the last 10 minutes. Deletion is refused while a job is still active (not yet finished or cancelled), while a booking is disputed or a card dispute with Stripe is still open, while a refund is unfinished, or while you are the last active admin. The account changes below happen together in one step. If any part fails, none of them is made, and the account stays as it was.
 
-**If the delete control is unavailable.** PPP can temporarily turn off the delete control, for example while it fixes a problem. While it is off, email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) from the email on the account with the subject “Account deletion request.” PPP may ask you to confirm that you control that email. PPP will answer within the time in section 9. The same refusals and the same results described in this section apply.
+**If the delete control is unavailable.** PPP can temporarily turn off the delete control, for example while it fixes a problem. While it is off, use the [Contact us page (prioritypropertypros.com/contact)](/contact) and send the request from the email on the account with the subject “Account deletion request.” PPP may ask you to confirm that you control that email. PPP will answer within the time in section 9. The same refusals and the same results described in this section apply.
 
 **Removed or cleared.**
 
@@ -454,7 +454,7 @@ Files stored under your account in project photos and contractor documents are r
 
 **Stripe.** PPP does not send a deletion notice to Stripe, and PPP sends Stripe nothing as part of deletion. PPP does not close a contractor’s Stripe Connect account at Stripe. Stripe keeps that account, and its own payment, customer, and Checkout records, under Stripe’s policy. PPP keeps the Stripe ids that refer to those payment records. PPP cannot delete card numbers it never stored. Deleting an account does not by itself refund the $9.99 or a $4.99 Connection Fee. Refund exceptions are in the [Refund & Cancellation Policy](/refunds).
 
-**Priority Help chats (applies once Priority Help is enabled).** A chat started without signing in is deleted automatically 90 days after its last message. If that chat became a support ticket that is still open, it is kept until the ticket is resolved or closed, and is then deleted automatically 90 days later. A signed-in chat is deleted automatically 365 days after it is resolved or closed, or 365 days after its last message if it never became a ticket. Deleting your account deletes your Priority Help chats in the same step. The automatic deletion runs once a day, so a chat can remain up to one more day. PPP keeps a usage record for each automatic reply (the date, the AI model, the amount of text processed, and the cost) without the chat text; once the chat is deleted, that record no longer links to it. OpenAI’s own retention is described in section 5.
+**Priority Help chats (only if Priority Help is turned on).** A chat started without signing in is deleted automatically 90 days after its last message. If that chat became a support ticket that is still open, it is kept until the ticket is resolved or closed, and is then deleted automatically 90 days later. A signed-in chat is deleted automatically 365 days after it is resolved or closed, or 365 days after its last message if it never became a ticket. Deleting your account deletes your Priority Help chats in the same step. The automatic deletion runs once a day, so a chat can remain up to one more day. PPP keeps a usage record for each automatic reply (the date, the AI model, the amount of text processed, and the cost) without the chat text; once the chat is deleted, that record no longer links to it. OpenAI’s own retention is described in section 5.
 
 Apart from Priority Help chats, the product does not publish a separate multi-year retention table. There is no fixed “we keep everything for X years” rule in the software. An acceptance record can remain after the account is deleted, as this section describes. The time of an 18-or-older affirmation is stored on the profile and is removed when that profile is deleted.
 
@@ -464,29 +464,29 @@ You can update profile and notification settings in the app, turn push and email
 
 The product does not include an in-app export or a download of your personal information. You can still view the account information the product shows you.
 
-**Privacy requests.** Email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com), or mail your request to Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US. Say whether you want access, a correction, a copy, deletion, or an opt-out, and include the email on the account. PPP may ask you to confirm that you control that email before it acts, for example by replying from that address. A mailed request is answered by email to the account email. PPP does not sell personal information and does not use it for targeted advertising, so there is no sale list or ad profile to remove. You can turn notification email off from the unsubscribe link in a message or from notification settings in the app.
+**Privacy requests.** Use the [Contact us page (prioritypropertypros.com/contact)](/contact), or mail your request to Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US. Say whether you want access, a correction, a copy, deletion, or an opt-out, and include the email on the account. PPP may ask you to confirm that you control that email before it acts, for example by replying from that address. A mailed request is answered by email to the account email. PPP does not sell personal information and does not use it for targeted advertising, so there is no sale list or ad profile to remove. You can turn notification email off from the unsubscribe link in a message or from notification settings in the app.
 
-PPP will answer within 45 days. If the request needs more time, PPP may take up to 45 more days and will tell you before the first 45 days end. PPP keeps a record of the request and how it was handled. PPP will not discriminate against you for asking. If PPP denies a request, you may reply to that email and ask for another look. Deleting the account from the account screen is separate from this email and follows section 8.
+PPP will answer within 45 days. If the request needs more time, PPP may take up to 45 more days and will tell you before the first 45 days end. PPP keeps a record of the request and how it was handled. PPP will not discriminate against you for asking. If PPP denies a request, you may reply to PPP’s answer and ask for another look. Deleting the account from the account screen is separate from this request and follows section 8.
 
 This policy is written for people in the United States, including Texas. The Texas Data Privacy and Security Act (TDPSA) gives consumers of a covered business the right to access, correct, delete, and obtain a copy of personal data, and to opt out of sale, targeted advertising, and certain profiling. PPP does not sell personal data and does not run targeted advertising or ad profiling. The request process above is how PPP handles those asks.
 
-If you decline an updated version of the agreements, you can still view your account information and delete your account. While acceptance of the current versions is required, new marketplace actions stay unavailable until you accept. That limit does not apply while the requirement to accept these versions is off.
+If you decline an updated version of the agreements, you can still view your account information and delete your account. New marketplace actions stay unavailable until you accept.
 
 ## 10. Children
 
-The marketplace is for adults hiring and doing property work. It is not directed to children. You must be 18 or older to create an account. That is an affirmation you make, not a verification of your age. The signup form does not ask for a date of birth. After the requirement to accept these versions is turned on, a new signup asks you to affirm that you are 18 or older and PPP records the time. An existing account is asked for the same affirmation when it accepts the current versions. While that requirement is off, the form does not require the affirmation and does not reject a signup for it.
+The marketplace is for adults hiring and doing property work. It is not directed to children. You must be 18 or older to create an account. That is an affirmation you make, not a verification of your age. The signup form does not ask for a date of birth. A new signup asks you to affirm that you are 18 or older and PPP records the time. An existing account is asked for the same affirmation when it accepts the current versions.
 
 ## 11. Security
 
-The site is served over HTTPS. Signed-in access is limited to the records the product is built to show that person, and sensitive actions go through checked server steps. Admin accounts can be required to use a second factor. No method of storage or transmission is perfect. Email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com) if you believe your account is being misused.
+The site is served over HTTPS. Signed-in access is limited to the records the product is built to show that person, and sensitive actions go through checked server steps. Admin accounts can be required to use a second factor. No method of storage or transmission is perfect. Contact PPP through the [Contact us page (prioritypropertypros.com/contact)](/contact) if you believe your account is being misused.
 
 ## 12. Changes
 
-PPP will post an updated policy on this page. The effective date of a version is its publication date. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates. The new version becomes the agreement PPP can require only after the requirement to accept these versions is turned on. Until then, the server does not reject a signup for these versions. After it is on, a new account must accept the current version and affirm that the person is 18 or older, or the server will not create the account. If you already have an account, the next sign-in asks you to accept and to make that affirmation, and that acceptance is stored separately from the acceptance recorded when the account was created, with the version and the time. You can still view your information and delete your account before you accept. Nothing is deleted because you have not yet accepted.
+PPP will post an updated policy on this page. The effective date of a version is its publication date. That posting is the notice. For a material change, PPP will also email the address on the account when PPP has that address. Notification settings do not have a separate switch for legal updates. A new version is required from its publication date. A new account must accept the current version and affirm that the person is 18 or older, or the server will not create the account. If you already have an account, the next sign-in asks you to accept and to make that affirmation, and that acceptance is stored separately from the acceptance recorded when the account was created, with the version and the time. You can still view your information and delete your account before you accept. Nothing is deleted because you have not yet accepted.
 
 ## 13. Contact
 
-Privacy questions and privacy requests: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+Privacy questions and privacy requests: use the [Contact us page (prioritypropertypros.com/contact)](/contact).
 
 Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.
 $ppp_legal_privacy_policy$,
@@ -506,16 +506,17 @@ VALUES (
 
 This is not legal advice.
 
-Effective date: the date this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published, shown at the top of this page.
 
-PPP does not require acceptance of this version until these pages are published and that requirement is turned on. That requirement ships off. After it is turned on, a new account records the current version and the time. Someone who already has an account is asked at the next sign-in to accept the current versions and to affirm that they are 18 or older. That affirmation is a statement the person makes. It is not a verification of age. That later acceptance is stored separately from the acceptance recorded when the account was created. They can still view their information and delete the account. Turning the requirement on does not delete an account or a payment record.
+A new account accepts the current version at signup, and PPP records the version and the time. Someone who already has an account is asked at the next sign-in to accept the current versions and to affirm that they are 18 or older. That affirmation is a statement the person makes. It is not a verification of age. That later acceptance is stored separately from the acceptance recorded when the account was created. They can still view their information and delete the account. Requiring acceptance does not delete an account or a payment record.
 
 ## Plain-language summary
 
 - The $9.99 account activation is a one-time fee for customers and contractors. It buys account activation. It is delivered when the server verifies the Stripe payment and marks the fee paid. It is not a monthly subscription. It does not approve a contractor, unlock contact, or start a job.
 - The $4.99 Connection Fee is what a contractor pays to connect on one project. It buys messaging for that pair and the customer’s option to share contact. It is delivered when the server verifies the payment and unlocks that connection. A rehire on a new project is another connection and another $4.99. Clicking Connect is not delivery.
-- Once the applicable service is delivered, the fee is generally non-refundable, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
-- This app does not send refunds to Stripe. Until a refund workflow is approved, an exception is handled manually in the Stripe Dashboard by the owner. Card data is entered at Stripe. PPP does not store card numbers.
+- The $9.99 activation fee is generally non-refundable once account activation is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
+- The $4.99 Connection Fee is non-refundable once the connection is delivered. If a contractor is charged but the connection can't be provided (the project was cancelled or closed, the opportunity expired, the customer blocked the contractor, or the same connection was charged twice), PPP refunds the $4.99 automatically to the original payment method. A refund the law requires, or an approved exception, is also available.
+- Automatic Connection Fee refunds are sent through Stripe. Other exceptions are reviewed by the owner and, if approved, refunded through Stripe. Card data is entered at Stripe. PPP does not store card numbers.
 - PPP does not collect the payment for the work. Cancelling a job does not create a PPP refund of that job payment, because PPP never held it.
 - Cancelling a project does not refund a delivered platform fee and does not make PPP a party to the job. Job responsibility is in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).
 
@@ -538,17 +539,19 @@ While a checkout is turned off, PPP does not charge that fee. An unpaid or unver
 Once the applicable service is delivered, the fee is generally non-refundable:
 
 - The $9.99 account activation fee is non-refundable once account activation is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
-- The $4.99 Connection Fee is non-refundable once that connection is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
+- The $4.99 Connection Fee is non-refundable once that connection is delivered, except for a refund the law requires or an approved exception. A Connection Fee charged for a connection that can't be provided is refunded automatically, as described below.
 - Delivery of account activation is the server marking the fee paid after it verifies the Stripe Checkout session. Delivery of a connection is the server unlocking that connection after it verifies the payment.
 - There is no refund under this general rule if the contractor is not hired, the customer chooses someone else, the customer cancels, the contractor changes their mind after the connection is delivered, the contractor passes after paying, or the parties later decide not to do the work.
 - A Connection Fee on a rehire follows the same rule.
 - Closing your account does not by itself refund either fee.
 
-A charge that does not deliver the service it was meant to buy — account activation not marked paid, or a connection not unlocked — is an erroneous charge for purposes of this policy. The product can mark that charge for review. Marking it for review is not a refund.
+**Automatic Connection Fee refunds.** If a $4.99 Connection Fee is charged but the connection can't be provided, PPP refunds it automatically to the original payment method. That covers, for example, a project that was cancelled or closed, an opportunity that expired or is no longer open, a customer who blocked the contractor or stopped new connections, a reservation that expired before payment finished, and the same connection being charged twice. PPP checks these rules again after payment and before it unlocks the connection. A connection that was already delivered is never refunded automatically. Each automatic refund is for the $4.99 that was charged, is issued once, and is recorded. Stripe and the card issuer control how long the refund takes to appear. If the payment details do not match what PPP expected, the charge is held for owner review instead of being refunded automatically. You do not need to ask for an automatic refund.
 
-This app has no refund button for these fees and does not send a refund to Stripe. A duplicate charge, an erroneous charge, a refund the law requires, or an approved exception is reviewed by the owner. If the owner approves it, the refund is issued in the Stripe Dashboard. That step is outside this app. This policy does not promise that every request will be approved.
+**Activation fee charged but not delivered.** A $9.99 activation charge that does not result in account activation being marked paid is an erroneous charge under this policy. The product refunds an undelivered Connection Fee automatically. An undelivered activation fee is marked for owner review, and if the owner confirms it, the refund is issued through Stripe.
 
-**How to ask.** Email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Include the account email, which fee ($9.99 activation or $4.99 Connection Fee), the amount, the date if you have it, and why you believe the charge is a duplicate, an erroneous charge, required by law, or another exception. You can also mail the same information to Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US. PPP may reply by email to the account email to confirm the request. The owner decides. PPP keeps a record of the request, the decision, and the Stripe refund reference when a refund is issued. Sending the email or letter does not by itself create a refund.
+**Other exceptions.** A duplicate $9.99 charge, another erroneous charge, a refund the law requires, or an approved exception is reviewed by the owner. If the owner approves it, the refund is issued through Stripe. This policy does not promise that every request will be approved.
+
+**How to ask.** Use the [Contact us page (prioritypropertypros.com/contact)](/contact). Include the account email, which fee ($9.99 activation or $4.99 Connection Fee), the amount, the date if you have it, and why you believe the charge is a duplicate, an erroneous charge, required by law, or another exception. You can also mail the same information to Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US. PPP may reply by email to the account email to confirm the request. The owner decides. PPP keeps a record of the request, the decision, and the Stripe refund reference when a refund is issued. Sending the request or letter does not by itself create a refund.
 
 Nothing in this policy takes away a right that a Texas or federal law does not let a business waive.
 
@@ -560,7 +563,7 @@ PPP does not use Stripe to collect, hold, or refund the customer’s payment for
 
 ## 4. Cancelling a project or a booking
 
-A customer can decline an estimate, stop new connections, and cancel a project when the product allows that status change. Pros already connected can still message. Cancelling a project does not refund a Connection Fee that was already delivered for that project, and it does not refund a delivered $9.99 activation, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception.
+A customer can decline an estimate, stop new connections, and cancel a project when the product allows that status change. Pros already connected can still message. Cancelling a project does not refund a Connection Fee that was already delivered for that project, and it does not refund a delivered $9.99 activation, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception. If a contractor's Connection Fee payment goes through after the project was cancelled or closed, that connection can't be provided, and the $4.99 is refunded automatically under section 2.
 
 A contractor can pass on an unpaid offer. Passing frees that slot for another contractor. Passing after a delivered Connect does not refund the $4.99 under the general rule in section 2.
 
@@ -574,9 +577,7 @@ A booking status of Disputed, when it is set, is a label on the marketplace reco
 
 ## 6. Contact
 
-Questions about a platform fee: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). Include the account email and, if you have it, the project. Emailing does not by itself create a refund.
-
-Once Priority Help is enabled, its AI assistant can explain this policy but cannot approve a refund exception or start a refund. Choose Talk to Support in the chat, or email the address above, so a person reviews the request.
+Questions about a platform fee: use the [Contact us page (prioritypropertypros.com/contact)](/contact). Include the account email and, if you have it, the project. Contacting PPP does not by itself create a refund.
 
 Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.
 $ppp_legal_refund_cancellation$,
@@ -596,9 +597,9 @@ VALUES (
 
 This is not legal advice.
 
-Effective date: the date this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published, shown at the top of this page.
 
-PPP does not require acceptance of this version until these pages are published and that requirement is turned on. That requirement ships off. After it is turned on, a new account records the current version and the time. Someone who already has an account is asked at the next sign-in to accept the current versions and to affirm that they are 18 or older. That affirmation is a statement the person makes. It is not a verification of age. That later acceptance is stored separately from the acceptance recorded when the account was created. They can still view their information and delete the account. Turning the requirement on does not delete an account.
+A new account accepts the current version at signup, and PPP records the version and the time. Someone who already has an account is asked at the next sign-in to accept the current versions and to affirm that they are 18 or older. That affirmation is a statement the person makes. It is not a verification of age. That later acceptance is stored separately from the acceptance recorded when the account was created. They can still view their information and delete the account. Requiring acceptance does not delete an account.
 
 ## Plain-language summary
 
@@ -645,7 +646,7 @@ A blocked message or a warning for this rule does not, by itself, refund a Conne
 
 Do not harass, threaten, or discriminate against another person through the marketplace. Do not send repeated unwanted contact after a project is cancelled or a connection is closed. Do not post another person’s private information.
 
-On an estimate or a booking, a customer can choose “Don't match me with this pro again.” That blocks the pro for that customer only. Matching skips that pro, the pro is left out of Hire Again, and the pro’s open, unaccepted offers on that customer’s other current projects close immediately. Paid connections and bookings are not changed. Work already underway stays as it is, and a paid Connection Fee stays paid. The customer can undo that from Blocked pros, and an admin can remove the block. A customer review of 1, 2, or 3 stars creates the same kind of block. A review of 4 or 5 stars does not. Raising that review to 4 or 5 stars does not remove it. A contractor’s review of a customer never creates a block. You can also cancel a project when the product allows it, stop new connections, and email [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+On an estimate or a booking, a customer can choose “Don't match me with this pro again.” That blocks the pro for that customer only. Matching skips that pro, the pro is left out of Hire Again, and the pro’s open, unaccepted offers on that customer’s other current projects close immediately. Paid connections and bookings are not changed. Work already underway stays as it is, and a paid Connection Fee stays paid. The customer can undo that from Blocked pros, and an admin can remove the block. A customer review of 1, 2, or 3 stars creates the same kind of block. A review of 4 or 5 stars does not. Raising that review to 4 or 5 stars does not remove it. A contractor’s review of a customer never creates a block. You can also cancel a project when the product allows it, stop new connections, and contact PPP through the [Contact us page (prioritypropertypros.com/contact)](/contact).
 
 ## 5. Reports
 
@@ -658,9 +659,9 @@ A homeowner or other account holder can report:
 - serious contractor misconduct
 - a violation of these guidelines or the Terms of Service
 
-Send the report by email to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com). The site does not have a separate in-app complaint center. Once Priority Help is enabled, you can also choose Talk to Support in that chat; a person handles the report there. A contractor can also report a project photo in the product. That report stores the reporter, the target, and the reason. An admin can read photo reports. The other person on a job can report that job review. An admin can hide a job review without deleting it. Marketplace reviews of PPP stay off the public page until an admin approves them. An admin who approves or rejects one records a written reason that is not shown on the public review. An admin can suspend, disable, or close an account.
+Send the report through the [Contact us page (prioritypropertypros.com/contact)](/contact). The site does not have a separate in-app complaint center. A contractor can also report a project photo in the product. That report stores the reporter, the target, and the reason. An admin can read photo reports. The other person on a job can report that job review. An admin can hide a job review without deleting it. Marketplace reviews of PPP stay off the public page until an admin approves them. An admin who approves or rejects one records a written reason that is not shown on the public review. An admin can suspend, disable, or close an account.
 
-PPP may review a report, ask for more information, moderate the content, suspend an account, or remove a contractor from the marketplace. PPP keeps the report and the decision in its records. PPP does not publish the other person’s private information in a public decision. A person who wants another look can reply to the support email. PPP does not promise to investigate every report or to resolve every report.
+PPP may review a report, ask for more information, moderate the content, suspend an account, or remove a contractor from the marketplace. PPP keeps the report and the decision in its records. PPP does not publish the other person’s private information in a public decision. A person who wants another look can reply to PPP’s answer. PPP does not promise to investigate every report or to resolve every report.
 
 Reviewing a report is not a guarantee of workmanship, not an assumption of responsibility for the job, and not arbitration of a construction dispute. Disputes about the work stay in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms).
 
@@ -672,7 +673,7 @@ Enforcement is not a finding that someone is licensed, insured, bonded, or backg
 
 ## 7. Contact
 
-Report a marketplace problem to [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+Report a marketplace problem through the [Contact us page (prioritypropertypros.com/contact)](/contact).
 
 Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.
 
@@ -694,9 +695,9 @@ VALUES (
 
 This is not legal advice.
 
-Effective date: the date this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published, shown at the top of this page.
 
-PPP does not require acceptance of this version until these pages are published and that requirement is turned on. That requirement ships off. After it is turned on, a new account records the current version and the time. Someone who already has an account is asked at the next sign-in to accept the current versions and to affirm that they are 18 or older. That affirmation is a statement the person makes. It is not a verification of age. That later acceptance is stored separately from the acceptance recorded when the account was created. They can still view their information and delete the account. Turning the requirement on does not delete a review, a photo, or an account.
+A new account accepts the current version at signup, and PPP records the version and the time. Someone who already has an account is asked at the next sign-in to accept the current versions and to affirm that they are 18 or older. That affirmation is a statement the person makes. It is not a verification of age. That later acceptance is stored separately from the acceptance recorded when the account was created. They can still view their information and delete the account. Requiring acceptance does not delete a review, a photo, or an account.
 
 ## Plain-language summary
 
@@ -737,7 +738,7 @@ PPP may refuse, edit display of, or remove content that breaks these guidelines,
 
 ## 5. Contact
 
-Questions about a review or a photo: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+Questions about a review or a photo: use the [Contact us page (prioritypropertypros.com/contact)](/contact).
 
 Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.
 $ppp_legal_review_content$,
@@ -757,13 +758,13 @@ VALUES (
 
 This is not legal advice.
 
-Effective date: the date this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published, shown at the top of this page.
 
 ## Plain-language summary
 
 - How you relate to Priority Property Pros, including responsibility for the work, is in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms). These terms do not repeat that section.
 - PPP does not state that you are licensed, insured, bonded, or background-checked. Putting a license or insurance note on your profile does not mean PPP verified it.
-- You pay the $9.99 one-time activation, then $4.99 each time you choose to Connect, including when a past customer posts a new project and you connect again. Each fee is generally non-refundable once that service is delivered, with the exceptions in the Refund & Cancellation Policy.
+- You pay the $9.99 one-time activation, then $4.99 each time you choose to Connect, including when a past customer posts a new project and you connect again. Each fee is generally non-refundable once that service is delivered, with the exceptions in the Refund & Cancellation Policy. If you are charged $4.99 but the connection can't be provided, it is refunded automatically.
 - You choose which jobs to take. The customer pays you directly. PPP does not take a percentage of the job.
 
 These terms are part of the [Terms of Service](/terms) for contractor accounts. Customers can read them. Only contractor signups are asked to accept them, and only those acceptances are stored on contractor accounts. The [Refund & Cancellation Policy](/refunds) and the [Community Guidelines](/community-guidelines) also apply.
@@ -786,7 +787,7 @@ Nothing on the site means you are licensed, insured, bonded, or background-check
 
 You pay a one-time $9.99 account activation when that Stripe Checkout is turned on. Then $0 a month. You pay $4.99 each time you choose to Connect on a project. That includes a new project from a customer you have worked with before. Hire Again does not waive the Connection Fee.
 
-The Connection Fee buys connection access for that project: messaging with that customer, and the customer’s option to share contact details. It does not buy the job. The customer may hire someone else or hire no one. Account activation is delivered when the server verifies the Stripe payment and marks the fee paid. A connection is delivered when the server verifies the payment and unlocks that connection. Clicking Connect is not delivery. The [Refund & Cancellation Policy](/refunds) says both fees are generally non-refundable once the applicable service is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception. This app does not issue those refunds. Until a refund workflow is approved, an exception is handled manually in the Stripe Dashboard by the owner.
+The Connection Fee buys connection access for that project: messaging with that customer, and the customer’s option to share contact details. It does not buy the job. The customer may hire someone else or hire no one. Account activation is delivered when the server verifies the Stripe payment and marks the fee paid. A connection is delivered when the server verifies the payment and unlocks that connection. Clicking Connect is not delivery. Under the [Refund & Cancellation Policy](/refunds), the $9.99 activation is generally non-refundable once it is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception. The $4.99 Connection Fee is non-refundable once the connection is delivered. If you are charged but the connection can't be provided, for example because the project was cancelled or closed, the opportunity expired, the customer blocked you, or you were charged twice, PPP refunds the $4.99 automatically to your original payment method. Other exceptions are reviewed by the owner.
 
 You do not pay PPP a percentage of the job. The customer pays you directly for the work. PPP does not collect that payment.
 
@@ -804,11 +805,11 @@ You set your estimate in the product. Job responsibility, and disputes about the
 
 ## 6. Acceptance
 
-Contractor signup uses the same checkbox as any other signup, and the checkbox names these Contractor Participation Terms. You must be 18 or older. That is an affirmation you make, not a verification of your age. Until these pages are published and the requirement to accept these versions is turned on, the server does not reject the account for these versions and does not require the affirmation. After that requirement is on, the server stores the version and the time, records the time of the age affirmation, and a new contractor account is not created if the current version was not accepted or the affirmation is missing. If these terms are updated after you already have an account, the next sign-in asks you to accept the current versions and to affirm that you are 18 or older if you have not already done so. That later acceptance is stored separately from the acceptance recorded when the account was created, with its own version and time. You can still view your jobs, messages, and account information, and you can delete the account, before you accept. While the requirement is on, new marketplace actions wait on that acceptance. Nothing is deleted because you have not yet accepted.
+Contractor signup uses the same checkbox as any other signup, and the checkbox names these Contractor Participation Terms. You must be 18 or older. That is an affirmation you make, not a verification of your age. The server stores the version and the time, records the time of the age affirmation, and a new contractor account is not created if the current version was not accepted or the affirmation is missing. If these terms are updated after you already have an account, the next sign-in asks you to accept the current versions and to affirm that you are 18 or older if you have not already done so. That later acceptance is stored separately from the acceptance recorded when the account was created, with its own version and time. You can still view your jobs, messages, and account information, and you can delete the account, before you accept. New marketplace actions wait on that acceptance. Nothing is deleted because you have not yet accepted.
 
 ## 7. Contact
 
-Questions about these terms: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+Questions about these terms: use the [Contact us page (prioritypropertypros.com/contact)](/contact).
 
 Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.
 $ppp_legal_contractor_participation$,
@@ -1263,21 +1264,71 @@ REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated
 COMMENT ON FUNCTION public.handle_new_user() IS
   'Creates the profile. Agreement enforcement and the 18-or-older affirmation run only when legal_acceptance_required is on. When it is off, signup is not rejected and only the already-current terms and privacy rows are recorded if the checkbox was accepted. Does not hide or delete existing account data and does not change Stripe or fee flags.';
 
+CREATE OR REPLACE FUNCTION public.profile_missing_current_agreements(p_profile_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.agreements AS agreement
+    JOIN public.profiles AS profile ON profile.id = p_profile_id
+    WHERE agreement.is_current
+      AND (
+        agreement.audience = 'ALL'
+        OR (agreement.audience = 'CONTRACTOR' AND profile.account_type = 'CONTRACTOR')
+      )
+      AND NOT EXISTS (
+        SELECT 1
+        FROM public.agreement_acceptances AS acceptance
+        WHERE acceptance.agreement_id = agreement.id
+          AND acceptance.profile_id = p_profile_id
+      )
+  );
+$$;
+
+COMMENT ON FUNCTION public.profile_missing_current_agreements(uuid) IS
+  'Internal helper for the new-marketplace-action trigger. True when that profile has not accepted a current agreement. Read-only.';
+
+REVOKE ALL ON FUNCTION public.profile_missing_current_agreements(uuid) FROM PUBLIC, anon, authenticated;
+
 CREATE OR REPLACE FUNCTION public.enforce_current_terms_for_new_marketplace_action()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+  actor uuid := auth.uid();
 BEGIN
-  IF auth.uid() IS NULL OR public.is_admin() OR NOT public.legal_acceptance_required() THEN
+  IF NOT public.legal_acceptance_required() THEN
     RETURN NEW;
   END IF;
 
-  IF EXISTS (SELECT 1 FROM public.missing_current_agreements() LIMIT 1) THEN
+  IF actor IS NULL THEN
+    -- Service role. The $4.99 Connect reservation is inserted by the checkout
+    -- function with the service role before any Stripe session exists, so check
+    -- the contractor on that row. Webhook fulfillment and refunds only UPDATE
+    -- existing rows and are not affected. Every other service-role insert passes.
+    IF TG_TABLE_NAME = 'project_connections' THEN
+      SELECT contractor.profile_id
+      INTO actor
+      FROM public.contractor_profiles AS contractor
+      WHERE contractor.id = NEW.contractor_profile_id;
+    END IF;
+    IF actor IS NULL THEN
+      RETURN NEW;
+    END IF;
+  ELSIF public.is_admin() THEN
+    RETURN NEW;
+  END IF;
+
+  IF public.profile_missing_current_agreements(actor) THEN
     RAISE EXCEPTION 'terms_acceptance_required'
       USING ERRCODE = 'P0001',
-            HINT = 'Accept the current agreements before a new marketplace action. You can still view your account and delete it.';
+            HINT = 'Accept the current agreements before a new marketplace action. You can still view your account and delete it. You have not been charged.';
   END IF;
 
   RETURN NEW;
@@ -1285,7 +1336,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.enforce_current_terms_for_new_marketplace_action() IS
-  'BEFORE INSERT only. Raises terms_acceptance_required when legal_acceptance_required is on and the caller is missing a current agreement. Allows a null auth.uid() (service role) and admins. Does not block SELECT, updates, account deletion, or payment tables. Does not change Stripe functions or fee flags.';
+  'BEFORE INSERT only. Raises terms_acceptance_required when legal_acceptance_required is on and the acting user is missing a current agreement. Admins pass. Service-role inserts pass, except a project_connections reservation, which is checked against that row''s contractor before any Stripe session exists. Does not block SELECT, updates, account deletion, or payment tables. Does not change Stripe functions or fee flags.';
 
 REVOKE ALL ON FUNCTION public.enforce_current_terms_for_new_marketplace_action() FROM PUBLIC, anon, authenticated;
 

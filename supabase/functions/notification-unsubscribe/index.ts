@@ -6,6 +6,8 @@ import {
   type NotificationCategory,
 } from "../_shared/notificationPolicy.ts";
 import { loadNotificationRuntimeSecrets } from "../_shared/notificationSecrets.ts";
+import { restRpc } from "../_shared/supabase.ts";
+import { RATE_LIMITS, checkRateLimit, clientIp } from "../_shared/rateLimit.ts";
 
 function page(title: string, message: string, siteUrl: string, status = 200): Response {
   const site = siteUrl.replace(/\/$/, "");
@@ -85,6 +87,11 @@ Deno.serve(async (req) => {
   const secrets = await loadNotificationRuntimeSecrets(service());
   if (req.method !== "GET" && req.method !== "POST") {
     return page("Unsubscribe", "Open the unsubscribe link from your email.", secrets.notificationSiteUrl, 405);
+  }
+  const ip = clientIp(req);
+  const limit = await checkRateLimit(restRpc, RATE_LIMITS.unsubscribeIp, ip ? `ip:${ip}` : null);
+  if (!limit.allowed) {
+    return page("Unsubscribe", "Too many tries. Please wait a few minutes and open the link again.", secrets.notificationSiteUrl, 429);
   }
   const url = new URL(req.url);
   let token = url.searchParams.get("token") ?? "";

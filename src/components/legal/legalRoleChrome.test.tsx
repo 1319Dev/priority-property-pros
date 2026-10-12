@@ -129,7 +129,8 @@ describe("legal chrome for each role", () => {
       </MemoryRouter>,
     );
     expect(screen.getByText(data)).toBeInTheDocument();
-    expect(screen.getByText(`${eyebrow} · Pat Lee`)).toBeInTheDocument();
+    expect(screen.getByText(eyebrow)).toBeInTheDocument();
+    expect(screen.getByText("· Pat Lee")).toBeInTheDocument();
     expect(screen.getAllByRole("navigation", { name: "Dashboard" }).some((nav) => nav.className.includes("lg:hidden"))).toBe(
       true,
     );

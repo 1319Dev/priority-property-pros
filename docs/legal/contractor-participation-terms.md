@@ -2,13 +2,13 @@
 
 This is not legal advice.
 
-Effective date: the date this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published, shown at the top of this page.
 
 ## Plain-language summary
 
 - How you relate to Priority Property Pros, including responsibility for the work, is in Independent Marketplace and Contractor Responsibility in the [Terms of Service](/terms). These terms do not repeat that section.
 - PPP does not state that you are licensed, insured, bonded, or background-checked. Putting a license or insurance note on your profile does not mean PPP verified it.
-- You pay the $9.99 one-time activation, then $4.99 each time you choose to Connect, including when a past customer posts a new project and you connect again. Each fee is generally non-refundable once that service is delivered, with the exceptions in the Refund & Cancellation Policy.
+- You pay the $9.99 one-time activation, then $4.99 each time you choose to Connect, including when a past customer posts a new project and you connect again. Each fee is generally non-refundable once that service is delivered, with the exceptions in the Refund & Cancellation Policy. If you are charged $4.99 but the connection can't be provided, it is refunded automatically.
 - You choose which jobs to take. The customer pays you directly. PPP does not take a percentage of the job.
 
 These terms are part of the [Terms of Service](/terms) for contractor accounts. Customers can read them. Only contractor signups are asked to accept them, and only those acceptances are stored on contractor accounts. The [Refund & Cancellation Policy](/refunds) and the [Community Guidelines](/community-guidelines) also apply.
@@ -31,7 +31,7 @@ Nothing on the site means you are licensed, insured, bonded, or background-check
 
 You pay a one-time $9.99 account activation when that Stripe Checkout is turned on. Then $0 a month. You pay $4.99 each time you choose to Connect on a project. That includes a new project from a customer you have worked with before. Hire Again does not waive the Connection Fee.
 
-The Connection Fee buys connection access for that project: messaging with that customer, and the customer’s option to share contact details. It does not buy the job. The customer may hire someone else or hire no one. Account activation is delivered when the server verifies the Stripe payment and marks the fee paid. A connection is delivered when the server verifies the payment and unlocks that connection. Clicking Connect is not delivery. The [Refund & Cancellation Policy](/refunds) says both fees are generally non-refundable once the applicable service is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception. This app does not issue those refunds. Until a refund workflow is approved, an exception is handled manually in the Stripe Dashboard by the owner.
+The Connection Fee buys connection access for that project: messaging with that customer, and the customer’s option to share contact details. It does not buy the job. The customer may hire someone else or hire no one. Account activation is delivered when the server verifies the Stripe payment and marks the fee paid. A connection is delivered when the server verifies the payment and unlocks that connection. Clicking Connect is not delivery. Under the [Refund & Cancellation Policy](/refunds), the $9.99 activation is generally non-refundable once it is delivered, except for a duplicate charge, an erroneous charge, a refund the law requires, or an approved exception. The $4.99 Connection Fee is non-refundable once the connection is delivered. If you are charged but the connection can't be provided, for example because the project was cancelled or closed, the opportunity expired, the customer blocked you, or you were charged twice, PPP refunds the $4.99 automatically to your original payment method. Other exceptions are reviewed by the owner.
 
 You do not pay PPP a percentage of the job. The customer pays you directly for the work. PPP does not collect that payment.
 
@@ -49,10 +49,10 @@ You set your estimate in the product. Job responsibility, and disputes about the
 
 ## 6. Acceptance
 
-Contractor signup uses the same checkbox as any other signup, and the checkbox names these Contractor Participation Terms. You must be 18 or older. That is an affirmation you make, not a verification of your age. Until these pages are published and the requirement to accept these versions is turned on, the server does not reject the account for these versions and does not require the affirmation. After that requirement is on, the server stores the version and the time, records the time of the age affirmation, and a new contractor account is not created if the current version was not accepted or the affirmation is missing. If these terms are updated after you already have an account, the next sign-in asks you to accept the current versions and to affirm that you are 18 or older if you have not already done so. That later acceptance is stored separately from the acceptance recorded when the account was created, with its own version and time. You can still view your jobs, messages, and account information, and you can delete the account, before you accept. While the requirement is on, new marketplace actions wait on that acceptance. Nothing is deleted because you have not yet accepted.
+Contractor signup uses the same checkbox as any other signup, and the checkbox names these Contractor Participation Terms. You must be 18 or older. That is an affirmation you make, not a verification of your age. The server stores the version and the time, records the time of the age affirmation, and a new contractor account is not created if the current version was not accepted or the affirmation is missing. If these terms are updated after you already have an account, the next sign-in asks you to accept the current versions and to affirm that you are 18 or older if you have not already done so. That later acceptance is stored separately from the acceptance recorded when the account was created, with its own version and time. You can still view your jobs, messages, and account information, and you can delete the account, before you accept. New marketplace actions wait on that acceptance. Nothing is deleted because you have not yet accepted.
 
 ## 7. Contact
 
-Questions about these terms: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+Questions about these terms: use the [Contact us page (prioritypropertypros.com/contact)](/contact).
 
 Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.

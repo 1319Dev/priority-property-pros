@@ -65,9 +65,9 @@ PPP does **not** run image OCR. Upload guidance, filename sanitization, and `sub
 
 ## Refund policy (document only — attorney review)
 
-The $9.99 account activation fee and the $4.99 Connection Fee are **non-refundable**. $4.99 buys connection access, not a guaranteed job. There is no refund if the contractor is not hired, the customer chooses someone else, the customer cancels, or the contractor changes their mind.
+The $9.99 account activation fee is **non-refundable**. The $4.99 Connection Fee is **non-refundable once the connection is delivered**. $4.99 buys connection access, not a guaranteed job. There is no refund if the contractor is not hired, the customer chooses someone else, the customer cancels after the connection, or the contractor changes their mind. If a $4.99 charge goes through but the connection can't be provided (blocked, expired, cancelled/closed, or a duplicate charge), it is refunded automatically (PR #136, `docs/CONNECTION_FEE_REFUNDS.md`).
 
-The app does **not** issue Stripe refunds for these fees. `needs_refund` is an internal ops flag for charged-but-not-entitled technical failures (no extra unlock). Operator correction, if any, is outside the product — Stripe Dashboard refunds remain possible for Garrett. Fraud is handled through dispute and admin review.
+The app does **not** issue Stripe refunds for the $9.99 fee or for a delivered $4.99 connection; the only automatic refund is the undeliverable $4.99 case above. `needs_refund` is an internal ops flag for charged-but-not-entitled technical failures (no extra unlock). Operator correction, if any, is outside the product — Stripe Dashboard refunds remain possible for Garrett. Fraud is handled through dispute and admin review.
 
 ## VERIFIER
 

@@ -992,6 +992,23 @@ export type Database = {
         Args: { p_review_id: string; p_status: string; p_reason: string };
         Returns: Json;
       };
+      admin_list_audit_log: {
+        Args: {
+          p_actor?: string | null;
+          p_action?: string | null;
+          p_from?: string | null;
+          p_to?: string | null;
+          p_reference?: string | null;
+          p_limit?: number;
+        };
+        Returns: {
+          occurred_at: string;
+          actor_role: string;
+          action: string;
+          job_reference: string | null;
+          summary: string | null;
+        }[];
+      };
       admin_mfa_required: { Args: Record<string, never>; Returns: boolean };
       admin_dashboard_summary: { Args: { p_include_test?: boolean }; Returns: Json };
       admin_needs_attention: { Args: { p_include_test?: boolean }; Returns: Json };
@@ -1042,6 +1059,27 @@ export type Database = {
         Args: { p_booking_id: string; p_rating: number; p_body?: string | null };
         Returns: Json;
       };
+      report_booking_review: {
+        Args: { p_review_id: string; p_reason: string };
+        Returns: Json;
+      };
+      submit_booking_review_response: {
+        Args: { p_review_id: string; p_body: string };
+        Returns: Json;
+      };
+      admin_hide_booking_review: {
+        Args: { p_review_id: string; p_reason: string };
+        Returns: Json;
+      };
+      admin_restore_booking_review: {
+        Args: { p_review_id: string; p_reason: string };
+        Returns: Json;
+      };
+      admin_hide_booking_review_response: {
+        Args: { p_review_id: string; p_reason: string };
+        Returns: Json;
+      };
+      admin_list_booking_reviews: { Args: Record<string, never>; Returns: Json };
       confirm_booking_hired: { Args: { p_booking_id: string }; Returns: Json };
       booking_is_mutually_hired: { Args: { p_booking_id: string }; Returns: boolean };
       booking_job_contact: { Args: { p_booking_id: string }; Returns: Json };
@@ -1075,6 +1113,7 @@ export type Database = {
       mark_estimate_viewed: { Args: { p_estimate_id: string; p_project_id?: string | null }; Returns: Json };
       decline_estimate: { Args: { p_estimate_id: string }; Returns: Json };
       list_my_estimates: { Args: Record<string, never>; Returns: Json };
+      list_my_opportunity_labels: { Args: Record<string, never>; Returns: Json };
       list_my_notifications: { Args: Record<string, never>; Returns: Json };
       list_my_message_threads: { Args: Record<string, never>; Returns: Json };
       mark_message_thread_read: { Args: { p_thread_id: string }; Returns: Json };
@@ -1099,6 +1138,7 @@ export type Database = {
         Returns: boolean;
       };
       mark_notification_read: { Args: { p_notification_id: string }; Returns: Json };
+      mark_all_my_notifications_read: { Args: Record<string, never>; Returns: number };
       ensure_my_notification_preferences: { Args: Record<string, never>; Returns: number };
       save_my_push_subscription: {
         Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent?: string | null };
@@ -1181,7 +1221,7 @@ export type Database = {
       };
       list_public_directory_reviews: {
         Args: { p_id: string };
-        Returns: { id: string; rating: number; body: string }[];
+        Returns: { id: string; rating: number; body: string; contractor_response: string | null }[];
       };
       text_contains_pre_hire_contact: { Args: { p_text?: string | null }; Returns: boolean };
       assert_no_pre_hire_contact: { Args: { p_text?: string | null }; Returns: undefined };

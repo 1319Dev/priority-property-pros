@@ -311,9 +311,45 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
     pricing.unmount();
     const trust = renderApp("/trust");
     expect(trust.container.textContent).not.toMatch(/attorney review/i);
-    expect(trust.container.textContent).toMatch(/\$9\.99 account activation fee and the \$4\.99 Connection Fee are non-refundable/i);
+    expect(trust.container.textContent).toMatch(/\$9\.99 account activation fee is non-refundable\./i);
+    expect(trust.container.textContent).toMatch(
+      /\$4\.99 Connection Fee is non-refundable once the connection is delivered\. If you are charged but the connection can't be provided, the \$4\.99 is refunded automatically/i,
+    );
+    expect(trust.container.textContent).not.toMatch(/Connection Fee (is|are) non-refundable\./i);
     expect(trust.container.textContent).toMatch(/pre-connection circumvention of contact sharing is prohibited/i);
     expect(trust.container.textContent).toMatch(/does not currently verify licenses, insurance, or workmanship/i);
+  });
+
+  it("shows the support email only on the Contact Us page", () => {
+    const email = /support@prioritypropertypros\.com/i;
+    const contact = renderApp("/contact");
+    expect(contact.container.innerHTML).toMatch(email);
+    contact.unmount();
+    const otherRoutes = [
+      "/",
+      "/find-a-pro",
+      "/how-it-works",
+      "/pricing",
+      "/become-a-pro",
+      "/faq",
+      "/reviews",
+      "/sign-in",
+      "/sign-up",
+      "/sign-up/customer",
+      "/sign-up/contractor",
+      "/forgot-password",
+      "/account/status",
+      "/post-project",
+      "/trust",
+      "/notifications",
+      "/no-such-page",
+    ];
+    for (const path of otherRoutes) {
+      const view = renderApp(path);
+      expect(view.container.innerHTML, path).not.toMatch(email);
+      expect(view.container.innerHTML, path).not.toMatch(/mailto:/i);
+      view.unmount();
+    }
   });
 
   it("renders a public route when the address has a trailing slash", () => {

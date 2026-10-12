@@ -43,7 +43,7 @@ export function LegalDocumentPage({
   return (
     <section className="py-10 sm:py-16">
       <Container className="max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Legal</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Legal</p>
         {publishedLabel ? (
           <p className="mt-3 text-sm text-ink-600">Published {publishedLabel}.</p>
         ) : null}

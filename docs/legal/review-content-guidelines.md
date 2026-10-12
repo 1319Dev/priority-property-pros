@@ -2,9 +2,9 @@
 
 This is not legal advice.
 
-Effective date: the date this version is published. Until this version is published, it is not in effect.
+Effective date: the date this version is published, shown at the top of this page.
 
-PPP does not require acceptance of this version until these pages are published and that requirement is turned on. That requirement ships off. After it is turned on, a new account records the current version and the time. Someone who already has an account is asked at the next sign-in to accept the current versions and to affirm that they are 18 or older. That affirmation is a statement the person makes. It is not a verification of age. That later acceptance is stored separately from the acceptance recorded when the account was created. They can still view their information and delete the account. Turning the requirement on does not delete a review, a photo, or an account.
+A new account accepts the current version at signup, and PPP records the version and the time. Someone who already has an account is asked at the next sign-in to accept the current versions and to affirm that they are 18 or older. That affirmation is a statement the person makes. It is not a verification of age. That later acceptance is stored separately from the acceptance recorded when the account was created. They can still view their information and delete the account. Requiring acceptance does not delete a review, a photo, or an account.
 
 ## Plain-language summary
 
@@ -45,6 +45,6 @@ PPP may refuse, edit display of, or remove content that breaks these guidelines,
 
 ## 5. Contact
 
-Questions about a review or a photo: [support@prioritypropertypros.com](mailto:support@prioritypropertypros.com).
+Questions about a review or a photo: use the [Contact us page (prioritypropertypros.com/contact)](/contact).
 
 Mailing address: Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.
