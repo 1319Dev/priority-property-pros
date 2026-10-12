@@ -1,11 +1,11 @@
 import { MarketingPhoto } from "../../components/media/MarketingPhoto";
 import { Container, SectionHeading } from "../../components/ui/Container";
 import { MARKETING_SECTION_PHOTOS } from "../../data/marketingPhotos";
-import { JOB_PAYMENT_PLAIN } from "../../data/pricing";
+import { CONNECTION_FEE_NON_REFUNDABLE, JOB_PAYMENT_PLAIN } from "../../data/pricing";
 import { useHidePlatformPricing } from "../../lib/auth/platformPricing";
 
 const CONNECT_STEP_WITH_FEE =
-  "Independent contractors browse anonymized opportunities. Up to three can connect for $4.99 each. Connecting does not guarantee a hire. The $4.99 Connection Fee is non-refundable.";
+  `Independent contractors browse anonymized opportunities. Up to three can connect for $4.99 each. Connecting does not guarantee a hire. ${CONNECTION_FEE_NON_REFUNDABLE}`;
 
 const CONNECT_STEP_WITHOUT_FEE =
   "Independent contractors browse anonymized opportunities. Up to three can connect. You choose who to hire.";

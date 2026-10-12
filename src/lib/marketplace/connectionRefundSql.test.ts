@@ -85,7 +85,24 @@ describe("Connection Fee validity and refund migration", () => {
     expect(fn("prepare_connection_fee_refund")).toMatch(/write_audit_log\(NULL, 'connection_fee\.refund\.flagged'/);
     expect(fn("prepare_connection_fee_refund")).toMatch(/alert_admins_connection_fee_refund/);
     expect(fn("record_connection_fee_refund_result")).toMatch(/'connection_fee\.refund\.' \|\| lower\(v_status\)/);
-    expect(fn("alert_admins_connection_fee_refund")).toMatch(/account_type = 'ADMIN' AND p\.account_status = 'ACTIVE'/);
+    // Admin alerts go through #131's notify_admins / admin_refunds category, never a custom kind.
+    expect(fn("alert_admins_connection_fee_refund")).toMatch(/public\.notify_admins\(\s*'admin\.refund_flagged'/);
+    expect(migration).not.toContain("admin.connection_fee_refund");
+  });
+
+  it("never auto-refunds a PAID connection whose delivering session is unknown", () => {
+    const prepare = fn("prepare_connection_fee_refund");
+    expect(prepare).toMatch(/'possible_duplicate_payment';\s+v_auto := false;/);
+    expect(prepare).toMatch(/IF conn\.status IN \('PAID', 'COMPLETED'\) AND conn\.stripe_checkout_session_id IS NULL THEN\s+v_auto := false;/);
+  });
+
+  it("updates #131's Connect alert wording from the live definition and restores it on rollback", () => {
+    const start = migration.indexOf("CREATE OR REPLACE FUNCTION public.admin_alert_refund_flagged()");
+    expect(start).toBeGreaterThan(-1);
+    const body = migration.slice(start);
+    expect(body).toMatch(/A paid Connect could not be provided\. It is refunded automatically\./);
+    expect(body).toMatch(/A paid activation was flagged for a refund\. Nothing was refunded automatically\./);
+    expect(rollback).toMatch(/A paid Connect was flagged for a refund\. Nothing was refunded automatically\./);
   });
 
   it("has a rollback that drops every new object", () => {

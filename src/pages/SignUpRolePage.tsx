@@ -5,7 +5,7 @@ import { dashboardPath } from "../lib/auth/publicEntry";
 import { requestsVerifierSignup } from "../lib/auth/roles";
 import { useAuth } from "../lib/auth/useAuth";
 import {
-  CONNECTION_FEE_NO_HIRE_GUARANTEE,
+  CONNECTION_FEE_NO_HIRE_PLAIN,
   HOMEOWNER_PRICING_SUMMARY,
   JOB_PAYMENT_PLAIN,
   PRO_PRICING_SUMMARY,
@@ -23,7 +23,7 @@ const options = [
     to: "/sign-up/contractor",
     label: "I want to get hired",
     account: "Contractor account",
-    detail: `${PRO_PRICING_SUMMARY} ${CONNECTION_FEE_NO_HIRE_GUARANTEE}`,
+    detail: `${PRO_PRICING_SUMMARY} ${CONNECTION_FEE_NO_HIRE_PLAIN}`,
   },
 ];
 

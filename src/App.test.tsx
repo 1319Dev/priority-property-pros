@@ -302,7 +302,11 @@ describe("Marketing pages, reviews, and legacy redirects", () => {
     pricing.unmount();
     const trust = renderApp("/trust");
     expect(trust.container.textContent).not.toMatch(/attorney review/i);
-    expect(trust.container.textContent).toMatch(/\$9\.99 account activation fee and the \$4\.99 Connection Fee are non-refundable/i);
+    expect(trust.container.textContent).toMatch(/\$9\.99 account activation fee is non-refundable\./i);
+    expect(trust.container.textContent).toMatch(
+      /\$4\.99 Connection Fee is non-refundable once the connection is delivered\. If you are charged but the connection can't be provided, the \$4\.99 is refunded automatically/i,
+    );
+    expect(trust.container.textContent).not.toMatch(/Connection Fee (is|are) non-refundable\./i);
     expect(trust.container.textContent).toMatch(/pre-connection circumvention of contact sharing is prohibited/i);
     expect(trust.container.textContent).toMatch(/does not currently verify licenses, insurance, or workmanship/i);
   });

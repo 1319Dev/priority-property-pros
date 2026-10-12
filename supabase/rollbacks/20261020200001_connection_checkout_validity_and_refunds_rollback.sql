@@ -26,4 +26,72 @@ DROP TRIGGER IF EXISTS connection_fee_refunds_protect_row ON public.connection_f
 DROP FUNCTION IF EXISTS public.protect_connection_fee_refund_row();
 DROP TABLE IF EXISTS public.connection_fee_refunds;
 
+-- Restore #131 admin_alert_refund_flagged exactly as it was live before this migration (md5 8ea9d776).
+CREATE OR REPLACE FUNCTION public.admin_alert_refund_flagged()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_kind text;
+  v_entity_type text;
+  v_project uuid;
+  v_ref integer;
+  v_path text;
+BEGIN
+  BEGIN
+    IF TG_TABLE_NAME = 'project_connections' THEN
+      v_kind := 'connect';
+      v_entity_type := 'project_connection';
+      v_project := NEW.project_id;
+      SELECT pr.reference_number INTO v_ref FROM public.projects pr WHERE pr.id = v_project;
+      v_path := public.admin_path_for_reference(v_ref);
+    ELSE
+      v_kind := 'activation';
+      v_entity_type := 'signup_fee_charge';
+      v_project := NULL;
+      v_ref := NULL;
+      v_path := '/app/admin';
+    END IF;
+
+    PERFORM public.write_audit_log(
+      auth.uid(),
+      'payment.flagged_for_refund',
+      v_entity_type,
+      NEW.id,
+      jsonb_build_object(
+        'payment_kind', v_kind,
+        'reason', NEW.refund_reason,
+        'project_id', v_project,
+        'reference_number', v_ref
+      )
+    );
+
+    PERFORM public.notify_admins(
+      'admin.refund_flagged',
+      'Payment flagged for refund',
+      CASE WHEN v_kind = 'connect'
+        THEN 'A paid Connect was flagged for a refund. Nothing was refunded automatically.'
+        ELSE 'A paid activation was flagged for a refund. Nothing was refunded automatically.'
+      END,
+      v_entity_type,
+      NEW.id,
+      jsonb_build_object(
+        'payment_kind', v_kind,
+        'reason', NEW.refund_reason,
+        'project_id', v_project,
+        'reference_number', v_ref,
+        'path', v_path
+      ),
+      NULL
+    );
+  EXCEPTION WHEN OTHERS THEN
+    -- Never break the payment path that set the flag.
+    RAISE WARNING 'admin refund alert skipped for %', NEW.id;
+  END;
+  RETURN NULL;
+END;
+$function$;
+
 COMMIT;

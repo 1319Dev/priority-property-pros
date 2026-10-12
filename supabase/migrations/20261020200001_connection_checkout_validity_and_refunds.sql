@@ -11,6 +11,12 @@
 --
 -- A connection that is already PAID or COMPLETED by this same session is never refunded here.
 -- A second paid session on an already PAID connection (duplicate charge) is refunded.
+-- A PAID connection with no stored delivering session id is never auto-refunded (MANUAL_REVIEW only).
+--
+-- Admin alerts go through #131's notify_admins with kind 'admin.refund_flagged' (category admin_refunds).
+-- #131's project_connections trigger already alerts when an undelivered connection is flagged; its Connect
+-- wording is updated here (it said "Nothing was refunded automatically"). The rest of that function is
+-- the LIVE definition (captured 2026-10-11, md5 8ea9d776) unchanged.
 
 CREATE TABLE IF NOT EXISTS public.connection_fee_refunds (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -245,6 +251,8 @@ REVOKE ALL ON FUNCTION public.connection_checkout_session_validity(text) FROM PU
 GRANT EXECUTE ON FUNCTION public.connection_checkout_session_validity(text) TO service_role;
 
 -- Admin in-app alert. Notifications carry no contact data.
+-- Uses #131's notify_admins + 'admin.refund_flagged' so admin_refunds preferences and the bell apply.
+-- Never breaks the payment path that calls it.
 CREATE OR REPLACE FUNCTION public.alert_admins_connection_fee_refund(p_refund_id uuid, p_title text, p_body text)
 RETURNS integer
 LANGUAGE plpgsql
@@ -252,19 +260,29 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  admin_id uuid;
-  n integer := 0;
+  ref public.connection_fee_refunds;
+  v_ref integer;
 BEGIN
-  FOR admin_id IN
-    SELECT p.id FROM public.profiles p WHERE p.account_type = 'ADMIN' AND p.account_status = 'ACTIVE'
-  LOOP
-    PERFORM public.enqueue_notification(
-      admin_id, 'admin.connection_fee_refund', p_title, p_body,
-      'connection_fee_refund', p_refund_id, jsonb_build_object('refund_id', p_refund_id)
-    );
-    n := n + 1;
-  END LOOP;
-  RETURN n;
+  SELECT * INTO ref FROM public.connection_fee_refunds WHERE id = p_refund_id;
+  IF ref.project_id IS NOT NULL THEN
+    SELECT pr.reference_number INTO v_ref FROM public.projects pr WHERE pr.id = ref.project_id;
+  END IF;
+  RETURN public.notify_admins(
+    'admin.refund_flagged', p_title, p_body, 'connection_fee_refund', p_refund_id,
+    jsonb_build_object(
+      'payment_kind', 'connect',
+      'refund_id', p_refund_id,
+      'reason', ref.reason,
+      'refund_status', ref.status,
+      'project_id', ref.project_id,
+      'reference_number', v_ref,
+      'path', public.admin_path_for_reference(v_ref)
+    ),
+    NULL
+  );
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'connection fee refund admin alert skipped for %', p_refund_id;
+  RETURN 0;
 END;
 $$;
 
@@ -310,6 +328,10 @@ BEGIN
   IF v_reason IS NULL THEN
     IF sess.needs_refund OR coalesce(conn.needs_refund, false) AND conn.stripe_checkout_session_id IS NOT DISTINCT FROM sess.stripe_checkout_session_id THEN
       v_reason := coalesce(sess.refund_reason, conn.refund_reason, 'needs_refund');
+    ELSIF conn.status IN ('PAID', 'COMPLETED') AND conn.stripe_checkout_session_id IS NULL THEN
+      -- Delivering session unknown: never auto-refund, admin reviews it.
+      v_reason := 'possible_duplicate_payment';
+      v_auto := false;
     ELSIF conn.status IN ('PAID', 'COMPLETED')
           AND conn.stripe_checkout_session_id IS DISTINCT FROM sess.stripe_checkout_session_id THEN
       v_reason := 'duplicate_payment';
@@ -322,6 +344,9 @@ BEGIN
   IF conn.status IN ('PAID', 'COMPLETED')
      AND conn.stripe_checkout_session_id IS NOT DISTINCT FROM sess.stripe_checkout_session_id THEN
     RETURN jsonb_build_object('refund', false, 'proceed', false, 'reason', 'delivered_connection_not_refunded');
+  END IF;
+  IF conn.status IN ('PAID', 'COMPLETED') AND conn.stripe_checkout_session_id IS NULL THEN
+    v_auto := false;
   END IF;
 
   IF NOT sess.needs_refund THEN
@@ -360,10 +385,16 @@ BEGIN
       PERFORM public.write_connection_event(ref.connection_id, 'connection.refund.flagged',
         jsonb_build_object('refund_id', ref.id, 'reason', ref.reason, 'auto_refund', ref.auto_refund));
     END IF;
-    PERFORM public.alert_admins_connection_fee_refund(ref.id,
-      CASE WHEN ref.auto_refund THEN 'Connection Fee refund started' ELSE 'Connection Fee needs a manual refund review' END,
-      'A $4.99 Connection Fee was paid but the connection could not be provided (' || ref.reason || '). '
-        || CASE WHEN ref.auto_refund THEN 'An automatic refund is being issued.' ELSE 'Review it in Stripe before refunding.' END);
+    -- An undelivered connection flag already alerted admins through #131's project_connections trigger.
+    -- Alert here only when that trigger cannot (no connection, or a PAID connection = duplicate charge)
+    -- or when the refund needs a manual review.
+    IF NOT ref.auto_refund THEN
+      PERFORM public.alert_admins_connection_fee_refund(ref.id, 'Connect payment needs a manual refund review',
+        'A $4.99 Connect payment could not be provided (' || ref.reason || '). It was not refunded automatically. Review it in Stripe.');
+    ELSIF conn.id IS NULL OR conn.status IN ('PAID', 'COMPLETED') THEN
+      PERFORM public.alert_admins_connection_fee_refund(ref.id, 'Connect refund started',
+        'A second $4.99 Connect payment was taken for a connection that was already delivered (' || ref.reason || '). It is being refunded automatically.');
+    END IF;
   END IF;
 
   IF ref.status IN ('SUCCEEDED', 'MANUAL_REVIEW', 'CANCELED')
@@ -596,3 +627,72 @@ GRANT EXECUTE ON FUNCTION public.connection_fee_refund_reconcile_report() TO aut
 
 COMMENT ON FUNCTION public.connection_fee_refund_reconcile_report() IS
   'Admins and service role. Lists flagged Connection Fee sessions without a refund row, refunds not SUCCEEDED, and SUCCEEDED refunds not yet verified against Stripe. Read only.';
+
+-- #131 alert wording: an undelivered Connect is now refunded automatically.
+-- LIVE definition (md5 8ea9d776bc42733e93507b45fd00534f) with only the Connect body text changed.
+CREATE OR REPLACE FUNCTION public.admin_alert_refund_flagged()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_kind text;
+  v_entity_type text;
+  v_project uuid;
+  v_ref integer;
+  v_path text;
+BEGIN
+  BEGIN
+    IF TG_TABLE_NAME = 'project_connections' THEN
+      v_kind := 'connect';
+      v_entity_type := 'project_connection';
+      v_project := NEW.project_id;
+      SELECT pr.reference_number INTO v_ref FROM public.projects pr WHERE pr.id = v_project;
+      v_path := public.admin_path_for_reference(v_ref);
+    ELSE
+      v_kind := 'activation';
+      v_entity_type := 'signup_fee_charge';
+      v_project := NULL;
+      v_ref := NULL;
+      v_path := '/app/admin';
+    END IF;
+
+    PERFORM public.write_audit_log(
+      auth.uid(),
+      'payment.flagged_for_refund',
+      v_entity_type,
+      NEW.id,
+      jsonb_build_object(
+        'payment_kind', v_kind,
+        'reason', NEW.refund_reason,
+        'project_id', v_project,
+        'reference_number', v_ref
+      )
+    );
+
+    PERFORM public.notify_admins(
+      'admin.refund_flagged',
+      'Payment flagged for refund',
+      CASE WHEN v_kind = 'connect'
+        THEN 'A paid Connect could not be provided. It is refunded automatically. You will get another alert if the refund needs attention.'
+        ELSE 'A paid activation was flagged for a refund. Nothing was refunded automatically.'
+      END,
+      v_entity_type,
+      NEW.id,
+      jsonb_build_object(
+        'payment_kind', v_kind,
+        'reason', NEW.refund_reason,
+        'project_id', v_project,
+        'reference_number', v_ref,
+        'path', v_path
+      ),
+      NULL
+    );
+  EXCEPTION WHEN OTHERS THEN
+    -- Never break the payment path that set the flag.
+    RAISE WARNING 'admin refund alert skipped for %', NEW.id;
+  END;
+  RETURN NULL;
+END;
+$function$;

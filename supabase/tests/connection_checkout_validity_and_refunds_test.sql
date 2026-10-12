@@ -180,7 +180,7 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.project_connections WHERE id = '10000000-0000-4000-8000-000000000001' AND needs_refund) THEN RAISE EXCEPTION 'connection not flagged'; END IF;
   SELECT count(*) INTO n FROM public.audit_logs WHERE action = 'connection_fee.refund.flagged' AND entity_id = refund_row;
   IF n <> 1 THEN RAISE EXCEPTION 'expected one flagged audit, got %', n; END IF;
-  SELECT count(*) INTO n FROM public.notifications WHERE kind = 'admin.connection_fee_refund' AND recipient_profile_id = 'a0000000-0000-4000-8000-000000000001';
+  SELECT count(*) INTO n FROM public.notifications WHERE kind = 'admin.refund_flagged' AND entity_type = 'project_connection' AND recipient_profile_id = 'a0000000-0000-4000-8000-000000000001';
   IF n <> 1 THEN RAISE EXCEPTION 'expected one admin alert, got %', n; END IF;
 
   -- 6. Concurrent second caller does not proceed while attempt 1 is fresh.
