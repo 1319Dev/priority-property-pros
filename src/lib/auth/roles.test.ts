@@ -21,8 +21,8 @@ describe("signup metadata", () => {
     expect(meta.account_type).toBe("CUSTOMER");
     expect(meta.account_type).not.toBe("ADMIN");
     const versions = JSON.parse(meta.accepted_agreement_versions);
-    expect(versions["terms-of-use"]).toBe(3);
-    expect(versions["privacy-policy"]).toBe(2);
+    expect(versions["terms-of-use"]).toBe(4);
+    expect(versions["privacy-policy"]).toBe(3);
     expect(meta.affirmed_age_18).toBeUndefined();
     expect(versions["refund-cancellation"]).toBe(1);
     expect(versions["contractor-participation"]).toBeUndefined();
@@ -63,7 +63,7 @@ describe("signup metadata", () => {
     });
     const versions = JSON.parse(meta.accepted_agreement_versions);
     expect(versions["contractor-participation"]).toBe(1);
-    expect(versions["terms-of-use"]).toBe(3);
+    expect(versions["terms-of-use"]).toBe(4);
   });
 
   it("sends the age affirmation only when the signup form collected it", () => {
