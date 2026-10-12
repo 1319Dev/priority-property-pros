@@ -54,9 +54,11 @@ describe("connection checkout copy and payments-off fallback", () => {
     expect(CONNECT_PAYMENTS_OFF_COPY).toMatch(/contact stays locked/i);
     expect(CONNECT_PAYMENTS_OFF_COPY).toMatch(/clicking connect does not unlock contact/i);
     expect(CONNECT_PAYMENTS_OFF_COPY).not.toMatch(/coming soon/i);
-    expect(JOBS_STREET_HELPER_COPY).toMatch(/Connect for \$4\.99/);
+    expect(JOBS_STREET_HELPER_COPY).toMatch(/Connecting for \$4\.99 opens messaging/);
+    expect(JOBS_STREET_HELPER_COPY).toMatch(/customer decides if and when to share/i);
     expect(JOBS_STREET_HELPER_COPY).not.toMatch(/coming soon/i);
-    expect(OPPORTUNITY_CONTACT_LOCKED_COPY).toMatch(/does not unlock contact/i);
+    expect(OPPORTUNITY_CONTACT_LOCKED_COPY).toMatch(/opens messaging/i);
+    expect(OPPORTUNITY_CONTACT_LOCKED_COPY).toMatch(/customer decides if and when to share/i);
     expect(OPPORTUNITY_CONTACT_LOCKED_COPY).not.toMatch(/payments are off|coming soon/i);
     expect(privateContactHintCopy()).toMatch(/\$4\.99 connection entitlement/i);
     expect(privateContactHintCopy()).not.toMatch(/coming soon/i);

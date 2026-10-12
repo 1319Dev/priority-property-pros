@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { MarketingPhoto } from "../components/media/MarketingPhoto";
 import { BrandLoader } from "../components/brand/BrandLoader";
@@ -8,6 +9,7 @@ import { CUSTOMER_CTA } from "../data/brand";
 import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
 import { PRICING_PATH } from "../data/pricing";
 import { useHidePlatformPricing } from "../lib/auth/platformPricing";
+import { useAuth } from "../lib/auth/useAuth";
 import { ContractorStorefront } from "../features/findAPro/ContractorStorefront";
 import { FindAProDirectory } from "../features/findAPro/FindAProDirectory";
 import { useFindAProDirectory, useFindAProStorefront } from "../features/findAPro/useFindAProDirectory";
@@ -19,7 +21,11 @@ import {
   FIND_A_PRO_TITLE,
   storefrontDocumentTitle,
 } from "../lib/marketplace/findAPro";
-import { isUuid } from "../lib/marketplace/publicDirectory";
+import { fetchMyBookings } from "../lib/marketplace/api";
+import { hiredJobChip } from "../lib/marketplace/hiredJobs";
+import { listMyMessageThreads } from "../lib/marketplace/messagingApi";
+import { isUuid, publicAboutForViewer } from "../lib/marketplace/publicDirectory";
+import type { BookingStatus } from "../lib/marketplace/types";
 import { usePageTitle } from "../lib/seo/usePageTitle";
 
 const FIND_A_PRO_INTRO_WITHOUT_PLATFORM_FEE =
@@ -40,7 +46,7 @@ export function FindAProPage() {
             sizes="(max-width: 768px) 100vw, 672px"
           />
         </div>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Find a Pro</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">{FIND_A_PRO_TITLE}</h1>
         <p className="mt-4 text-base leading-relaxed text-ink-700 sm:text-lg">
           {hidePricing ? FIND_A_PRO_INTRO_WITHOUT_PLATFORM_FEE : FIND_A_PRO_INTRO}
@@ -63,9 +69,52 @@ export function FindAProPage() {
 
 export function PublicContractorPage() {
   const { contractorId = "" } = useParams();
+  const { user, profile: viewer, account_type } = useAuth();
   const listedId = isUuid(contractorId);
   const { profile, failed, loading } = useFindAProStorefront(contractorId, listedId);
+  const [alreadyConnected, setAlreadyConnected] = useState(false);
   usePageTitle(profile ? storefrontDocumentTitle(profile.displayLabel) : FIND_A_PRO_DOCUMENT_TITLE);
+
+  useEffect(() => {
+    if (!user || !viewer || account_type !== "CUSTOMER" || !listedId) {
+      setAlreadyConnected(false);
+      return;
+    }
+    let stop = false;
+    void Promise.all([
+      listMyMessageThreads().catch(() => []),
+      fetchMyBookings("customer", viewer.id).catch(() => []),
+    ])
+      .then(([threads, bookings]) => {
+        if (stop) return;
+        const messaged = threads.some((row) => row.contractor_profile_id === contractorId);
+        const hired = bookings.some((row) => {
+          const booking = row as {
+            contractor_profile_id?: string | null;
+            status?: string | null;
+            customer_hired_at?: string | null;
+            contractor_hired_at?: string | null;
+          };
+          return (
+            booking.contractor_profile_id === contractorId &&
+            Boolean(
+              hiredJobChip({
+                bookingStatus: booking.status as BookingStatus,
+                customerHiredAt: booking.customer_hired_at,
+                contractorHiredAt: booking.contractor_hired_at,
+              }),
+            )
+          );
+        });
+        setAlreadyConnected(messaged || hired);
+      })
+      .catch(() => {
+        if (!stop) setAlreadyConnected(false);
+      });
+    return () => {
+      stop = true;
+    };
+  }, [account_type, contractorId, listedId, user, viewer]);
 
   if (loading) {
     return (
@@ -81,7 +130,7 @@ export function PublicContractorPage() {
     return (
       <section className={`py-8 sm:py-12 ${FIND_A_PRO_LAYOUT_CLASS}`}>
         <Container className="max-w-xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Find a Pro</p>
           <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">Profile not loaded</h1>
           <p className="mt-4 text-base leading-relaxed text-ink-700">
             This profile could not be loaded. You can try again in a moment.
@@ -100,7 +149,7 @@ export function PublicContractorPage() {
     return (
       <section className={`py-8 sm:py-12 ${FIND_A_PRO_LAYOUT_CLASS}`}>
         <Container className="max-w-xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Find a Pro</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Find a Pro</p>
           <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800">Profile not listed</h1>
           <p className="mt-4 text-base leading-relaxed text-ink-700">
             This contractor is not on the public directory. Only approved, active contractors are listed. Phone, email,
@@ -119,7 +168,9 @@ export function PublicContractorPage() {
   return (
     <section className={`py-8 sm:py-12 ${FIND_A_PRO_LAYOUT_CLASS}`}>
       <Container className="max-w-3xl">
-        <ContractorStorefront profile={profile} />
+        <ContractorStorefront
+          profile={{ ...profile, about: publicAboutForViewer(profile.about, alreadyConnected) }}
+        />
       </Container>
     </section>
   );

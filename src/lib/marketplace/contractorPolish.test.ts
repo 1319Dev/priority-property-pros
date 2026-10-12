@@ -11,6 +11,8 @@ import {
   customerPlaceLine,
   formatPhoneDisplay,
   friendlyTimestamp,
+  jobLocationHeading,
+  showActivationFeeNote,
   serviceAreaBaseZip,
   hiredProjectIdSet,
   noticeBody,
@@ -37,6 +39,12 @@ describe("contractor account and fee copy", () => {
       text: "Activation: Not required",
       showActivate: false,
     });
+    expect(showActivationFeeNote("UNPAID")).toBe(true);
+    expect(showActivationFeeNote(null)).toBe(true);
+    expect(showActivationFeeNote("PAID")).toBe(false);
+    expect(showActivationFeeNote("NOT_REQUIRED")).toBe(false);
+    expect(jobLocationHeading(false)).toBe("Approximate location");
+    expect(jobLocationHeading(true)).toBeNull();
     expect(activationStatusLine({ status: "UNPAID" })).toEqual({
       text: "Activation: Not activated",
       showActivate: true,
@@ -105,7 +113,11 @@ describe("status words and notices", () => {
   it("says Declined and treats a $0 change as no price change", () => {
     expect(changeOrderStatusLabel("REJECTED")).toBe("Declined");
     expect(changeOrderStatusLabel("APPROVED")).toBe("Approved");
-    expect(changeOrderAmountLabel(0, () => "$0.00")).toBe("No price change");
+    expect(changeOrderAmountLabel(0, () => "$0.00")).toBe("Scope change, price stays the same");
+    expect(changeOrderAmountLabel("0", () => "$0.00")).toBe("Scope change, price stays the same");
+    expect(changeOrderAmountLabel("18000", (cents) => `$${(cents / 100).toFixed(2)}`)).toBe("$180.00");
+    expect(changeOrderAmountLabel(null, () => "$0.00")).toBe("Amount not on file");
+    expect(changeOrderAmountLabel("Materials increase", () => "$9.99")).toBe("Amount not on file");
     expect(changeOrderAmountLabel(18000, (cents) => `$${(cents / 100).toFixed(2)}`)).toBe("$180.00");
   });
 

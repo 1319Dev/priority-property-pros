@@ -1,4 +1,5 @@
 import { json, optionsResponse } from "../_shared/cors.ts";
+import { RATE_LIMITS, enforceRateLimits } from "../_shared/rateLimit.ts";
 import { restRpc, userIdFromRequest } from "../_shared/supabase.ts";
 import {
   assertPaidConnectionSession,
@@ -9,6 +10,7 @@ import {
   stripePaymentIntentId,
   stripeTestModeFromFlags,
 } from "../_shared/stripeEnv.ts";
+import { refundConnectionFeeIfNeeded, stripeRefundApi } from "../_shared/connectionRefund.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return optionsResponse();
@@ -16,6 +18,10 @@ Deno.serve(async (req) => {
 
   try {
     const userId = await userIdFromRequest(req);
+    const limited = await enforceRateLimits(restRpc, [
+      { rule: RATE_LIMITS.reconcileUser, subject: `user:${userId}` },
+    ], { paid: false });
+    if (limited) return limited;
     const flags = await restRpc("connection_fee_checkout_flags", {});
     if (flags.error) return json({ error: flags.error, paid: false, contact_unlocked: false }, 500);
     const snapshot = (flags.data ?? {}) as { stripe_test_mode?: boolean };
@@ -69,6 +75,37 @@ Deno.serve(async (req) => {
     }
 
     const validated = assertPaidConnectionSession(session, { expectedPriceId: envPrice, testMode });
+    const refundInput = {
+      checkoutSessionId: sessionId,
+      paymentIntentId: stripePaymentIntentId(session.payment_intent),
+      amountCents: validated.amountCents,
+      currency: validated.currency,
+      livemode: Boolean(session.livemode),
+    };
+    const refunds = stripeRefundApi(stripeSecret);
+
+    // Same re-validation as the webhook. The return page must not deliver what the webhook would refund.
+    const validity = await restRpc("connection_checkout_session_validity", {
+      p_stripe_checkout_session_id: sessionId,
+    });
+    if (validity.error) return json({ error: validity.error, paid: false, contact_unlocked: false }, 500);
+    const valid = (validity.data ?? {}) as { ok?: boolean; reason?: string | null };
+    if (valid.ok !== true) {
+      const refunded = await refundConnectionFeeIfNeeded(restRpc, refunds, {
+        ...refundInput,
+        reason: `connection_unavailable:${valid.reason ?? "unknown"}`,
+      });
+      return json({
+        paid: false,
+        contact_unlocked: false,
+        needs_refund: true,
+        refund_status: refunded.status,
+        reason: "connection no longer available; the $4.99 is being refunded",
+        payments_live: false,
+        charges_live: false,
+      });
+    }
+
     const fulfilled = await restRpc("fulfill_connection_fee_checkout", {
       p_stripe_checkout_session_id: sessionId,
       p_processor_event_id: `reconcile:${sessionId}`,
@@ -84,8 +121,10 @@ Deno.serve(async (req) => {
     });
     if (fulfilled.error) return json({ error: fulfilled.error, paid: false, contact_unlocked: false }, 400);
     const result = (fulfilled.data ?? {}) as Record<string, unknown>;
+    const refunded = await refundConnectionFeeIfNeeded(restRpc, refunds, refundInput);
     return json({
       ...result,
+      ...(refunded.refund ? { needs_refund: true, refund_status: refunded.status } : {}),
       paid: result.paid === true,
       contact_unlocked: result.contact_unlocked === true,
       payments_live: false,

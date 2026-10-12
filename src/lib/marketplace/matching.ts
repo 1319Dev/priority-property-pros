@@ -153,7 +153,7 @@ export const OFFER_FAIRNESS_LOOKBACK_DAYS = 14;
 export const OFFER_FAIRNESS_MAX_PENALTY = 24;
 
 export const HOMEOWNER_OFFER_QUEUE_COPY =
-  "Offered to up to 3 local pros. If someone skips, the next best-suited pro is invited. Names and contact stay private until a paid connection.";
+  "Offered to up to 3 local pros. If someone skips, the next matched pro is invited. Names and contact stay private until a paid connection.";
 
 export type OfferLoad = {
   sameCategoryRecentOffers: number;

@@ -8,7 +8,6 @@ import {
 import {
   isReviewBackedPublicContractor,
   publishableReviewSnippets,
-  reviewedContractorAverage,
   type ReviewedContractorSnippet,
 } from "./reviewedContractors";
 import {
@@ -37,10 +36,11 @@ function cardFromDirectoryRow(row: PublicDirectoryRpcRow): PublicContractorCard 
 }
 
 function snippetsFromRows(
-  rows: Array<{ id: string; rating: number; body: string }>,
+  rows: Array<{ id: string; rating: number; body: string; hidden?: boolean; verified?: boolean }>,
 ): ReviewedContractorSnippet[] {
   return publishableReviewSnippets(
     rows
+      .filter((review) => review.hidden !== true && review.verified !== false)
       .map((review) => toPublicSafeReview({ id: review.id, rating: review.rating, body: review.body }))
       .filter((review): review is NonNullable<typeof review> => Boolean(review)),
   );
@@ -55,8 +55,6 @@ function withPublishableReviews(
   return {
     ...card,
     reviews: published,
-    ratingCount: published.length,
-    ratingAverage: reviewedContractorAverage(published),
   };
 }
 

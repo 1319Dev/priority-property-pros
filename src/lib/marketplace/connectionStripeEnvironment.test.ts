@@ -308,7 +308,7 @@ describe("Connection Fee Stripe TEST/LIVE environment control", () => {
     expect(trustedFulfillmentPathOnly("reconcile")).toBe(true);
     const returnPage = readFileSync(path.join(repoRoot, "src/pages/app/pro/ConnectionCheckoutReturnPage.tsx"), "utf8");
     expect(returnPage).toMatch(/successUrlUnlocksContact/);
-    expect(returnPage).toMatch(/This page cannot unlock contact/);
+    expect(returnPage).toMatch(/This page cannot open messaging or reveal contact/);
     expect(fn).toMatch(/success URL is not a trusted Stripe session/);
     expect(config).toMatch(/verify_jwt = false/);
   });

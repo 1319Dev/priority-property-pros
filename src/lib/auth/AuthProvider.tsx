@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { getSupabaseClient, getSupabaseRecoveryRequestClient, isSupabaseConfigured } from "../supabase/client";
 import { AUTH_CALLBACK_PATH, AUTH_RESET_PATH, authRedirectUrl } from "./redirects";
@@ -8,6 +8,9 @@ import { buildSignupMetadata } from "./signupMetadata";
 import type { Profile, SignUpInput } from "./types";
 import type { SignupFeeStatus } from "../signupFee/constants";
 import { fetchSignupFeeCheckoutFlags } from "../signupFee/api";
+import { emailChangeErrorMessage, emailChangeFieldErrors } from "./emailChange";
+import { signInErrorMessage } from "./signInError";
+import { passwordPolicyError } from "./passwordPolicy";
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
   const supabase = getSupabaseClient();
@@ -41,6 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [signupFeeEnabled, setSignupFeeEnabled] = useState(false);
+  const [sessionNotice, setSessionNotice] = useState<"expired" | null>(null);
+  const intentionalSignOut = useRef(false);
+  const hadSession = useRef(false);
 
   const applySession = useCallback(async (next: Session | null) => {
     setSession(next);
@@ -68,15 +74,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     const sawSession = { current: false };
 
-    void supabase.auth.getSession().then(async ({ data }) => {
+    void supabase.auth.getSession().then(async ({ data, error }) => {
       if (cancelled) return;
       sawSession.current = true;
+      if (data.session) hadSession.current = true;
+      if (error && !intentionalSignOut.current) setSessionNotice("expired");
       await applySession(data.session);
       if (!cancelled) setLoading(false);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!sawSession.current && !nextSession && event !== "SIGNED_OUT") return;
+      if (event === "SIGNED_OUT") {
+        if (hadSession.current && !intentionalSignOut.current) setSessionNotice("expired");
+        hadSession.current = false;
+      } else if (nextSession) {
+        hadSession.current = true;
+        if (event === "SIGNED_IN" || event === "INITIAL_SESSION") setSessionNotice(null);
+      }
       void applySession(nextSession);
     });
 
@@ -99,19 +114,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (email: string, password: string) => {
     const supabase = getSupabaseClient();
     if (!supabase) return { error: "Supabase is not configured yet." };
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error?.message ?? null };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      return { error: signInErrorMessage(error) };
+    } catch (err) {
+      const fallback = err instanceof Error ? err : { message: "Failed to fetch" };
+      return { error: signInErrorMessage(fallback) };
+    }
   }, []);
 
   const signUp = useCallback(async (input: SignUpInput) => {
     const supabase = getSupabaseClient();
     if (!supabase) return { error: "Supabase is not configured yet.", needsEmailConfirm: false };
     if (!input.acceptedTerms) {
-      return { error: "You must accept the Terms of Use and Privacy Policy.", needsEmailConfirm: false };
+      return { error: "You must accept the Terms of Service, Privacy Policy, and the other agreements on the signup form.", needsEmailConfirm: false };
+    }
+    if (input.ageAffirmationRequired && !input.affirmedAge18) {
+      return { error: "You must confirm that you are 18 or older.", needsEmailConfirm: false };
     }
     if (requestsVerifierSignup([input.accountType])) {
       return { error: "That account type is not available.", needsEmailConfirm: false };
     }
+    const tooShort = passwordPolicyError(input.password);
+    if (tooShort) return { error: tooShort, needsEmailConfirm: false };
     const { data, error } = await supabase.auth.signUp({
       email: input.email.trim(),
       password: input.password,
@@ -126,8 +151,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     const supabase = getSupabaseClient();
-    if (!supabase) return;
-    await supabase.auth.signOut();
+    intentionalSignOut.current = true;
+    try {
+      if (supabase) await supabase.auth.signOut();
+    } finally {
+      intentionalSignOut.current = false;
+    }
+    hadSession.current = false;
+    setSessionNotice(null);
     setProfile(null);
     setUser(null);
     setSession(null);
@@ -146,9 +177,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updatePassword = useCallback(async (password: string) => {
     const supabase = getSupabaseClient();
     if (!supabase) return { error: "Supabase is not configured yet." };
+    const tooShort = passwordPolicyError(password);
+    if (tooShort) return { error: tooShort };
     const { error } = await supabase.auth.updateUser({ password });
     return { error: error?.message ?? null };
   }, []);
+
+  const requestEmailChange = useCallback(async (nextEmail: string, currentPassword: string) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { error: "Supabase is not configured yet." };
+    const currentEmail = user?.email ?? null;
+    if (!currentEmail) return { error: "Sign in again before changing your email." };
+    const fields = emailChangeFieldErrors(nextEmail, currentPassword, currentEmail);
+    if (fields.email || fields.password) return { error: fields.email ?? fields.password ?? null };
+    try {
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email: currentEmail.trim(),
+        password: currentPassword,
+      });
+      if (reauthError) return { error: emailChangeErrorMessage(reauthError, "reauth") };
+      const { error } = await supabase.auth.updateUser(
+        { email: nextEmail.trim() },
+        { emailRedirectTo: authRedirectUrl(AUTH_CALLBACK_PATH) },
+      );
+      if (error) return { error: emailChangeErrorMessage(error, "update") };
+      return { error: null };
+    } catch (err) {
+      const fallback = err instanceof Error ? err : { message: "Failed to fetch" };
+      return { error: emailChangeErrorMessage(fallback, "update") };
+    }
+  }, [user]);
 
   const resendVerification = useCallback(async (email: string) => {
     const supabase = getSupabaseClient();
@@ -172,6 +230,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       account_status: profile?.account_status ?? null,
       signup_fee_status: (profile?.signup_fee_status as SignupFeeStatus | null | undefined) ?? null,
       signup_fee_enabled: signupFeeEnabled,
+      sessionNotice,
       signIn,
       signUp,
       signOut,
@@ -179,6 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       requestPasswordReset,
       updatePassword,
       resendVerification,
+      requestEmailChange,
     }),
     [
       configured,
@@ -187,6 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       profile,
       signupFeeEnabled,
+      sessionNotice,
       signIn,
       signUp,
       signOut,
@@ -194,6 +255,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       requestPasswordReset,
       updatePassword,
       resendVerification,
+      requestEmailChange,
     ],
   );
 
