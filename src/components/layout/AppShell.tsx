@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { AgreementAcceptancePrompt } from "../legal/AgreementAcceptancePrompt";
+import { PriorityHelp } from "../support/PriorityHelp";
 import { BottomNav } from "./BottomNav";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
@@ -19,6 +20,7 @@ export function AppShell() {
       </main>
       <Footer />
       <BottomNav />
+      <PriorityHelp />
     </div>
   );
 }

@@ -26,6 +26,7 @@ export const GITHUB_PAGES_SPA_ROUTES = [
   "/services",
   "/about",
   "/sign-in",
+  "/login",
   "/sign-up",
   "/forgot-password",
   "/auth/reset-password",
@@ -46,6 +47,7 @@ export const GITHUB_PAGES_SPA_ROUTES = [
   "/app/pro",
   "/app/verifier",
   "/app/admin",
+  "/app/notifications",
 ] as const;
 
 export function spaShellDestinations(route: string): string[] {

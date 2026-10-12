@@ -17,11 +17,24 @@ function AuthLoadingScreen() {
 }
 
 export function RequireAuth() {
-  const { loading, user, profile, account_status, account_type, signup_fee_enabled, signup_fee_status, sessionNotice } =
-    useAuth();
+  const {
+    loading,
+    user,
+    profile,
+    account_status,
+    account_type,
+    signup_fee_enabled,
+    signup_fee_status,
+    sessionNotice,
+    signedOutByUser,
+  } = useAuth();
   const location = useLocation();
 
   if (loading) return <AuthLoadingScreen />;
+  if (!user && signedOutByUser) {
+    // Chose Sign out: do not remember this page, so the next sign-in opens that account's dashboard.
+    return <Navigate to="/sign-in" replace />;
+  }
   if (!user) {
     return (
       <Navigate

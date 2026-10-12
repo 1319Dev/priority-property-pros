@@ -220,6 +220,13 @@ describe("Jobs page after passing a job", () => {
     expect(screen.queryByText("12 Oak Street")).not.toBeInTheDocument();
   });
 
+  it("shows an empty-state box on History when there is no job history", async () => {
+    vi.mocked(marketplaceApi.fetchMyOpportunities).mockResolvedValue([]);
+    renderJobsPage();
+    await userEvent.click(await screen.findByRole("button", { name: "History" }));
+    expect(await screen.findByText("No job history yet")).toBeInTheDocument();
+  });
+
   it("shows the PPP number on a passed job without the street", async () => {
     vi.mocked(marketplaceApi.fetchMyOpportunities).mockResolvedValue([passedRow]);
     vi.mocked(marketplaceApi.fetchMyOpportunityLabels).mockResolvedValue([

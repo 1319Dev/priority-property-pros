@@ -569,6 +569,9 @@ export function OpportunitiesPage() {
           })}
         </ul>
       ) : null}
+      {tab === "history" && historyRows.length === 0 ? (
+        <EmptyState title="No job history yet" body="Jobs you passed on, closed jobs, and cancelled jobs will be listed here." />
+      ) : null}
       {tab === "history" && historyRows.length > 0 ? (
         <section className="space-y-3">
           <h2 className="font-display text-2xl text-forest-800">History</h2>
