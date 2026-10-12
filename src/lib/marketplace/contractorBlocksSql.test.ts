@@ -64,7 +64,11 @@ describe("customer contractor block SQL", () => {
     expect(names.filter((name) => name.includes("customer_contractor_blocks"))).toEqual([migrationName]);
     for (const name of names.filter((file) => file > migrationName)) {
       const later = readMigration(name);
-      expect(later, name).not.toMatch(/FUNCTION public\.contractor_eligible_for_project/);
+      // A later migration may rebuild eligibility from the live definition (for example the
+      // TEST-account exclusion in 20261021000001), but it must keep the block check.
+      if (/FUNCTION public\.contractor_eligible_for_project/.test(later)) {
+        expect(extractFunction(later, "contractor_eligible_for_project"), name).toContain(blockStanza);
+      }
       expect(later, name).not.toMatch(/FUNCTION public\.hire_again_contractors/);
     }
   });

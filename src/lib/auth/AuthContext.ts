@@ -15,6 +15,12 @@ export type AuthContextValue = {
   signup_fee_enabled: boolean;
   /** Set when a previous session ended without the person choosing Sign out. */
   sessionNotice?: "expired" | null;
+  /**
+   * True after the person chose Sign out in this tab, until the next sign-in. Protected
+   * pages then send them to /sign-in without saving the page they were on, so the next
+   * sign-in (possibly a different account) lands on its dashboard.
+   */
+  signedOutByUser?: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (input: SignUpInput) => Promise<{ error: string | null; needsEmailConfirm: boolean }>;
   signOut: () => Promise<void>;

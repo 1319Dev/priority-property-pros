@@ -1,5 +1,6 @@
 import { CONTACT_PATH } from "../../data/brand";
 import { getSupabaseClient } from "../supabase/client";
+import { clearWizardSession } from "../marketplace/wizardSession";
 
 /**
  * Emergency pause switch from #120. PR #90 ships the atomic delete-account
@@ -124,5 +125,6 @@ export async function deleteOwnAccount(password: string): Promise<{ error: strin
   if (!deleted) {
     return { error: DELETE_ACCOUNT_GENERIC_ERROR, deleted: false };
   }
+  clearWizardSession();
   return { error: null, deleted: true };
 }

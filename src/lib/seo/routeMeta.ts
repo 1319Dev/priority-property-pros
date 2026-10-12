@@ -80,7 +80,7 @@ export const ROUTE_META: Record<string, RouteMeta> = {
 };
 
 /** Private or utility areas that should never be indexed. */
-export const NOINDEX_PREFIXES = ["/app", "/auth", "/account", "/notifications", "/dev", "/sign-in", "/forgot-password"] as const;
+export const NOINDEX_PREFIXES = ["/app", "/auth", "/account", "/notifications", "/dev", "/sign-in", "/login", "/forgot-password"] as const;
 
 export function normalizePath(pathname: string): string {
   const path = (pathname || "/").split(/[?#]/)[0] || "/";
