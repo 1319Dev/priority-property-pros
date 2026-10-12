@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { BottomSheet } from "./BottomSheet";
 import { Button } from "./Button";
 
@@ -9,6 +10,7 @@ export function ConfirmDialog({
   cancelLabel = "Keep it",
   tone = "danger",
   busy = false,
+  notice,
   onConfirm,
   onClose,
 }: {
@@ -19,13 +21,16 @@ export function ConfirmDialog({
   cancelLabel?: string;
   tone?: "danger" | "primary";
   busy?: boolean;
+  /** Optional short line shown directly above the confirm button. */
+  notice?: ReactNode;
   onConfirm: () => void;
   onClose: () => void;
 }) {
   return (
     <BottomSheet open={open} title={title} onClose={onClose}>
       <p className="text-sm leading-relaxed text-ink-700">{body}</p>
-      <div className="mt-5 flex flex-col gap-2">
+      {notice ? <div className="mt-4">{notice}</div> : null}
+      <div className={notice ? "mt-3 flex flex-col gap-2" : "mt-5 flex flex-col gap-2"}>
         <Button
           type="button"
           className="min-h-14 w-full"

@@ -1,11 +1,13 @@
 import { createContext, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
+import { fetchAdminNeedsAttention } from "../../lib/admin/dashboardApi";
 import { useAuth } from "../../lib/auth/useAuth";
 import { accountSettingsPath } from "../../lib/auth/roles";
 import type { InAppNotification } from "../../lib/notifications/api";
 import { useNotifications } from "../../lib/notifications/useNotifications";
-import { noticeBody, noticeProjectLine } from "../../lib/marketplace/contractorPolish";
+import { notificationProjectLine, safeNoticeText, safeNoticeTitle } from "../../lib/notifications/presentation";
+import { bellBadgeLabel, notificationHistoryPath } from "./bellCopy";
 import { NARROW_NOTIFICATION_QUERY, dropdownRightInset } from "./notificationPanelLayout";
 
 export type NotificationBellPreview = {
@@ -76,6 +78,43 @@ function CloseIcon() {
   );
 }
 
+const ADMIN_INCLUDE_TEST_KEY = "ppp-admin-include-test";
+const ATTENTION_REFRESH_MS = 120_000;
+
+function readAdminIncludeTest(): boolean {
+  try {
+    return localStorage.getItem(ADMIN_INCLUDE_TEST_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** Same list as Overview > Needs your attention, so the bell and the dashboard agree. */
+function useAdminAttentionCount(enabled: boolean, open: boolean): number {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!enabled) {
+      setCount(0);
+      return undefined;
+    }
+    let stop = false;
+    const load = () => {
+      void fetchAdminNeedsAttention(readAdminIncludeTest())
+        .then((list) => {
+          if (!stop) setCount(list.items.length);
+        })
+        .catch(() => undefined);
+    };
+    load();
+    const timer = window.setInterval(load, ATTENTION_REFRESH_MS);
+    return () => {
+      stop = true;
+      window.clearInterval(timer);
+    };
+  }, [enabled, open]);
+  return count;
+}
+
 const PANEL_SHELL =
   "flex flex-col overflow-hidden rounded-3xl border border-forest-800/10 bg-cream-50 shadow-xl focus:outline-none";
 
@@ -103,12 +142,9 @@ export function NotificationBell({ preview: previewProp }: { preview?: Notificat
   const panelId = useId();
   const titleId = useId();
   const settingsTo = `${accountSettingsPath(account_type, account_status)}/notifications`;
-  const historyTo =
-    account_type === "CONTRACTOR"
-      ? "/app/pro/notifications"
-      : account_type === "CUSTOMER"
-        ? "/app/customer/notifications"
-        : settingsTo;
+  const historyTo = notificationHistoryPath(account_type);
+  const attention = useAdminAttentionCount(!preview && account_type === "ADMIN", open);
+  const badge = unread + attention;
 
   useEffect(() => {
     if (!open) return undefined;
@@ -194,7 +230,7 @@ export function NotificationBell({ preview: previewProp }: { preview?: Notificat
 
   if (!preview && !user) return null;
 
-  const label = unread > 0 ? `Notifications, ${unread} unread` : "Notifications";
+  const label = bellBadgeLabel(unread, attention);
 
   const panel = (
     <div
@@ -235,13 +271,35 @@ export function NotificationBell({ preview: previewProp }: { preview?: Notificat
           ) : null}
         </div>
       </div>
+      {attention > 0 ? (
+        <Link
+          to="/app/admin"
+          className="shrink-0 border-b border-forest-800/10 bg-gold-500/15 px-4 py-3 text-sm font-semibold text-forest-800 hover:bg-gold-500/25"
+          onClick={() => setOpen(false)}
+        >
+          {attention} {attention === 1 ? "item needs" : "items need"} your attention on Overview
+        </Link>
+      ) : null}
       <ul className="min-h-0 overflow-y-auto overscroll-contain">
         {items.length === 0 ? (
           <li className="px-4 py-8 text-sm text-ink-500">
-            {preview || live.ready ? (live.loadError && !preview ? live.loadError : "You're all caught up.") : "Loading notifications…"}
+            {preview || live.ready
+              ? live.loadError && !preview
+                ? live.loadError
+                : attention > 0
+                  ? "No new notifications."
+                  : "You're all caught up."
+              : "Loading notifications…"}
           </li>
         ) : (
-          items.map((item) => (
+          items.map((item) => {
+            const title = safeNoticeTitle(item.title);
+            const context = notificationProjectLine({
+              projectTitle: item.projectTitle,
+              referenceNumber: item.referenceNumber,
+            });
+            const body = safeNoticeText(title, item.body);
+            return (
             <li key={item.id} className="border-b border-forest-800/5 last:border-b-0">
               <Link
                 to={item.path}
@@ -253,37 +311,28 @@ export function NotificationBell({ preview: previewProp }: { preview?: Notificat
               >
                 <span className="flex min-w-0 items-start justify-between gap-3">
                   <span className={`min-w-0 flex-1 break-words text-sm font-semibold ${item.readAt ? "text-ink-700" : "text-forest-800"}`}>
-                    {item.title}
+                    {title}
                   </span>
                   {!item.readAt ? <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-gold-500" aria-hidden="true" /> : null}
                 </span>
-                {noticeProjectLine({
-                  project_title: item.projectTitle,
-                  reference_number: item.referenceNumber,
-                }) ? (
-                  <span className="break-words text-sm font-medium text-forest-800">
-                    {noticeProjectLine({
-                      project_title: item.projectTitle,
-                      reference_number: item.referenceNumber,
-                    })}
-                  </span>
-                ) : null}
-                {noticeBody(item.title, item.body) ? (
-                  <span className="break-words text-sm leading-snug text-ink-500">{noticeBody(item.title, item.body)}</span>
-                ) : null}
+                {context ? <span className="break-words text-sm font-medium text-forest-800">{context}</span> : null}
+                {body ? <span className="break-words text-sm leading-snug text-ink-500">{body}</span> : null}
                 <span className="text-xs text-ink-300">{relativeTime(item.createdAt)}</span>
               </Link>
             </li>
-          ))
+            );
+          })
         )}
       </ul>
-      <Link
-        to={historyTo}
-        className="shrink-0 border-t border-forest-800/10 px-4 py-3 text-center text-sm font-semibold text-forest-800 hover:bg-cream-100"
-        onClick={() => setOpen(false)}
-      >
-        Notification history
-      </Link>
+      {historyTo ? (
+        <Link
+          to={historyTo}
+          className="shrink-0 border-t border-forest-800/10 px-4 py-3 text-center text-sm font-semibold text-forest-800 hover:bg-cream-100"
+          onClick={() => setOpen(false)}
+        >
+          Notification history
+        </Link>
+      ) : null}
       <Link
         to={account_type ? settingsTo : "/notifications"}
         className="shrink-0 border-t border-forest-800/10 px-4 py-3 text-center text-sm font-semibold text-forest-800 hover:bg-cream-100"
@@ -307,9 +356,9 @@ export function NotificationBell({ preview: previewProp }: { preview?: Notificat
         onClick={() => setOpen((current) => !current)}
       >
         <BellIcon />
-        {unread > 0 ? (
+        {badge > 0 ? (
           <span className="absolute right-1 top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-gold-500 px-1 text-[0.65rem] font-bold text-forest-950">
-            {unread > 9 ? "9+" : unread}
+            {badge > 9 ? "9+" : badge}
           </span>
         ) : null}
       </button>

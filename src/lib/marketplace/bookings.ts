@@ -1,6 +1,6 @@
 import { JOB_PAYMENT_PLAIN } from "../../data/pricing";
 import type { AccountType } from "../auth/types";
-import { BOOKING_STATUSES, type BookingStatus, type ContactAccessStatus } from "./types";
+import { BOOKING_STATUSES, type BookingContactAccess, type BookingStatus, type ContactAccessStatus } from "./types";
 
 /** Keys that must never appear on unauthorized RPC / notification / event payloads. */
 export const PRIVATE_CONTACT_PAYLOAD_KEYS = [
@@ -121,12 +121,67 @@ export function unauthorizedPayloadLeaksPrivateContact(
   });
 }
 
+export type AdminContactAccessView = {
+  unlocked: boolean;
+  /** A paid $4.99 Connect entitlement for this contractor on this job (connection-scoped or carried onto the booking). */
+  viaConnect: BookingContactAccess | null;
+  /** An admin override on this one booking. */
+  viaOverride: BookingContactAccess | null;
+};
+
+/**
+ * Contact can be unlocked two ways: the paid Connect row (keyed by connection, booking_id may be null)
+ * or a booking-scoped row (admin override, or the Connect grant carried onto the booking).
+ * The admin page must look at both, the same way contractor_has_contact_access_on_project does.
+ */
+export function adminEffectiveContactAccess(
+  bookingRow: BookingContactAccess | null | undefined,
+  connectionRows: readonly BookingContactAccess[] = [],
+): AdminContactAccessView {
+  const bookingOpen = contactAccessRowAllowsReveal(bookingRow) ? bookingRow ?? null : null;
+  const bookingIsOverride =
+    bookingOpen != null && (bookingOpen.grant_source === "ADMIN_OVERRIDE" || bookingOpen.status === "ADMIN_OVERRIDE");
+  const viaOverride = bookingIsOverride ? bookingOpen : null;
+  const viaConnect =
+    connectionRows.find((row) => contactAccessRowAllowsReveal(row) && row.grant_source !== "ADMIN_OVERRIDE") ??
+    (bookingOpen && !bookingIsOverride ? bookingOpen : null);
+  return { unlocked: Boolean(viaConnect || viaOverride), viaConnect, viaOverride };
+}
+
+export function adminContactAccessSummary(view: AdminContactAccessView): string {
+  if (view.viaConnect && view.viaOverride) {
+    return "Contact is unlocked. This contractor paid the $4.99 Connect on this job, and an admin override is also on this booking.";
+  }
+  if (view.viaConnect) {
+    return "Contact is unlocked. This contractor paid the $4.99 Connect on this job, so no admin grant is needed.";
+  }
+  if (view.viaOverride) return "Contact is unlocked by an admin override on this booking.";
+  return privateContactLockedCopy();
+}
+
 export function privateContactLockedCopy(): string {
-  return "Project contact is locked. Street, phone, and email stay hidden until this contractor has a paid $4.99 connection entitlement or an admin unlocks this specific record.";
+  return "Project contact is locked. A paid $4.99 connection entitlement opens messaging only. Street, phone, and email stay hidden until the customer shares them with this contractor, or an admin unlocks this specific record.";
+}
+
+/** Admin grant panel. Reads the access row. Does not grant or revoke. */
+export function adminContactAccessIntro(
+  access:
+    | { status: ContactAccessStatus; revoked_at?: string | null; grant_source?: string | null }
+    | null
+    | undefined,
+): string {
+  if (!contactAccessRowAllowsReveal(access)) return privateContactLockedCopy();
+  if (access?.status === "ADMIN_OVERRIDE" || access?.grant_source === "ADMIN_OVERRIDE") {
+    return "Project contact is unlocked by an admin override for this booking. Street, phone, and email stay available until you revoke them.";
+  }
+  if (access?.grant_source === "CONNECTION_FEE_PAYMENT") {
+    return "Project contact is unlocked. Connect was paid for this booking, so street, phone, and email stay available until you revoke them.";
+  }
+  return "Project contact is unlocked for this booking. Street, phone, and email stay available until you revoke them.";
 }
 
 export function privateContactHintCopy(): string {
-  return "Stays private until a paid $4.99 connection entitlement or an admin unlock.";
+  return "Stays private until the customer shares it with a contractor who has a paid $4.99 connection entitlement, or an admin unlock.";
 }
 
 export function formatContactAccessState(

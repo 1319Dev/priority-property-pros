@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BrandLoader } from "./components/brand/BrandLoader";
 import { AppShell } from "./components/layout/AppShell";
 import { ScrollToTop } from "./components/layout/ScrollToTop";
+import { RouteMetaSync } from "./lib/seo/RouteMetaSync";
 import { RequireAdmin, RequireAuth, RequireRole } from "./lib/auth/guards";
 import { BecomeAProPage } from "./pages/BecomeAProPage";
 import { ContactPage } from "./pages/ContactPage";
@@ -52,30 +53,37 @@ import {
 import { ConnectionCheckoutReturnPage } from "./pages/app/pro/ConnectionCheckoutReturnPage";
 import { ProProfilePage } from "./pages/app/pro/ProProfilePages";
 import { ProEstimatesPage } from "./pages/app/pro/ProEstimatesPages";
-import { ProBookingDetailPage, ProBookingRedirect, ProBookingsPage, ProHiredJobByProjectPage } from "./pages/app/pro/ProBookingPages";
+import { ProBookingDetailPage, ProBookingRedirect, ProHiredJobByProjectPage } from "./pages/app/pro/ProBookingPages";
+import { ProBillingPage } from "./pages/app/pro/ProBillingPage";
 import { VerifierHomePage, VerifierMessagesPage, VerifierVisitsPage } from "./pages/app/VerifierPages";
+import { adminChildRoutes } from "./pages/app/admin/adminRoutes";
 const AdminShell = lazy(() => import("./pages/app/AdminShell").then((mod) => ({ default: mod.AdminShell })));
-const AdminHomePage = lazy(() => import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminHomePage })));
-const AdminApprovalsPage = lazy(() =>
-  import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminApprovalsPage })),
-);
-const AdminApprovalDetailPage = lazy(() =>
-  import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminApprovalDetailPage })),
-);
-const AdminReviewsPage = lazy(() =>
-  import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminReviewsPage })),
-);
-const AdminBookingsPage = lazy(() =>
-  import("./pages/app/AdminPages").then((mod) => ({ default: mod.AdminBookingsPage })),
-);
-const AdminTwoFactorPage = lazy(() =>
-  import("./pages/app/admin/AdminTwoFactorPage").then((mod) => ({ default: mod.AdminTwoFactorPage })),
-);
 
 const DevNotificationPreview = import.meta.env.DEV
   ? lazy(() =>
       import("./pages/dev/NotificationPreviewPage").then((mod) => ({ default: mod.NotificationPreviewPage })),
     )
+  : null;
+
+/** Off unless the build sets VITE_PUBLISH_LEGAL_PAGES=true. Drafts stay out of the production bundle. */
+const publishLegalPages = import.meta.env.VITE_PUBLISH_LEGAL_PAGES === "true";
+const TermsPage = publishLegalPages
+  ? lazy(() => import("./pages/TermsPage").then((mod) => ({ default: mod.TermsPage })))
+  : null;
+const PrivacyPage = publishLegalPages
+  ? lazy(() => import("./pages/PrivacyPage").then((mod) => ({ default: mod.PrivacyPage })))
+  : null;
+const RefundPolicyPage = publishLegalPages
+  ? lazy(() => import("./pages/RefundPolicyPage").then((mod) => ({ default: mod.RefundPolicyPage })))
+  : null;
+const CommunityGuidelinesPage = publishLegalPages
+  ? lazy(() => import("./pages/CommunityGuidelinesPage").then((mod) => ({ default: mod.CommunityGuidelinesPage })))
+  : null;
+const ContractorTermsPage = publishLegalPages
+  ? lazy(() => import("./pages/ContractorTermsPage").then((mod) => ({ default: mod.ContractorTermsPage })))
+  : null;
+const ReviewGuidelinesPage = publishLegalPages
+  ? lazy(() => import("./pages/ReviewGuidelinesPage").then((mod) => ({ default: mod.ReviewGuidelinesPage })))
   : null;
 
 function StripTrailingSlash() {
@@ -92,6 +100,7 @@ export default function App() {
     <>
       <StripTrailingSlash />
       <ScrollToTop />
+      <RouteMetaSync />
       <Routes>
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
@@ -121,6 +130,66 @@ export default function App() {
         <Route path="/post-project" element={<PostProjectPage />} />
         <Route path="/trust" element={<TrustPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
+        {TermsPage ? (
+          <Route
+            path="/terms"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading terms…" />}>
+                <TermsPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {PrivacyPage ? (
+          <Route
+            path="/privacy"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading privacy policy…" />}>
+                <PrivacyPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {RefundPolicyPage ? (
+          <Route
+            path="/refunds"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading refund policy…" />}>
+                <RefundPolicyPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {CommunityGuidelinesPage ? (
+          <Route
+            path="/community-guidelines"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading community guidelines…" />}>
+                <CommunityGuidelinesPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {ContractorTermsPage ? (
+          <Route
+            path="/contractor-terms"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading contractor terms…" />}>
+                <ContractorTermsPage />
+              </Suspense>
+            }
+          />
+        ) : null}
+        {ReviewGuidelinesPage ? (
+          <Route
+            path="/content-guidelines"
+            element={
+              <Suspense fallback={<BrandLoader layout="page" label="Loading review guidelines…" />}>
+                <ReviewGuidelinesPage />
+              </Suspense>
+            }
+          />
+        ) : null}
       </Route>
 
       {DevNotificationPreview ? (
@@ -153,6 +222,7 @@ export default function App() {
             <Route path="account" element={<AccountPage />} />
             <Route path="notifications" element={<NotificationHistoryPage />} />
             <Route path="account/blocked" element={<BlockedProsPage />} />
+            <Route path="blocked" element={<Navigate to="/app/customer/account/blocked" replace />} />
             <Route path="account/notifications" element={<NotificationSettingsPage />} />
           </Route>
         </Route>
@@ -166,7 +236,10 @@ export default function App() {
             <Route path="connections/return" element={<ConnectionCheckoutReturnPage />} />
             <Route path="jobs/project/:projectId" element={<ProHiredJobByProjectPage />} />
             <Route path="jobs/:bookingId" element={<ProBookingDetailPage />} />
-            <Route path="bookings" element={<ProBookingsPage />} />
+            {/* Bookings duplicated Hired jobs; old links land there. */}
+            <Route path="bookings" element={<Navigate to="/app/pro/opportunities?tab=hired" replace />} />
+            <Route path="billing" element={<ProBillingPage />} />
+            <Route path="connections" element={<Navigate to="/app/pro/billing" replace />} />
             <Route path="bookings/:bookingId" element={<ProBookingRedirect />} />
             <Route path="estimates" element={<ProEstimatesPage />} />
             <Route path="onboarding" element={<ProOnboardingPage />} />
@@ -191,25 +264,12 @@ export default function App() {
           <Route
             path="/app/admin"
             element={
-              <Suspense
-                fallback={
-                  <div className="paper-grain flex min-h-dvh items-center justify-center">
-                    <BrandLoader layout="page" label="Loading admin…" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<BrandLoader layout="inline" label="Loading admin…" />}>
                 <AdminShell />
               </Suspense>
             }
           >
-            <Route index element={<AdminHomePage />} />
-            <Route path="approvals" element={<AdminApprovalsPage />} />
-            <Route path="approvals/:contractorProfileId" element={<AdminApprovalDetailPage />} />
-            <Route path="reviews" element={<AdminReviewsPage />} />
-            <Route path="bookings" element={<AdminBookingsPage />} />
-            <Route path="security" element={<AdminTwoFactorPage />} />
-            <Route path="account" element={<AccountPage />} />
-            <Route path="account/notifications" element={<NotificationSettingsPage />} />
+            {adminChildRoutes}
           </Route>
         </Route>
       </Route>

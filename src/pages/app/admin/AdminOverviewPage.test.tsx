@@ -11,6 +11,15 @@ const fetchAdminDashboardSummary = vi.fn();
 const fetchAdminNeedsAttention = vi.fn();
 const fetchAdminRecentActivity = vi.fn();
 const fetchAdminDashboardTrends = vi.fn();
+const fetchPaymentsSummary = vi.fn();
+
+vi.mock("../../../lib/admin/paymentsApi", async () => {
+  const actual = await vi.importActual<typeof import("../../../lib/admin/paymentsApi")>("../../../lib/admin/paymentsApi");
+  return {
+    ...actual,
+    fetchPaymentsSummary: (...args: unknown[]) => fetchPaymentsSummary(...args),
+  };
+});
 
 vi.mock("../../../lib/admin/dashboardApi", async () => {
   const actual = await vi.importActual<typeof import("../../../lib/admin/dashboardApi")>("../../../lib/admin/dashboardApi");
@@ -135,16 +144,19 @@ describe("Admin overview", () => {
     fetchAdminNeedsAttention.mockResolvedValue(attention);
     fetchAdminRecentActivity.mockResolvedValue(activity);
     fetchAdminDashboardTrends.mockResolvedValue(trends);
+    fetchPaymentsSummary.mockRejectedValue(new Error("not set up"));
   });
 
   it("shows documented counts, integer revenue, and unavailable metrics", async () => {
     renderOverview();
     expect((await screen.findAllByText("$14.98")).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Not set up yet").length).toBeGreaterThanOrEqual(3);
-    expect(screen.getByRole("link", { name: /Email support@prioritypropertypros.com/i })).toHaveAttribute(
-      "href",
-      "mailto:support@prioritypropertypros.com",
-    );
+    expect(screen.queryByText("Not set up yet")).not.toBeInTheDocument();
+    expect(screen.queryByText("Net revenue")).not.toBeInTheDocument();
+    expect(screen.queryByText("Card declines")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Card declines:/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Support tickets")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Contact us" })).toHaveAttribute("href", "/contact");
+    expect(document.body.innerHTML).not.toMatch(/support@prioritypropertypros\.com|mailto:/i);
     expect(screen.getByRole("link", { name: /Awaiting approval/i })).toHaveAttribute("href", "/app/admin/approvals");
     expect(screen.getByRole("link", { name: /Platform reviews/i })).toHaveAttribute("href", "/app/admin/reviews");
     expect(screen.getByRole("link", { name: /Two-factor is not enrolled/i })).toHaveAttribute("href", "/app/admin/security");
@@ -155,6 +167,32 @@ describe("Admin overview", () => {
     expect(screen.getAllByRole("table").length).toBeGreaterThan(0);
     expect(screen.queryByText(/Payments are not live/i)).not.toBeInTheDocument();
     expect(screen.queryByText("$0.00")).not.toBeInTheDocument();
+  });
+
+  it("collapses consecutive identical activity and keeps numbers while a refresh is in flight", async () => {
+    let release: (value: DashboardSummary) => void = () => undefined;
+    fetchAdminRecentActivity.mockResolvedValue([
+      { ...activity[0], label: "Account flag updated", subjectLabel: "Tina", jobReference: null, cursor: "a" },
+      { ...activity[0], label: "Account flag updated", subjectLabel: "Tina", jobReference: null, cursor: "b" },
+      { ...activity[0], cursor: "c" },
+    ]);
+    fetchAdminDashboardSummary.mockResolvedValueOnce(summary).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    const user = userEvent.setup();
+    renderOverview();
+    expect(await screen.findByText("Account flag updated · 2")).toBeInTheDocument();
+    expect(screen.getAllByText("Account flag updated", { exact: false })).toHaveLength(1);
+    expect(screen.getByText("Homeowner accounts, not counting deleted ones.")).toBeInTheDocument();
+    expect(screen.getByText(/Support requests arrive by email from the/)).toBeInTheDocument();
+    expect(screen.queryByText(/gmail/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Refresh" }));
+    expect(screen.getAllByText("$14.98").length).toBeGreaterThan(0);
+    release(summary);
+    await waitFor(() => expect(fetchAdminDashboardSummary).toHaveBeenCalledTimes(2));
   });
 
   it("shows an empty activity feed without inventing rows", async () => {
@@ -208,6 +246,24 @@ describe("Admin overview", () => {
     );
   });
 
+  it("fills the net revenue card from the payments summary and leaves declines unset", async () => {
+    fetchPaymentsSummary.mockResolvedValue({
+      grossCents: 2497,
+      refundedCents: 0,
+      netCents: 2497,
+      failedCount: 1,
+      needsRefundCount: 2,
+      definition: "needs_refund flag is not a completed refund",
+    });
+    renderOverview();
+    expect(await screen.findByRole("link", { name: /Net revenue/ })).toHaveAttribute("href", "/app/admin/payments");
+    expect(screen.getByText("Succeeded live fees minus stored refunds")).toBeInTheDocument();
+    expect(screen.getAllByText("$14.98").length).toBeGreaterThan(0);
+    expect(screen.getByText("$24.97")).toBeInTheDocument();
+    expect(screen.queryByText("Card declines")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /mark paid|refund/i })).not.toBeInTheDocument();
+  });
+
   it("requests the selected trend range", async () => {
     const user = userEvent.setup();
     renderOverview();
@@ -217,5 +273,40 @@ describe("Admin overview", () => {
       const query = trendQuery("7d");
       expect(fetchAdminDashboardTrends).toHaveBeenCalledWith({ ...query, includeTest: false });
     });
+  });
+
+  it("shows plain sentences and never the database definitions, including the old support address", async () => {
+    fetchAdminDashboardSummary.mockResolvedValue({
+      ...summary,
+      metrics: {
+        ...summary.metrics,
+        homeowners: metric(1, "available", "profiles where account_type is CUSTOMER and account_status is not DELETED"),
+        revenue_lifetime_cents: metric(
+          1498,
+          "available",
+          "sum of amount_cents from livemode signup_fee_charges and connection_checkout_sessions in PAID or CONSUMED",
+        ),
+        support_tickets: metric(
+          null,
+          "unavailable",
+          "No support_tickets table. Support today is email to prioritypropertypros@gmail.com",
+        ),
+      },
+    });
+    const { container } = renderOverview();
+    await screen.findAllByText("$14.98");
+    expect(screen.getByText("Homeowner accounts, not counting deleted ones.")).toBeInTheDocument();
+    expect(screen.getByText("All activation and Connect fees paid, in live mode.")).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/account_type|amount_cents|livemode|signup_fee_charges|gmail/);
+  });
+
+  it("shows Net revenue once the database reports it", async () => {
+    fetchAdminDashboardSummary.mockResolvedValue({
+      ...summary,
+      metrics: { ...summary.metrics, revenue_net_cents: metric(123456, "available", "net") },
+    });
+    renderOverview();
+    expect(await screen.findByText("Net revenue")).toBeInTheDocument();
+    expect(screen.getByText("$1,234.56")).toBeInTheDocument();
   });
 });

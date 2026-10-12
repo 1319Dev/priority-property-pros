@@ -1,4 +1,3 @@
-import { SUPPORT_EMAIL } from "../../data/brand";
 import { getSupabaseClient } from "../supabase/client";
 
 export const PRIORITY_HELP_FUNCTION = "priority-help";
@@ -8,9 +7,12 @@ export const SUPPORT_HANDOFF =
 
 export const PRIORITY_HELP_PREVIEW_KEY = "ppp.priority-help.preview";
 
-// Priority Property Pros' own contact details may appear in an answer.
+// Owner rule: the support email is shown only on the Contact us page. Any
+// Priority Property Pros mailbox in a reply is rewritten to point there.
+// PPP's mailing address may appear in an answer.
+export const CONTACT_PAGE_TEXT = "the Contact us page (prioritypropertypros.com/contact)";
+const PPP_MAILBOX = /(?:mailto:)?[A-Z0-9._%+-]+@prioritypropertypros\.com/gi;
 const ALLOWED_CONTACT = [
-  /support@prioritypropertypros\.com/gi,
   /(Priority Property Pros LLC,?\s*)?5900 Balcones Drive,? STE 100,? Austin,? TX 78731( US)?/gi,
 ];
 
@@ -73,21 +75,22 @@ export function availabilityNotice(availability: HelpAvailability, humanJoined: 
 
 export function safeSupportText(role: HelpRole, body: string): string {
   if (role === "customer") return body;
-  const checked = ALLOWED_CONTACT.reduce((acc, pattern) => acc.replace(pattern, " "), body);
-  return PRIVATE_LEAK.test(checked) ? SUPPORT_HANDOFF : body;
+  const rewritten = body.replace(PPP_MAILBOX, CONTACT_PAGE_TEXT);
+  const checked = ALLOWED_CONTACT.reduce((acc, pattern) => acc.replace(pattern, " "), rewritten);
+  return PRIVATE_LEAK.test(checked) ? SUPPORT_HANDOFF : rewritten;
 }
 
 export function helpErrorMessage(code: string | null): string {
-  if (!code) return `That message could not be sent. You can email ${SUPPORT_EMAIL}.`;
+  if (!code) return `That message could not be sent. You can use the Contact us page.`;
   if (/too many/i.test(code)) return "Please wait a few minutes before sending another message.";
   if (/too long/i.test(code)) return "Messages are limited to 2,000 characters.";
   if (/closed/i.test(code)) return "This conversation is closed. Your next message starts a new request.";
   if (/html/i.test(code)) return "Send plain text only.";
   if (/not your conversation/i.test(code)) return "This chat is no longer available. Refresh and try again.";
   if (/unavailable|not configured|failed to fetch|network/i.test(code)) {
-    return `Priority Help can't reach the server right now. You can email ${SUPPORT_EMAIL}.`;
+    return `Priority Help can't reach the server right now. You can use the Contact us page.`;
   }
-  return `That message could not be sent. You can email ${SUPPORT_EMAIL}.`;
+  return `That message could not be sent. You can use the Contact us page.`;
 }
 
 export function containsSupportHtml(value: string): boolean {

@@ -4,14 +4,14 @@ import { PostProjectLink } from "../components/layout/PostProjectLink";
 import { Container } from "../components/ui/Container";
 import { CUSTOMER_CTA, CONTRACTOR_CTA } from "../data/brand";
 import { MARKETING_SECTION_PHOTOS } from "../data/marketingPhotos";
-import { JOB_PAYMENT_PLAIN } from "../data/pricing";
+import { CONNECTION_FEE_NON_REFUNDABLE, JOB_PAYMENT_PLAIN } from "../data/pricing";
 import { useHidePlatformPricing } from "../lib/auth/platformPricing";
 
 const CONNECT_WITH_FEE =
-  "Up to three local independents can connect for $4.99 each. We invite the best-suited pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited. Connecting does not guarantee a hire. The $4.99 Connection Fee is non-refundable.";
+  `Up to three local independents can connect for $4.99 each. We invite matched pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited. Connecting does not guarantee a hire. ${CONNECTION_FEE_NON_REFUNDABLE}`;
 
 const CONNECT_WITHOUT_FEE =
-  "Up to three local independents can connect. We invite the best-suited pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited.";
+  "Up to three local independents can connect. We invite matched pros first and rotate fairly so the same contractors are not always first. If someone skips, the next pro is invited.";
 
 const steps = [
   {
@@ -52,7 +52,7 @@ export function HowItWorksPage() {
             sizes="(max-width: 768px) 100vw, 672px"
           />
         </div>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">How it works</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">How it works</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">
           The marketplace in four steps.
         </h1>
@@ -64,7 +64,7 @@ export function HowItWorksPage() {
         <ol className="mt-8 grid gap-4">
           {visibleSteps.map((step) => (
             <li key={step.n} className="rounded-3xl border border-forest-800/10 bg-cream-50 px-5 py-5">
-              <p className="font-display text-3xl italic text-gold-600">{step.n}</p>
+              <p className="font-display text-3xl italic text-gold-700">{step.n}</p>
               <h2 className="mt-1 font-display text-2xl text-forest-800">{step.title}</h2>
               <p className="mt-2 text-sm leading-relaxed text-ink-700">{step.body}</p>
             </li>

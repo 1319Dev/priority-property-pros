@@ -249,7 +249,13 @@ export function ProfileReviewForm({
           onChange={(event) => onBodyChange(event.target.value)}
         />
       </label>
-      <Button type="button" className="min-h-14 w-full" onClick={() => void onSubmit(rating, body)}>
+      {/^[1-5]$/.test(rating) ? null : <p className="text-sm text-ink-500">Choose 1 to 5 stars.</p>}
+      <Button
+        type="button"
+        className="min-h-14 w-full"
+        disabled={!/^[1-5]$/.test(rating)}
+        onClick={() => void onSubmit(rating, body)}
+      >
         Submit review
       </Button>
       <CustomerBlockAction role={role} contractorProfileId={contractorProfileId} bookingId={bookingId} />

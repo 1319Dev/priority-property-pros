@@ -96,9 +96,14 @@ describe("priority help client", () => {
     expect(containsSupportHtml("Estimates are plain text")).toBe(false);
   });
 
-  it("allows Priority Property Pros' own contact details and reads the on/off flag", () => {
+  it("never shows an email, allows PPP's mailing address, and reads the on/off flag", () => {
     const own = "Email support@prioritypropertypros.com or mail Priority Property Pros LLC, 5900 Balcones Drive STE 100, Austin, TX 78731 US.";
-    expect(safeSupportText("assistant", own)).toBe(own);
+    const shown = safeSupportText("assistant", own);
+    expect(shown).not.toMatch(/@/);
+    expect(shown).toContain("the Contact us page (prioritypropertypros.com/contact)");
+    expect(shown).toContain("5900 Balcones Drive STE 100");
+    expect(safeSupportText("admin", "Write to support@prioritypropertypros.com")).not.toMatch(/@/);
+    expect(helpErrorMessage(null)).not.toMatch(/@/);
     expect(safeSupportText("assistant", "Email pro@example.com")).toBe(SUPPORT_HANDOFF);
     expect(normalizeHelpPayload({ ok: true, enabled: true }, null).enabled).toBe(true);
     expect(normalizeHelpPayload({ ok: true, enabled: false }, null).enabled).toBe(false);

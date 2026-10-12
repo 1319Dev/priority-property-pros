@@ -14,15 +14,18 @@ function roleFromLocation() {
   return ROLES[value] ?? "CUSTOMER";
 }
 
-function feeUnpaidFromLocation() {
-  return new URLSearchParams(window.location.search).get("fee") === "unpaid";
+function feeFromLocation(accountType) {
+  const params = new URLSearchParams(window.location.search);
+  const fee = (params.get("fee") || "").toUpperCase();
+  if (fee === "UNPAID" || fee === "PAID" || fee === "NOT_REQUIRED") return fee;
+  return accountType === "CONTRACTOR" ? "PAID" : "NOT_REQUIRED";
 }
 
 const noop = async () => ({ error: null });
 
 export function AuthProvider({ children }) {
   const accountType = roleFromLocation();
-  const feeUnpaid = feeUnpaidFromLocation();
+  const signupFeeStatus = feeFromLocation(accountType);
   const value = useMemo(() => {
     const profile = {
       id: "user-layout",
@@ -33,8 +36,8 @@ export function AuthProvider({ children }) {
       avatar_url: null,
       account_type: accountType,
       account_status: "ACTIVE",
-      signup_fee_status: feeUnpaid ? "UNPAID" : accountType === "CONTRACTOR" ? "PAID" : "NOT_REQUIRED",
-      signup_fee_paid_at: feeUnpaid ? null : accountType === "CONTRACTOR" ? "2026-03-12T15:00:00.000Z" : null,
+      signup_fee_status: signupFeeStatus,
+      signup_fee_paid_at: signupFeeStatus === "PAID" ? "2026-03-12T15:00:00.000Z" : null,
       created_at: "2026-01-01T00:00:00Z",
       updated_at: "2026-01-01T00:00:00Z",
     };
@@ -50,8 +53,8 @@ export function AuthProvider({ children }) {
       profile,
       account_type: accountType,
       account_status: "ACTIVE",
-      signup_fee_status: feeUnpaid ? "UNPAID" : accountType === "CONTRACTOR" ? "PAID" : "NOT_REQUIRED",
-      signup_fee_enabled: feeUnpaid,
+      signup_fee_status: signupFeeStatus,
+      signup_fee_enabled: false,
       signIn: noop,
       signUp: async () => ({ error: null, needsEmailConfirm: false }),
       signOut: async () => undefined,
@@ -60,7 +63,7 @@ export function AuthProvider({ children }) {
       updatePassword: noop,
       resendVerification: noop,
     };
-  }, [accountType, feeUnpaid]);
+  }, [accountType, signupFeeStatus]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
