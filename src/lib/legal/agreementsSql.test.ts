@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { LEGAL_DOCUMENTS } from "./catalog";
 
+const SUPERSEDED_BY_PRIORITY_HELP_LIVE: Record<string, number> = { "terms-of-use": 3, "privacy-policy": 2 };
+
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const migrationPath = path.join(repoRoot, "supabase/migrations/20261018000001_legal_agreement_acceptance.sql");
 const rollbackPath = path.join(repoRoot, "supabase/rollbacks/20261018000001_legal_agreement_acceptance_rollback.sql");
@@ -46,6 +48,13 @@ describe("legal agreement acceptance migration", () => {
                   ? "review-content-guidelines.md"
                   : "contractor-participation-terms.md";
       expect(sql).toContain(`'${doc.slug}'`);
+      // Terms v4 and Privacy v3 are published by 20261021500001_legal_priority_help_live.sql
+      // (legalPriorityHelpLive.test.ts checks their text). This applied migration keeps v3 / v2.
+      const superseded = SUPERSEDED_BY_PRIORITY_HELP_LIVE[doc.slug];
+      if (superseded) {
+        expect(sql).toContain(`\n  ${superseded},`);
+        continue;
+      }
       expect(sql).toContain(`\n  ${doc.version},`);
       expect(quotedBody(sql, doc.slug)).toBe(readFileSync(path.join(repoRoot, "docs/legal", fileName), "utf8"));
     }

@@ -90,7 +90,8 @@ describe("draft legal pages", () => {
     expect(combined).toMatch(/refunds the \$4\.99 automatically/i);
     expect(combined).not.toMatch(/Resend/);
     expect(combined).toMatch(/Google Workspace/);
-    expect(combined).toMatch(/Priority Help \(not yet available\)/);
+    expect(combined).not.toMatch(/not yet available|has not turned on|if PPP turns it on|only if Priority Help is turned on/i);
+    expect(combined).toMatch(/Priority Help is a support chat on the site/);
     expect(combined).toMatch(/operates solely as an online marketplace connecting homeowners with independent third-party contractors/);
     expect(combined).toMatch(/unless expressly stated otherwise/);
     expect(combined).toMatch(/cannot legally be excluded/);
@@ -108,8 +109,9 @@ describe("draft legal pages", () => {
     expect(combined).toMatch(/Google Workspace/);
     expect(combined).toMatch(/local storage/i);
     expect(combined).toMatch(/Texas Data Privacy and Security Act/);
-    expect(combined).toMatch(/Priority Help chat \(not yet available\)/);
-    expect(combined).toMatch(/OpenAI \(only if Priority Help is turned on\)/);
+    expect(combined).toMatch(/Priority Help chat\./);
+    expect(combined).toMatch(/OpenAI \(Priority Help\)/);
+    expect(combined).toMatch(/It is an automated assistant, not a person/);
     expect(combined).not.toMatch(/applies once Priority Help is enabled/);
     expect(combined).not.toMatch(/pending activation|If and when PPP turns Priority Help on/);
     expect(combined).toMatch(/PPP stores the messages you type, the replies, and the times/);
