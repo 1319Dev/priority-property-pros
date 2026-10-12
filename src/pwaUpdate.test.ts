@@ -159,7 +159,7 @@ describe("form dirty tracking", () => {
     button.textContent = "Continue";
     zone.append(button);
     document.body.append(zone);
-    writeWizardSession({ ...emptyWizardSession(), title: "Fence repair" });
+    writeWizardSession({ ...emptyWizardSession(), title: "Fence repair" }, "user-1");
     const tracker = track();
 
     expect(tracker.isDirty()).toBe(true);
