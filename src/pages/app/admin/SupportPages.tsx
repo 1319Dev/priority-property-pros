@@ -79,7 +79,7 @@ function SupportSubnav() {
 function PageIntro({ title, body }: { title: string; body: string }) {
   return (
     <header className="space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Support</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Support</p>
       <h1 className="font-display text-4xl font-semibold text-forest-800">{title}</h1>
       <p className="max-w-2xl text-ink-700">{body}</p>
       <SupportSubnav />
