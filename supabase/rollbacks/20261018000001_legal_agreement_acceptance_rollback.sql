@@ -35,6 +35,14 @@ CREATE POLICY agreements_select_current
 
 DELETE FROM public.platform_settings WHERE key = 'legal_acceptance_required';
 
+GRANT INSERT ON public.agreement_acceptances TO authenticated;
+DROP POLICY IF EXISTS agreement_acceptances_insert_own ON public.agreement_acceptances;
+CREATE POLICY agreement_acceptances_insert_own
+  ON public.agreement_acceptances
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (profile_id = auth.uid());
+
 UPDATE public.agreements
 SET is_current = false
 WHERE (slug, version) IN (

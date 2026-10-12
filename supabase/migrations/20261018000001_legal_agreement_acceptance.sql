@@ -102,6 +102,12 @@ CREATE TRIGGER agreement_acceptances_protect
 
 REVOKE ALL ON FUNCTION public.protect_agreement_acceptance() FROM PUBLIC, anon, authenticated;
 
+-- Acceptances are written only by handle_new_user (signup) and accept_current_agreements()
+-- (sign-in prompt), which also records the 18-or-older affirmation. A direct REST insert
+-- would skip that affirmation, so the old insert-own policy is removed.
+DROP POLICY IF EXISTS agreement_acceptances_insert_own ON public.agreement_acceptances;
+REVOKE INSERT ON public.agreement_acceptances FROM authenticated;
+
 DROP POLICY IF EXISTS agreements_select_current ON public.agreements;
 CREATE POLICY agreements_select_current
   ON public.agreements

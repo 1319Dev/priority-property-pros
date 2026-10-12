@@ -68,6 +68,8 @@ describe("legal agreement acceptance migration", () => {
     // before any Stripe session: check that row's contractor so an unaccepted pro is stopped before payment.
     expect(sql).toMatch(/IF TG_TABLE_NAME = 'project_connections' THEN\s+SELECT contractor\.profile_id/);
     expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.profile_missing_current_agreements\(uuid\) FROM PUBLIC, anon, authenticated/);
+    expect(sql).toMatch(/DROP POLICY IF EXISTS agreement_acceptances_insert_own ON public\.agreement_acceptances;/);
+    expect(sql).toMatch(/REVOKE INSERT ON public\.agreement_acceptances FROM authenticated;/);
     expect(sql).not.toMatch(/BEFORE INSERT ON public\.signup_fee/);
     expect(sql).not.toMatch(/BEFORE INSERT ON public\.connection_fee/);
     expect(sql).toMatch(/IF NOT public\.legal_acceptance_required\(\) THEN\s+RETURN;/);
