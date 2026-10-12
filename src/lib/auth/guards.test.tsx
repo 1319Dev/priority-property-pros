@@ -113,6 +113,16 @@ describe("protected routes", () => {
     expect(screen.queryByText("customer-home")).not.toBeInTheDocument();
   });
 
+  it("remembers the page when a signed-out visitor opens a protected link", () => {
+    renderGuard("/app/customer/projects/p-1", auth({ user: null, profile: null }));
+    expect(screen.getByText(/sign-in from=\/app\/customer\/projects\/p-1/)).toBeInTheDocument();
+  });
+
+  it("does not remember the page after the person chose Sign out", () => {
+    renderGuard("/app/customer/projects/p-1", auth({ user: null, profile: null, signedOutByUser: true }));
+    expect(screen.getByText("sign-in from= notice=")).toBeInTheDocument();
+  });
+
   it("sends suspended users to the status page", () => {
     const p = profile("CUSTOMER", "SUSPENDED");
     renderGuard(

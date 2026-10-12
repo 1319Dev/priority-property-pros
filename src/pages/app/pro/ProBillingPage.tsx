@@ -67,7 +67,10 @@ export function ProBillingPage() {
       <FormError message={error} />
       {rows === null ? <BrandLoader layout="section" label="Loading billing" /> : null}
       {rows !== null && rows.length === 0 && !error ? (
-        <EmptyState title="No payments yet" body="Connect payments and your activation will be listed here." />
+        <EmptyState
+          title="No payments yet"
+          body="Completed Connect payments and your activation will be listed here. A checkout you started but did not finish is not a charge, so it is not listed."
+        />
       ) : null}
       {rows && rows.length > 0 ? (
         <section aria-label="Payments" className="space-y-3">

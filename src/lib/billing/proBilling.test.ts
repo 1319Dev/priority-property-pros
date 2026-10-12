@@ -21,10 +21,38 @@ describe("contractor billing rows", () => {
   });
 
   it("lists Connect payments with the PPP number, amount, date, and status, newest first", () => {
-    expect(rows.map((row) => row.id)).toEqual(["connect-c-paid", "connect-c-cancel", "activation-s1"]);
+    expect(rows.map((row) => row.id)).toEqual(["connect-c-paid", "activation-s1"]);
     expect(rows[0]).toMatchObject({ label: "Connect", jobRef: "PPP-1004", amountCents: 499, status: "Paid", charged: true, testMode: false });
-    expect(rows[1]).toMatchObject({ jobRef: null, status: "Cancelled · not charged", charged: false });
-    expect(rows[2]).toMatchObject({ label: "Account activation", amountCents: 999, status: "Paid", charged: true });
+    expect(rows[1]).toMatchObject({ label: "Account activation", amountCents: 999, status: "Paid", charged: true });
+  });
+
+  it("hides checkouts that were started but never charged", () => {
+    const only = buildBillingRows({
+      connections: [
+        { id: "c-res", project_id: "p3", status: "RESERVED", fee_cents: 499, paid_at: null, created_at: "2026-10-05T12:00:00Z", cancelled_at: null, needs_refund: false },
+        { id: "c-exp", project_id: "p4", status: "EXPIRED", fee_cents: 499, paid_at: null, created_at: "2026-10-05T12:00:00Z", cancelled_at: null, needs_refund: false },
+      ],
+      sessions: [],
+      charges: [
+        { id: "open", amount_cents: 999, status: "OPEN", payment_status: "unpaid", livemode: true, fulfilled_at: null, created_at: "2026-10-11T20:40:00Z", needs_refund: false },
+        { id: "exp", amount_cents: 999, status: "EXPIRED", payment_status: null, livemode: true, fulfilled_at: null, created_at: "2026-10-10T20:40:00Z", needs_refund: false },
+        { id: "fail", amount_cents: 999, status: "FAILED", payment_status: null, livemode: true, fulfilled_at: null, created_at: "2026-10-10T20:40:00Z", needs_refund: false },
+        { id: "cx", amount_cents: 999, status: "CANCELED", payment_status: null, livemode: true, fulfilled_at: null, created_at: "2026-10-10T20:40:00Z", needs_refund: false },
+      ],
+      references: {},
+    });
+    expect(only).toEqual([]);
+    const kept = buildBillingRows({
+      connections: [],
+      sessions: [],
+      charges: [
+        { id: "refund", amount_cents: 999, status: "NEEDS_REFUND", payment_status: "paid", livemode: true, fulfilled_at: null, created_at: "2026-10-10T20:40:00Z", needs_refund: true },
+        { id: "failed-after-charge", amount_cents: 999, status: "FAILED", payment_status: "paid", livemode: true, fulfilled_at: null, created_at: "2026-10-09T20:40:00Z", needs_refund: false },
+      ],
+      references: {},
+    });
+    expect(kept.map((row) => row.id)).toEqual(["activation-refund", "activation-failed-after-charge"]);
+    expect(kept.every((row) => !/not charged/i.test(row.status))).toBe(true);
   });
 
   it("totals only real charges", () => {

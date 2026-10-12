@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { Logo } from "../brand/Logo";
+import { PriorityHelp } from "../support/PriorityHelp";
 import { AccountMenu } from "../account/AccountMenu";
 import { NotificationBell } from "../notifications/NotificationBell";
 import { useAuth } from "../../lib/auth/useAuth";
@@ -109,6 +110,7 @@ export function DashboardShell({
           ))}
         </ul>
       </nav>
+      <PriorityHelp />
     </div>
   );
 }

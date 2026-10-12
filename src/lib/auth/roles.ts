@@ -19,6 +19,18 @@ export const ROLE_ACCOUNT: Record<AccountType, string> = {
   ADMIN: "/app/admin/account",
 };
 
+/** Each role's notification list. Verifiers have no list page, only notification settings. */
+export const ROLE_NOTIFICATIONS: Record<AccountType, string> = {
+  CUSTOMER: "/app/customer/notifications",
+  CONTRACTOR: "/app/pro/notifications",
+  VERIFIER: "/app/verifier/account/notifications",
+  ADMIN: "/app/admin/notifications",
+};
+
+export function roleNotificationsPath(accountType: AccountType): string {
+  return ROLE_NOTIFICATIONS[accountType];
+}
+
 export const BLOCKED_STATUSES: AccountStatus[] = ["SUSPENDED", "DISABLED", "DELETED"];
 
 export function isPublicSignupType(value: string): value is PublicSignupType {

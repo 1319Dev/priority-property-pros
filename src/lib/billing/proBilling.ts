@@ -10,6 +10,7 @@ import type { SignupFeeStatus } from "../signupFee/constants";
  * connection_checkout_sessions, signup_fee_charges, and projects (reference
  * number only). No customer name, phone, email, street, or project title.
  * PPP does not store Stripe receipt URLs, so no receipt link is shown.
+ * Checkouts that were started but never charged are left out.
  */
 
 export type BillingRowKind = "connect" | "activation";
@@ -143,7 +144,9 @@ export function buildBillingRows(input: {
       testMode: charge.livemode === false,
     });
   }
-  return rows.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+  // Only real money movements are billing history: paid, refunded, or under refund review.
+  // An abandoned, open, expired, cancelled, or failed checkout never charged the card, so it is not listed.
+  return rows.filter((row) => row.charged).sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
 }
 
 export function billingTotalChargedCents(rows: BillingRow[]): number {

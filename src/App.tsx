@@ -12,6 +12,7 @@ import { FindAProPage, PublicContractorPage } from "./pages/FindAProPage";
 import { HomePage } from "./pages/HomePage";
 import { HowItWorksPage } from "./pages/HowItWorksPage";
 import { LegacyPathRedirect } from "./pages/LegacyPathRedirect";
+import { AppNotificationsRedirect, LoginRedirect } from "./pages/RouteRedirects";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { PricingPage } from "./pages/PricingPage";
 import { PostProjectPage } from "./pages/PostProjectPage";
@@ -119,6 +120,7 @@ export default function App() {
         <Route path="/services" element={<LegacyPathRedirect />} />
         <Route path="/about" element={<LegacyPathRedirect />} />
         <Route path="/sign-in" element={<SignInPage />} />
+        <Route path="/login" element={<LoginRedirect />} />
         <Route path="/sign-up" element={<SignUpRolePage />} />
         <Route path="/sign-up/:role" element={<SignUpPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -202,6 +204,8 @@ export default function App() {
           }
         />
       ) : null}
+
+      <Route path="/app/notifications" element={<AppNotificationsRedirect />} />
 
       <Route element={<RequireAuth />}>
         <Route element={<RequireRole role="CUSTOMER" />}>
