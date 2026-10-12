@@ -20,6 +20,7 @@ describe("admin nav config", () => {
       "/app/admin/approvals",
       "/app/admin/reviews",
       "/app/admin/bookings",
+      "/app/admin/support",
       "/app/admin/security",
       "/app/admin/audit",
       "/app/admin/account",
@@ -34,6 +35,11 @@ describe("admin nav config", () => {
     expect(ADMIN_NAV_GROUPS).toEqual(["Overview", "People", "Marketplace", "Money", "Trust", "Account"]);
     expect(adminNavByGroup("People").map((item) => item.id)).toEqual(["homeowners", "contractors"]);
     expect(adminNavByGroup("Money").map((item) => item.id)).toEqual(["payments"]);
+    expect(adminNavByGroup("Trust").map((item) => item.id)).toEqual(["support", "security", "audit"]);
+    const supportRoutes = readFileSync(path.join(repoRoot, "src/pages/app/admin/sections/support/routes.tsx"), "utf8");
+    expect(supportRoutes).toContain('path="support"');
+    expect(supportRoutes).toContain('path="support/:conversationId"');
+    expect(adminSearchHits("support").map((hit) => hit.label)).toContain("Support");
   });
 
   it("keeps the admin route tree out of the public bundle entry", () => {
