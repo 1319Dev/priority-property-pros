@@ -694,7 +694,7 @@ BEGIN
     SELECT jsonb_build_object(
       'slug', a.slug,
       'title', a.title,
-      'excerpt', left(a.body_md, 700)
+      'excerpt', left(a.body_md, 2400)
     ) AS item,
     ts_rank(a.search_vector, websearch_to_tsquery('english', v_query)) AS rank
     FROM public.support_kb_articles a
@@ -711,7 +711,7 @@ BEGIN
       SELECT jsonb_build_object(
         'slug', a.slug,
         'title', a.title,
-        'excerpt', left(a.body_md, 700)
+        'excerpt', left(a.body_md, 2400)
       ) AS item
       FROM public.support_kb_articles a
       WHERE a.status = 'PUBLISHED'
