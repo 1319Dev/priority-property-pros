@@ -27,6 +27,22 @@ const profile = {
   about: "Independent local contractor. Contact is shared after you connect through Priority Property Pros.",
 };
 
+const ratedCard = {
+  ...card,
+  id: "22222222-2222-4222-8222-222222222222",
+  displayLabel: "Handyman pro in Houston",
+  photoInitials: "HH",
+  primaryService: "Handyman",
+  otherServices: [],
+  categories: ["Handyman"],
+  serviceArea: "Serves within 25 miles of Houston, TX",
+  ratingAverage: 5,
+  ratingCount: 2,
+  ratingLabel: "5.0 ★ · 2 reviews",
+  newOnPlatform: false,
+  reviews: [{ id: "r1", rating: 5, body: "Finished the indoor repair.", verifiedProject: true }],
+};
+
 export function DirectoryPreview({ view }) {
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
@@ -40,7 +56,7 @@ export function DirectoryPreview({ view }) {
         <>
           <p className="mt-4 text-base leading-relaxed text-ink-700">{FIND_A_PRO_INTRO}</p>
           <div className="mt-8">
-            <FindAProDirectory cards={[card]} failed={false} loading={false} onRetry={() => undefined} />
+            <FindAProDirectory cards={[card, ratedCard]} failed={false} loading={false} onRetry={() => undefined} />
           </div>
         </>
       )}

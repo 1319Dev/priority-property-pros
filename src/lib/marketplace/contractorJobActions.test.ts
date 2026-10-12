@@ -133,7 +133,7 @@ describe("Pass on this job copy and plan", () => {
     });
     expect(endJobConfirmBody(null)).toBe(PASS_SKIP_BODY);
     expect(endJobConfirmBody("PAYMENT_DISABLED")).toBe(PASS_SKIP_BODY);
-    expect(PASS_SKIP_BODY).toMatch(/next best-suited contractor/i);
+    expect(PASS_SKIP_BODY).toMatch(/next matched contractor/i);
     expect(declineJobTitle("PAYMENT_DISABLED")).toBe("Pass on this job?");
     expect(declineJobConfirmLabel(null)).toBe("Pass on this job");
     expect(declineJobButtonLabel("PAYMENT_DISABLED")).toBe("Pass on this job");

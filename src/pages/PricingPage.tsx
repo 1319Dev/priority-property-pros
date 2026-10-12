@@ -49,7 +49,7 @@ export function PricingPage() {
   return (
     <section className="py-10 sm:py-16">
       <Container className="max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Pricing</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Pricing</p>
         <h1 className="mt-3 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">
           {PRICING_PAGE_TITLE}
         </h1>
@@ -73,7 +73,7 @@ export function PricingPage() {
             <p className="mt-2 text-sm font-semibold text-gold-300">{SIGNUP_FEE_NON_REFUNDABLE}</p>
           </article>
           <article className="rounded-3xl border border-forest-800/15 bg-cream-50 px-5 py-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">
               Contractors
             </p>
             <p className="mt-2 font-display text-4xl font-semibold text-forest-800 sm:text-5xl">

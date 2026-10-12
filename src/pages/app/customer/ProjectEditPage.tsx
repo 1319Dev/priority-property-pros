@@ -226,7 +226,7 @@ export function ProjectEditPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-600">Edit project</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-700">Edit project</p>
         <h1 className="mt-2 font-display text-4xl font-semibold text-forest-800">Update the job</h1>
         <JobReference value={project.reference_number} />
         <p className="mt-3 text-sm text-ink-700">
