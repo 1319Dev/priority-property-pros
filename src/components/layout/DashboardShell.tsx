@@ -6,6 +6,8 @@ import { NotificationBell } from "../notifications/NotificationBell";
 import { useAuth } from "../../lib/auth/useAuth";
 import { displayName } from "../../lib/auth/roles";
 import { CONTACT_LINK_LABEL, CONTACT_PATH } from "../../data/brand";
+import { AgreementAcceptancePrompt } from "../legal/AgreementAcceptancePrompt";
+import { LegalFooterLinks } from "../legal/LegalFooterLinks";
 
 export type DashNavItem = {
   to: string;
@@ -74,14 +76,16 @@ export function DashboardShell({
         </div>
       ) : null}
       {notice ? <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6">{notice}</div> : null}
+      <AgreementAcceptancePrompt />
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:pb-10">
         {children ?? <Outlet />}
       </main>
-      <p className="mx-auto w-full max-w-6xl break-words px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] text-sm text-ink-500 sm:px-6 lg:pb-6">
-        <Link className="font-semibold text-forest-800 underline" to={CONTACT_PATH}>
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-1 break-words px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] text-sm text-ink-500 sm:px-6 lg:pb-6">
+        <Link className="inline-flex min-h-11 items-center font-semibold text-forest-800 underline" to={CONTACT_PATH}>
           {CONTACT_LINK_LABEL}
         </Link>
-      </p>
+        <LegalFooterLinks linkClassName="inline-flex min-h-11 items-center font-semibold text-forest-800 underline" />
+      </div>
       <nav
         aria-label="Dashboard"
         className="fixed inset-x-0 bottom-0 z-40 border-t border-forest-800/10 bg-cream-50/95 pb-safe backdrop-blur-md lg:hidden"

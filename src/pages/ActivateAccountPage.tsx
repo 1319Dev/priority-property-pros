@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { BrandLoader } from "../components/brand/BrandLoader";
+import { CheckoutRefundNotice } from "../components/payments/CheckoutRefundNotice";
 import { Button } from "../components/ui/Button";
 import { AuthCard, FormError } from "../lib/auth/AuthCard";
 import { postLoginPath } from "../lib/auth/roles";
@@ -109,6 +110,7 @@ export function ActivateAccountPage() {
         <p className="rounded-2xl bg-cream-100 px-4 py-3 text-sm text-ink-700">Confirming payment with Stripe…</p>
       ) : null}
       <FormError message={error} />
+      <CheckoutRefundNotice fee="activation" />
       <Button type="button" disabled={busy || confirming || !user} onClick={() => void pay()}>
         {busy ? "Starting checkout…" : "Pay $9.99"}
       </Button>
