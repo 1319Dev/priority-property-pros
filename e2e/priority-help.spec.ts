@@ -113,7 +113,7 @@ test("the launcher does not cover signup or checkout at 390", async ({ page }) =
   expect(navBox).not.toBeNull();
   expect(intersects(helpBox!, navBox!)).toBe(false);
 
-  await page.goto(`${harness}?as=customer&fee=unpaid#/account/activate`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${harness}?as=customer&fee=unpaid&feeon=1#/account/activate`, { waitUntil: "domcontentloaded" });
   const pay = page.getByRole("button", { name: "Pay $9.99" });
   await expect(pay).toBeVisible();
   await pay.scrollIntoViewIfNeeded();

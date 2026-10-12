@@ -26,6 +26,8 @@ const noop = async () => ({ error: null });
 export function AuthProvider({ children }) {
   const accountType = roleFromLocation();
   const signupFeeStatus = feeFromLocation(accountType);
+  // ?feeon=1 turns the activation checkout on (Priority Help layout checks on /account/activate).
+  const signupFeeEnabled = new URLSearchParams(window.location.search).get("feeon") === "1";
   const value = useMemo(() => {
     const profile = {
       id: "user-layout",
@@ -54,7 +56,7 @@ export function AuthProvider({ children }) {
       account_type: accountType,
       account_status: "ACTIVE",
       signup_fee_status: signupFeeStatus,
-      signup_fee_enabled: false,
+      signup_fee_enabled: signupFeeEnabled,
       signIn: noop,
       signUp: async () => ({ error: null, needsEmailConfirm: false }),
       signOut: async () => undefined,
@@ -63,7 +65,7 @@ export function AuthProvider({ children }) {
       updatePassword: noop,
       resendVerification: noop,
     };
-  }, [accountType, signupFeeStatus]);
+  }, [accountType, signupFeeStatus, signupFeeEnabled]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
