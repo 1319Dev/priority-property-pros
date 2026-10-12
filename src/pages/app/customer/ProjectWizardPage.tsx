@@ -52,8 +52,9 @@ export function ProjectWizardPage() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const composing = !projectId || projectId === "new";
+  const draftOwnerId = user?.id ?? null;
   const [form, setForm] = useState<WizardSession>(() =>
-    composing ? (resumeAtFirstStep(readWizardSession()) ?? emptyWizardSession()) : emptyWizardSession(),
+    composing ? (resumeAtFirstStep(readWizardSession(draftOwnerId)) ?? emptyWizardSession()) : emptyWizardSession(),
   );
   const [addressPrefilled, setAddressPrefilled] = useState(false);
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
@@ -69,6 +70,7 @@ export function ProjectWizardPage() {
   const formRef = useRef(form);
   formRef.current = form;
   const persistReady = useRef(false);
+  const persistOwner = useRef<string | null>(draftOwnerId);
 
   const step = form.step;
 
@@ -92,22 +94,29 @@ export function ProjectWizardPage() {
   }, [targetedPro]);
 
   useEffect(() => {
-    if (!composing) {
+    if (!composing || !draftOwnerId) {
       persistReady.current = false;
       return;
     }
+    if (persistOwner.current !== draftOwnerId) {
+      // A different account signed in on this tab: drop whatever was on screen.
+      persistOwner.current = draftOwnerId;
+      persistReady.current = false;
+      setForm(resumeAtFirstStep(readWizardSession(draftOwnerId)) ?? emptyWizardSession());
+      return;
+    }
     if (!persistReady.current) {
-      const saved = resumeAtFirstStep(readWizardSession());
+      const saved = resumeAtFirstStep(readWizardSession(draftOwnerId));
       if (saved && !wizardSessionIsEmpty(saved)) setForm(saved);
       persistReady.current = true;
       return;
     }
     if (wizardSessionIsEmpty(form)) {
-      const saved = readWizardSession();
+      const saved = readWizardSession(draftOwnerId);
       if (saved && !wizardSessionIsEmpty(saved)) return;
     }
-    writeWizardSession(form);
-  }, [composing, form]);
+    writeWizardSession(form, draftOwnerId);
+  }, [composing, form, draftOwnerId]);
 
   useEffect(() => {
     return () => {
@@ -389,12 +398,19 @@ export function ProjectWizardPage() {
           {questions.length === 0 ? <p className="text-ink-500">Pick a category first.</p> : null}
           {questions.map((question) => (
             <div key={question.id}>
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-gold-700">
+              <label
+                htmlFor={`wizard-question-${question.id}`}
+                id={`wizard-question-${question.id}-label`}
+                className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-gold-700"
+              >
                 {question.prompt}
                 {question.is_required ? " *" : ""}
-              </p>
+              </label>
               {question.kind === "SINGLE_CHOICE" ? (
                 <select
+                  id={`wizard-question-${question.id}`}
+                  aria-required={question.is_required ? true : undefined}
+                  aria-describedby={question.help_text ? `wizard-question-${question.id}-help` : undefined}
                   className="min-h-14 w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4"
                   value={form.answers[question.id] ?? ""}
                   onChange={(e) =>
@@ -413,6 +429,9 @@ export function ProjectWizardPage() {
                 </select>
               ) : question.kind === "BOOLEAN" ? (
                 <select
+                  id={`wizard-question-${question.id}`}
+                  aria-required={question.is_required ? true : undefined}
+                  aria-describedby={question.help_text ? `wizard-question-${question.id}-help` : undefined}
                   className="min-h-14 w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4"
                   value={form.answers[question.id] ?? ""}
                   onChange={(e) =>
@@ -428,6 +447,9 @@ export function ProjectWizardPage() {
                 </select>
               ) : (
                 <textarea
+                  id={`wizard-question-${question.id}`}
+                  aria-required={question.is_required ? true : undefined}
+                  aria-describedby={question.help_text ? `wizard-question-${question.id}-help` : undefined}
                   rows={3}
                   className="w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4 py-3"
                   value={form.answers[question.id] ?? ""}
@@ -439,7 +461,9 @@ export function ProjectWizardPage() {
                   }
                 />
               )}
-              {question.help_text ? <p className="mt-1 text-sm text-ink-500">{question.help_text}</p> : null}
+              {question.help_text ? <p id={`wizard-question-${question.id}-help`} className="mt-1 text-sm text-ink-500">
+                  {question.help_text}
+                </p> : null}
             </div>
           ))}
         </div>

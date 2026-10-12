@@ -11,6 +11,7 @@ import { fetchSignupFeeCheckoutFlags } from "../signupFee/api";
 import { emailChangeErrorMessage, emailChangeFieldErrors } from "./emailChange";
 import { signInErrorMessage } from "./signInError";
 import { passwordPolicyError } from "./passwordPolicy";
+import { clearWizardSession } from "../marketplace/wizardSession";
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
   const supabase = getSupabaseClient();
@@ -45,10 +46,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [signupFeeEnabled, setSignupFeeEnabled] = useState(false);
   const [sessionNotice, setSessionNotice] = useState<"expired" | null>(null);
+  const [signedOutByUser, setSignedOutByUser] = useState(false);
   const intentionalSignOut = useRef(false);
   const hadSession = useRef(false);
 
+  const lastUserId = useRef<string | null>(null);
+
   const applySession = useCallback(async (next: Session | null) => {
+    const nextUserId = next?.user?.id ?? null;
+    if (lastUserId.current && lastUserId.current !== nextUserId) {
+      // Signed out (or another account signed in): never leave a post-a-project draft behind.
+      clearWizardSession();
+    }
+    lastUserId.current = nextUserId;
+    if (nextUserId) setSignedOutByUser(false);
     setSession(next);
     setUser(next?.user ?? null);
     if (next?.user) {
@@ -152,6 +163,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     const supabase = getSupabaseClient();
     intentionalSignOut.current = true;
+    setSignedOutByUser(true);
+    clearWizardSession();
     try {
       if (supabase) await supabase.auth.signOut();
     } finally {
@@ -231,6 +244,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signup_fee_status: (profile?.signup_fee_status as SignupFeeStatus | null | undefined) ?? null,
       signup_fee_enabled: signupFeeEnabled,
       sessionNotice,
+      signedOutByUser,
       signIn,
       signUp,
       signOut,
@@ -248,6 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       signupFeeEnabled,
       sessionNotice,
+      signedOutByUser,
       signIn,
       signUp,
       signOut,

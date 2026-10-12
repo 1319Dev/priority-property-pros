@@ -1,4 +1,4 @@
-import { readWizardSession, wizardSessionIsEmpty } from "./lib/marketplace/wizardSession";
+import { hasUnsavedWizardDraft } from "./lib/marketplace/wizardSession";
 
 export const UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000;
 export const RELOAD_GUARD_MS = 15_000;
@@ -123,12 +123,7 @@ function fieldValue(field: HTMLInputElement | HTMLTextAreaElement | HTMLSelectEl
 
 function openWizardDraft(doc: Document, storage: GuardStorage): boolean {
   if (!doc.querySelector("[data-pwa-form='project-wizard']")) return false;
-  try {
-    const session = readWizardSession(storage);
-    return session != null && !wizardSessionIsEmpty(session);
-  } catch {
-    return false;
-  }
+  return hasUnsavedWizardDraft(storage);
 }
 
 export function createFormDirtyTracker(doc: Document, storage: GuardStorage = sessionStorage) {

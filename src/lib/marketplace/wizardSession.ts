@@ -63,44 +63,106 @@ function isTiming(value: unknown): value is TimingPreference {
   return typeof value === "string" && (TIMING_PREFERENCES as readonly string[]).includes(value);
 }
 
-export function readWizardSession(storage: Pick<Storage, "getItem"> = sessionStorage): WizardSession | null {
+type StoredWizardDraft = {
+  /** auth user id of the homeowner who typed the draft */
+  ownerId: string;
+  draft: Partial<WizardSession>;
+};
+
+function normalizeWizardSession(parsed: Partial<WizardSession> | null | undefined): WizardSession | null {
+  if (!parsed || typeof parsed !== "object") return null;
+  const empty = emptyWizardSession();
+  const step = typeof parsed.step === "number" && parsed.step >= 1 && parsed.step <= 8 ? parsed.step : 1;
+  const answers =
+    parsed.answers && typeof parsed.answers === "object" && !Array.isArray(parsed.answers) ? parsed.answers : {};
+  return {
+    ...empty,
+    step,
+    title: typeof parsed.title === "string" ? parsed.title : "",
+    description: typeof parsed.description === "string" ? parsed.description : "",
+    categoryId: typeof parsed.categoryId === "string" ? parsed.categoryId : null,
+    answers,
+    street: typeof parsed.street === "string" ? parsed.street : "",
+    street2: typeof parsed.street2 === "string" ? parsed.street2 : "",
+    city: typeof parsed.city === "string" ? parsed.city : "",
+    state: typeof parsed.state === "string" ? parsed.state : "",
+    zipCode: typeof parsed.zipCode === "string" ? parsed.zipCode : "",
+    timing: isTiming(parsed.timing) ? parsed.timing : null,
+    preferredDate: typeof parsed.preferredDate === "string" ? parsed.preferredDate : "",
+    budgetMin: typeof parsed.budgetMin === "string" ? parsed.budgetMin : "",
+    budgetMax: typeof parsed.budgetMax === "string" ? parsed.budgetMax : "",
+  };
+}
+
+function readStoredDraft(storage: Pick<Storage, "getItem">): StoredWizardDraft | "unowned" | null {
+  const raw = storage.getItem(STORAGE_KEY);
+  if (!raw) return null;
+  const parsed = JSON.parse(raw) as Partial<StoredWizardDraft> | null;
+  if (!parsed || typeof parsed !== "object") return "unowned";
+  if (typeof parsed.ownerId !== "string" || !parsed.ownerId || !parsed.draft || typeof parsed.draft !== "object") {
+    // Drafts saved before drafts were tied to an account have no owner. Never restore them.
+    return "unowned";
+  }
+  return { ownerId: parsed.ownerId, draft: parsed.draft };
+}
+
+/**
+ * Reads the wizard draft saved in this tab, but only when it belongs to the
+ * signed-in homeowner. A draft typed by another account on the same browser
+ * (or an old draft with no owner) is removed and never returned.
+ */
+export function readWizardSession(
+  ownerId: string | null | undefined,
+  storage: Pick<Storage, "getItem" | "removeItem"> = sessionStorage,
+): WizardSession | null {
+  if (!ownerId) return null;
   try {
-    const raw = storage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<WizardSession>;
-    if (!parsed || typeof parsed !== "object") return null;
-    const empty = emptyWizardSession();
-    const step = typeof parsed.step === "number" && parsed.step >= 1 && parsed.step <= 8 ? parsed.step : 1;
-    const answers =
-      parsed.answers && typeof parsed.answers === "object" && !Array.isArray(parsed.answers) ? parsed.answers : {};
-    return {
-      ...empty,
-      step,
-      title: typeof parsed.title === "string" ? parsed.title : "",
-      description: typeof parsed.description === "string" ? parsed.description : "",
-      categoryId: typeof parsed.categoryId === "string" ? parsed.categoryId : null,
-      answers,
-      street: typeof parsed.street === "string" ? parsed.street : "",
-      street2: typeof parsed.street2 === "string" ? parsed.street2 : "",
-      city: typeof parsed.city === "string" ? parsed.city : "",
-      state: typeof parsed.state === "string" ? parsed.state : "",
-      zipCode: typeof parsed.zipCode === "string" ? parsed.zipCode : "",
-      timing: isTiming(parsed.timing) ? parsed.timing : null,
-      preferredDate: typeof parsed.preferredDate === "string" ? parsed.preferredDate : "",
-      budgetMin: typeof parsed.budgetMin === "string" ? parsed.budgetMin : "",
-      budgetMax: typeof parsed.budgetMax === "string" ? parsed.budgetMax : "",
-    };
+    const stored = readStoredDraft(storage);
+    if (!stored) return null;
+    if (stored === "unowned" || stored.ownerId !== ownerId) {
+      storage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return normalizeWizardSession(stored.draft);
   } catch {
+    try {
+      storage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
     return null;
   }
 }
 
-export function writeWizardSession(value: WizardSession, storage: Pick<Storage, "setItem"> = sessionStorage): void {
-  storage.setItem(STORAGE_KEY, JSON.stringify(value));
+/** True when this tab holds a non-empty wizard draft for any account (used by the update guard). */
+export function hasUnsavedWizardDraft(storage: Pick<Storage, "getItem"> = sessionStorage): boolean {
+  try {
+    const stored = readStoredDraft(storage);
+    if (!stored || stored === "unowned") return false;
+    const draft = normalizeWizardSession(stored.draft);
+    return draft != null && !wizardSessionIsEmpty(draft);
+  } catch {
+    return false;
+  }
 }
 
-export function clearWizardSession(storage: Pick<Storage, "removeItem"> = sessionStorage): void {
-  storage.removeItem(STORAGE_KEY);
+export function writeWizardSession(
+  value: WizardSession,
+  ownerId: string | null | undefined,
+  storage: Pick<Storage, "setItem"> = sessionStorage,
+): void {
+  if (!ownerId) return;
+  const stored: StoredWizardDraft = { ownerId, draft: value };
+  storage.setItem(STORAGE_KEY, JSON.stringify(stored));
+}
+
+/** Removes any wizard draft from this tab. Called after posting, on sign-out, and after account deletion. */
+export function clearWizardSession(storage: Pick<Storage, "removeItem"> | null = null): void {
+  try {
+    (storage ?? sessionStorage).removeItem(STORAGE_KEY);
+  } catch {
+    /* storage unavailable */
+  }
 }
 
 /**
