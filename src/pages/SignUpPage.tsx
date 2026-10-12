@@ -1,4 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Honeypot } from "../components/security/Honeypot";
+import { evaluateBotGuard } from "../lib/security/botGuard";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { BrandLoader } from "../components/brand/BrandLoader";
 import { Button } from "../components/ui/Button";
@@ -50,6 +52,8 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
   const { signUp, configured, loading, user, account_type, account_status, signup_fee_enabled, signup_fee_status } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState("");
+  const [startedAt] = useState(() => Date.now());
   const [fieldErrors, setFieldErrors] = useState<SignupFieldErrors>({});
   const [busy, setBusy] = useState(false);
   const [accepted, setAccepted] = useState(false);
@@ -117,6 +121,16 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
       event.currentTarget.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
       return;
     }
+    // Field errors first (nothing is sent); the bot guard runs only right before calling Supabase.
+    const guard = evaluateBotGuard({ form: "signUp", honeypotValue: honeypot, startedAtMs: startedAt, nowMs: Date.now() });
+    if (!guard.ok) {
+      if (guard.silent) {
+        navigate(`/auth/verify?state=check-email&email=${encodeURIComponent(values.email)}`, { replace: true });
+      } else {
+        setError(guard.message);
+      }
+      return;
+    }
     setBusy(true);
     const result = await signUp({
       email: values.email,
@@ -156,7 +170,8 @@ function SignUpForm({ accountType }: { accountType: PublicSignupType }) {
         </>
       }
     >
-      <form className="space-y-4" noValidate onSubmit={onSubmit}>
+      <form className="relative space-y-4" noValidate onSubmit={onSubmit}>
+        <Honeypot value={honeypot} onChange={setHoneypot} />
         <div id="signup-account-difference" className="rounded-3xl border border-forest-800/10 bg-cream-100 px-4 py-3 text-sm leading-relaxed text-ink-700">
           <p>{accountType === "CONTRACTOR" ? CONTRACTOR_ACCOUNT_DIFFERENCE : CUSTOMER_ACCOUNT_DIFFERENCE}</p>
           <p className="mt-2">{checkoutLive ? SIGNUP_BEFORE_CHECKOUT : SIGNUP_BEFORE_CHECKOUT_NOT_LIVE}</p>

@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from "react";
+import { Honeypot } from "../components/security/Honeypot";
+import { evaluateBotGuard } from "../lib/security/botGuard";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { BrandLoader } from "../components/brand/BrandLoader";
 import { Button } from "../components/ui/Button";
@@ -23,6 +25,7 @@ export function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [busy, setBusy] = useState(false);
 
@@ -41,6 +44,11 @@ export function SignInPage() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    const guard = evaluateBotGuard({ form: "signIn", honeypotValue: honeypot, startedAtMs: 0, nowMs: Date.now() });
+    if (!guard.ok) {
+      setError("Email or password is incorrect.");
+      return;
+    }
     const nextErrors = signInFieldErrors(email, password);
     setFieldErrors(nextErrors);
     if (nextErrors.email || nextErrors.password) {
@@ -73,7 +81,8 @@ export function SignInPage() {
         </>
       }
     >
-      <form className="space-y-4" noValidate onSubmit={onSubmit}>
+      <form className="relative space-y-4" noValidate onSubmit={onSubmit}>
+        <Honeypot value={honeypot} onChange={setHoneypot} />
         {expired ? (
           <p className="rounded-2xl bg-cream-100 px-4 py-3 text-sm text-ink-700" role="status">
             {SESSION_EXPIRED_MESSAGE}
