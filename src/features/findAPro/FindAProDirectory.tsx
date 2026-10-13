@@ -19,6 +19,7 @@ import {
 } from "../../lib/marketplace/findAPro";
 import { liveContractorPath } from "../../lib/marketplace/publicDirectory";
 import { postProjectPath } from "../../lib/marketplace/customerCopy";
+import { PublicPortfolioGallery } from "./PublicPortfolioGallery";
 
 const selectClass =
   "min-h-14 w-full max-w-full rounded-2xl border border-forest-800/15 bg-cream-50 px-4 text-base text-ink-900";
@@ -68,7 +69,7 @@ export function FindAProCardView({ card }: { card: FindAProCard }) {
       ) : (
         <p className="mt-3 text-sm font-semibold text-forest-800">{card.ratingLabel}</p>
       )}
-      <PortfolioPreview items={card.portfolio} />
+      <PublicPortfolioGallery items={card.portfolio} limit={2} empty="No portfolio yet" />
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Link
           to={liveContractorPath(card.id)}
@@ -81,21 +82,6 @@ export function FindAProCardView({ card }: { card: FindAProCard }) {
         </PostProjectLink>
       </div>
     </article>
-  );
-}
-
-function PortfolioPreview({ items }: { items: FindAProCard["portfolio"] }) {
-  if (items.length === 0) {
-    return <p className="mt-3 text-sm text-ink-500">No portfolio yet</p>;
-  }
-  return (
-    <ul className="mt-3 grid min-w-0 gap-2">
-      {items.slice(0, 2).map((item) => (
-        <li key={item.id} className="min-w-0 break-words rounded-2xl bg-cream-100 px-3 py-2 text-sm text-ink-700">
-          {item.caption}
-        </li>
-      ))}
-    </ul>
   );
 }
 
